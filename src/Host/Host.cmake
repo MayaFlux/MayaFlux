@@ -5,8 +5,6 @@ add_library(MayaFluxHost SHARED
     ${CMAKE_CURRENT_LIST_DIR}/Session.hpp
     ${CMAKE_CURRENT_LIST_DIR}/Dependencies.cpp
     ${CMAKE_CURRENT_LIST_DIR}/Dependencies.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/Live/Runtime.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/Live/Runtime.hpp
 )
 
 set_target_properties(MayaFluxHost PROPERTIES

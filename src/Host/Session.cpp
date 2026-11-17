@@ -19,7 +19,7 @@ namespace {
 
     struct State {
         std::shared_ptr<Lila::Lila> instance;
-        uint16_t port {};
+        std::optional<Lila::Address> address;
         bool starting {};
         std::array<std::vector<std::string>, k_stage_count> staged;
         std::set<std::string> libraries;
@@ -33,7 +33,6 @@ namespace {
     };
 
     Memory::SnapshotCell<State> g_state;
-    thread_local std::string t_eval_error;
 
     std::unexpected<Failure> refuse(std::string message, std::vector<std::filesystem::path> tried = {})
     {
@@ -43,6 +42,17 @@ namespace {
     size_t index_of(detail::Stage stage)
     {
         return static_cast<size_t>(stage);
+    }
+
+    std::string where_text(const std::optional<Lila::Address>& address)
+    {
+        if (!address) {
+            return "nowhere";
+        }
+        if (const auto* tcp = std::get_if<Lila::TcpAddress>(&*address)) {
+            return tcp->host + ":" + std::to_string(tcp->port);
+        }
+        return "socket " + std::get<Lila::UnixAddress>(*address).path.value_or(std::filesystem::path {}).string();
     }
 
     std::shared_ptr<Lila::Lila> running_instance()
@@ -59,19 +69,18 @@ namespace {
 
     Result<void> run_eval(Lila::Lila& lila, const std::string& code)
     {
-        t_eval_error.clear();
-        if (lila.eval(code)) {
-            return {};
+        if (auto evaluated = lila.eval(code); !evaluated) {
+            return refuse(std::move(evaluated.error()));
         }
-        return refuse(t_eval_error.empty() ? "evaluation failed" : t_eval_error);
+        return {};
     }
 
     Result<void> run_load(Lila::Lila& lila, const std::string& path)
     {
-        if (lila.load_library(path)) {
-            return {};
+        if (auto loaded = lila.load_library(path); !loaded) {
+            return refuse(std::move(loaded.error()), { path });
         }
-        return refuse(lila.get_last_error(), { path });
+        return {};
     }
 
     Result<void> apply_now(Lila::Lila& lila, detail::Stage stage, const std::string& value)
@@ -182,7 +191,7 @@ namespace detail {
 
 }
 
-Result<void> start_session(uint16_t port)
+Result<void> start_session(const Lila::Address& where)
 {
     enum class Refusal : uint8_t {
         None,
@@ -191,13 +200,13 @@ Result<void> start_session(uint16_t port)
     };
 
     Refusal refusal = Refusal::None;
-    uint16_t running_port {};
+    std::optional<Lila::Address> running;
     std::array<std::vector<std::string>, k_stage_count> staged;
 
     g_state.update([&](State& state) {
         if (state.instance) {
             refusal = Refusal::Running;
-            running_port = state.port;
+            running = state.address;
             return false;
         }
         if (state.starting) {
@@ -211,7 +220,7 @@ Result<void> start_session(uint16_t port)
     });
 
     if (refusal == Refusal::Running) {
-        return refuse("session already running on port " + std::to_string(running_port));
+        return refuse("session already running on " + where_text(running));
     }
     if (refusal == Refusal::Starting) {
         return refuse("session is starting");
@@ -225,10 +234,9 @@ Result<void> start_session(uint16_t port)
     for (const auto& flag : staged[index_of(detail::Stage::CompileFlag)]) {
         instance->add_compile_flag(flag);
     }
-    instance->on_error([](const std::string& error) { t_eval_error = error; });
 
     const auto abandon = [&instance](Failure failure) -> Result<void> {
-        instance->stop_server();
+        instance->stop_listening();
         g_state.update([](State& state) {
             state.starting = false;
             state.libraries.clear();
@@ -236,8 +244,8 @@ Result<void> start_session(uint16_t port)
         return std::unexpected(std::move(failure));
     };
 
-    if (!instance->initialize(Lila::OperationMode::Both, static_cast<int>(port), true)) {
-        return abandon(Failure { .message = "initialization failed: " + instance->get_last_error(), .tried = {} });
+    if (const auto ready = instance->initialize(true); !ready) {
+        return abandon(Failure { .message = "initialization failed: " + ready.error(), .tried = {} });
     }
 
     for (const auto& library : staged[index_of(detail::Stage::Library)]) {
@@ -251,21 +259,25 @@ Result<void> start_session(uint16_t port)
         }
     }
 
+    if (const auto listening = instance->listen(where); !listening) {
+        return abandon(Failure { .message = "listen failed: " + listening.error(), .tried = {} });
+    }
+
+    const auto bound = instance->address();
     g_state.update([&](State& state) {
         state.instance = instance;
-        state.port = port;
+        state.address = bound;
         state.starting = false;
     });
 
-    LILA_INFO(Lila::Emitter::SYSTEM,
-        "start_session: running on port " + std::to_string(port));
+    LILA_INFO(Lila::Emitter::SYSTEM, "start_session: running on " + where_text(bound));
     return {};
 }
 
 void stop_session(bool clear_persistent_store)
 {
     std::shared_ptr<Lila::Lila> instance;
-    uint16_t stopped_port {};
+    std::optional<Lila::Address> stopped;
 
     g_state.update([&](State& state) {
         if (!state.instance) {
@@ -273,7 +285,7 @@ void stop_session(bool clear_persistent_store)
             return false;
         }
         instance = std::move(state.instance);
-        stopped_port = std::exchange(state.port, uint16_t {});
+        stopped = std::exchange(state.address, std::nullopt);
         state.libraries.clear();
         return true;
     });
@@ -283,9 +295,9 @@ void stop_session(bool clear_persistent_store)
     }
 
     LILA_INFO(Lila::Emitter::SYSTEM,
-        "stop_session: stopping on port " + std::to_string(stopped_port));
+        "stop_session: stopping on " + where_text(stopped));
 
-    instance->stop_server();
+    instance->stop_listening();
     instance.reset();
 
     if (clear_persistent_store) {
@@ -300,10 +312,10 @@ bool session_active()
     return view && view->instance;
 }
 
-uint16_t session_port()
+std::optional<Lila::Address> session_address()
 {
     auto view = g_state.read();
-    return view && view->instance ? view->port : uint16_t {};
+    return view && view->instance ? view->address : std::nullopt;
 }
 
 Result<void> eval(const std::string& code)

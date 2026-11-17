@@ -1,7 +1,7 @@
 #include "Lila.hpp"
 
 #include "ClangInterpreter.hpp"
-#include "Server.hpp"
+#include "Listener.hpp"
 
 #include "Commentator.hpp"
 
@@ -15,236 +15,133 @@
 
 namespace Lila {
 
+namespace {
+    constexpr auto k_poll_interval = std::chrono::milliseconds(100);
+}
+
 Lila::Lila()
     : m_interpreter(std::make_unique<ClangInterpreter>())
-    , m_current_mode(OperationMode::Direct)
-    , server_loop_rate(0.1F)
 {
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance created");
 }
 
 Lila::~Lila()
 {
-    stop_server();
+    stop_listening();
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance destroyed");
 }
 
-bool Lila::initialize(OperationMode mode, int server_port, bool skip_host_library_load) noexcept
+Result<void> Lila::initialize(bool skip_host_library_load)
 {
     LILA_INFO(Emitter::SYSTEM, "Initializing Lila");
-    m_current_mode = mode;
 
-    if (!initialize_interpreter(skip_host_library_load)) {
+    if (!m_interpreter->initialize(skip_host_library_load)) {
         LILA_ERROR(Emitter::SYSTEM, "Failed to initialize interpreter");
-        return false;
-    }
-
-    if (mode == OperationMode::Server || mode == OperationMode::Both) {
-        if (!initialize_server(server_port)) {
-            LILA_ERROR(Emitter::SYSTEM, "Failed to initialize server");
-            return false;
-        }
+        return std::unexpected(m_interpreter->get_last_error());
     }
 
     LILA_INFO(Emitter::SYSTEM, "Lila initialized successfully");
-    return true;
+    return {};
 }
 
-bool Lila::initialize_interpreter(bool skip_host_library_load)
+Result<void> Lila::listen(const Address& where)
 {
-    LILA_DEBUG(Emitter::SYSTEM, "Initializing interpreter subsystem");
-    return m_interpreter->initialize(skip_host_library_load);
-}
+    stop_listening();
 
-bool Lila::initialize_server(int port)
-{
-    if (m_server && m_server->is_running()) {
-        LILA_WARN(Emitter::SYSTEM, "Stopping existing server before starting new one");
-        stop_server();
-    }
-
-    LILA_DEBUG(Emitter::SYSTEM,
-        std::string("Initializing server on port ") + std::to_string(port));
-
-    m_server = std::make_unique<Server>(port);
-
-    m_server->set_message_handler([this](std::string_view message) {
-        return this->handle_server_message(message);
+    auto listener = Listener::create(where);
+    listener->set_message_handler([this](std::string_view message) {
+        return handle_message(message);
     });
 
-    return m_server->start();
+    if (auto started = listener->start(); !started) {
+        return started;
+    }
+
+    m_listener = std::move(listener);
+    return {};
 }
 
-std::expected<std::string, std::string> Lila::handle_server_message(std::string_view message)
+void Lila::stop_listening()
+{
+    if (m_listener) {
+        LILA_INFO(Emitter::SYSTEM, "Stopping listener");
+        m_listener->stop();
+        m_listener.reset();
+    }
+}
+
+bool Lila::is_listening() const
+{
+    return m_listener && m_listener->is_running();
+}
+
+std::optional<Address> Lila::address() const
+{
+    if (!m_listener || !m_listener->is_running()) {
+        return std::nullopt;
+    }
+    return m_listener->address();
+}
+
+Result<std::string> Lila::handle_message(std::string_view message)
 {
     if (message.empty()) {
-        return R"({"status":"error","message":"Empty message"})";
+        return std::unexpected("empty message");
     }
 
-    auto result = m_interpreter->eval(std::string(message));
-
-    if (result.success) {
-        if (m_success_callback) {
-            m_success_callback();
-        }
-        return "";
+    if (auto evaluated = eval(std::string(message)); !evaluated) {
+        return std::unexpected(std::move(evaluated.error()));
     }
-
-    if (m_error_callback) {
-        m_error_callback(result.error);
-    }
-
-    return std::unexpected(escape_json(result.error));
+    return std::string {};
 }
 
-bool Lila::eval(const std::string& code)
+Result<void> Lila::eval(const std::string& code)
 {
-    if (!m_interpreter) {
-        LILA_ERROR(Emitter::SYSTEM, "Cannot eval: interpreter not initialized");
-        return false;
+    const auto result = m_interpreter->eval(code);
+    if (!result.success) {
+        return std::unexpected(result.error);
     }
-
-    auto result = m_interpreter->eval(code);
-
-    if (result.success && m_success_callback) {
-        m_success_callback();
-    } else if (!result.success && m_error_callback) {
-        m_error_callback(result.error);
-    }
-
-    return result.success;
+    return {};
 }
 
-bool Lila::eval_file(const std::string& filepath)
+Result<void> Lila::load_library(const std::string& path)
 {
-    if (!m_interpreter) {
-        LILA_ERROR(Emitter::SYSTEM, "Cannot eval file: interpreter not initialized");
-        return false;
+    if (!m_interpreter->load_library(path)) {
+        return std::unexpected(m_interpreter->get_last_error());
     }
-
-    auto result = m_interpreter->eval_file(filepath);
-    return result.success;
-}
-
-void Lila::start_server(int port)
-{
-    LILA_INFO(Emitter::SYSTEM,
-        std::string("Starting server on port ") + std::to_string(port));
-
-    initialize_server(port);
-}
-
-void Lila::stop_server()
-{
-    if (m_server) {
-        LILA_INFO(Emitter::SYSTEM, "Stopping server");
-        m_server->stop();
-        m_server.reset();
-    }
-}
-
-bool Lila::is_server_running() const
-{
-    return m_server && m_server->is_running();
+    return {};
 }
 
 void* Lila::get_symbol_address(const std::string& name)
 {
-    return m_interpreter ? m_interpreter->get_symbol_address(name) : nullptr;
-}
-
-std::vector<std::string> Lila::get_defined_symbols()
-{
-    return m_interpreter ? m_interpreter->get_defined_symbols() : std::vector<std::string> {};
+    return m_interpreter->get_symbol_address(name);
 }
 
 void Lila::add_include_path(const std::string& path)
 {
-    if (m_interpreter) {
-        m_interpreter->add_include_path(path);
-    }
+    m_interpreter->add_include_path(path);
 }
 
 void Lila::add_compile_flag(const std::string& flag)
 {
-    if (m_interpreter) {
-        m_interpreter->add_compile_flag(flag);
-    }
-}
-
-bool Lila::load_library(const std::string& path)
-{
-    return m_interpreter && m_interpreter->load_library(path);
-}
-
-void Lila::on_success(std::function<void()> callback)
-{
-    m_success_callback = std::move(callback);
-    LILA_DEBUG(Emitter::SYSTEM, "Success callback registered");
-}
-
-void Lila::on_error(std::function<void(const std::string&)> callback)
-{
-    m_error_callback = std::move(callback);
-    LILA_DEBUG(Emitter::SYSTEM, "Error callback registered");
-}
-
-void Lila::on_server_started(std::function<void()> callback)
-{
-    if (m_server) {
-        m_server->on_server_started(std::move(callback));
-        LILA_DEBUG(Emitter::SYSTEM, "Server started callback registered");
-    }
-}
-
-void Lila::on_server_client_connected(std::function<void(const ClientInfo&)> callback)
-{
-    if (m_server) {
-        m_server->on_client_connected(std::move(callback));
-        LILA_DEBUG(Emitter::SYSTEM, "Client connected callback registered");
-    }
-}
-
-void Lila::on_server_client_disconnected(std::function<void(const ClientInfo&)> callback)
-{
-    if (m_server) {
-        m_server->on_client_disconnected(std::move(callback));
-        LILA_DEBUG(Emitter::SYSTEM, "Client disconnected callback registered");
-    }
-}
-
-std::string Lila::get_last_error() const
-{
-    return m_interpreter ? m_interpreter->get_last_error() : "Interpreter not initialized";
-}
-
-OperationMode Lila::get_current_mode() const
-{
-    return m_current_mode;
+    m_interpreter->add_compile_flag(flag);
 }
 
 void Lila::await_shutdown(const std::atomic<bool>* external_flag)
 {
     LILA_INFO(Emitter::SYSTEM, "Entering main event loop");
 
+    while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
+        if (!is_listening()) {
+            LILA_ERROR(Emitter::SYSTEM, "Listener stopped unexpectedly");
+            break;
+        }
 #ifdef MAYAFLUX_PLATFORM_MACOS
-    while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
-        if (!is_server_running()) {
-            LILA_ERROR(Emitter::SYSTEM, "Server stopped unexpectedly");
-            break;
-        }
-        CFRunLoopRunInMode(kCFRunLoopDefaultMode, server_loop_rate, false);
-    }
-
+        CFRunLoopRunInMode(kCFRunLoopDefaultMode, std::chrono::duration<double>(k_poll_interval).count(), false);
 #else
-    while (!m_shutdown_requested.load(std::memory_order_acquire) && (!external_flag || external_flag->load(std::memory_order_acquire))) {
-        if (!is_server_running()) {
-            LILA_ERROR(Emitter::SYSTEM, "Server stopped unexpectedly");
-            break;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(server_loop_rate * 1000)));
-    }
+        std::this_thread::sleep_for(k_poll_interval);
 #endif
+    }
 
     LILA_INFO(Emitter::SYSTEM, "Exiting main event loop");
 }
@@ -256,37 +153,6 @@ void Lila::request_shutdown()
 #ifdef MAYAFLUX_PLATFORM_MACOS
     CFRunLoopStop(CFRunLoopGetMain());
 #endif
-}
-
-std::string Lila::escape_json(const std::string& str)
-{
-    std::string escaped;
-    escaped.reserve(str.size());
-
-    for (char c : str) {
-        switch (c) {
-        case '"':
-            escaped += "\\\"";
-            break;
-        case '\\':
-            escaped += "\\\\";
-            break;
-        case '\n':
-            escaped += "\\n";
-            break;
-        case '\r':
-            escaped += "\\r";
-            break;
-        case '\t':
-            escaped += "\\t";
-            break;
-        default:
-            if (c >= 0x20) {
-                escaped += c;
-            }
-        }
-    }
-    return escaped;
 }
 
 } // namespace Lila

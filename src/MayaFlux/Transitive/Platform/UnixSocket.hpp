@@ -10,43 +10,43 @@
 namespace MayaFlux::Platform {
 
 /**
- * @brief A local endpoint at an explicit file path, absolute or relative to the working directory.
+ * @brief A Unix socket at an explicit file path, absolute or relative to the working directory.
  */
-struct EndpointFromPath {
+struct UnixSocketFromPath {
     std::filesystem::path path;
 };
 
 /**
- * @brief A local endpoint given by file name, placed in the user's runtime directory.
+ * @brief A Unix socket given by file name, placed in the user's runtime directory.
  *
  * The directory is the first of runtime_directory_candidates() that exists.
  */
-struct EndpointFromName {
+struct UnixSocketFromName {
     std::string file_name;
 };
 
-using EndpointSource = std::variant<EndpointFromPath, EndpointFromName>;
+using UnixSocketSource = std::variant<UnixSocketFromPath, UnixSocketFromName>;
 
 /**
- * @brief An endpoint that is safe to bind.
+ * @brief A socket path that is safe to bind.
  *
  * replaced_stale is true when a socket file nothing answered on was removed.
  */
-struct LocalEndpoint {
+struct UnixSocket {
     std::filesystem::path path;
     bool replaced_stale;
 };
 
-inline constexpr std::string_view default_endpoint_name = "mayaflux-lila.sock";
+inline constexpr std::string_view default_unix_socket_name = "mayaflux-lila.sock";
 
 #if defined(MAYAFLUX_PLATFORM_MACOS)
-inline constexpr size_t local_endpoint_path_limit = 103;
+inline constexpr size_t unix_socket_path_limit = 103;
 #else
-inline constexpr size_t local_endpoint_path_limit = 107;
+inline constexpr size_t unix_socket_path_limit = 107;
 #endif
 
 /**
- * @brief Per-user directories a local endpoint may live in, in the order tried.
+ * @brief Per-user directories a Unix socket may live in, in the order tried.
  *
  * Read from the environment on every call, so a changed variable is seen at once.
  * Linux: XDG_RUNTIME_DIR, then /run/user/<uid>. macOS: TMPDIR. Windows: TEMP,
@@ -83,7 +83,7 @@ inline constexpr size_t local_endpoint_path_limit = 107;
 
 namespace detail {
 
-    inline bool endpoint_directory_is_safe(const std::filesystem::path& directory)
+    inline bool socket_directory_is_safe(const std::filesystem::path& directory)
     {
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
         (void)directory;
@@ -101,7 +101,7 @@ namespace detail {
 #endif
     }
 
-    inline bool endpoint_entry_is_socket(const std::filesystem::file_status& status)
+    inline bool entry_is_socket(const std::filesystem::file_status& status)
     {
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
         return status.type() == std::filesystem::file_type::socket
@@ -111,16 +111,16 @@ namespace detail {
 #endif
     }
 
-    inline Acquired<std::filesystem::path> resolve_endpoint_path(const EndpointSource& source)
+    inline Acquired<std::filesystem::path> resolve_socket_path(const UnixSocketSource& source)
     {
         return std::visit(Overloaded {
-                              [](const EndpointFromPath& from) -> Acquired<std::filesystem::path> {
+                              [](const UnixSocketFromPath& from) -> Acquired<std::filesystem::path> {
                                   if (has_control_character(from.path.string())) {
                                       return std::unexpected(make_failure(AcquireFailure::Reason::InvalidName, from.path.string()));
                                   }
                                   return resolve_absolute(from.path);
                               },
-                              [](const EndpointFromName& from) -> Acquired<std::filesystem::path> {
+                              [](const UnixSocketFromName& from) -> Acquired<std::filesystem::path> {
                                   if (auto failure = check_file_name(from.file_name)) {
                                       return std::unexpected(*failure);
                                   }
@@ -139,11 +139,11 @@ namespace detail {
 }
 
 /**
- * @brief Decide whether a local socket path can be bound, and clear a stale one.
+ * @brief Decide whether a Unix socket path can be bound, and clear a stale one.
  *
  * The path is resolved, then refused if it contains a control character (NUL
  * included, since the filesystem would see it cut short), if it is longer than
- * local_endpoint_path_limit bytes, if its directory is missing, is not a directory, or is writable by others
+ * unix_socket_path_limit bytes, if its directory is missing, is not a directory, or is writable by others
  * without the sticky bit (group write is accepted, since group membership is not
  * inspected, and ownership is not checked), or if something other than a socket
  * already sits there. A symbolic link is never followed and never removed. A
@@ -159,18 +159,18 @@ namespace detail {
  * @param source The request.
  * @param is_alive Called with the path of an existing socket file. Return true if a
  *        server answers on it. It may throw, and then nothing is removed.
- * @return The endpoint, or the reason it was refused with the paths checked.
+ * @return The socket path, or the reason it was refused with the paths checked.
  */
 template <std::predicate<const std::filesystem::path&> Probe>
-[[nodiscard]] Acquired<LocalEndpoint> acquire_local_endpoint(const EndpointSource& source, Probe&& is_alive)
+[[nodiscard]] Acquired<UnixSocket> acquire_unix_socket(const UnixSocketSource& source, Probe&& is_alive)
 {
-    auto resolved = detail::resolve_endpoint_path(source);
+    auto resolved = detail::resolve_socket_path(source);
     if (!resolved) {
         return std::unexpected(resolved.error());
     }
     const std::filesystem::path path = std::move(*resolved);
 
-    if (path.u8string().size() > local_endpoint_path_limit) {
+    if (path.u8string().size() > unix_socket_path_limit) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::TooLong, path.string(), { path }));
     }
 
@@ -181,19 +181,19 @@ template <std::predicate<const std::filesystem::path&> Probe>
     if (!detail::path_is_directory(directory)) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::NotDirectory, path.string(), { directory }));
     }
-    if (!detail::endpoint_directory_is_safe(directory)) {
+    if (!detail::socket_directory_is_safe(directory)) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::Unsafe, path.string(), { directory }));
     }
 
     std::error_code ec;
     const auto entry = std::filesystem::symlink_status(path, ec);
     if (entry.type() == std::filesystem::file_type::not_found) {
-        return LocalEndpoint { .path = path, .replaced_stale = false };
+        return UnixSocket { .path = path, .replaced_stale = false };
     }
     if (ec) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::Unsafe, path.string(), { path }));
     }
-    if (!detail::endpoint_entry_is_socket(entry)) {
+    if (!detail::entry_is_socket(entry)) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::NotSocket, path.string(), { path }));
     }
 
@@ -205,7 +205,7 @@ template <std::predicate<const std::filesystem::path&> Probe>
     if (ec) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::StaleNotRemoved, path.string(), { path }));
     }
-    return LocalEndpoint { .path = path, .replaced_stale = true };
+    return UnixSocket { .path = path, .replaced_stale = true };
 }
 
 /**
@@ -215,7 +215,7 @@ template <std::predicate<const std::filesystem::path&> Probe>
  * the umask was. On Windows this does nothing and the file keeps the access its
  * directory gives it.
  */
-[[nodiscard]] inline Acquired<void> restrict_endpoint_to_owner(const std::filesystem::path& path)
+[[nodiscard]] inline Acquired<void> restrict_unix_socket_to_owner(const std::filesystem::path& path)
 {
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
     (void)path;

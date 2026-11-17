@@ -52,7 +52,7 @@ enum class LogLevel : uint8_t {
  * Used to indicate which subsystem emitted the log.
  */
 enum class Emitter : uint8_t {
-    SERVER, ///< TCP server, connection handling
+    SERVER, ///< Server, connection handling
     INTERPRETER, ///< Clang interpreter, compilation, symbol resolution
     SYSTEM, ///< System-level operations, initialization
     GENERAL ///< General/uncategorized

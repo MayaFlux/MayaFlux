@@ -100,9 +100,9 @@ install(TARGETS Lila
 install(FILES
     ${CMAKE_SOURCE_DIR}/src/Lila/ClangInterpreter.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Commentator.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/EventBus.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Lila.hpp
-    ${CMAKE_SOURCE_DIR}/src/Lila/Server.hpp
+    ${CMAKE_SOURCE_DIR}/src/Lila/Address.hpp
+    ${CMAKE_SOURCE_DIR}/src/Lila/Result.hpp
     DESTINATION include/Lila
 )
 
@@ -121,11 +121,6 @@ install(TARGETS MayaFluxHost
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(FILES
-    ${CMAKE_SOURCE_DIR}/src/Host/Live/Runtime.hpp
-    DESTINATION include/MayaFlux/Host/Live
 )
 
 install(FILES

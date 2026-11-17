@@ -544,12 +544,12 @@ if(NOT TARGET MayaFlux::MayaFluxHost)
         set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
             IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/bin/MayaFluxHost.dll"
             IMPORTED_IMPLIB   "${_MAYAFLUX_LIBDIR}/MayaFluxHost.lib"
-            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host/Live;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
+            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
         )
     else()
         set_target_properties(MayaFlux::MayaFluxHost PROPERTIES
             IMPORTED_LOCATION "${_MAYAFLUX_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}MayaFluxHost${CMAKE_SHARED_LIBRARY_SUFFIX}"
-            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host/Live;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
+            INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_PREFIX_DIR}/include/MayaFlux/Host;${PACKAGE_PREFIX_DIR}/share/MayaFlux/runtime"
         )
     endif()
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Lila/Address.hpp"
+
 #include <expected>
 
 namespace MayaFlux::Platform {
@@ -23,21 +25,24 @@ template <typename T = void>
 using Result = std::expected<T, Failure>;
 
 /**
- * @brief Start a Lila interpreter and TCP server inside this process.
+ * @brief Start a Lila interpreter and a server inside this process.
  *
  * Applies everything staged before this call: include paths and flags,
  * then libraries, then evaluations, in the order they were staged. The
- * attempt consumes the staged items whether or not it succeeds. If any
- * staged library or evaluation fails, the session is torn down and the
- * failure is returned.
+ * listener starts only after those succeed. The attempt consumes the
+ * staged items whether or not it succeeds. If any staged library or evaluation
+ * fails, or the server cannot listen, the session is torn down and the failure
+ * is returned.
  *
  * Only one session is permitted per process. Staging calls made on other
  * threads while the start is in progress are refused, not queued.
  *
- * @param port TCP port for the Lila server to listen on.
+ * @param where A UnixAddress by default: a socket only the owner can use, at
+ *        the default path in the user's runtime directory. A TcpAddress is an
+ *        explicit choice.
  * @return Success, or the reason the session did not start.
  */
-MAYAFLUX_HOST_API Result<void> start_session(uint16_t port = 9090);
+MAYAFLUX_HOST_API Result<void> start_session(const Lila::Address& where = Lila::UnixAddress {});
 
 /**
  * @brief Stop the running session.
@@ -55,9 +60,10 @@ MAYAFLUX_HOST_API void stop_session(bool clear_persistent_store = false);
 [[nodiscard]] MAYAFLUX_HOST_API bool session_active();
 
 /**
- * @brief TCP port of the running session, or 0 if none is running.
+ * @brief Where the running session listens, with anything resolved at start filled in.
+ * @return The address, or nothing if no session is running.
  */
-[[nodiscard]] MAYAFLUX_HOST_API uint16_t session_port();
+[[nodiscard]] MAYAFLUX_HOST_API std::optional<Lila::Address> session_address();
 
 /**
  * @brief Evaluate a code snippet.
