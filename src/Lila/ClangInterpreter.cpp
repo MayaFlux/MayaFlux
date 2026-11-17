@@ -23,6 +23,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #include <llvm/ExecutionEngine/Orc/AbsoluteSymbols.h>
+#include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
 #include <typeinfo>
 #endif
 
@@ -54,7 +55,18 @@ namespace {
         add("??3@YAXPEAX_K@Z", static_cast<void (*)(void*, std::size_t) noexcept>(&::operator delete));
         add("?_Facet_Register@std@@YAXPEAV_Facet_base@1@@Z", &std::_Facet_Register);
 
-        return jit.getMainJITDylib().define(llvm::orc::absoluteSymbols(std::move(symbols)));
+        if (auto defined = jit.getMainJITDylib().define(llvm::orc::absoluteSymbols(std::move(symbols)))) {
+            return defined;
+        }
+
+        auto generator = llvm::orc::DynamicLibrarySearchGenerator::Load(
+            "ucrtbase.dll", jit.getDataLayout().getGlobalPrefix());
+        if (!generator) {
+            return generator.takeError();
+        }
+        jit.getMainJITDylib().addGenerator(std::move(*generator));
+
+        return llvm::Error::success();
     }
 
     std::unique_ptr<clang::IncrementalExecutorBuilder> make_executor_builder()
@@ -275,8 +287,6 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
     } else {
         LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
     }
-
-    result = m_impl->interpreter->ParseAndExecute("std::cout << \"Ready for Live\" << std::flush;");
 
     return true;
 }
