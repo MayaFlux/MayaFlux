@@ -179,12 +179,12 @@ int main(int argc, char** argv)
     Lila::Lila playground;
 
     if (const auto ready = playground.initialize(); !ready) {
-        LILA_FATAL(Lila::Emitter::SYSTEM, "Failed to initialize: " + ready.error());
+        LILA_FATAL(Lila::Emitter::SYSTEM, "Failed to initialize: " + std::string(ready.error()));
         return 1;
     }
 
     if (const auto listening = playground.listen(Lila::TcpAddress { .port = port }); !listening) {
-        LILA_FATAL(Lila::Emitter::SYSTEM, "Failed to listen: " + listening.error());
+        LILA_FATAL(Lila::Emitter::SYSTEM, "Failed to listen: " + std::string(listening.error()));
         return 1;
     }
 

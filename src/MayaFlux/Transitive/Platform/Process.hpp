@@ -11,14 +11,16 @@ constexpr char PathSeparator = '/';
 inline std::string safe_getenv(const char* var)
 {
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
-    char* value = nullptr;
     size_t len = 0;
-    if (_dupenv_s(&value, &len, var) == 0 && value != nullptr) {
-        std::string result(value);
-        free(value);
-        return result;
+    if (getenv_s(&len, nullptr, 0, var) != 0 || len <= 1) {
+        return "";
     }
-    return "";
+    std::string result(len, '\0');
+    if (getenv_s(&len, result.data(), result.size(), var) != 0 || len == 0) {
+        return "";
+    }
+    result.resize(len - 1);
+    return result;
 #else
     const char* value = std::getenv(var);
     return value ? std::string(value) : "";

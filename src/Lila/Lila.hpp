@@ -41,7 +41,7 @@ public:
      *        LoadDynamicLibrary on MayaFluxLib at startup. Used when MayaFluxLib
      *        is already resident in the calling process.
      */
-    Result<void> initialize(bool skip_host_library_load = false);
+    Status initialize(bool skip_host_library_load = false);
 
     /**
      * @brief Starts listening so remote clients can send code.
@@ -50,7 +50,7 @@ public:
      *
      * @param where TcpAddress or UnixAddress.
      */
-    Result<void> listen(const Address& where);
+    Status listen(const Address& where);
 
     /**
      * @brief Stops listening and disconnects all clients
@@ -64,22 +64,23 @@ public:
 
     /**
      * @brief Where this is listening, with anything resolved at start filled in.
-     * @return The address, or nothing if not listening.
+     * @return The address, or nullptr if not listening. Valid until the
+     *         listener stops or listen() is called again. Copy it to keep it.
      */
-    [[nodiscard]] std::optional<Address> address() const;
+    [[nodiscard]] const Address* address() const;
 
     /**
      * @brief Evaluates a C++ code snippet
      * @param code Code to execute
      * @return Success, or the compiler's or runtime's error text
      */
-    Result<void> eval(const std::string& code);
+    Status eval(const std::string& code);
 
     /**
      * @brief Load a shared library into the JIT symbol table.
      * @param path Full path to the shared library.
      */
-    Result<void> load_library(const std::string& path);
+    Status load_library(const std::string& path);
 
     /**
      * @brief Gets the address of a symbol defined in the interpreter
@@ -116,8 +117,11 @@ public:
 private:
     Result<std::string> handle_message(std::string_view message);
 
+    static Status refuse(std::string reason);
+
     std::unique_ptr<ClangInterpreter> m_interpreter;
     std::unique_ptr<Listener> m_listener;
+    std::optional<Address> m_bound;
     std::atomic<bool> m_shutdown_requested { false };
 };
 

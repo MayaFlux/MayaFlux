@@ -31,20 +31,27 @@ Lila::~Lila()
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance destroyed");
 }
 
-Result<void> Lila::initialize(bool skip_host_library_load)
+Status Lila::refuse(std::string reason)
+{
+    thread_local std::string held;
+    held = std::move(reason);
+    return std::unexpected(std::string_view(held));
+}
+
+Status Lila::initialize(bool skip_host_library_load)
 {
     LILA_INFO(Emitter::SYSTEM, "Initializing Lila");
 
     if (!m_interpreter->initialize(skip_host_library_load)) {
         LILA_ERROR(Emitter::SYSTEM, "Failed to initialize interpreter");
-        return std::unexpected(m_interpreter->get_last_error());
+        return refuse(m_interpreter->get_last_error());
     }
 
     LILA_INFO(Emitter::SYSTEM, "Lila initialized successfully");
     return {};
 }
 
-Result<void> Lila::listen(const Address& where)
+Status Lila::listen(const Address& where)
 {
     stop_listening();
 
@@ -54,9 +61,10 @@ Result<void> Lila::listen(const Address& where)
     });
 
     if (auto started = listener->start(); !started) {
-        return started;
+        return refuse(std::move(started.error()));
     }
 
+    m_bound = listener->address();
     m_listener = std::move(listener);
     return {};
 }
@@ -68,6 +76,7 @@ void Lila::stop_listening()
         m_listener->stop();
         m_listener.reset();
     }
+    m_bound.reset();
 }
 
 bool Lila::is_listening() const
@@ -75,12 +84,12 @@ bool Lila::is_listening() const
     return m_listener && m_listener->is_running();
 }
 
-std::optional<Address> Lila::address() const
+const Address* Lila::address() const
 {
-    if (!m_listener || !m_listener->is_running()) {
-        return std::nullopt;
+    if (!m_listener || !m_listener->is_running() || !m_bound) {
+        return nullptr;
     }
-    return m_listener->address();
+    return &*m_bound;
 }
 
 Result<std::string> Lila::handle_message(std::string_view message)
@@ -90,24 +99,24 @@ Result<std::string> Lila::handle_message(std::string_view message)
     }
 
     if (auto evaluated = eval(std::string(message)); !evaluated) {
-        return std::unexpected(std::move(evaluated.error()));
+        return std::unexpected(std::string(evaluated.error()));
     }
     return std::string {};
 }
 
-Result<void> Lila::eval(const std::string& code)
+Status Lila::eval(const std::string& code)
 {
     const auto result = m_interpreter->eval(code);
     if (!result.success) {
-        return std::unexpected(result.error);
+        return refuse(result.error);
     }
     return {};
 }
 
-Result<void> Lila::load_library(const std::string& path)
+Status Lila::load_library(const std::string& path)
 {
     if (!m_interpreter->load_library(path)) {
-        return std::unexpected(m_interpreter->get_last_error());
+        return refuse(m_interpreter->get_last_error());
     }
     return {};
 }

@@ -3,7 +3,15 @@
 #include "Acquisition.hpp"
 #include "Process.hpp"
 
-#if !defined(MAYAFLUX_PLATFORM_WINDOWS)
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
 #include <unistd.h>
 #endif
 
@@ -101,12 +109,23 @@ namespace detail {
 #endif
     }
 
-    inline bool entry_is_socket(const std::filesystem::file_status& status)
+    inline bool entry_is_socket(const std::filesystem::file_status& status, const std::filesystem::path& path)
     {
 #if defined(MAYAFLUX_PLATFORM_WINDOWS)
-        return status.type() == std::filesystem::file_type::socket
-            || status.type() == std::filesystem::file_type::unknown;
+        if (status.type() == std::filesystem::file_type::socket) {
+            return true;
+        }
+        constexpr DWORD af_unix_reparse_tag = 0x80000023;
+        WIN32_FIND_DATAW found {};
+        const HANDLE handle = FindFirstFileW(path.c_str(), &found);
+        if (handle == INVALID_HANDLE_VALUE) {
+            return false;
+        }
+        FindClose(handle);
+        return (found.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0
+            && found.dwReserved0 == af_unix_reparse_tag;
 #else
+        (void)path;
         return status.type() == std::filesystem::file_type::socket;
 #endif
     }
@@ -193,7 +212,7 @@ template <std::predicate<const std::filesystem::path&> Probe>
     if (ec) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::Unsafe, path.string(), { path }));
     }
-    if (!detail::entry_is_socket(entry)) {
+    if (!detail::entry_is_socket(entry, path)) {
         return std::unexpected(detail::make_failure(AcquireFailure::Reason::NotSocket, path.string(), { path }));
     }
 

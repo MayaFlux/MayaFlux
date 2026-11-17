@@ -70,7 +70,7 @@ namespace {
     Result<void> run_eval(Lila::Lila& lila, const std::string& code)
     {
         if (auto evaluated = lila.eval(code); !evaluated) {
-            return refuse(std::move(evaluated.error()));
+            return refuse(std::string(evaluated.error()));
         }
         return {};
     }
@@ -78,7 +78,7 @@ namespace {
     Result<void> run_load(Lila::Lila& lila, const std::string& path)
     {
         if (auto loaded = lila.load_library(path); !loaded) {
-            return refuse(std::move(loaded.error()), { path });
+            return refuse(std::string(loaded.error()), { path });
         }
         return {};
     }
@@ -245,7 +245,7 @@ Result<void> start_session(const Lila::Address& where)
     };
 
     if (const auto ready = instance->initialize(true); !ready) {
-        return abandon(Failure { .message = "initialization failed: " + ready.error(), .tried = {} });
+        return abandon(Failure { .message = "initialization failed: " + std::string(ready.error()), .tried = {} });
     }
 
     for (const auto& library : staged[index_of(detail::Stage::Library)]) {
@@ -260,10 +260,11 @@ Result<void> start_session(const Lila::Address& where)
     }
 
     if (const auto listening = instance->listen(where); !listening) {
-        return abandon(Failure { .message = "listen failed: " + listening.error(), .tried = {} });
+        return abandon(Failure { .message = "listen failed: " + std::string(listening.error()), .tried = {} });
     }
 
-    const auto bound = instance->address();
+    const auto* resolved = instance->address();
+    const std::optional<Lila::Address> bound = resolved ? std::optional<Lila::Address>(*resolved) : std::nullopt;
     g_state.update([&](State& state) {
         state.instance = instance;
         state.address = bound;
