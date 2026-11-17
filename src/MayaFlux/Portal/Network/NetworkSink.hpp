@@ -67,7 +67,8 @@ public:
      * @return true if the send was accepted by the backend.
      *
      * For UDP: non-blocking sendto() to the address in StreamConfig::endpoint.
-     * For TCP: writes a framed message; may block briefly on backpressure.
+     * For TCP and UDS: writes a framed message once the connection is open,
+     * and returns false while it is still connecting or after it failed.
      */
     [[nodiscard]] bool send(ByteView data) const;
 
@@ -79,7 +80,7 @@ public:
      * @return true if the send was accepted.
      *
      * Primary use: UDP fan-out to a different peer than the default target.
-     * TCP ignores address/port and uses the connected peer.
+     * TCP and UDS ignore address/port and use the connected peer.
      */
     [[nodiscard]] bool send_to(ByteView data, const std::string& address, uint16_t port) const;
 

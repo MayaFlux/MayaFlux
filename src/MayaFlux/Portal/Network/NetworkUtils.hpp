@@ -18,7 +18,9 @@ enum class NetworkTransportHint : uint8_t {
     UDP, ///< Low-latency, unordered datagrams. OSC, control, sparse streams.
     TCP, ///< Reliable ordered byte stream. Bulk data, session-oriented.
     SHARED_MEMORY, ///< Zero-copy IPC on the same machine.
-    AUTO ///< Let NetworkFoundry pick based on StreamProfile.
+    UDS, ///< Reliable ordered messages to a Unix domain socket on the same machine.
+         ///< Addressed by StreamEndpoint::path, never chosen by AUTO.
+    AUTO ///< Pick UDP or TCP from the StreamProfile.
 };
 
 //=============================================================================
@@ -98,6 +100,7 @@ struct MAYAFLUX_API StreamEndpoint {
     std::string address; ///< Remote address. Empty = listen only.
     uint16_t port { 0 }; ///< Remote port (send) or local port (receive).
     uint16_t local_port { 0 }; ///< Explicit local bind port. 0 = OS-assigned.
+    std::string path; ///< UDS only: socket to connect to. A bare name is looked up in the runtime directory.
 };
 
 //=============================================================================

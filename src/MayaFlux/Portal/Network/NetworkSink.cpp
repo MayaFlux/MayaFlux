@@ -18,6 +18,8 @@ namespace {
             return Core::NetworkTransport::TCP;
         case NetworkTransportHint::SHARED_MEMORY:
             return Core::NetworkTransport::SHARED_MEMORY;
+        case NetworkTransportHint::UDS:
+            return Core::NetworkTransport::UDS;
         case NetworkTransportHint::AUTO:
             switch (profile) {
             case StreamProfile::ORDERED_BULK:
@@ -48,10 +50,20 @@ NetworkSink::NetworkSink(const StreamConfig& config)
     Core::EndpointInfo info;
     info.transport = resolve_transport(config.transport, config.profile);
     info.role = Core::EndpointRole::SEND;
-    info.remote_address = config.endpoint.address;
-    info.remote_port = config.endpoint.port;
-    info.local_port = config.endpoint.local_port;
     info.label = config.name;
+
+    if (info.transport == Core::NetworkTransport::UDS) {
+        if (config.endpoint.path.empty()) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::Networking,
+                "NetworkSink '{}': UDS needs a path", m_name);
+            return;
+        }
+        info.remote_path = config.endpoint.path;
+    } else {
+        info.remote_address = config.endpoint.address;
+        info.remote_port = config.endpoint.port;
+        info.local_port = config.endpoint.local_port;
+    }
 
     m_endpoint_id = svc->open_endpoint(info);
 
