@@ -172,11 +172,9 @@ void Lila::add_compile_flag(const std::string& flag)
     }
 }
 
-void Lila::load_library(const std::string& path)
+bool Lila::load_library(const std::string& path)
 {
-    if (m_interpreter) {
-        m_interpreter->load_library(path);
-    }
+    return m_interpreter && m_interpreter->load_library(path);
 }
 
 void Lila::on_success(std::function<void()> callback)

@@ -128,6 +128,12 @@ install(FILES
     DESTINATION include/MayaFlux/Host/Live
 )
 
+install(FILES
+    ${CMAKE_SOURCE_DIR}/src/Host/Session.hpp
+    ${CMAKE_SOURCE_DIR}/src/Host/Dependencies.hpp
+    DESTINATION include/MayaFlux/Host
+)
+
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/third_party/tinyexr/
     DESTINATION include/MayaFlux/thirdparty/tinyexr
     FILES_MATCHING PATTERN "*.h" PATTERN "*.hh"

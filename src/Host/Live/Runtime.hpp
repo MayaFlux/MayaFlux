@@ -54,60 +54,62 @@ MAYAFLUX_HOST_API void stop_lila(bool clear_persistent_store = false);
  * @return optional path to the directory containing the header, or nullopt
  *         if the header was not staged or could not be found.
  */
+[[deprecated("scans the whole working directory; use Host::add_header with explicit roots")]]
 MAYAFLUX_HOST_API std::optional<std::filesystem::path> find_include_dir(const std::string& filename);
 
 /**
  * @brief Add an include path to the Lila interpreter.
  *
- * Must be called before start_lila(). Paths registered after initialization
- * have no effect on the compiler state already built by initialize().
+ * Must be called before start_lila().
  *
  * @param path Directory to add to the JIT include search path.
+ * @deprecated Use Host::add_include_root, which reports failure.
  */
+[[deprecated("use Host::add_include_root")]]
 MAYAFLUX_HOST_API void lila_add_include_path(const std::string& path);
 
 /**
  * @brief Add a compile flag to the Lila interpreter.
  *
- * Must be called before start_lila(). Flags registered after initialization
- * have no effect on the compiler state already built by initialize().
+ * Must be called before start_lila().
  *
  * @param flag Compiler flag string, e.g. "-DMY_DEFINE" or "-I/some/path".
+ * @deprecated Use Host::add_compile_flag, which reports failure.
  */
+[[deprecated("use Host::add_compile_flag")]]
 MAYAFLUX_HOST_API void lila_add_compile_flag(const std::string& flag);
 
 /**
  * @brief Stage a header for inclusion in the Lila interpreter.
  *
- * Resolves the header's directory and pre-evaluates the include
- * so the type is available to JIT clients without manual inclusion.
+ * Finds the header by scanning the working directory, then includes it.
  *
  * @param filename Header filename to find and include, e.g. "Dust.hpp"
- * @return true if the file was found.
+ * @return true if the header was found and included.
+ * @deprecated Use Host::add_header with explicit roots.
  */
+[[deprecated("use Host::add_header")]]
 MAYAFLUX_HOST_API bool lila_add_header(const std::string& filename);
 
 /**
- * @brief Load a shared library into the JIT symbol table at runtime.
+ * @brief Load a shared library into the JIT symbol table.
  *
- * Can be called before or after start_lila(). Libraries loaded before
- * start_lila() are staged and loaded immediately after interpreter
- * initialization. Use this for external .so/.dylib/.dll files that
- * were not linked into the host process.
+ * Can be called before or after start_lila().
  *
  * @param path Full path to the shared library.
+ * @deprecated Use Host::load_library, which reports failure.
  */
+[[deprecated("use Host::load_library")]]
 MAYAFLUX_HOST_API void lila_load_library(const std::string& path);
 
 /**
  * @brief Evaluate a code snippet in the Lila interpreter.
  *
- * Can be called after start_lila() to pre-warm the JIT state,
- * e.g. to include community module headers before clients connect.
- *
  * @param code C++ code to evaluate, e.g. "#include \"Dust.hpp\""
- * @return true if evaluation succeeded.
+ * @return true if evaluation succeeded or was staged.
+ * @deprecated Use Host::eval, which reports the error text.
  */
+[[deprecated("use Host::eval")]]
 MAYAFLUX_HOST_API bool lila_eval(const std::string& code);
 
 } // namespace MayaFlux::Host::Live
