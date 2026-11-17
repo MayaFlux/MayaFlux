@@ -10,15 +10,15 @@ namespace fs = std::filesystem;
 #ifdef MAYAFLUX_PLATFORM_MACOS
 inline Acquired<std::filesystem::path> resolve_homebrew_prefix()
 {
-    const std::filesystem::path standard = "/opt/homebrew";
-    if (detail::path_is_directory(standard)) {
-        return standard;
-    }
-
     std::string reported = exec_command("brew --prefix 2>/dev/null");
     trim_output(reported);
     if (!reported.empty() && detail::path_is_directory(reported)) {
         return std::filesystem::path(reported);
+    }
+
+    const std::filesystem::path standard = "/opt/homebrew";
+    if (detail::path_is_directory(standard)) {
+        return standard;
     }
 
     return std::unexpected(AcquireFailure {
@@ -34,15 +34,53 @@ inline Acquired<std::filesystem::path> homebrew_prefix()
 }
 #endif
 
-inline std::vector<std::string> with_homebrew_include(std::vector<std::string> paths, std::string_view leaf)
+struct PlatformCandidates {
+    std::vector<std::string> library_dirs;
+    std::vector<std::string> include_dirs;
+    std::vector<std::string> vswhere_paths;
+    std::vector<std::string> windows_kits_roots;
+    std::vector<std::string> macos_sdk_paths;
+};
+
+inline const PlatformCandidates& platform_candidates()
 {
+#if defined(MAYAFLUX_PLATFORM_WINDOWS)
+    static const PlatformCandidates table {
+        .vswhere_paths = {
+            "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
+            "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe" },
+        .windows_kits_roots = {
+            "C:\\Program Files (x86)\\Windows Kits\\10",
+            "C:\\Program Files\\Windows Kits\\10" },
+    };
+#elif defined(MAYAFLUX_PLATFORM_MACOS)
+    static const PlatformCandidates table {
+        .library_dirs = { "/usr/local/lib", "/usr/lib", "/lib", "/usr/local/lib64", "/usr/lib64", "/lib64" },
+        .include_dirs = { "/usr/include", "/usr/local/include" },
+        .macos_sdk_paths = {
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk" },
+    };
+#else
+    static const PlatformCandidates table {
+        .library_dirs = { "/usr/local/lib", "/usr/lib", "/lib", "/usr/local/lib64", "/usr/lib64", "/lib64" },
+        .include_dirs = { "/usr/include", "/usr/local/include" },
+    };
+#endif
+    return table;
+}
+
+inline std::vector<std::string> dependency_fallbacks(std::string_view leaf)
+{
+    std::vector<std::string> paths;
 #ifdef MAYAFLUX_PLATFORM_MACOS
     if (const auto prefix = homebrew_prefix()) {
         paths.push_back((*prefix / "include" / leaf).string());
     }
-#else
-    static_cast<void>(leaf);
 #endif
+    for (const auto& dir : platform_candidates().include_dirs) {
+        paths.push_back((fs::path(dir) / leaf).string());
+    }
     return paths;
 }
 
@@ -59,10 +97,10 @@ inline const std::vector<DependencyHint>& dependency_hints()
 {
     static const std::vector<DependencyHint> hints = {
         { .env_hint = Config::EIGEN_HINT,
-            .fallback_paths = with_homebrew_include({ "/usr/include/eigen3", "/usr/local/include/eigen3" }, "eigen3"),
+            .fallback_paths = dependency_fallbacks("eigen3"),
             .aliases = { "eigen", "Eigen" } },
         { .env_hint = Config::FREETYPE_HINT,
-            .fallback_paths = with_homebrew_include({ "/usr/include/freetype2", "/usr/local/include/freetype2" }, "freetype2"),
+            .fallback_paths = dependency_fallbacks("freetype2"),
             .aliases = { "freetype2", "freetype" } },
         { .vendored_root = (fs::path(Config::SOURCE_DIR) / "third_party/magic_enum").string(),
             .env_hint = Config::MAGIC_ENUM_HINT,
@@ -381,24 +419,55 @@ inline std::string SystemConfig::find_latest_sdk_version(const fs::path& base)
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 
+inline bool is_vs_installation(const fs::path& candidate)
+{
+    std::error_code code;
+    return !candidate.empty()
+        && fs::is_directory(candidate, code)
+        && fs::is_directory(candidate / "VC" / "Tools" / "MSVC", code);
+}
+
+inline std::string query_vswhere(const std::string& vswhere_command)
+{
+    const std::string command = vswhere_command
+        + " -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>nul";
+    std::string output = exec_command(command.c_str());
+    trim_output(output);
+    return is_vs_installation(fs::path(output)) ? output : std::string {};
+}
+
 inline std::string SystemConfig::find_latest_vs_installation()
 {
-    std::vector<std::string> vswhere_paths = {
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe",
-        "C:\\Program Files\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-    };
+    std::vector<std::string> commands { "vswhere" };
 
-    for (const auto& path : vswhere_paths) {
-        if (fs::exists(path)) {
-            std::string cmd = "\"" + path + "\" -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
-            std::string vs_path = exec_command(cmd.c_str());
-            if (!vs_path.empty()) {
-                trim_output(vs_path);
-                if (fs::exists(vs_path)) {
-                    return vs_path;
-                }
-            }
+    for (const char* name : { "ProgramFiles(x86)", "ProgramFiles", "ProgramW6432" }) {
+        const std::string root = safe_getenv(name);
+        if (root.empty()) {
+            continue;
         }
+        const fs::path exe = fs::path(root) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe";
+        std::error_code code;
+        if (fs::is_regular_file(exe, code)) {
+            commands.push_back("\"" + exe.string() + "\"");
+        }
+    }
+
+    for (const auto& path : platform_candidates().vswhere_paths) {
+        std::error_code code;
+        if (fs::is_regular_file(path, code)) {
+            commands.push_back("\"" + path + "\"");
+        }
+    }
+
+    for (const auto& command : commands) {
+        if (auto found = query_vswhere(command); !found.empty()) {
+            return found;
+        }
+    }
+
+    const std::string developer_prompt = safe_getenv("VSINSTALLDIR");
+    if (is_vs_installation(fs::path(developer_prompt))) {
+        return developer_prompt;
     }
 
     return "";
@@ -551,12 +620,7 @@ inline std::vector<std::string> SystemConfig::probe_sdk_paths(const std::string&
     const std::string& arch)
 {
     std::vector<std::string> paths;
-    std::vector<fs::path> sdk_base_paths = {
-        "C:\\Program Files (x86)\\Windows Kits\\10",
-        "C:\\Program Files\\Windows Kits\\10"
-    };
-
-    for (const auto& base_path : sdk_base_paths) {
+    for (const auto& base_path : platform_candidates().windows_kits_roots) {
         if (fs::exists(base_path)) {
             fs::path search_dir = fs::path(base_path) / subpath;
             std::string version = find_latest_sdk_version(search_dir);
@@ -602,16 +666,7 @@ inline std::vector<std::string> SystemConfig::get_unix_library_paths()
     }
 #endif
 
-    std::vector<std::string> default_paths = {
-        "/usr/local/lib",
-        "/usr/lib",
-        "/lib",
-        "/usr/local/lib64",
-        "/usr/lib64",
-        "/lib64"
-    };
-
-    for (const auto& path : default_paths) {
+    for (const auto& path : platform_candidates().library_dirs) {
         if (fs::exists(path)) {
             lib_paths.push_back(path);
         }
@@ -632,12 +687,7 @@ inline std::string SystemConfig::get_macos_sdk_path()
         return sdk_path;
     }
 
-    std::vector<std::string> possible_paths = {
-        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
-        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-    };
-
-    for (const auto& path : possible_paths) {
+    for (const auto& path : platform_candidates().macos_sdk_paths) {
         if (fs::exists(path)) {
             return path;
         }
