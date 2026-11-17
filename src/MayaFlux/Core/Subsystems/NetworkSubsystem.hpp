@@ -228,6 +228,7 @@ private:
 
     void initialize_udp_backend();
     void initialize_tcp_backend();
+    void initialize_uds_backend();
     void initialize_shm_backend();
 
     void register_backend_service();

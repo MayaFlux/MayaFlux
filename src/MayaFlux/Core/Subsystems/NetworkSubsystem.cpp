@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Core/Backends/Network/TCPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDPBackend.hpp"
+#include "MayaFlux/Core/Backends/Network/UDSBackend.hpp"
 
 #include "MayaFlux/Portal/Network/Network.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -50,6 +51,9 @@ void NetworkSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
     if (m_config.shared_memory.enabled) {
         initialize_shm_backend();
+    }
+    if (m_config.uds.enabled) {
+        initialize_uds_backend();
     }
 
     register_backend_service();
@@ -378,6 +382,12 @@ void NetworkSubsystem::initialize_tcp_backend()
 {
     auto tcp = std::make_unique<TCPBackend>(m_config.tcp, *m_io_context);
     add_backend(std::move(tcp));
+}
+
+void NetworkSubsystem::initialize_uds_backend()
+{
+    auto uds = std::make_unique<UDSBackend>(m_config.uds, *m_io_context);
+    add_backend(std::move(uds));
 }
 
 void NetworkSubsystem::initialize_shm_backend()
