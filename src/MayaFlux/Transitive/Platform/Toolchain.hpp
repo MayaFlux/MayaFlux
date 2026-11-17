@@ -1,10 +1,50 @@
 #pragma once
 
+#include "Acquisition.hpp"
 #include "Process.hpp"
 
 namespace MayaFlux::Platform {
 
 namespace fs = std::filesystem;
+
+#ifdef MAYAFLUX_PLATFORM_MACOS
+inline Acquired<std::filesystem::path> resolve_homebrew_prefix()
+{
+    const std::filesystem::path standard = "/opt/homebrew";
+    if (detail::path_is_directory(standard)) {
+        return standard;
+    }
+
+    std::string reported = exec_command("brew --prefix 2>/dev/null");
+    trim_output(reported);
+    if (!reported.empty() && detail::path_is_directory(reported)) {
+        return std::filesystem::path(reported);
+    }
+
+    return std::unexpected(AcquireFailure {
+        .reason = AcquireFailure::Reason::Missing,
+        .request = "brew --prefix",
+        .tried = { standard } });
+}
+
+inline Acquired<std::filesystem::path> homebrew_prefix()
+{
+    static const Acquired<std::filesystem::path> prefix = resolve_homebrew_prefix();
+    return prefix;
+}
+#endif
+
+inline std::vector<std::string> with_homebrew_include(std::vector<std::string> paths, std::string_view leaf)
+{
+#ifdef MAYAFLUX_PLATFORM_MACOS
+    if (const auto prefix = homebrew_prefix()) {
+        paths.push_back((*prefix / "include" / leaf).string());
+    }
+#else
+    static_cast<void>(leaf);
+#endif
+    return paths;
+}
 
 struct DependencyHint {
     std::string vendored_root;
@@ -19,10 +59,10 @@ inline const std::vector<DependencyHint>& dependency_hints()
 {
     static const std::vector<DependencyHint> hints = {
         { .env_hint = Config::EIGEN_HINT,
-            .fallback_paths = { "/usr/include/eigen3", "/usr/local/include/eigen3", "/opt/homebrew/include/eigen3" },
+            .fallback_paths = with_homebrew_include({ "/usr/include/eigen3", "/usr/local/include/eigen3" }, "eigen3"),
             .aliases = { "eigen", "Eigen" } },
         { .env_hint = Config::FREETYPE_HINT,
-            .fallback_paths = { "/usr/include/freetype2", "/usr/local/include/freetype2", "/opt/homebrew/include/freetype2" },
+            .fallback_paths = with_homebrew_include({ "/usr/include/freetype2", "/usr/local/include/freetype2" }, "freetype2"),
             .aliases = { "freetype2", "freetype" } },
         { .vendored_root = (fs::path(Config::SOURCE_DIR) / "third_party/magic_enum").string(),
             .env_hint = Config::MAGIC_ENUM_HINT,
@@ -147,9 +187,8 @@ inline const std::vector<std::string>& SystemConfig::get_system_includes()
             includes.push_back(xcode_includes);
         }
 
-        std::string homebrew_includes = "/opt/homebrew/include";
-        if (fs::exists(homebrew_includes)) {
-            includes.push_back(homebrew_includes);
+        if (const auto prefix = homebrew_prefix(); prefix && fs::exists(*prefix / "include")) {
+            includes.push_back((*prefix / "include").string());
         }
 #endif // MAYAFLUX_PLATFORM_MACOS
     }
@@ -557,10 +596,13 @@ inline std::vector<std::string> SystemConfig::get_unix_library_paths()
         }
     }
 
-    std::vector<std::string> default_paths = {
 #if defined(MAYAFLUX_PLATFORM_MACOS)
-        "/opt/homebrew/lib",
+    if (const auto prefix = homebrew_prefix(); prefix && fs::exists(*prefix / "lib")) {
+        lib_paths.push_back((*prefix / "lib").string());
+    }
 #endif
+
+    std::vector<std::string> default_paths = {
         "/usr/local/lib",
         "/usr/lib",
         "/lib",
