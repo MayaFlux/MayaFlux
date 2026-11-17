@@ -158,6 +158,21 @@ namespace detail {
         case Reason::MarkerMissing:
             message = "marker file missing";
             break;
+        case Reason::TooLong:
+            message = "path too long";
+            break;
+        case Reason::Unsafe:
+            message = "unsafe location";
+            break;
+        case Reason::NotSocket:
+            message = "not a socket";
+            break;
+        case Reason::InUse:
+            message = "already in use";
+            break;
+        case Reason::StaleNotRemoved:
+            message = "stale entry could not be removed";
+            break;
         }
         if (!failure.request.empty()) {
             message += ": " + failure.request;

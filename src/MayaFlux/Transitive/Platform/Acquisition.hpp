@@ -14,7 +14,12 @@ struct AcquireFailure {
         Missing,
         NotDirectory,
         NotRegularFile,
-        MarkerMissing
+        MarkerMissing,
+        TooLong,
+        Unsafe,
+        NotSocket,
+        InUse,
+        StaleNotRemoved
     };
 
     Reason reason;
