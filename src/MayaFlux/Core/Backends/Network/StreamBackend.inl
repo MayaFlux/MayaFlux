@@ -172,7 +172,7 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
         return info.id;
     }
 
-    auto conn = std::make_unique<ConnectionState>(m_context, info.framing);
+    auto conn = std::make_unique<ConnectionState>(m_context, info.framing, info.max_message_size);
     conn->info = info;
     conn->info.state = EndpointState::OPENING;
     conn->is_outbound = true;
@@ -307,7 +307,9 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
         break;
     default:
         encoded = Transitive::Protocol::encode_length_prefixed(
-            payload, *frame, Transitive::Protocol::default_max_frame, true);
+            payload, *frame,
+            conn.info.max_message_size != 0 ? conn.info.max_message_size : Transitive::Protocol::default_max_frame,
+            true);
         break;
     }
     if (!encoded) {
@@ -440,7 +442,7 @@ void StreamBackend<Transport>::start_accept(ListenerState& listener)
                 new_id = m_allocate_endpoint_id();
             }
 
-            auto conn = std::make_unique<ConnectionState>(m_context, lst.info.framing);
+            auto conn = std::make_unique<ConnectionState>(m_context, lst.info.framing, lst.info.max_message_size);
             conn->socket = std::move(lst.pending_socket);
             conn->is_outbound = false;
             conn->info.id = new_id;
@@ -449,6 +451,7 @@ void StreamBackend<Transport>::start_accept(ListenerState& listener)
             conn->info.state = EndpointState::OPEN;
             conn->info.parent_id = listener_id;
             conn->info.framing = lst.info.framing;
+            conn->info.max_message_size = lst.info.max_message_size;
             Transport::describe_accepted(conn->socket, lst.info, conn->info);
 
             auto* raw = conn.get();
@@ -531,7 +534,7 @@ void StreamBackend<Transport>::on_bytes_received(ConnectionState& conn,
 
     if (dropped != 0) {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "{} endpoint {} dropped {} line(s) over the length limit",
+            "{} endpoint {} dropped {} line(s) over max_message_size",
             Transport::label, conn.info.id, dropped);
     }
 

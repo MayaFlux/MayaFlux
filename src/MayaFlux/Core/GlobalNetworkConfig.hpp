@@ -96,6 +96,12 @@ struct MAYAFLUX_API EndpointInfo {
     /// TCP and UDS: how messages are delimited. Both ends must agree, and a listener's
     /// accepted connections use the listener's. UDP ignores it.
     FramingPolicy framing { FramingPolicy::AUTO };
+
+    /// TCP and UDS: the largest message in bytes, 0 for the framing's own limit. For LENGTH_PREFIX
+    /// it is the largest payload, 64 MiB by default, and a larger one closes the connection on
+    /// receive and is refused on send. For LINE it is the longest line, 1 MiB by default, and a
+    /// longer one is dropped on receive. NONE ignores it.
+    size_t max_message_size {};
 };
 
 /**

@@ -116,6 +116,7 @@ struct MAYAFLUX_API StreamConfig {
     StreamProfile profile { StreamProfile::ARBITRARY };
     NetworkTransportHint transport { NetworkTransportHint::AUTO };
     FramingPolicy framing { FramingPolicy::AUTO };
+    size_t max_message_size {}; ///< TCP and UDS: largest message or line in bytes. 0 = the framing's own limit.
 };
 
 //=============================================================================

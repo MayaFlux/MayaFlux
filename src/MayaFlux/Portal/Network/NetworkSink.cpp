@@ -52,6 +52,7 @@ NetworkSink::NetworkSink(const StreamConfig& config)
     info.role = Core::EndpointRole::SEND;
     info.label = config.name;
     info.framing = config.framing;
+    info.max_message_size = config.max_message_size;
 
     if (info.transport == Core::NetworkTransport::UDS) {
         if (config.endpoint.path.empty()) {

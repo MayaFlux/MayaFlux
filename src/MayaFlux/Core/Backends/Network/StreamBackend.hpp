@@ -44,16 +44,17 @@ namespace detail {
     using StreamFramer = std::variant<Transitive::Protocol::LengthPrefixFramer,
         Transitive::Protocol::LineFramer, RawChunkFramer>;
 
-    inline StreamFramer make_stream_framer(FramingPolicy framing)
+    inline StreamFramer make_stream_framer(FramingPolicy framing, size_t max_message_size)
     {
         if (framing == FramingPolicy::LINE) {
-            return StreamFramer { std::in_place_type<Transitive::Protocol::LineFramer> };
+            return StreamFramer { std::in_place_type<Transitive::Protocol::LineFramer>,
+                max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_line };
         }
         if (framing == FramingPolicy::NONE) {
             return StreamFramer { std::in_place_type<RawChunkFramer> };
         }
         return StreamFramer { std::in_place_type<Transitive::Protocol::LengthPrefixFramer>,
-            Transitive::Protocol::default_max_frame, true };
+            max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_frame, true };
     }
 
 }
@@ -81,8 +82,9 @@ namespace detail {
  * listener. Messages are delimited by EndpointInfo::framing, chosen per endpoint
  * and inherited by a listener's connections. AUTO and LENGTH_PREFIX are a four byte
  * big-endian length followed by the payload, where a zero length, or one above
- * 64 MiB, closes the connection. LINE delivers each LF terminated line as a message
- * and drops a line over 1 MiB without closing the connection. NONE is raw bytes: each
+ * max_message_size (64 MiB by default), closes the connection. LINE delivers each LF
+ * terminated line as a message and drops a line over max_message_size (1 MiB by
+ * default) without closing the connection. NONE is raw bytes: each
  * read is delivered as one message with no boundaries, and a send writes its payload
  * as it is. CHUNKED is refused.
  *
@@ -155,10 +157,10 @@ private:
         std::unique_ptr<asio::steady_timer> reconnect_timer;
         bool is_outbound {};
 
-        ConnectionState(asio::io_context& ctx, FramingPolicy framing)
+        ConnectionState(asio::io_context& ctx, FramingPolicy framing, size_t max_message_size)
             : socket(ctx)
             , read_buffer(k_read_chunk)
-            , framer(detail::make_stream_framer(framing))
+            , framer(detail::make_stream_framer(framing, max_message_size))
         {
         }
     };
