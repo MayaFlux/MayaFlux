@@ -286,8 +286,46 @@ bool ClangInterpreter::initialize(bool skip_host_library_load)
         LILA_WARN(Emitter::INTERPRETER, warning);
     } else {
         LILA_INFO(Emitter::INTERPRETER, "MayaFlux headers loaded successfully");
+
+        if (!verify_library_version()) {
+            LILA_ERROR(Emitter::INTERPRETER, m_last_error);
+            return false;
+        }
     }
 
+    return true;
+}
+
+bool ClangInterpreter::verify_library_version()
+{
+    const auto declared = eval(R"(extern "C" const char* lila_header_version() { return MAYAFLUX_VERSION; })");
+    if (!declared.success) {
+        m_last_error = "Cannot read the MayaFlux version the interpreter's headers declare: " + declared.error;
+        return false;
+    }
+
+    const auto header_version = reinterpret_cast<const char* (*)()>(get_symbol_address("lila_header_version"));
+    if (!header_version) {
+        m_last_error = "Cannot find the version function the interpreter just defined for the headers";
+        return false;
+    }
+
+    const auto library_version = reinterpret_cast<const char* (*)()>(get_symbol_address("mayaflux_version"));
+    if (!library_version) {
+        m_last_error = "The loaded MayaFluxLib does not report its version, so it predates the headers the interpreter loaded";
+        return false;
+    }
+
+    const std::string_view headers = header_version();
+    const std::string_view library = library_version();
+
+    if (headers != library) {
+        m_last_error = "MayaFluxLib is version " + std::string(library)
+            + " but the headers the interpreter loaded are version " + std::string(headers);
+        return false;
+    }
+
+    LILA_INFO(Emitter::INTERPRETER, "MayaFluxLib and interpreter headers agree on version " + std::string(library));
     return true;
 }
 
