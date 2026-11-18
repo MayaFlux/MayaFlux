@@ -5,6 +5,9 @@
 #include "KeyMapping.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <cerrno>
+#include <csignal>
+#include <fcntl.h>
 #include <linux/input-event-codes.h>
 #include <poll.h>
 #include <sys/mman.h>
@@ -12,6 +15,44 @@
 #include <unistd.h>
 
 namespace MayaFlux::Core {
+
+namespace {
+
+    ssize_t write_without_sigpipe(int fd, const char* data, size_t size)
+    {
+        sigset_t blocked;
+        sigset_t previous;
+        sigemptyset(&blocked);
+        sigaddset(&blocked, SIGPIPE);
+        pthread_sigmask(SIG_BLOCK, &blocked, &previous);
+
+        const ssize_t written = ::write(fd, data, size);
+        const int saved_errno = errno;
+
+        if (written < 0 && saved_errno == EPIPE) {
+            const timespec no_wait {};
+            sigtimedwait(&blocked, nullptr, &no_wait);
+        }
+
+        pthread_sigmask(SIG_SETMASK, &previous, nullptr);
+        errno = saved_errno;
+        return written;
+    }
+
+    const std::string* preferred_text_mime(const std::vector<std::string>& offered)
+    {
+        constexpr std::array<std::string_view, 3> k_preferred {
+            "text/plain;charset=utf-8", "text/plain", "UTF8_STRING"
+        };
+        for (const auto wanted : k_preferred) {
+            const auto found = std::ranges::find(offered, wanted);
+            if (found != offered.end())
+                return &*found;
+        }
+        return nullptr;
+    }
+
+}
 
 // ============================================================================
 // Construction / destruction
@@ -95,6 +136,8 @@ void WaylandWindow::hide()
 
 void WaylandWindow::destroy()
 {
+    release_clipboard();
+
     if (m_repeat_fd >= 0) {
         close(m_repeat_fd);
         m_repeat_fd = -1;
@@ -240,6 +283,9 @@ void WaylandWindow::poll()
         handle_display_error();
         return;
     }
+
+    advance_clipboard_writes();
+    advance_clipboard_reads();
 
     if (m_repeat_fd >= 0 && !m_held_keys.empty()) {
         uint64_t expirations = 0;
@@ -483,6 +529,7 @@ void WaylandWindow::on_registry_global(void* data, wl_registry* reg,
             wl_registry_bind(reg, name, &wl_seat_interface,
                 std::min(version, 7U)));
         wl_seat_add_listener(self->m_seat, &s_seat_listener, self);
+        self->create_data_device();
     } else if (std::string_view(iface) == zxdg_decoration_manager_v1_interface.name) {
         self->m_decoration_manager = static_cast<zxdg_decoration_manager_v1*>(
             wl_registry_bind(reg, name, &zxdg_decoration_manager_v1_interface, 1U));
@@ -490,6 +537,7 @@ void WaylandWindow::on_registry_global(void* data, wl_registry* reg,
         self->m_data_device_manager = static_cast<wl_data_device_manager*>(
             wl_registry_bind(reg, name, &wl_data_device_manager_interface,
                 std::min(version, 3U)));
+        self->create_data_device();
     } else if (std::string_view(iface) == zwp_pointer_constraints_v1_interface.name) {
         self->m_pointer_constraints = static_cast<zwp_pointer_constraints_v1*>(
             wl_registry_bind(reg, name, &zwp_pointer_constraints_v1_interface, 1U));
@@ -696,6 +744,7 @@ void WaylandWindow::on_keyboard_leave(void* data, wl_keyboard*,
 {
     auto* self = static_cast<WaylandWindow*>(data);
     self->release_held_keys();
+    self->drop_clipboard_offer();
     self->m_state.is_focused = false;
     self->apply_cursor_mode();
     WindowEvent ev;
@@ -818,6 +867,252 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
         self->m_key_repeat_config.text_initial_delay_ms = static_cast<uint32_t>(delay);
     }
 }
+
+// ============================================================================
+// Clipboard
+// ============================================================================
+
+void WaylandWindow::create_data_device()
+{
+    if (m_data_device || !m_data_device_manager || !m_seat)
+        return;
+
+    m_data_device = wl_data_device_manager_get_data_device(m_data_device_manager, m_seat);
+    wl_data_device_add_listener(m_data_device, &s_data_device_listener, this);
+}
+
+void WaylandWindow::discard_offer(wl_data_offer* offer)
+{
+    if (!offer)
+        return;
+
+    m_offer_mime_types.erase(offer);
+    wl_data_offer_destroy(offer);
+}
+
+void WaylandWindow::drop_clipboard_offer()
+{
+    discard_offer(m_clipboard_offer);
+    m_clipboard_offer = nullptr;
+}
+
+void WaylandWindow::request_clipboard_text(ClipboardTextCallback callback)
+{
+    if (!callback)
+        return;
+
+    ClipboardRead read;
+    read.callback = std::move(callback);
+
+    if (m_clipboard_source) {
+        read.data = m_clipboard_text;
+        read.ready = true;
+        read.ok = true;
+    } else if (m_clipboard_offer && m_display) {
+        const auto types = m_offer_mime_types.find(m_clipboard_offer);
+        const std::string* mime = types != m_offer_mime_types.end()
+            ? preferred_text_mime(types->second)
+            : nullptr;
+
+        int pipe_fds[2] {};
+        if (mime && pipe2(pipe_fds, O_CLOEXEC) == 0) {
+            wl_data_offer_receive(m_clipboard_offer, mime->c_str(), pipe_fds[1]);
+            close(pipe_fds[1]);
+            wl_display_flush(m_display);
+            fcntl(pipe_fds[0], F_SETFL, O_NONBLOCK);
+            read.fd = pipe_fds[0];
+        } else {
+            read.ready = true;
+        }
+    } else {
+        read.ready = true;
+    }
+
+    m_clipboard_reads.push_back(std::move(read));
+}
+
+void WaylandWindow::set_clipboard_text(const std::string& text)
+{
+    if (!m_data_device || !m_data_device_manager || !m_display)
+        return;
+
+    wl_data_source* source = wl_data_device_manager_create_data_source(m_data_device_manager);
+    wl_data_source_add_listener(source, &s_data_source_listener, this);
+    wl_data_source_offer(source, "text/plain;charset=utf-8");
+    wl_data_source_offer(source, "text/plain");
+    wl_data_source_offer(source, "UTF8_STRING");
+
+    m_clipboard_text = text;
+    wl_data_device_set_selection(m_data_device, source, m_input_serial);
+
+    if (m_clipboard_source)
+        wl_data_source_destroy(m_clipboard_source);
+    m_clipboard_source = source;
+
+    wl_display_flush(m_display);
+}
+
+void WaylandWindow::advance_clipboard_writes()
+{
+    for (auto& write : m_clipboard_writes) {
+        while (write.fd >= 0 && write.offset < write.data.size()) {
+            const ssize_t written = write_without_sigpipe(write.fd,
+                write.data.data() + write.offset, write.data.size() - write.offset);
+            if (written > 0) {
+                write.offset += static_cast<size_t>(written);
+            } else if (written < 0 && errno == EINTR) {
+                continue;
+            } else if (written < 0 && errno == EAGAIN) {
+                break;
+            } else {
+                write.offset = write.data.size();
+            }
+        }
+
+        if (write.offset >= write.data.size() && write.fd >= 0) {
+            close(write.fd);
+            write.fd = -1;
+        }
+    }
+
+    std::erase_if(m_clipboard_writes, [](const ClipboardWrite& write) { return write.fd < 0; });
+}
+
+void WaylandWindow::advance_clipboard_reads()
+{
+    for (auto& read : m_clipboard_reads) {
+        while (read.fd >= 0 && !read.ready) {
+            std::array<char, 4096> buffer {};
+            const ssize_t count = ::read(read.fd, buffer.data(), buffer.size());
+            if (count > 0) {
+                read.data.append(buffer.data(), static_cast<size_t>(count));
+            } else if (count < 0 && errno == EINTR) {
+                continue;
+            } else if (count < 0 && errno == EAGAIN) {
+                break;
+            } else {
+                read.ok = count == 0;
+                read.ready = true;
+                close(read.fd);
+                read.fd = -1;
+            }
+        }
+    }
+
+    std::vector<ClipboardRead> finished;
+    for (auto& read : m_clipboard_reads) {
+        if (read.ready)
+            finished.push_back(std::move(read));
+    }
+    std::erase_if(m_clipboard_reads, [](const ClipboardRead& read) { return read.ready || !read.callback; });
+
+    for (auto& read : finished) {
+        read.callback(read.ok ? std::optional<std::string>(std::move(read.data)) : std::nullopt);
+    }
+}
+
+void WaylandWindow::release_clipboard()
+{
+    for (auto& write : m_clipboard_writes) {
+        if (write.fd >= 0)
+            close(write.fd);
+    }
+    m_clipboard_writes.clear();
+
+    auto reads = std::move(m_clipboard_reads);
+    m_clipboard_reads.clear();
+    for (auto& read : reads) {
+        if (read.fd >= 0) {
+            close(read.fd);
+            read.fd = -1;
+        }
+        read.callback(read.ready && read.ok ? std::optional<std::string>(std::move(read.data)) : std::nullopt);
+    }
+
+    if (m_clipboard_source) {
+        wl_data_source_destroy(m_clipboard_source);
+        m_clipboard_source = nullptr;
+    }
+    m_clipboard_text.clear();
+
+    m_clipboard_offer = nullptr;
+    for (const auto& entry : m_offer_mime_types)
+        wl_data_offer_destroy(entry.first);
+    m_offer_mime_types.clear();
+
+    if (m_data_device) {
+        if (wl_data_device_get_version(m_data_device) >= WL_DATA_DEVICE_RELEASE_SINCE_VERSION)
+            wl_data_device_release(m_data_device);
+        else
+            wl_data_device_destroy(m_data_device);
+        m_data_device = nullptr;
+    }
+}
+
+void WaylandWindow::on_data_offer(void* data, wl_data_device*, wl_data_offer* offer)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    self->m_offer_mime_types[offer];
+    wl_data_offer_add_listener(offer, &s_data_offer_listener, self);
+}
+
+void WaylandWindow::on_data_enter(void* data, wl_data_device*, uint32_t,
+    wl_surface*, wl_fixed_t, wl_fixed_t, wl_data_offer* offer)
+{
+    static_cast<WaylandWindow*>(data)->discard_offer(offer);
+}
+
+void WaylandWindow::on_data_leave(void*, wl_data_device*) { }
+void WaylandWindow::on_data_motion(void*, wl_data_device*, uint32_t, wl_fixed_t, wl_fixed_t) { }
+void WaylandWindow::on_data_drop(void*, wl_data_device*) { }
+
+void WaylandWindow::on_data_selection(void* data, wl_data_device*, wl_data_offer* offer)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    if (self->m_clipboard_offer != offer)
+        self->drop_clipboard_offer();
+    self->m_clipboard_offer = offer;
+}
+
+void WaylandWindow::on_offer_mime_type(void* data, wl_data_offer* offer, const char* mime_type)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    const auto types = self->m_offer_mime_types.find(offer);
+    if (types != self->m_offer_mime_types.end())
+        types->second.emplace_back(mime_type);
+}
+
+void WaylandWindow::on_offer_source_actions(void*, wl_data_offer*, uint32_t) { }
+void WaylandWindow::on_offer_action(void*, wl_data_offer*, uint32_t) { }
+
+void WaylandWindow::on_source_target(void*, wl_data_source*, const char*) { }
+
+void WaylandWindow::on_source_send(void* data, wl_data_source* source, const char*, int32_t fd)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    if (source != self->m_clipboard_source) {
+        close(fd);
+        return;
+    }
+
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    self->m_clipboard_writes.push_back({ .fd = fd, .data = self->m_clipboard_text, .offset = 0 });
+    self->advance_clipboard_writes();
+}
+
+void WaylandWindow::on_source_cancelled(void* data, wl_data_source* source)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    wl_data_source_destroy(source);
+    if (source == self->m_clipboard_source) {
+        self->m_clipboard_source = nullptr;
+        self->m_clipboard_text.clear();
+    }
+}
+
+void WaylandWindow::on_source_dnd_drop_performed(void*, wl_data_source*) { }
+void WaylandWindow::on_source_dnd_finished(void*, wl_data_source*) { }
+void WaylandWindow::on_source_action(void*, wl_data_source*, uint32_t) { }
 
 // ============================================================================
 // Cursor mode

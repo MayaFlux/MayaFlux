@@ -13,6 +13,11 @@ class VKBuffer;
 namespace MayaFlux::Core {
 
 /**
+ * @brief Receives clipboard text, or nullopt when there is none to read.
+ */
+using ClipboardTextCallback = std::function<void(std::optional<std::string>)>;
+
+/**
  * @class Window
  * @brief Platform-agnostic window wrapper
  *
@@ -157,6 +162,31 @@ public:
      * standalone window. Callbacks and awaiters run on the calling thread.
      */
     virtual void poll() { }
+
+    /**
+     * @brief Read text from the system clipboard.
+     * @param callback Called exactly once with the text or nullopt; a backend with
+     *                 a clipboard calls it from poll().
+     *
+     * Nullopt means the clipboard holds no text this window can read. On Wayland
+     * only the window with keyboard focus can read it. The default has no
+     * clipboard and delivers nullopt at once.
+     */
+    virtual void request_clipboard_text(ClipboardTextCallback callback)
+    {
+        if (callback)
+            callback(std::nullopt);
+    }
+
+    /**
+     * @brief Place text on the system clipboard.
+     * @param text UTF-8 text.
+     *
+     * On Wayland the copy needs a recent key or button event in this window, and
+     * lasts while the window lives unless a clipboard manager keeps it. The
+     * default has no clipboard and ignores the call.
+     */
+    virtual void set_clipboard_text(const std::string& text) { (void)text; }
 
     /**
      * @brief Track a secondary command buffer for this frame

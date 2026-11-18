@@ -48,6 +48,9 @@ public:
     void destroy() override;
     void poll() override;
 
+    void request_clipboard_text(ClipboardTextCallback callback) override;
+    void set_clipboard_text(const std::string& text) override;
+
     [[nodiscard]] bool should_close() const override;
     void request_close() override;
 
@@ -135,6 +138,28 @@ private:
     double m_virtual_y {};
     std::atomic<bool> m_cursor_mode_dirty { false };
 
+    struct ClipboardRead {
+        ClipboardTextCallback callback;
+        int fd { -1 };
+        std::string data;
+        bool ready {};
+        bool ok {};
+    };
+
+    struct ClipboardWrite {
+        int fd { -1 };
+        std::string data;
+        size_t offset {};
+    };
+
+    wl_data_device* m_data_device {};
+    wl_data_source* m_clipboard_source {};
+    wl_data_offer* m_clipboard_offer {};
+    std::string m_clipboard_text;
+    std::unordered_map<wl_data_offer*, std::vector<std::string>> m_offer_mime_types;
+    std::vector<ClipboardRead> m_clipboard_reads;
+    std::vector<ClipboardWrite> m_clipboard_writes;
+
     int m_repeat_fd { -1 };
     int m_text_repeat_fd { -1 };
     std::unordered_map<int16_t, WindowEvent::KeyData> m_held_keys;
@@ -193,6 +218,24 @@ private:
      * compositor lacks pointer constraints or relative pointer.
      */
     void apply_cursor_mode();
+
+    /** @brief Create the data device once both the seat and the data device manager are bound. */
+    void create_data_device();
+
+    /** @brief Destroy one offer, forgetting its mime types. */
+    void discard_offer(wl_data_offer* offer);
+
+    /** @brief Drop the cached selection offer, which is only valid while the window has keyboard focus. */
+    void drop_clipboard_offer();
+
+    /** @brief Write pending copy data to the readers that asked for it, without blocking. */
+    void advance_clipboard_writes();
+
+    /** @brief Read pending paste data without blocking and deliver finished requests. */
+    void advance_clipboard_reads();
+
+    /** @brief Finish every request, close every pipe and release the data device and sources. */
+    void release_clipboard();
     void lock_cursor();
     void unlock_cursor();
     void update_cursor_visibility();
@@ -279,6 +322,50 @@ private:
         .key = on_keyboard_key,
         .modifiers = on_keyboard_modifiers,
         .repeat_info = on_keyboard_repeat_info,
+    };
+
+    // -------------------------------------------------------------------------
+    // wl_data_device, wl_data_offer and wl_data_source listeners
+    // -------------------------------------------------------------------------
+    static void on_data_offer(void* data, wl_data_device*, wl_data_offer* offer);
+    static void on_data_enter(void* data, wl_data_device*, uint32_t serial,
+        wl_surface*, wl_fixed_t x, wl_fixed_t y, wl_data_offer* offer);
+    static void on_data_leave(void* data, wl_data_device*);
+    static void on_data_motion(void* data, wl_data_device*, uint32_t time,
+        wl_fixed_t x, wl_fixed_t y);
+    static void on_data_drop(void* data, wl_data_device*);
+    static void on_data_selection(void* data, wl_data_device*, wl_data_offer* offer);
+    static constexpr wl_data_device_listener s_data_device_listener {
+        .data_offer = on_data_offer,
+        .enter = on_data_enter,
+        .leave = on_data_leave,
+        .motion = on_data_motion,
+        .drop = on_data_drop,
+        .selection = on_data_selection,
+    };
+
+    static void on_offer_mime_type(void* data, wl_data_offer* offer, const char* mime_type);
+    static void on_offer_source_actions(void* data, wl_data_offer*, uint32_t actions);
+    static void on_offer_action(void* data, wl_data_offer*, uint32_t action);
+    static constexpr wl_data_offer_listener s_data_offer_listener {
+        .offer = on_offer_mime_type,
+        .source_actions = on_offer_source_actions,
+        .action = on_offer_action,
+    };
+
+    static void on_source_target(void* data, wl_data_source*, const char* mime_type);
+    static void on_source_send(void* data, wl_data_source* source, const char* mime_type, int32_t fd);
+    static void on_source_cancelled(void* data, wl_data_source* source);
+    static void on_source_dnd_drop_performed(void* data, wl_data_source*);
+    static void on_source_dnd_finished(void* data, wl_data_source*);
+    static void on_source_action(void* data, wl_data_source*, uint32_t action);
+    static constexpr wl_data_source_listener s_data_source_listener {
+        .target = on_source_target,
+        .send = on_source_send,
+        .cancelled = on_source_cancelled,
+        .dnd_drop_performed = on_source_dnd_drop_performed,
+        .dnd_finished = on_source_dnd_finished,
+        .action = on_source_action,
     };
 
     // -------------------------------------------------------------------------
