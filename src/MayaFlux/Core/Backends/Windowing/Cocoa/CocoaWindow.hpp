@@ -37,6 +37,9 @@ public:
     void destroy() override;
     void poll() override;
 
+    void request_clipboard_text(ClipboardTextCallback callback) override;
+    void set_clipboard_text(const std::string& text) override;
+
     [[nodiscard]] bool should_close() const override;
     void request_close() override;
 
@@ -112,6 +115,17 @@ private:
     mutable std::mutex m_render_tracking_mutex;
 
     void push_event(WindowEvent ev);
+
+    struct ClipboardDelivery {
+        ClipboardTextCallback callback;
+        std::optional<std::string> text;
+    };
+
+    std::mutex m_clipboard_mutex;
+    std::vector<ClipboardDelivery> m_clipboard_ready;
+
+    /** @brief Call every finished clipboard request that has not been delivered yet. */
+    void deliver_clipboard();
 };
 
 } // namespace MayaFlux::Core
