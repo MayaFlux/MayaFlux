@@ -9,15 +9,14 @@ namespace MayaFlux::Kriya {
 
 Vruta::Event key_pressed(
     std::shared_ptr<Core::Window> window,
-    IO::Keys key,
+    IO::ModifiedKey key,
     std::function<void()> callback)
 {
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::WindowEventFilter filter;
+    Vruta::WindowEventFilter filter { key };
     filter.event_type = Core::WindowEventType::KEY_PRESSED;
-    filter.key_code = key;
 
     while (true) {
         if (promise.should_terminate) {
@@ -57,14 +56,13 @@ Vruta::Event key_released(
 
 Vruta::Event key_held(
     std::shared_ptr<Core::Window> window,
-    IO::Keys key,
+    IO::ModifiedKey key,
     std::function<void()> callback)
 {
     auto& promise = co_await GetEventPromise {};
     auto& source = window->get_event_source();
 
-    Vruta::WindowEventFilter filter;
-    filter.key_code = key;
+    Vruta::WindowEventFilter filter { key };
 
     while (true) {
         if (promise.should_terminate)

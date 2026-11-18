@@ -261,7 +261,7 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline(std::
 /**
  * @brief Schedule a key press handler
  * @param window Window to listen to
- * @param key Key to wait for
+ * @param key Key to wait for, with optional modifiers (IO::Keys::V | IO::Modifiers::Ctrl)
  * @param callback Function to call on key press
  * @param name Optional name for the event handler
  *
@@ -274,7 +274,7 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline(std::
  */
 MAYAFLUX_API void on_key_pressed(
     const std::shared_ptr<Core::Window>& window,
-    IO::Keys key,
+    IO::ModifiedKey key,
     std::function<void()> callback,
     std::string name = "");
 
