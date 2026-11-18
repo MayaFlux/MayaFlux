@@ -34,6 +34,25 @@ namespace {
 
     Memory::SnapshotCell<State> g_state;
 
+    struct ObserverEntry {
+        ObserverId id;
+        std::shared_ptr<const EvalObserver> observer;
+    };
+
+    Memory::SnapshotCell<std::vector<ObserverEntry>> g_observers;
+    std::atomic<ObserverId> g_next_observer { 1 };
+
+    void dispatch_eval(void*, const Lila::EvalReport& report)
+    {
+        const auto observers = g_observers.read();
+        if (!observers) {
+            return;
+        }
+        for (const auto& entry : *observers) {
+            (*entry.observer)(report);
+        }
+    }
+
     std::unexpected<Failure> refuse(std::string message, std::vector<std::filesystem::path> tried = {})
     {
         return std::unexpected(Failure { .message = std::move(message), .tried = std::move(tried) });
@@ -227,6 +246,7 @@ Result<void> start_session(const Lila::Address& where)
     }
 
     auto instance = std::make_shared<Lila::Lila>();
+    instance->add_eval_observer(&dispatch_eval, nullptr);
 
     for (const auto& path : staged[index_of(detail::Stage::IncludePath)]) {
         instance->add_include_path(path);
@@ -322,6 +342,23 @@ std::optional<Lila::Address> session_address()
 Result<void> eval(const std::string& code)
 {
     return detail::apply_or_stage(detail::Stage::Eval, code);
+}
+
+ObserverId on_eval(EvalObserver observer)
+{
+    const ObserverId id = g_next_observer.fetch_add(1);
+    const auto held = std::make_shared<const EvalObserver>(std::move(observer));
+    g_observers.update([&](std::vector<ObserverEntry>& entries) {
+        entries.push_back({ .id = id, .observer = held });
+    });
+    return id;
+}
+
+void remove_eval_observer(ObserverId id)
+{
+    g_observers.update([id](std::vector<ObserverEntry>& entries) {
+        return std::erase_if(entries, [id](const ObserverEntry& entry) { return entry.id == id; }) > 0;
+    });
 }
 
 Result<void> eval_file(const std::filesystem::path& path)

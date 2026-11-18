@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Lila/Address.hpp"
+#include "Lila/EvalReport.hpp"
 
 #include <expected>
 
@@ -74,6 +75,42 @@ MAYAFLUX_HOST_API void stop_session(bool clear_persistent_store = false);
  * @return Success, or the interpreter's error text.
  */
 MAYAFLUX_HOST_API Result<void> eval(const std::string& code);
+
+/**
+ * @brief What one evaluation did, as Lila reports it.
+ *
+ * The views in the report are valid only during the observer call.
+ */
+using EvalReport = Lila::EvalReport;
+using EvalOrigin = Lila::EvalOrigin;
+
+using EvalObserver = std::function<void(const EvalReport&)>;
+
+/**
+ * @brief Identifies an observer for remove_eval_observer. Never zero.
+ */
+using ObserverId = uint64_t;
+
+/**
+ * @brief Observe every evaluation in the session, whoever sent it.
+ *
+ * The observer receives a report for each block this process evaluates, including
+ * the blocks staged before start_session, and for each block a client sends,
+ * whether it succeeded or failed. EvalOrigin tells them apart. It runs on the
+ * thread that evaluated, which for a client is the listener's thread, so it must
+ * not block, and an exception that escapes it is logged and dropped. Observers can
+ * be added before the session starts and outlive it.
+ *
+ * @param observer Called with each report.
+ * @return An id for remove_eval_observer.
+ */
+MAYAFLUX_HOST_API ObserverId on_eval(EvalObserver observer);
+
+/**
+ * @brief Stop observing. An unknown id is ignored. A call already running on another
+ *        thread may still be finishing when this returns.
+ */
+MAYAFLUX_HOST_API void remove_eval_observer(ObserverId id);
 
 /**
  * @brief Evaluate a source file by including it.

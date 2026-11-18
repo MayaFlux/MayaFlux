@@ -5,6 +5,8 @@
 
 #include "Commentator.hpp"
 
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+
 #ifdef MAYAFLUX_PLATFORM_MACOS
 #include <CoreFoundation/CoreFoundation.h>
 #endif
@@ -33,8 +35,20 @@ namespace {
     }
 }
 
+struct Lila::Observers {
+    struct Entry {
+        uint64_t id;
+        EvalObserver observer;
+        void* user;
+    };
+
+    MayaFlux::Memory::SnapshotCell<std::vector<Entry>> cell;
+    std::atomic<uint64_t> next_id { 1 };
+};
+
 Lila::Lila()
     : m_interpreter(std::make_unique<ClangInterpreter>())
+    , m_observers(std::make_unique<Observers>())
 {
     LILA_DEBUG(Emitter::SYSTEM, "Lila instance created");
 }
@@ -113,7 +127,7 @@ Result<std::string> Lila::handle_message(std::string_view message)
         return std::unexpected("empty message");
     }
 
-    if (auto evaluated = eval(std::string(message)); !evaluated) {
+    if (auto evaluated = evaluate(std::string(message), EvalOrigin::Client); !evaluated) {
         return std::unexpected(std::string(evaluated.error()));
     }
     return std::string {};
@@ -121,11 +135,52 @@ Result<std::string> Lila::handle_message(std::string_view message)
 
 Status Lila::eval(const std::string& code)
 {
+    return evaluate(code, EvalOrigin::Local);
+}
+
+Status Lila::evaluate(const std::string& code, EvalOrigin origin)
+{
     const auto result = m_interpreter->eval(code);
+
+    if (const auto observers = m_observers->cell.read()) {
+        const EvalReport report {
+            .origin = origin,
+            .ok = result.success,
+            .code = code,
+            .reason = result.success ? std::string_view {} : std::string_view(result.error),
+        };
+
+        for (const auto& entry : *observers) {
+            try {
+                entry.observer(entry.user, report);
+            } catch (const std::exception& e) {
+                LILA_WARN(Emitter::SYSTEM, std::string("Eval observer threw: ") + e.what());
+            } catch (...) {
+                LILA_WARN(Emitter::SYSTEM, "Eval observer threw");
+            }
+        }
+    }
+
     if (!result.success) {
         return refuse(result.error);
     }
     return {};
+}
+
+uint64_t Lila::add_eval_observer(EvalObserver observer, void* user)
+{
+    const uint64_t id = m_observers->next_id.fetch_add(1);
+    m_observers->cell.update([&](std::vector<Observers::Entry>& entries) {
+        entries.push_back({ .id = id, .observer = observer, .user = user });
+    });
+    return id;
+}
+
+void Lila::remove_eval_observer(uint64_t id)
+{
+    m_observers->cell.update([id](std::vector<Observers::Entry>& entries) {
+        return std::erase_if(entries, [id](const Observers::Entry& entry) { return entry.id == id; }) > 0;
+    });
 }
 
 Status Lila::load_library(const std::string& path)
