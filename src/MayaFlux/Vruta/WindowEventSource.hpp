@@ -21,12 +21,16 @@ namespace MayaFlux::Vruta {
  * @struct WindowEventFilter
  * @brief Filter criteria for window input events.
  *
- * Multiple criteria are ANDed. An empty filter matches any event.
+ * Multiple criteria are ANDed. An empty filter matches any event. Modifiers,
+ * when set, must equal the held Shift, Ctrl, Alt and Super bits of a key or
+ * mouse button event; lock bits are ignored, and an event with no modifier
+ * field never matches.
  */
 struct MAYAFLUX_API WindowEventFilter : public EventFilter {
     std::optional<Core::WindowEventType> event_type;
     std::optional<IO::Keys> key_code;
     std::optional<IO::MouseButtons> button;
+    std::optional<IO::Modifiers> modifiers;
 
     WindowEventFilter() = default;
 
@@ -47,6 +51,29 @@ struct MAYAFLUX_API WindowEventFilter : public EventFilter {
         : key_code(key)
     {
     }
+
+    /**
+     * @brief Constructs a filter matching a key and, if set, its modifiers.
+     * @param key Key and modifier requirement to match.
+     */
+    WindowEventFilter(IO::ModifiedKey key)
+        : key_code(key.key)
+        , modifiers(key.modifiers)
+    {
+    }
+
+    /**
+     * @brief Whether an event satisfies every criterion that is set.
+     */
+    [[nodiscard]] bool matches(const Core::WindowEvent& event) const;
+
+    /**
+     * @brief Whether the modifier criterion accepts the mods carried by event data.
+     *
+     * True when no modifiers are required. False when they are required and the
+     * data is neither KeyData nor MouseButtonData.
+     */
+    [[nodiscard]] bool matches_modifiers(const Core::WindowEvent::EventData& data) const;
 };
 
 // =============================================================================
@@ -124,6 +151,16 @@ public:
     [[nodiscard]] bool is_key_pressed(IO::Keys key) const;
 
     /**
+     * @brief Modifier state carried by the most recent key or mouse button event.
+     *
+     * Reflects every modifier key press and release, including the releases a
+     * backend emits when focus is lost, so it also answers for events that
+     * carry no modifiers of their own, such as scroll and motion. Hold bits
+     * are Shift, Ctrl, Alt and Super; lock bits are CapsLock and NumLock.
+     */
+    [[nodiscard]] IO::Modifiers modifiers() const { return m_modifiers; }
+
+    /**
      * @brief Returns true if the given mouse button is currently held.
      * @param button Button index.
      */
@@ -139,6 +176,7 @@ private:
     std::array<size_t, 256> m_pending_counts {};
     std::unordered_map<int16_t, bool> m_key_states;
     std::unordered_map<int, bool> m_button_states;
+    IO::Modifiers m_modifiers { IO::Modifiers::None };
     double m_mouse_x {};
     double m_mouse_y {};
     std::vector<std::function<void()>> m_deferred_actions;

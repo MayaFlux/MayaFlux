@@ -44,24 +44,7 @@ void WindowEventAwaiter::try_resume(const void* event)
 
 bool WindowEventAwaiter::filter_matches(const void* event) const
 {
-    const auto* ev = static_cast<const Core::WindowEvent*>(event);
-
-    if (m_filter.event_type && ev->type != *m_filter.event_type)
-        return false;
-
-    if (m_filter.key_code) {
-        const auto* kd = std::get_if<Core::WindowEvent::KeyData>(&ev->data);
-        if (!kd || kd->key != static_cast<int16_t>(*m_filter.key_code))
-            return false;
-    }
-
-    if (m_filter.button) {
-        const auto* bd = std::get_if<Core::WindowEvent::MouseButtonData>(&ev->data);
-        if (!bd || bd->button != static_cast<int>(*m_filter.button))
-            return false;
-    }
-
-    return true;
+    return m_filter.matches(*static_cast<const Core::WindowEvent*>(event));
 }
 
 } // namespace MayaFlux::Kriya

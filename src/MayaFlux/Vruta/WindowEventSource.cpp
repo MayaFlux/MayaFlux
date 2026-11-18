@@ -7,6 +7,7 @@ namespace MayaFlux::Vruta {
 void WindowEventSource::signal(Core::WindowEvent event)
 {
     if (auto* kd = std::get_if<Core::WindowEvent::KeyData>(&event.data)) {
+        m_modifiers = kd->mods;
         if (event.type == Core::WindowEventType::KEY_PRESSED) {
             m_key_states[kd->key] = true;
         } else if (event.type == Core::WindowEventType::KEY_RELEASED) {
@@ -15,6 +16,7 @@ void WindowEventSource::signal(Core::WindowEvent event)
     }
 
     if (auto* bd = std::get_if<Core::WindowEvent::MouseButtonData>(&event.data)) {
+        m_modifiers = bd->mods;
         if (event.type == Core::WindowEventType::MOUSE_BUTTON_PRESSED) {
             m_button_states[bd->button] = true;
         } else if (event.type == Core::WindowEventType::MOUSE_BUTTON_RELEASED) {
@@ -73,12 +75,51 @@ Kriya::WindowEventAwaiter WindowEventSource::await_event(Core::WindowEventType t
     return Kriya::WindowEventAwaiter { *this, type };
 }
 
+bool WindowEventFilter::matches_modifiers(const Core::WindowEvent::EventData& data) const
+{
+    if (!modifiers)
+        return true;
+
+    IO::Modifiers mods = IO::Modifiers::None;
+    if (const auto* key_data = std::get_if<Core::WindowEvent::KeyData>(&data)) {
+        mods = key_data->mods;
+    } else if (const auto* button_data = std::get_if<Core::WindowEvent::MouseButtonData>(&data)) {
+        mods = button_data->mods;
+    } else {
+        return false;
+    }
+
+    constexpr auto hold = IO::Modifiers::Shift | IO::Modifiers::Ctrl
+        | IO::Modifiers::Alt | IO::Modifiers::Super;
+    return (mods & hold) == *modifiers;
+}
+
+bool WindowEventFilter::matches(const Core::WindowEvent& event) const
+{
+    if (event_type && event.type != *event_type)
+        return false;
+
+    if (key_code) {
+        const auto* key_data = std::get_if<Core::WindowEvent::KeyData>(&event.data);
+        if (!key_data || key_data->key != static_cast<int16_t>(*key_code))
+            return false;
+    }
+
+    if (button) {
+        const auto* button_data = std::get_if<Core::WindowEvent::MouseButtonData>(&event.data);
+        if (!button_data || button_data->button != static_cast<int>(*button))
+            return false;
+    }
+
+    return matches_modifiers(event.data);
+}
+
 std::optional<Core::WindowEvent> WindowEventSource::pop_event(const WindowEventFilter& filter)
 {
     if (m_pending_events.empty())
         return std::nullopt;
 
-    if (!filter.event_type && !filter.key_code && !filter.button) {
+    if (!filter.event_type && !filter.key_code && !filter.button && !filter.modifiers) {
         auto ev = m_pending_events.front();
         m_pending_events.pop_front();
         --m_pending_counts[static_cast<uint8_t>(ev.type)];
@@ -92,28 +133,7 @@ std::optional<Core::WindowEvent> WindowEventSource::pop_event(const WindowEventF
         auto ev = m_pending_events.front();
         m_pending_events.pop_front();
 
-        bool matches = true;
-
-        if (filter.event_type && ev.type != *filter.event_type)
-            matches = false;
-
-        if (matches && filter.key_code) {
-            if (auto* kd = std::get_if<Core::WindowEvent::KeyData>(&ev.data)) {
-                matches = kd->key == static_cast<int16_t>(*filter.key_code);
-            } else {
-                matches = false;
-            }
-        }
-
-        if (matches && filter.button) {
-            if (auto* bd = std::get_if<Core::WindowEvent::MouseButtonData>(&ev.data)) {
-                matches = bd->button == static_cast<int>(*filter.button);
-            } else {
-                matches = false;
-            }
-        }
-
-        if (matches && !result) {
+        if (!result && filter.matches(ev)) {
             result = ev;
         } else {
             tmp.push_back(ev);
