@@ -59,8 +59,8 @@ public:
 
     NetworkSource(const NetworkSource&) = delete;
     NetworkSource& operator=(const NetworkSource&) = delete;
-    NetworkSource(NetworkSource&&) noexcept = default;
-    NetworkSource& operator=(NetworkSource&&) noexcept = default;
+    NetworkSource(NetworkSource&&) = delete;
+    NetworkSource& operator=(NetworkSource&&) = delete;
 
     /**
      * @brief Signal that a message arrived (called from Asio IO thread)
