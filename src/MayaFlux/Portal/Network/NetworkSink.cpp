@@ -79,9 +79,30 @@ NetworkSink::NetworkSink(const StreamConfig& config)
         "NetworkSink '{}' opened endpoint {}", m_name, m_endpoint_id);
 }
 
+NetworkSink::NetworkSink(Borrowed, uint64_t connection_id, std::string name)
+    : m_name(std::move(name))
+    , m_owns(false)
+{
+    m_service = Registry::BackendRegistry::instance()
+                    .get_service<Registry::Service::NetworkService>();
+
+    if (!m_service) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Networking,
+            "NetworkSink '{}': NetworkService not available", m_name);
+        return;
+    }
+
+    m_endpoint_id = connection_id;
+}
+
+NetworkSink NetworkSink::to_connection(uint64_t connection_id, std::string name)
+{
+    return NetworkSink(Borrowed {}, connection_id, std::move(name));
+}
+
 NetworkSink::~NetworkSink()
 {
-    if (m_endpoint_id == 0 || !m_service) {
+    if (!m_owns || m_endpoint_id == 0 || !m_service) {
         return;
     }
     m_service->close_endpoint(m_endpoint_id);
@@ -90,6 +111,7 @@ NetworkSink::~NetworkSink()
 NetworkSink::NetworkSink(NetworkSink&& other) noexcept
     : m_name(std::move(other.m_name))
     , m_endpoint_id(other.m_endpoint_id)
+    , m_owns(other.m_owns)
     , m_service(other.m_service)
 {
     other.m_endpoint_id = 0;
@@ -99,11 +121,12 @@ NetworkSink::NetworkSink(NetworkSink&& other) noexcept
 NetworkSink& NetworkSink::operator=(NetworkSink&& other) noexcept
 {
     if (this != &other) {
-        if (m_endpoint_id != 0 && m_service) {
+        if (m_owns && m_endpoint_id != 0 && m_service) {
             m_service->close_endpoint(m_endpoint_id);
         }
         m_name = std::move(other.m_name);
         m_endpoint_id = other.m_endpoint_id;
+        m_owns = other.m_owns;
         m_service = other.m_service;
         other.m_endpoint_id = 0;
         other.m_service = nullptr;
