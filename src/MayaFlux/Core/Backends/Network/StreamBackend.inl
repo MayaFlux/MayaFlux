@@ -2,6 +2,7 @@
 
 #include "StreamBackend.hpp"
 
+#include <asio/post.hpp>
 #include <asio/write.hpp>
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -322,18 +323,74 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
         return false;
     }
 
+    const size_t unit = conn->info.max_message_size != 0 ? conn->info.max_message_size : Transitive::Protocol::default_max_frame;
+    if (conn->pending_bytes.fetch_add(frame->size()) + frame->size() > 4 * unit) {
+        conn->pending_bytes.fetch_sub(frame->size());
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+            "{} endpoint {} refused a send: the peer has left too much unread",
+            Transport::label, endpoint_id);
+        return false;
+    }
+
+    asio::post(m_context, [this, conn, frame = typename ConnectionState::Frame(std::move(frame))]() mutable {
+        enqueue_write(conn, std::move(frame));
+    });
+
+    return true;
+}
+
+template <typename Transport>
+void StreamBackend<Transport>::enqueue_write(const ConnectionPtr& conn, ConnectionState::Frame frame)
+{
+    if (conn->closed.load() || conn->state.load() != EndpointState::OPEN) {
+        conn->pending_bytes.fetch_sub(frame->size());
+        return;
+    }
+
+    conn->push(std::move(frame));
+    if (!conn->writing) {
+        start_write(conn);
+    }
+}
+
+template <typename Transport>
+void StreamBackend<Transport>::start_write(const ConnectionPtr& conn)
+{
+    conn->writing = true;
+    const auto frame = conn->front();
+
     asio::async_write(
         conn->socket,
         asio::buffer(*frame),
         [this, conn, frame](const asio::error_code& ec, size_t) {
+            conn->pending_bytes.fetch_sub(frame->size());
+            conn->pop();
+            conn->writing = false;
+
             if (ec) {
-                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-                    "{} write failed on endpoint {}: {}", Transport::label, conn->info.id, ec.message());
+                drop_queued_writes(*conn);
+                if (ec != asio::error::operation_aborted) {
+                    MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+                        "{} write failed on endpoint {}: {}", Transport::label, conn->info.id, ec.message());
+                }
                 on_connection_error(conn, ec);
+                return;
+            }
+
+            if (conn->has_queued() && !conn->closed.load()) {
+                start_write(conn);
             }
         });
+}
 
-    return true;
+template <typename Transport>
+void StreamBackend<Transport>::drop_queued_writes(ConnectionState& conn)
+{
+    for (size_t i = conn.outbox_head; i < conn.outbox.size(); ++i) {
+        conn.pending_bytes.fetch_sub(conn.outbox[i]->size());
+    }
+    conn.outbox.clear();
+    conn.outbox_head = 0;
 }
 
 template <typename Transport>

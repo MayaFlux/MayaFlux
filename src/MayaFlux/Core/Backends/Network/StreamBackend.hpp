@@ -93,6 +93,13 @@ namespace detail {
  * All I/O is async on the shared io_context. The connection and listener tables are
  * lock free snapshots and no lock or guard is held while a callback runs, so a callback
  * may send, close an endpoint or open another from inside itself.
+ *
+ * send encodes the frame on the caller's thread and posts it to the io thread, where each
+ * connection keeps a queue with one write in flight, so frames from any number of threads
+ * reach the peer whole and in the order they were posted. It returns true once the frame is
+ * accepted, and false when the connection is not open, the payload cannot be encoded, or
+ * the peer has left more than four times max_message_size unread (256 MiB by default). A
+ * failed write is reported through the state callback and drops what was still queued.
  */
 template <typename Transport>
 class StreamBackend : public INetworkBackend {
@@ -160,13 +167,19 @@ private:
      * close_endpoint removes stays valid until the handlers that still hold it return.
      */
     struct ConnectionState {
+        using Frame = std::shared_ptr<const std::vector<uint8_t>>;
+
         EndpointInfo info;
         std::atomic<EndpointState> state { EndpointState::CLOSED };
         std::atomic<bool> closed { false };
+        std::atomic<size_t> pending_bytes { 0 };
         typename Protocol::socket socket;
         std::vector<uint8_t> read_buffer;
         detail::StreamFramer framer;
         std::unique_ptr<asio::steady_timer> reconnect_timer;
+        std::vector<Frame> outbox;
+        size_t outbox_head {};
+        bool writing {};
         bool is_outbound {};
 
         ConnectionState(asio::io_context& ctx, FramingPolicy framing, size_t max_message_size)
@@ -181,6 +194,29 @@ private:
             EndpointInfo copy = info;
             copy.state = state.load();
             return copy;
+        }
+
+        /**
+         * The outbox is a vector with a head index, not a deque: it is touched only by the io
+         * thread, it rarely holds more than a frame or two, and a vector reuses its storage
+         * where a deque allocates a block per few elements, which on MSVC is one per frame.
+         */
+        void push(Frame frame) { outbox.push_back(std::move(frame)); }
+
+        [[nodiscard]] bool has_queued() const { return outbox_head < outbox.size(); }
+
+        [[nodiscard]] const Frame& front() const { return outbox[outbox_head]; }
+
+        void pop()
+        {
+            outbox[outbox_head++].reset();
+            if (outbox_head == outbox.size()) {
+                outbox.clear();
+                outbox_head = 0;
+            } else if (outbox_head >= 64 && outbox_head * 2 >= outbox.size()) {
+                outbox.erase(outbox.begin(), outbox.begin() + static_cast<std::ptrdiff_t>(outbox_head));
+                outbox_head = 0;
+            }
         }
     };
 
@@ -220,6 +256,9 @@ private:
     [[nodiscard]] ListenerPtr find_listener(uint64_t endpoint_id) const;
 
     void close_listener(ListenerState& listener);
+    void enqueue_write(const ConnectionPtr& conn, ConnectionState::Frame frame);
+    void start_write(const ConnectionPtr& conn);
+    void drop_queued_writes(ConnectionState& conn);
     void start_connect(const ConnectionPtr& conn);
     void start_accept(const ListenerPtr& listener);
     void start_receive_chain(const ConnectionPtr& conn);
