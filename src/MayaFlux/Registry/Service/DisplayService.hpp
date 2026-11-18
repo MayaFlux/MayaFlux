@@ -216,10 +216,11 @@ struct MAYAFLUX_API DisplayService {
      * @brief Returns the last completed full-surface pixel readback for a window.
      *
      * Published by the per-window readback thread once a capture copy
-     * completes. Lock-free: the readback thread stores the buffer with
-     * release, callers load with acquire via an atomic shared_ptr, so the
-     * pointer is safe to read from any thread. Returns nullptr if no frame
-     * has completed yet or capture is unavailable on this surface.
+     * completes. Safe from any thread and never blocks. The returned buffer
+     * is never modified after publication and stays valid for as long as the
+     * caller holds it, however many newer frames are published. Returns
+     * nullptr if no frame has completed yet or capture is unavailable on
+     * this surface.
      *
      * Raw bytes in swapchain pixel format. Width and height match the
      * current swapchain extent from get_swapchain_extent().
@@ -252,7 +253,9 @@ struct MAYAFLUX_API DisplayService {
     /**
      * @brief Unregister a previously registered per-frame observer.
      *
-     * Safe from any thread, including from within the observer callback.
+     * Safe from any thread, including from within the observer callback. It
+     * does not wait for a callback already running on the readback thread, so
+     * that callback may still finish after this returns.
      *
      * @param window_handle Window the observer was registered on.
      * @param id Id returned by register_frame_observer.
