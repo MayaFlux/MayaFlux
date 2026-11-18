@@ -17,7 +17,7 @@ namespace Kriya {
     /**
      * @brief Creates an Event coroutine that triggers on specific key press
      * @param window Window to listen to
-     * @param key The key to wait for
+     * @param key The key to wait for, with optional modifiers (IO::Keys::V | IO::Modifiers::Ctrl)
      * @param callback Function to call on key press
      * @return Event coroutine that can be added to EventManager
      *
@@ -31,7 +31,7 @@ namespace Kriya {
      */
     MAYAFLUX_API Vruta::Event key_pressed(
         std::shared_ptr<Core::Window> window,
-        IO::Keys key,
+        IO::ModifiedKey key,
         std::function<void()> callback);
 
     /**
@@ -61,13 +61,13 @@ namespace Kriya {
      * is released. Suspends between ticks; does not spin.
      *
      * @param window   Window to listen to.
-     * @param key      Key to wait for.
+     * @param key      Key to wait for, with optional modifiers.
      * @param callback Called on press and each repeat tick.
      * @return Event coroutine that can be added to EventManager.
      */
     MAYAFLUX_API Vruta::Event key_held(
         std::shared_ptr<Core::Window> window,
-        IO::Keys key,
+        IO::ModifiedKey key,
         std::function<void()> callback);
 
     /**

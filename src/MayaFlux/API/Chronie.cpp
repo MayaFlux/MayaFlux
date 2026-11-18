@@ -141,7 +141,7 @@ std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline(std::shared_ptr<IO
 
 void on_key_pressed(
     const std::shared_ptr<Core::Window>& window,
-    IO::Keys key,
+    IO::ModifiedKey key,
     std::function<void()> callback,
     std::string name)
 {

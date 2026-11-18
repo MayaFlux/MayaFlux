@@ -44,46 +44,6 @@ namespace {
 
 }
 
-// ---------------------------------------------------------------------------
-// CaptureState retirement implementations (macOS only)
-// ---------------------------------------------------------------------------
-#ifdef MAYAFLUX_PLATFORM_MACOS
-
-void CaptureState::retire_last_frame(const std::vector<uint8_t>* ptr)
-{
-    for (;;) {
-        bool in_use = false;
-        for (size_t i = 0; i < LAST_FRAME_MAX_READERS; ++i) {
-            if (last_frame_hazard_ptrs[i].load(std::memory_order_acquire) == ptr) {
-                in_use = true;
-                break;
-            }
-        }
-        if (!in_use)
-            break;
-        std::this_thread::yield();
-    }
-    delete ptr;
-}
-
-void CaptureState::retire_observers(const ObserverMap* ptr)
-{
-    for (;;) {
-        bool in_use = false;
-        for (size_t i = 0; i < OBSERVERS_MAX_READERS; ++i) {
-            if (observers_hazard_ptrs[i].load(std::memory_order_acquire) == ptr) {
-                in_use = true;
-                break;
-            }
-        }
-        if (!in_use)
-            break;
-        std::this_thread::yield();
-    }
-    delete ptr;
-}
-#endif
-
 void WindowRenderContext::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();
@@ -396,7 +356,7 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
     };
 
     // ======================================================================
-    // get_last_frame – hazard‑pointer protected read + copy
+    // get_last_frame
     // ======================================================================
     display_service->get_last_frame = [this](const std::shared_ptr<void>& window_ptr)
         -> std::shared_ptr<std::vector<uint8_t>> {
@@ -404,45 +364,12 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         if (!ctx || !ctx->capture)
             return nullptr;
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        auto& state = *ctx->capture;
-
-        size_t slot = CaptureState::LAST_FRAME_MAX_READERS;
-        for (size_t i = 0; i < CaptureState::LAST_FRAME_MAX_READERS; ++i) {
-            bool expected = false;
-            if (state.last_frame_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
-                slot = i;
-                break;
-            }
-        }
-        if (slot == CaptureState::LAST_FRAME_MAX_READERS)
-            return nullptr;
-
-        const std::vector<uint8_t>* raw;
-        do {
-            raw = state.last_frame.load(std::memory_order_acquire);
-            state.last_frame_hazard_ptrs[slot].store(raw, std::memory_order_release);
-        } while (raw != state.last_frame.load(std::memory_order_acquire));
-
-        if (!raw) {
-            state.last_frame_hazard_ptrs[slot].store(nullptr, std::memory_order_release);
-            state.last_frame_slot_active[slot].store(false, std::memory_order_release);
-            return nullptr;
-        }
-
-        return std::shared_ptr<std::vector<uint8_t>>(
-            const_cast<std::vector<uint8_t>*>(raw),
-            [&state, slot](std::vector<uint8_t>*) {
-                state.last_frame_hazard_ptrs[slot].store(nullptr, std::memory_order_release);
-                state.last_frame_slot_active[slot].store(false, std::memory_order_release);
-            });
-#else
-        return ctx->capture->last_frame.load(std::memory_order_acquire);
-#endif
+        const auto frame = ctx->capture->last_frame.read();
+        return frame ? *frame : nullptr;
     };
 
     // ======================================================================
-    // register_frame_observer – hazard‑pointer update of observer map
+    // register_frame_observer
     // ======================================================================
     display_service->register_frame_observer = [this](
                                                    const std::shared_ptr<void>& window_ptr,
@@ -467,57 +394,14 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
         }
 
         auto& state = *ctx->capture;
-        uint32_t id = state.next_observer_id.fetch_add(1, std::memory_order_relaxed);
+        const uint32_t id = state.next_observer_id.fetch_add(1, std::memory_order_relaxed);
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        size_t obs_slot = CaptureState::OBSERVERS_MAX_READERS;
-        for (size_t i = 0; i < CaptureState::OBSERVERS_MAX_READERS; ++i) {
-            bool expected = false;
-            if (state.observers_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
-                obs_slot = i;
-                break;
-            }
-        }
-        if (obs_slot == CaptureState::OBSERVERS_MAX_READERS)
-            return 0;
-
-        const CaptureState::ObserverMap* current;
-        CaptureState::ObserverMap* new_map = nullptr;
-
-        do {
-            if (new_map)
-                delete new_map;
-
-            do {
-                current = state.observers.load(std::memory_order_acquire);
-                state.observers_hazard_ptrs[obs_slot].store(current, std::memory_order_release);
-            } while (current != state.observers.load(std::memory_order_acquire));
-
-            new_map = new CaptureState::ObserverMap(current ? *current : CaptureState::ObserverMap {});
-            (*new_map)[id] = cb;
-
-        } while (!state.observers.compare_exchange_weak(current, new_map, std::memory_order_acq_rel, std::memory_order_acquire));
-
-        state.observers_hazard_ptrs[obs_slot].store(nullptr, std::memory_order_release);
-        state.observers_slot_active[obs_slot].store(false, std::memory_order_release);
-
-        if (current)
-            state.retire_observers(current);
-#else
-        auto current = state.observers.load(std::memory_order_acquire);
-        std::shared_ptr<CaptureState::ObserverMap> next;
-        do {
-            next = std::make_shared<CaptureState::ObserverMap>(*current);
-            (*next)[id] = cb;
-        } while (!state.observers.compare_exchange_weak(
-            current, next,
-            std::memory_order_release, std::memory_order_acquire));
-#endif
+        state.observers.update([id, &cb](CaptureState::ObserverMap& map) { map[id] = cb; });
         return id;
     };
 
     // ======================================================================
-    // unregister_frame_observer – hazard‑pointer update
+    // unregister_frame_observer
     // ======================================================================
     display_service->unregister_frame_observer = [this](
                                                      const std::shared_ptr<void>& window_ptr, uint32_t id) {
@@ -534,52 +418,7 @@ void BackendWindowHandler::setup_backend_service(const std::shared_ptr<Registry:
             return;
         }
 
-        auto& state = *ctx->capture;
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-        size_t obs_slot = CaptureState::OBSERVERS_MAX_READERS;
-        for (size_t i = 0; i < CaptureState::OBSERVERS_MAX_READERS; ++i) {
-            bool expected = false;
-            if (state.observers_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
-                obs_slot = i;
-                break;
-            }
-        }
-        if (obs_slot == CaptureState::OBSERVERS_MAX_READERS)
-            return;
-
-        const CaptureState::ObserverMap* current;
-        CaptureState::ObserverMap* new_map = nullptr;
-
-        do {
-            if (new_map)
-                delete new_map;
-
-            do {
-                current = state.observers.load(std::memory_order_acquire);
-                state.observers_hazard_ptrs[obs_slot].store(current, std::memory_order_release);
-            } while (current != state.observers.load(std::memory_order_acquire));
-
-            new_map = new CaptureState::ObserverMap(current ? *current : CaptureState::ObserverMap {});
-            new_map->erase(id);
-
-        } while (!state.observers.compare_exchange_weak(current, new_map, std::memory_order_acq_rel, std::memory_order_acquire));
-
-        state.observers_hazard_ptrs[obs_slot].store(nullptr, std::memory_order_release);
-        state.observers_slot_active[obs_slot].store(false, std::memory_order_release);
-
-        if (current)
-            state.retire_observers(current);
-#else
-        auto current = state.observers.load(std::memory_order_acquire);
-        std::shared_ptr<CaptureState::ObserverMap> next;
-        do {
-            next = std::make_shared<CaptureState::ObserverMap>(*current);
-            next->erase(id);
-        } while (!state.observers.compare_exchange_weak(
-            current, next,
-            std::memory_order_release, std::memory_order_acquire));
-#endif
+        ctx->capture->observers.update([id](CaptureState::ObserverMap& map) { return map.erase(id) > 0; });
     };
 }
 
@@ -1064,57 +903,14 @@ void BackendWindowHandler::start_readback_thread(CaptureState& state, vk::Device
 
                 dev.unmapMemory(slot.mem);
 
-                // ---------------------------------------------------------------
-                // Store new frame into last_frame (same pattern as InputManager)
-                // ---------------------------------------------------------------
-#ifdef MAYAFLUX_PLATFORM_MACOS
-                auto* raw_frame = new std::vector<uint8_t>(*buf);
-                auto* old = state.last_frame.exchange(raw_frame, std::memory_order_acq_rel);
-                if (old)
-                    state.retire_last_frame(old);
-#else
-                state.last_frame.store(buf, std::memory_order_release);
-#endif
+                state.last_frame.publish(buf);
 
-// ---------------------------------------------------------------
-// Read observers and invoke callbacks
-// ---------------------------------------------------------------
-#ifdef MAYAFLUX_PLATFORM_MACOS
-                size_t obs_slot = CaptureState::OBSERVERS_MAX_READERS;
-                for (size_t i = 0; i < CaptureState::OBSERVERS_MAX_READERS; ++i) {
-                    bool expected = false;
-                    if (state.observers_slot_active[i].compare_exchange_strong(expected, true, std::memory_order_acquire)) {
-                        obs_slot = i;
-                        break;
-                    }
-                }
-
-                if (obs_slot != CaptureState::OBSERVERS_MAX_READERS) {
-                    const CaptureState::ObserverMap* obs_current;
-                    do {
-                        obs_current = state.observers.load(std::memory_order_acquire);
-                        state.observers_hazard_ptrs[obs_slot].store(obs_current, std::memory_order_release);
-                    } while (obs_current != state.observers.load(std::memory_order_acquire));
-
-                    if (obs_current) {
-                        for (const auto& [id, cb] : *obs_current) {
-                            cb(buf, slot.extent.width, slot.extent.height,
-                                static_cast<uint32_t>(state.format));
-                        }
-                    }
-
-                    state.observers_hazard_ptrs[obs_slot].store(nullptr, std::memory_order_release);
-                    state.observers_slot_active[obs_slot].store(false, std::memory_order_release);
-                }
-#else
-                auto obs = state.observers.load(std::memory_order_acquire);
-                if (obs) {
-                    for (const auto& [id, cb] : *obs) {
+                if (const auto observers = state.observers.read()) {
+                    for (const auto& [id, cb] : *observers) {
                         cb(buf, slot.extent.width, slot.extent.height,
                             static_cast<uint32_t>(state.format));
                     }
                 }
-#endif
 
                 slot.pending.store(false, std::memory_order_release);
                 any = true;

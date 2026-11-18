@@ -18,19 +18,20 @@ double event_time(NSEvent* event)
     return event ? event.timestamp : NSProcessInfo.processInfo.systemUptime;
 }
 
-int32_t translate_mods(NSEventModifierFlags flags)
+MayaFlux::IO::Modifiers translate_mods(NSEventModifierFlags flags)
 {
-    int32_t mods = 0;
+    using MayaFlux::IO::Modifiers;
+    Modifiers mods = Modifiers::None;
     if (flags & NSEventModifierFlagShift)
-        mods |= 0x0001;
+        mods = mods | Modifiers::Shift;
     if (flags & NSEventModifierFlagControl)
-        mods |= 0x0002;
+        mods = mods | Modifiers::Ctrl;
     if (flags & NSEventModifierFlagOption)
-        mods |= 0x0004;
+        mods = mods | Modifiers::Alt;
     if (flags & NSEventModifierFlagCommand)
-        mods |= 0x0008;
+        mods = mods | Modifiers::Super;
     if (flags & NSEventModifierFlagCapsLock)
-        mods |= 0x0010;
+        mods = mods | Modifiers::CapsLock;
     return mods;
 }
 
@@ -837,6 +838,8 @@ CocoaWindow::~CocoaWindow()
 
 void CocoaWindow::destroy()
 {
+    deliver_clipboard();
+
     auto native = m_native;
     if (!native)
         return;
@@ -861,6 +864,8 @@ void CocoaWindow::destroy()
 void CocoaWindow::poll()
 {
     Parallel::dispatch_main_sync([] { pump_app_events(); });
+
+    deliver_clipboard();
 
     const auto callback = m_event_callback;
     const auto now = std::chrono::steady_clock::now();
@@ -937,6 +942,54 @@ void CocoaWindow::poll()
         if (callback)
             callback(ev);
     }
+}
+
+void CocoaWindow::request_clipboard_text(ClipboardTextCallback callback)
+{
+    if (!callback)
+        return;
+
+    auto text = Parallel::dispatch_main_sync([]() -> std::optional<std::string> {
+        NSString* string = [NSPasteboard.generalPasteboard stringForType:NSPasteboardTypeString];
+        if (!string)
+            return std::nullopt;
+
+        NSData* bytes = [string dataUsingEncoding:NSUTF8StringEncoding];
+        if (!bytes)
+            return std::nullopt;
+
+        return std::string(static_cast<const char*>(bytes.bytes), bytes.length);
+    });
+
+    std::lock_guard lock(m_clipboard_mutex);
+    m_clipboard_ready.push_back({ .callback = std::move(callback), .text = std::move(text) });
+}
+
+void CocoaWindow::set_clipboard_text(const std::string& text)
+{
+    Parallel::dispatch_main_sync([&text] {
+        NSString* string = [[NSString alloc] initWithBytes:text.data()
+                                                    length:text.size()
+                                                  encoding:NSUTF8StringEncoding];
+        if (!string)
+            return;
+
+        NSPasteboard* pasteboard = NSPasteboard.generalPasteboard;
+        [pasteboard clearContents];
+        [pasteboard setString:string forType:NSPasteboardTypeString];
+    });
+}
+
+void CocoaWindow::deliver_clipboard()
+{
+    std::vector<ClipboardDelivery> ready;
+    {
+        std::lock_guard lock(m_clipboard_mutex);
+        ready.swap(m_clipboard_ready);
+    }
+
+    for (auto& delivery : ready)
+        delivery.callback(std::move(delivery.text));
 }
 
 void CocoaWindow::push_event(WindowEvent ev)

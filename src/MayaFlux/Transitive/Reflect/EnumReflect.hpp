@@ -189,6 +189,10 @@ EnumType string_to_enum_or_throw_case_insensitive(std::string_view str,
  * scoped enum implicitly. Integers do not convert to the wrapper, so an
  * out-of-range or wrong-family value cannot be stored by accident.
  *
+ * For a flag enum, one declared with MF_BITMASK_OPERATORS, the literal 0
+ * also converts and means no flags, so `.mods = 0` stays valid. Any other
+ * integer, and any non-constant integer, is a compile error.
+ *
  * @tparam E A scoped enumeration type.
  */
 template <typename E>
@@ -196,9 +200,19 @@ template <typename E>
 struct EnumByte {
     using underlying_type = std::underlying_type_t<E>;
 
+    /** @brief Holds the zero value. */
+    constexpr EnumByte() noexcept = default;
+
     /** @brief Stores @p value in its underlying integer type. */
     constexpr EnumByte(E value) noexcept
         : raw(static_cast<underlying_type>(value))
+    {
+    }
+
+    /** @brief Accepts the literal 0 as the empty flag set; flag enums only. */
+    consteval EnumByte(int zero)
+        requires requires(E flags) { any_flag(flags); }
+        : raw(zero == 0 ? underlying_type {} : throw std::invalid_argument("EnumByte accepts only the literal 0 as an integer"))
     {
     }
 

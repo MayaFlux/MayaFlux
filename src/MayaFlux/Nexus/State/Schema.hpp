@@ -27,7 +27,8 @@ namespace MayaFlux::Nexus::State {
  *       and color.r/g/b are pos_x/y/z and color_r/g/b, delay is delay_seconds,
  *       near and far are near_plane and far_plane, falloff_curve is
  *       falloff_curve_name, fit is fit_name. StateDecoder renames the old keys
- *       when it reads a version 5 or 6 file.
+ *       when it reads a version 5 or 6 file. A key wiring also records
+ *       key_modifiers when its key names modifiers.
  */
 inline constexpr uint32_t k_schema_version = 7;
 
@@ -121,6 +122,7 @@ struct WiringRecord {
     std::optional<Vruta::ProcessingToken> interval_token;
     std::optional<Vruta::ProcessingToken> duration_token;
     std::optional<IO::Keys> key;
+    std::optional<IO::Modifiers> key_modifiers;
     std::optional<IO::MouseButtons> button;
     std::optional<bool> held;
     std::string position_fn_name;

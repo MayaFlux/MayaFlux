@@ -25,6 +25,12 @@ namespace {
      * subscribes, replaces a callback or unbinds the element does not
      * invalidate what is still being called.
      */
+    int chord_code(const IO::ModifiedKey& key)
+    {
+        const int base = static_cast<int>(key.key) & 0xFFFF;
+        return key.modifiers ? (base | (1 << 16) | (static_cast<int>(*key.modifiers) << 17)) : base;
+    }
+
     template <typename Primary, typename... Args>
     void notify(Primary primary, Args... args)
     {
@@ -33,18 +39,20 @@ namespace {
     }
 
     bool matches(const Vruta::WindowEventFilter& filter, Core::WindowEventType type,
-        std::optional<IO::MouseButtons> button, std::optional<IO::Keys> key)
+        std::optional<IO::MouseButtons> button, std::optional<IO::Keys> key,
+        const Core::WindowEvent::EventData& data)
     {
         const bool button_matches = type == Core::WindowEventType::MOUSE_MOTION
             ? filter.button == button
             : (!filter.button || filter.button == button);
         return (!filter.event_type || *filter.event_type == type)
             && button_matches
-            && (!filter.key_code || filter.key_code == key);
+            && (!filter.key_code || filter.key_code == key)
+            && filter.matches_modifiers(data);
     }
 
     Vruta::Event subscribed_key_events(std::shared_ptr<Core::Window> window, IO::Keys key,
-        std::function<void(Core::WindowEventType)> callback)
+        std::function<void(const Core::WindowEvent&)> callback)
     {
         auto& promise = co_await Kriya::GetEventPromise {};
         auto& source = window->get_event_source();
@@ -58,7 +66,7 @@ namespace {
             const auto event = co_await Kriya::WindowEventAwaiter(source, filter);
             if (promise.should_terminate)
                 break;
-            callback(event.type);
+            callback(event);
         }
     }
 
@@ -164,7 +172,7 @@ bool Context::subscribe(uint32_t id, Vruta::WindowEventFilter filter, Subscriber
             m_event_manager.add_event(
                 std::make_shared<Vruta::Event>(
                     subscribed_key_events(m_window, key,
-                        [this, key](Core::WindowEventType type) { handle_subscribed_key(key, type); })),
+                        [this, key](const Core::WindowEvent& event) { handle_subscribed_key(key, event); })),
                 m_name + "_subscribed_key_" + std::to_string(key_code));
         }
     }
@@ -173,9 +181,9 @@ bool Context::subscribe(uint32_t id, Vruta::WindowEventFilter filter, Subscriber
     return true;
 }
 
-void Context::on_press(uint32_t id, IO::Keys key, KeyFn fn)
+void Context::on_press(uint32_t id, IO::ModifiedKey key, KeyFn fn)
 {
-    const int key_code = static_cast<int>(key);
+    const int key_code = chord_code(key);
     m_callbacks[id].key_press[key_code] = std::move(fn);
 
     if (!m_registered_keys[key_code].has_press) {
@@ -183,7 +191,7 @@ void Context::on_press(uint32_t id, IO::Keys key, KeyFn fn)
         m_event_manager.add_event(
             std::make_shared<Vruta::Event>(
                 Kriya::key_pressed(m_window, key,
-                    [this, key]() { handle_key_press(key); })),
+                    [this, key_code]() { handle_key_press(key_code); })),
             m_name + "_key_press_" + key_name);
         m_registered_keys[key_code].has_press = true;
     }
@@ -205,9 +213,9 @@ void Context::on_release(uint32_t id, IO::Keys key, KeyFn fn)
     }
 }
 
-void Context::on_held(uint32_t id, IO::Keys key, KeyFn fn)
+void Context::on_held(uint32_t id, IO::ModifiedKey key, KeyFn fn)
 {
-    const int key_code = static_cast<int>(key);
+    const int key_code = chord_code(key);
     m_callbacks[id].key_held[key_code] = std::move(fn);
 
     if (!m_registered_keys[key_code].has_held) {
@@ -215,7 +223,7 @@ void Context::on_held(uint32_t id, IO::Keys key, KeyFn fn)
         m_event_manager.add_event(
             std::make_shared<Vruta::Event>(
                 Kriya::key_held(m_window, key,
-                    [this, key]() { handle_key_held(key); })),
+                    [this, key_code]() { handle_key_held(key_code); })),
             m_name + "_key_held_" + key_name);
         m_registered_keys[key_code].has_held = true;
     }
@@ -330,6 +338,22 @@ const Vruta::WindowEventSource& Context::event_source() const
     return m_window->get_event_source();
 }
 
+void Context::request_clipboard_text(Core::ClipboardTextCallback callback) const
+{
+    if (!m_window) {
+        if (callback)
+            callback(std::nullopt);
+        return;
+    }
+    m_window->request_clipboard_text(std::move(callback));
+}
+
+void Context::set_clipboard_text(const std::string& text) const
+{
+    if (m_window)
+        m_window->set_clipboard_text(text);
+}
+
 Context& Context::key_step(
     uint32_t id,
     std::shared_ptr<MappedState<float>> state,
@@ -350,7 +374,7 @@ Context& Context::key_step(
     return *this;
 }
 
-Context& Context::press_and_hold(uint32_t id, IO::Keys key, KeyFn fn)
+Context& Context::press_and_hold(uint32_t id, IO::ModifiedKey key, KeyFn fn)
 {
     on_held(id, key, std::move(fn));
     return *this;
@@ -632,7 +656,7 @@ void Context::handle_scroll(double dx, double dy)
 // Keyboard event dispatch
 // =============================================================================
 
-void Context::handle_key_press(IO::Keys key)
+void Context::handle_key_press(int key_code)
 {
     sync_size();
     if (!m_focused)
@@ -642,7 +666,6 @@ void Context::handle_key_press(IO::Keys key)
     if (it == m_callbacks.end())
         return;
 
-    const int key_code = static_cast<int>(key);
     auto key_it = it->second.key_press.find(key_code);
     if (key_it != it->second.key_press.end())
         key_it->second(*m_focused);
@@ -663,7 +686,7 @@ void Context::handle_key_release(IO::Keys key)
         key_it->second(*m_focused);
 }
 
-void Context::handle_key_held(IO::Keys key)
+void Context::handle_key_held(int key_code)
 {
     if (!m_focused)
         return;
@@ -672,7 +695,6 @@ void Context::handle_key_held(IO::Keys key)
     if (it == m_callbacks.end())
         return;
 
-    const int key_code = static_cast<int>(key);
     auto key_it = it->second.key_held.find(key_code);
     if (key_it != it->second.key_held.end())
         key_it->second(*m_focused);
@@ -694,14 +716,13 @@ void Context::handle_text(uint32_t codepoint)
         Core::WindowEvent::TextData { codepoint });
 }
 
-void Context::handle_subscribed_key(IO::Keys key, Core::WindowEventType type)
+void Context::handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event)
 {
     sync_size();
     if (!m_focused)
         return;
 
-    dispatch(*m_focused, type, glm::vec2(0.F),
-        Core::WindowEvent::KeyData { static_cast<int16_t>(key), 0, 0 }, std::nullopt, key);
+    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt, key);
 }
 
 void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
@@ -717,7 +738,7 @@ void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
     event.type = type;
     event.data = std::move(data);
     for (const auto& subscription : subscribers) {
-        if (matches(subscription.filter, type, button, key))
+        if (matches(subscription.filter, type, button, key, event.data))
             subscription.fn(id, event, ndc);
     }
 }

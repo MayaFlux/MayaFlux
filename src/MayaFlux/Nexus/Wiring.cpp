@@ -37,13 +37,13 @@ Wiring& Wiring::for_duration(double seconds, Vruta::ProcessingToken token)
     return *this;
 }
 
-Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key)
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key)
 {
     m_trigger = KeyTrigger { .window = std::move(window), .key = key };
     return *this;
 }
 
-Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::Keys key, bool held,
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key, bool held,
     std::function<void()> on_release)
 {
     m_trigger = KeyTrigger {
@@ -466,7 +466,7 @@ void Wiring::finalise()
                     reg.chain_name = release_name;
                     ev_manager.add_event(
                         std::make_shared<Vruta::Event>(
-                            Kriya::key_released(trig.window, trig.key, *trig.on_release)),
+                            Kriya::key_released(trig.window, trig.key.key, *trig.on_release)),
                         release_name);
                 }
 

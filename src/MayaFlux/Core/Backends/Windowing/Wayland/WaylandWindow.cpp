@@ -5,6 +5,9 @@
 #include "KeyMapping.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <cerrno>
+#include <csignal>
+#include <fcntl.h>
 #include <linux/input-event-codes.h>
 #include <poll.h>
 #include <sys/mman.h>
@@ -12,6 +15,44 @@
 #include <unistd.h>
 
 namespace MayaFlux::Core {
+
+namespace {
+
+    ssize_t write_without_sigpipe(int fd, const char* data, size_t size)
+    {
+        sigset_t blocked;
+        sigset_t previous;
+        sigemptyset(&blocked);
+        sigaddset(&blocked, SIGPIPE);
+        pthread_sigmask(SIG_BLOCK, &blocked, &previous);
+
+        const ssize_t written = ::write(fd, data, size);
+        const int saved_errno = errno;
+
+        if (written < 0 && saved_errno == EPIPE) {
+            const timespec no_wait {};
+            sigtimedwait(&blocked, nullptr, &no_wait);
+        }
+
+        pthread_sigmask(SIG_SETMASK, &previous, nullptr);
+        errno = saved_errno;
+        return written;
+    }
+
+    const std::string* preferred_text_mime(const std::vector<std::string>& offered)
+    {
+        constexpr std::array<std::string_view, 3> k_preferred {
+            "text/plain;charset=utf-8", "text/plain", "UTF8_STRING"
+        };
+        for (const auto wanted : k_preferred) {
+            const auto found = std::ranges::find(offered, wanted);
+            if (found != offered.end())
+                return &*found;
+        }
+        return nullptr;
+    }
+
+}
 
 // ============================================================================
 // Construction / destruction
@@ -95,6 +136,8 @@ void WaylandWindow::hide()
 
 void WaylandWindow::destroy()
 {
+    release_clipboard();
+
     if (m_repeat_fd >= 0) {
         close(m_repeat_fd);
         m_repeat_fd = -1;
@@ -108,6 +151,11 @@ void WaylandWindow::destroy()
     if (m_keyboard) {
         wl_keyboard_destroy(m_keyboard);
         m_keyboard = nullptr;
+    }
+    unlock_cursor();
+    if (m_cursor_shape_device) {
+        wp_cursor_shape_device_v1_destroy(m_cursor_shape_device);
+        m_cursor_shape_device = nullptr;
     }
     if (m_pointer) {
         wl_pointer_destroy(m_pointer);
@@ -134,6 +182,22 @@ void WaylandWindow::destroy()
     if (m_decoration_manager) {
         zxdg_decoration_manager_v1_destroy(m_decoration_manager);
         m_decoration_manager = nullptr;
+    }
+    if (m_cursor_shape_manager) {
+        wp_cursor_shape_manager_v1_destroy(m_cursor_shape_manager);
+        m_cursor_shape_manager = nullptr;
+    }
+    if (m_relative_pointer_manager) {
+        zwp_relative_pointer_manager_v1_destroy(m_relative_pointer_manager);
+        m_relative_pointer_manager = nullptr;
+    }
+    if (m_pointer_constraints) {
+        zwp_pointer_constraints_v1_destroy(m_pointer_constraints);
+        m_pointer_constraints = nullptr;
+    }
+    if (m_data_device_manager) {
+        wl_data_device_manager_destroy(m_data_device_manager);
+        m_data_device_manager = nullptr;
     }
     if (m_xdg_toplevel) {
         xdg_toplevel_destroy(m_xdg_toplevel);
@@ -186,6 +250,9 @@ void WaylandWindow::poll()
     if (!m_display)
         return;
 
+    if (m_cursor_mode_dirty.exchange(false))
+        apply_cursor_mode();
+
     while (wl_display_prepare_read(m_display) != 0) {
         if (wl_display_dispatch_pending(m_display) < 0) {
             handle_display_error();
@@ -217,14 +284,20 @@ void WaylandWindow::poll()
         return;
     }
 
+    advance_clipboard_writes();
+    advance_clipboard_reads();
+
     if (m_repeat_fd >= 0 && !m_held_keys.empty()) {
         uint64_t expirations = 0;
         if (read(m_repeat_fd, &expirations, sizeof(expirations)) == sizeof(expirations)
             && expirations > 0) {
+            const IO::Modifiers mods = current_mods();
             for (const auto& [k, kd] : m_held_keys) {
+                WindowEvent::KeyData repeated = kd;
+                repeated.mods = mods;
                 WindowEvent rev;
                 rev.type = WindowEventType::KEY_REPEAT;
-                rev.data = kd;
+                rev.data = repeated;
                 emit(rev);
             }
         }
@@ -271,6 +344,12 @@ void WaylandWindow::handle_display_error()
         ev.type = WindowEventType::WINDOW_CLOSED;
         emit(ev);
     }
+}
+
+void WaylandWindow::set_input_config(const InputConfig& config)
+{
+    m_input_config = config;
+    m_cursor_mode_dirty.store(true);
 }
 
 void WaylandWindow::set_event_callback(WindowEventCallback callback)
@@ -375,6 +454,58 @@ void WaylandWindow::emit(const WindowEvent& ev)
         m_event_callback(ev);
 }
 
+IO::Keys WaylandWindow::resolve_key(uint32_t evdev_key) const
+{
+    IO::Keys key = from_evdev_scancode(evdev_key);
+    if (key == IO::Keys::Unknown && m_xkb_state) {
+        const xkb_keysym_t sym = xkb_state_key_get_one_sym(m_xkb_state, evdev_key + 8);
+        key = from_xkb_keysym(sym);
+    }
+    return key;
+}
+
+IO::Modifiers WaylandWindow::current_mods() const
+{
+    IO::Modifiers mods = m_modifier_keys.held();
+
+    if (m_xkb_state) {
+        const auto locked = [this](xkb_mod_index_t index) {
+            return index != XKB_MOD_INVALID
+                && xkb_state_mod_index_is_active(m_xkb_state, index, XKB_STATE_MODS_LOCKED) > 0;
+        };
+        if (locked(m_mod_caps))
+            mods = mods | IO::Modifiers::CapsLock;
+        if (locked(m_mod_num))
+            mods = mods | IO::Modifiers::NumLock;
+    }
+
+    return mods;
+}
+
+void WaylandWindow::release_held_keys()
+{
+    const auto held = std::move(m_held_keys);
+    m_held_keys.clear();
+    m_active_text_key = std::nullopt;
+    m_modifier_keys.clear();
+
+    itimerspec stop {};
+    if (m_repeat_fd >= 0)
+        timerfd_settime(m_repeat_fd, 0, &stop, nullptr);
+    if (m_text_repeat_fd >= 0)
+        timerfd_settime(m_text_repeat_fd, 0, &stop, nullptr);
+
+    const IO::Modifiers mods = current_mods();
+    for (const auto& [k, kd] : held) {
+        WindowEvent::KeyData released = kd;
+        released.mods = mods;
+        WindowEvent ev;
+        ev.type = WindowEventType::KEY_RELEASED;
+        ev.data = released;
+        emit(ev);
+    }
+}
+
 // ============================================================================
 // Registry
 // ============================================================================
@@ -398,9 +529,24 @@ void WaylandWindow::on_registry_global(void* data, wl_registry* reg,
             wl_registry_bind(reg, name, &wl_seat_interface,
                 std::min(version, 7U)));
         wl_seat_add_listener(self->m_seat, &s_seat_listener, self);
+        self->create_data_device();
     } else if (std::string_view(iface) == zxdg_decoration_manager_v1_interface.name) {
         self->m_decoration_manager = static_cast<zxdg_decoration_manager_v1*>(
             wl_registry_bind(reg, name, &zxdg_decoration_manager_v1_interface, 1U));
+    } else if (std::string_view(iface) == wl_data_device_manager_interface.name) {
+        self->m_data_device_manager = static_cast<wl_data_device_manager*>(
+            wl_registry_bind(reg, name, &wl_data_device_manager_interface,
+                std::min(version, 3U)));
+        self->create_data_device();
+    } else if (std::string_view(iface) == zwp_pointer_constraints_v1_interface.name) {
+        self->m_pointer_constraints = static_cast<zwp_pointer_constraints_v1*>(
+            wl_registry_bind(reg, name, &zwp_pointer_constraints_v1_interface, 1U));
+    } else if (std::string_view(iface) == zwp_relative_pointer_manager_v1_interface.name) {
+        self->m_relative_pointer_manager = static_cast<zwp_relative_pointer_manager_v1*>(
+            wl_registry_bind(reg, name, &zwp_relative_pointer_manager_v1_interface, 1U));
+    } else if (std::string_view(iface) == wp_cursor_shape_manager_v1_interface.name) {
+        self->m_cursor_shape_manager = static_cast<wp_cursor_shape_manager_v1*>(
+            wl_registry_bind(reg, name, &wp_cursor_shape_manager_v1_interface, 1U));
     }
 }
 
@@ -513,9 +659,17 @@ void WaylandWindow::on_seat_capabilities(void* data, wl_seat* seat, uint32_t cap
     if (has_ptr && !self->m_pointer) {
         self->m_pointer = wl_seat_get_pointer(seat);
         wl_pointer_add_listener(self->m_pointer, &s_pointer_listener, self);
+        self->m_cursor_mode_dirty.store(true);
     } else if (!has_ptr && self->m_pointer) {
+        self->unlock_cursor();
+        if (self->m_cursor_shape_device) {
+            wp_cursor_shape_device_v1_destroy(self->m_cursor_shape_device);
+            self->m_cursor_shape_device = nullptr;
+        }
         wl_pointer_destroy(self->m_pointer);
         self->m_pointer = nullptr;
+        self->m_pointer_inside = false;
+        self->m_cursor_hidden = false;
     }
 }
 
@@ -556,15 +710,30 @@ void WaylandWindow::on_keyboard_keymap(void* data, wl_keyboard*,
 
     munmap(buf, size);
 
-    if (self->m_xkb_keymap)
+    if (self->m_xkb_keymap) {
         self->m_xkb_state = xkb_state_new(self->m_xkb_keymap);
+        self->m_mod_caps = xkb_keymap_mod_get_index(self->m_xkb_keymap, XKB_MOD_NAME_CAPS);
+        self->m_mod_num = xkb_keymap_mod_get_index(self->m_xkb_keymap, XKB_MOD_NAME_NUM);
+    } else {
+        self->m_mod_caps = XKB_MOD_INVALID;
+        self->m_mod_num = XKB_MOD_INVALID;
+    }
 }
 
 void WaylandWindow::on_keyboard_enter(void* data, wl_keyboard*,
-    uint32_t, wl_surface*, wl_array*)
+    uint32_t, wl_surface*, wl_array* keys)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+
+    self->m_modifier_keys.clear();
+    const auto* pressed_begin = static_cast<const uint32_t*>(keys->data);
+    const auto* pressed_end = reinterpret_cast<const uint32_t*>(
+        static_cast<const uint8_t*>(keys->data) + keys->size);
+    for (const auto* code = pressed_begin; code != pressed_end; ++code)
+        self->m_modifier_keys.set(self->resolve_key(*code), true);
+
     self->m_state.is_focused = true;
+    self->apply_cursor_mode();
     WindowEvent ev;
     ev.type = WindowEventType::WINDOW_FOCUS_GAINED;
     self->emit(ev);
@@ -574,31 +743,32 @@ void WaylandWindow::on_keyboard_leave(void* data, wl_keyboard*,
     uint32_t, wl_surface*)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->release_held_keys();
+    self->drop_clipboard_offer();
     self->m_state.is_focused = false;
+    self->apply_cursor_mode();
     WindowEvent ev;
     ev.type = WindowEventType::WINDOW_FOCUS_LOST;
     self->emit(ev);
 }
 
 void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
-    uint32_t, uint32_t, uint32_t key, uint32_t state)
+    uint32_t serial, uint32_t, uint32_t key, uint32_t state)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_input_serial = serial;
     if (!self->m_xkb_state)
         return;
 
     const xkb_keycode_t xkb_key = key + 8;
 
-    IO::Keys mf_key = from_evdev_scancode(key);
-    if (mf_key == IO::Keys::Unknown) {
-        xkb_keysym_t sym = xkb_state_key_get_one_sym(self->m_xkb_state, xkb_key);
-        mf_key = from_xkb_keysym(sym);
-    }
+    const IO::Keys mf_key = self->resolve_key(key);
+    self->m_modifier_keys.set(mf_key, state == WL_KEYBOARD_KEY_STATE_PRESSED);
 
     const WindowEvent::KeyData kd {
         .key = static_cast<int16_t>(mf_key),
         .scancode = static_cast<int32_t>(key),
-        .mods = 0
+        .mods = self->current_mods()
     };
 
     WindowEvent ev;
@@ -699,13 +869,396 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
 }
 
 // ============================================================================
+// Clipboard
+// ============================================================================
+
+void WaylandWindow::create_data_device()
+{
+    if (m_data_device || !m_data_device_manager || !m_seat)
+        return;
+
+    m_data_device = wl_data_device_manager_get_data_device(m_data_device_manager, m_seat);
+    wl_data_device_add_listener(m_data_device, &s_data_device_listener, this);
+}
+
+void WaylandWindow::discard_offer(wl_data_offer* offer)
+{
+    if (!offer)
+        return;
+
+    m_offer_mime_types.erase(offer);
+    wl_data_offer_destroy(offer);
+}
+
+void WaylandWindow::drop_clipboard_offer()
+{
+    discard_offer(m_clipboard_offer);
+    m_clipboard_offer = nullptr;
+}
+
+void WaylandWindow::request_clipboard_text(ClipboardTextCallback callback)
+{
+    if (!callback)
+        return;
+
+    ClipboardRead read;
+    read.callback = std::move(callback);
+
+    if (m_clipboard_source) {
+        read.data = m_clipboard_text;
+        read.ready = true;
+        read.ok = true;
+    } else if (m_clipboard_offer && m_display) {
+        const auto types = m_offer_mime_types.find(m_clipboard_offer);
+        const std::string* mime = types != m_offer_mime_types.end()
+            ? preferred_text_mime(types->second)
+            : nullptr;
+
+        int pipe_fds[2] {};
+        if (mime && pipe2(pipe_fds, O_CLOEXEC) == 0) {
+            wl_data_offer_receive(m_clipboard_offer, mime->c_str(), pipe_fds[1]);
+            close(pipe_fds[1]);
+            wl_display_flush(m_display);
+            fcntl(pipe_fds[0], F_SETFL, O_NONBLOCK);
+            read.fd = pipe_fds[0];
+        } else {
+            read.ready = true;
+        }
+    } else {
+        read.ready = true;
+    }
+
+    m_clipboard_reads.push_back(std::move(read));
+}
+
+void WaylandWindow::set_clipboard_text(const std::string& text)
+{
+    if (!m_data_device || !m_data_device_manager || !m_display)
+        return;
+
+    wl_data_source* source = wl_data_device_manager_create_data_source(m_data_device_manager);
+    wl_data_source_add_listener(source, &s_data_source_listener, this);
+    wl_data_source_offer(source, "text/plain;charset=utf-8");
+    wl_data_source_offer(source, "text/plain");
+    wl_data_source_offer(source, "UTF8_STRING");
+
+    m_clipboard_text = text;
+    wl_data_device_set_selection(m_data_device, source, m_input_serial);
+
+    if (m_clipboard_source)
+        wl_data_source_destroy(m_clipboard_source);
+    m_clipboard_source = source;
+
+    wl_display_flush(m_display);
+}
+
+void WaylandWindow::advance_clipboard_writes()
+{
+    for (auto& write : m_clipboard_writes) {
+        while (write.fd >= 0 && write.offset < write.data.size()) {
+            const ssize_t written = write_without_sigpipe(write.fd,
+                write.data.data() + write.offset, write.data.size() - write.offset);
+            if (written > 0) {
+                write.offset += static_cast<size_t>(written);
+            } else if (written < 0 && errno == EINTR) {
+                continue;
+            } else if (written < 0 && errno == EAGAIN) {
+                break;
+            } else {
+                write.offset = write.data.size();
+            }
+        }
+
+        if (write.offset >= write.data.size() && write.fd >= 0) {
+            close(write.fd);
+            write.fd = -1;
+        }
+    }
+
+    std::erase_if(m_clipboard_writes, [](const ClipboardWrite& write) { return write.fd < 0; });
+}
+
+void WaylandWindow::advance_clipboard_reads()
+{
+    for (auto& read : m_clipboard_reads) {
+        while (read.fd >= 0 && !read.ready) {
+            std::array<char, 4096> buffer {};
+            const ssize_t count = ::read(read.fd, buffer.data(), buffer.size());
+            if (count > 0) {
+                read.data.append(buffer.data(), static_cast<size_t>(count));
+            } else if (count < 0 && errno == EINTR) {
+                continue;
+            } else if (count < 0 && errno == EAGAIN) {
+                break;
+            } else {
+                read.ok = count == 0;
+                read.ready = true;
+                close(read.fd);
+                read.fd = -1;
+            }
+        }
+    }
+
+    std::vector<ClipboardRead> finished;
+    for (auto& read : m_clipboard_reads) {
+        if (read.ready)
+            finished.push_back(std::move(read));
+    }
+    std::erase_if(m_clipboard_reads, [](const ClipboardRead& read) { return read.ready || !read.callback; });
+
+    for (auto& read : finished) {
+        read.callback(read.ok ? std::optional<std::string>(std::move(read.data)) : std::nullopt);
+    }
+}
+
+void WaylandWindow::release_clipboard()
+{
+    for (auto& write : m_clipboard_writes) {
+        if (write.fd >= 0)
+            close(write.fd);
+    }
+    m_clipboard_writes.clear();
+
+    auto reads = std::move(m_clipboard_reads);
+    m_clipboard_reads.clear();
+    for (auto& read : reads) {
+        if (read.fd >= 0) {
+            close(read.fd);
+            read.fd = -1;
+        }
+        read.callback(read.ready && read.ok ? std::optional<std::string>(std::move(read.data)) : std::nullopt);
+    }
+
+    if (m_clipboard_source) {
+        wl_data_source_destroy(m_clipboard_source);
+        m_clipboard_source = nullptr;
+    }
+    m_clipboard_text.clear();
+
+    m_clipboard_offer = nullptr;
+    for (const auto& entry : m_offer_mime_types)
+        wl_data_offer_destroy(entry.first);
+    m_offer_mime_types.clear();
+
+    if (m_data_device) {
+        if (wl_data_device_get_version(m_data_device) >= WL_DATA_DEVICE_RELEASE_SINCE_VERSION)
+            wl_data_device_release(m_data_device);
+        else
+            wl_data_device_destroy(m_data_device);
+        m_data_device = nullptr;
+    }
+}
+
+void WaylandWindow::on_data_offer(void* data, wl_data_device*, wl_data_offer* offer)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    self->m_offer_mime_types[offer];
+    wl_data_offer_add_listener(offer, &s_data_offer_listener, self);
+}
+
+void WaylandWindow::on_data_enter(void* data, wl_data_device*, uint32_t,
+    wl_surface*, wl_fixed_t, wl_fixed_t, wl_data_offer* offer)
+{
+    static_cast<WaylandWindow*>(data)->discard_offer(offer);
+}
+
+void WaylandWindow::on_data_leave(void*, wl_data_device*) { }
+void WaylandWindow::on_data_motion(void*, wl_data_device*, uint32_t, wl_fixed_t, wl_fixed_t) { }
+void WaylandWindow::on_data_drop(void*, wl_data_device*) { }
+
+void WaylandWindow::on_data_selection(void* data, wl_data_device*, wl_data_offer* offer)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    if (self->m_clipboard_offer != offer)
+        self->drop_clipboard_offer();
+    self->m_clipboard_offer = offer;
+}
+
+void WaylandWindow::on_offer_mime_type(void* data, wl_data_offer* offer, const char* mime_type)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    const auto types = self->m_offer_mime_types.find(offer);
+    if (types != self->m_offer_mime_types.end())
+        types->second.emplace_back(mime_type);
+}
+
+void WaylandWindow::on_offer_source_actions(void*, wl_data_offer*, uint32_t) { }
+void WaylandWindow::on_offer_action(void*, wl_data_offer*, uint32_t) { }
+
+void WaylandWindow::on_source_target(void*, wl_data_source*, const char*) { }
+
+void WaylandWindow::on_source_send(void* data, wl_data_source* source, const char*, int32_t fd)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    if (source != self->m_clipboard_source) {
+        close(fd);
+        return;
+    }
+
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+    self->m_clipboard_writes.push_back({ .fd = fd, .data = self->m_clipboard_text, .offset = 0 });
+    self->advance_clipboard_writes();
+}
+
+void WaylandWindow::on_source_cancelled(void* data, wl_data_source* source)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    wl_data_source_destroy(source);
+    if (source == self->m_clipboard_source) {
+        self->m_clipboard_source = nullptr;
+        self->m_clipboard_text.clear();
+    }
+}
+
+void WaylandWindow::on_source_dnd_drop_performed(void*, wl_data_source*) { }
+void WaylandWindow::on_source_dnd_finished(void*, wl_data_source*) { }
+void WaylandWindow::on_source_action(void*, wl_data_source*, uint32_t) { }
+
+// ============================================================================
+// Cursor mode
+// ============================================================================
+
+bool WaylandWindow::cursor_should_hide() const
+{
+    switch (m_input_config.cursor_mode) {
+    case CursorMode::HIDDEN:
+        return true;
+    case CursorMode::DISABLED:
+    case CursorMode::CAPTURED:
+        return m_pointer_constraints && m_relative_pointer_manager;
+    case CursorMode::NORMAL:
+        break;
+    }
+    return false;
+}
+
+void WaylandWindow::apply_cursor_mode()
+{
+    const CursorMode mode = m_input_config.cursor_mode;
+    const bool wants_lock = mode == CursorMode::DISABLED || mode == CursorMode::CAPTURED;
+
+    if (wants_lock && !(m_pointer_constraints && m_relative_pointer_manager)) {
+        MF_WARN_ONCE(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Compositor offers no pointer constraints or relative pointer; cursor_mode DISABLED and CAPTURED behave as NORMAL");
+    }
+
+    if (wants_lock && m_state.is_focused)
+        lock_cursor();
+    else
+        unlock_cursor();
+
+    update_cursor_visibility();
+}
+
+void WaylandWindow::lock_cursor()
+{
+    if (m_locked_pointer || !m_pointer || !m_surface
+        || !m_pointer_constraints || !m_relative_pointer_manager) {
+        return;
+    }
+
+    m_locked_pointer = zwp_pointer_constraints_v1_lock_pointer(
+        m_pointer_constraints, m_surface, m_pointer, nullptr,
+        ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_PERSISTENT);
+    zwp_locked_pointer_v1_add_listener(m_locked_pointer, &s_locked_pointer_listener, this);
+
+    m_relative_pointer = zwp_relative_pointer_manager_v1_get_relative_pointer(
+        m_relative_pointer_manager, m_pointer);
+    zwp_relative_pointer_v1_add_listener(m_relative_pointer, &s_relative_pointer_listener, this);
+}
+
+void WaylandWindow::unlock_cursor()
+{
+    if (m_relative_pointer) {
+        zwp_relative_pointer_v1_destroy(m_relative_pointer);
+        m_relative_pointer = nullptr;
+    }
+    if (m_locked_pointer) {
+        zwp_locked_pointer_v1_destroy(m_locked_pointer);
+        m_locked_pointer = nullptr;
+    }
+    m_cursor_locked = false;
+}
+
+void WaylandWindow::update_cursor_visibility()
+{
+    if (!m_pointer || !m_pointer_inside)
+        return;
+
+    const bool hide = cursor_should_hide();
+
+    if (hide && !m_cursor_hidden) {
+        wl_pointer_set_cursor(m_pointer, m_pointer_enter_serial, nullptr, 0, 0);
+        m_cursor_hidden = true;
+        return;
+    }
+
+    if (hide || !m_cursor_hidden)
+        return;
+
+    if (!m_cursor_shape_device && m_cursor_shape_manager) {
+        m_cursor_shape_device = wp_cursor_shape_manager_v1_get_pointer(
+            m_cursor_shape_manager, m_pointer);
+    }
+
+    if (!m_cursor_shape_device) {
+        MF_WARN_ONCE(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Compositor offers no cursor shape protocol; a hidden cursor returns when the pointer next enters the window");
+        return;
+    }
+
+    wp_cursor_shape_device_v1_set_shape(m_cursor_shape_device, m_pointer_enter_serial,
+        WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_DEFAULT);
+    m_cursor_hidden = false;
+}
+
+void WaylandWindow::on_pointer_locked(void* data, zwp_locked_pointer_v1*)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    self->m_cursor_locked = true;
+    self->m_virtual_x = static_cast<double>(self->m_state.current_width) / 2.0;
+    self->m_virtual_y = static_cast<double>(self->m_state.current_height) / 2.0;
+}
+
+void WaylandWindow::on_pointer_unlocked(void* data, zwp_locked_pointer_v1*)
+{
+    static_cast<WaylandWindow*>(data)->m_cursor_locked = false;
+}
+
+void WaylandWindow::on_relative_motion(void* data, zwp_relative_pointer_v1*,
+    uint32_t, uint32_t, wl_fixed_t dx, wl_fixed_t dy,
+    wl_fixed_t dx_unaccel, wl_fixed_t dy_unaccel)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    if (!self->m_cursor_locked)
+        return;
+
+    const bool unaccelerated = self->m_input_config.cursor_mode == CursorMode::CAPTURED
+        || self->m_input_config.raw_mouse_motion;
+    self->m_virtual_x += wl_fixed_to_double(unaccelerated ? dx_unaccel : dx);
+    self->m_virtual_y += wl_fixed_to_double(unaccelerated ? dy_unaccel : dy);
+
+    WindowEvent ev;
+    ev.type = WindowEventType::MOUSE_MOTION;
+    ev.data = WindowEvent::MousePosData {
+        .x = self->m_virtual_x,
+        .y = self->m_virtual_y
+    };
+    self->emit(ev);
+}
+
+// ============================================================================
 // wl_pointer
 // ============================================================================
 
 void WaylandWindow::on_pointer_enter(void* data, wl_pointer*,
-    uint32_t, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
+    uint32_t serial, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_pointer_enter_serial = serial;
+    self->m_pointer_inside = true;
+    self->m_cursor_hidden = false;
+    self->update_cursor_visibility();
     self->m_pointer_x = wl_fixed_to_double(sx);
     self->m_pointer_y = wl_fixed_to_double(sy);
     WindowEvent ev;
@@ -716,6 +1269,8 @@ void WaylandWindow::on_pointer_enter(void* data, wl_pointer*,
 void WaylandWindow::on_pointer_leave(void* data, wl_pointer*, uint32_t, wl_surface*)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_pointer_inside = false;
+    self->m_cursor_hidden = false;
     WindowEvent ev;
     ev.type = WindowEventType::MOUSE_EXITED;
     self->emit(ev);
@@ -725,6 +1280,8 @@ void WaylandWindow::on_pointer_motion(void* data, wl_pointer*,
     uint32_t, wl_fixed_t sx, wl_fixed_t sy)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    if (self->m_cursor_locked)
+        return;
     self->m_pointer_x = wl_fixed_to_double(sx);
     self->m_pointer_y = wl_fixed_to_double(sy);
     WindowEvent ev;
@@ -737,9 +1294,10 @@ void WaylandWindow::on_pointer_motion(void* data, wl_pointer*,
 }
 
 void WaylandWindow::on_pointer_button(void* data, wl_pointer*,
-    uint32_t, uint32_t, uint32_t button, uint32_t state)
+    uint32_t serial, uint32_t, uint32_t button, uint32_t state)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_input_serial = serial;
 
     IO::MouseButtons btn = IO::MouseButtons::Unknown;
     switch (button) {
@@ -768,7 +1326,7 @@ void WaylandWindow::on_pointer_button(void* data, wl_pointer*,
         : WindowEventType::MOUSE_BUTTON_RELEASED;
     ev.data = WindowEvent::MouseButtonData {
         .button = static_cast<int8_t>(btn),
-        .mods = 0
+        .mods = self->current_mods()
     };
     self->emit(ev);
 }

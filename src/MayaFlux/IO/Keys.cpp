@@ -73,6 +73,26 @@ bool is_modifier(Keys key) noexcept
     return key == Keys::LShift || key == Keys::RShift || key == Keys::LCtrl || key == Keys::RCtrl || key == Keys::LAlt || key == Keys::RAlt || key == Keys::LSuper || key == Keys::RSuper;
 }
 
+Modifiers modifier_of(Keys key) noexcept
+{
+    switch (key) {
+    case Keys::LShift:
+    case Keys::RShift:
+        return Modifiers::Shift;
+    case Keys::LCtrl:
+    case Keys::RCtrl:
+        return Modifiers::Ctrl;
+    case Keys::LAlt:
+    case Keys::RAlt:
+        return Modifiers::Alt;
+    case Keys::LSuper:
+    case Keys::RSuper:
+        return Modifiers::Super;
+    default:
+        return Modifiers::None;
+    }
+}
+
 bool is_function_key(Keys key) noexcept
 {
     int k = static_cast<int>(key);

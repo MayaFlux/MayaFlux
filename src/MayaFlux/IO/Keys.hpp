@@ -142,6 +142,62 @@ enum class Keys : int16_t {
 };
 
 /**
+ * @brief Modifier state bits carried in the mods field of key and mouse button events.
+ *
+ * Shift, Ctrl, Alt and Super are set while either side's key is down, and on a
+ * key event they are the state after that event: a modifier key's own press
+ * includes its bit and its release does not. CapsLock and NumLock are the lock
+ * state the system reports when the event is delivered. Alt is Option and
+ * Super is Command on macOS.
+ */
+enum class Modifiers : uint8_t {
+    None = 0,
+    Shift = 1 << 0,
+    Ctrl = 1 << 1,
+    Alt = 1 << 2,
+    Super = 1 << 3,
+    CapsLock = 1 << 4,
+    NumLock = 1 << 5,
+};
+
+MF_BITMASK_OPERATORS(Modifiers)
+
+/**
+ * @struct ModifiedKey
+ * @brief A key with an optional requirement on the held modifiers.
+ *
+ * A bare Keys value converts to a ModifiedKey that accepts any modifiers.
+ * With modifiers set, an event matches only when exactly those of Shift, Ctrl,
+ * Alt and Super are held; CapsLock and NumLock are ignored. Build one with
+ * Keys::V | Modifiers::Ctrl.
+ */
+struct ModifiedKey {
+    Keys key;
+    std::optional<Modifiers> modifiers;
+
+    constexpr ModifiedKey(Keys k) noexcept
+        : key(k)
+    {
+    }
+
+    constexpr ModifiedKey(Keys k, Modifiers m) noexcept
+        : key(k)
+        , modifiers(m)
+    {
+    }
+};
+
+[[nodiscard]] constexpr ModifiedKey operator|(Keys key, Modifiers mods) noexcept
+{
+    return { key, mods };
+}
+
+[[nodiscard]] constexpr ModifiedKey operator|(ModifiedKey key, Modifiers mods) noexcept
+{
+    return { key.key, key.modifiers.value_or(Modifiers::None) | mods };
+}
+
+/**
  * @brief Enumeration for mouse buttons.
  */
 enum class MouseButtons : int8_t {
@@ -197,6 +253,13 @@ MAYAFLUX_API bool is_printable(Keys key) noexcept;
  * @return True if the key is a modifier, false otherwise.
  */
 MAYAFLUX_API bool is_modifier(Keys key) noexcept;
+
+/**
+ * @brief The modifier a key holds down.
+ * @param key The key to check.
+ * @return Shift, Ctrl, Alt or Super for either side's key, None for any other key.
+ */
+MAYAFLUX_API Modifiers modifier_of(Keys key) noexcept;
 
 /**
  * @brief Checks if a key is a function key (e.g., F1-F25).

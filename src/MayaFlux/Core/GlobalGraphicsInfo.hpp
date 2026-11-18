@@ -1,6 +1,8 @@
 #pragma once
 
+#include "MayaFlux/IO/Keys.hpp"
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 namespace MayaFlux::Core {
 
@@ -445,6 +447,14 @@ struct WindowState {
 /**
  * @enum CursorMode
  * @brief Cursor visibility and behavior
+ *
+ * While the cursor is locked (DISABLED and CAPTURED), MOUSE_MOTION carries a
+ * virtual position that starts at the window centre and accumulates motion
+ * without bound. Take the difference between successive positions; it is not
+ * an absolute position.
+ *
+ * Set it through InputConfig::cursor_mode with Window::set_input_config(), which
+ * every backend honours; there is no separate cursor call.
  */
 enum class CursorMode : uint8_t {
     NORMAL, ///< Visible and movable
@@ -519,7 +529,8 @@ struct WindowEvent {
     };
     struct KeyData {
         int16_t key;
-        int32_t scancode, mods;
+        int32_t scancode;
+        Reflect::EnumByte<IO::Modifiers> mods;
     };
     /// @brief Resolved Unicode codepoint, layout/shift/dead-key/IME composed.
     struct TextData {
@@ -530,7 +541,7 @@ struct WindowEvent {
     };
     struct MouseButtonData {
         int8_t button;
-        int32_t mods;
+        Reflect::EnumByte<IO::Modifiers> mods;
     };
     struct ScrollData {
         double x_offset, y_offset;

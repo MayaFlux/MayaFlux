@@ -40,6 +40,7 @@ env:
     Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   LLVM_ROOT: "C:/LLVM_CI"
+  MSVC_TOOLSET_VER: "14.51"
 
 jobs:
   build:
@@ -101,8 +102,9 @@ jobs:
       - name: Setup MSVC environment
         shell: pwsh
         run: |
-          $compilerEnvironment = & $env:ComSpec /d /c ('call "{0}" x64 >nul && set' -f $env:VCVARS_PATH)
+          $compilerEnvironment = & $env:ComSpec /d /c ('call "{0}" x64 -vcvars_ver={1} && set' -f $env:VCVARS_PATH, $env:MSVC_TOOLSET_VER)
           if ($LASTEXITCODE -ne 0) {
+            $compilerEnvironment | Write-Host
             throw "MSVC environment setup failed with exit code $LASTEXITCODE."
           }
           foreach ($line in $compilerEnvironment) {
