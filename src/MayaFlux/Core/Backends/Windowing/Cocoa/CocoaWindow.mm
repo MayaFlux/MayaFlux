@@ -20,18 +20,19 @@ double event_time(NSEvent* event)
 
 int32_t translate_mods(NSEventModifierFlags flags)
 {
-    int32_t mods = 0;
+    using MayaFlux::IO::Modifiers;
+    Modifiers mods = Modifiers::None;
     if (flags & NSEventModifierFlagShift)
-        mods |= 0x0001;
+        mods = mods | Modifiers::Shift;
     if (flags & NSEventModifierFlagControl)
-        mods |= 0x0002;
+        mods = mods | Modifiers::Ctrl;
     if (flags & NSEventModifierFlagOption)
-        mods |= 0x0004;
+        mods = mods | Modifiers::Alt;
     if (flags & NSEventModifierFlagCommand)
-        mods |= 0x0008;
+        mods = mods | Modifiers::Super;
     if (flags & NSEventModifierFlagCapsLock)
-        mods |= 0x0010;
-    return mods;
+        mods = mods | Modifiers::CapsLock;
+    return static_cast<int32_t>(mods);
 }
 
 NSEventModifierFlags modifier_mask(MayaFlux::IO::Keys key)

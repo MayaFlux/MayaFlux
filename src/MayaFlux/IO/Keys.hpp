@@ -142,6 +142,37 @@ enum class Keys : int16_t {
 };
 
 /**
+ * @brief Modifier state bits carried in the mods field of key and mouse button events.
+ *
+ * Shift, Ctrl, Alt and Super are set while either side's key is down, and on a
+ * key event they are the state after that event: a modifier key's own press
+ * includes its bit and its release does not. CapsLock and NumLock are the lock
+ * state the system reports when the event is delivered. Alt is Option and
+ * Super is Command on macOS.
+ */
+enum class Modifiers : uint8_t {
+    None = 0,
+    Shift = 1 << 0,
+    Ctrl = 1 << 1,
+    Alt = 1 << 2,
+    Super = 1 << 3,
+    CapsLock = 1 << 4,
+    NumLock = 1 << 5,
+};
+
+MF_BITMASK_OPERATORS(Modifiers)
+
+/**
+ * @brief True when every bit of required is set in an event's mods field.
+ * @param mods Raw mods value from KeyData or MouseButtonData.
+ * @param required Modifiers that must all be set.
+ */
+[[nodiscard]] constexpr bool has_modifiers(int32_t mods, Modifiers required) noexcept
+{
+    return has_flag(static_cast<Modifiers>(mods), required);
+}
+
+/**
  * @brief Enumeration for mouse buttons.
  */
 enum class MouseButtons : int8_t {

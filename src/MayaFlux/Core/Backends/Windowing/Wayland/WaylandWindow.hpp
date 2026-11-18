@@ -2,6 +2,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_LINUX
 
+#include "MayaFlux/Core/Backends/Windowing/ModifierKeyState.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -107,6 +108,9 @@ private:
     xkb_context* m_xkb_context {};
     xkb_keymap* m_xkb_keymap {};
     xkb_state* m_xkb_state {};
+    xkb_mod_index_t m_mod_caps { XKB_MOD_INVALID };
+    xkb_mod_index_t m_mod_num { XKB_MOD_INVALID };
+    ModifierKeyState m_modifier_keys;
 
     double m_pointer_x {};
     double m_pointer_y {};
@@ -151,6 +155,15 @@ private:
 
     /** @brief Log the display error, mark the window closed, emit WINDOW_CLOSED once. */
     void handle_display_error();
+
+    /** @brief Map an evdev key code to IO::Keys through the scancode table, then the active keymap. */
+    [[nodiscard]] IO::Keys resolve_key(uint32_t evdev_key) const;
+
+    /** @brief IO::Modifiers bits for the held modifier keys and the lock state. */
+    [[nodiscard]] int32_t current_mods() const;
+
+    /** @brief Release every held key and modifier, as when focus is lost. */
+    void release_held_keys();
 
     // -------------------------------------------------------------------------
     // Registry listener (static trampoline + instance handler)

@@ -141,6 +141,7 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
     }
 
     case WM_SETFOCUS: {
+        self->seed_modifier_keys();
         self->m_state.is_focused = true;
         WindowEvent ev;
         ev.type = WindowEventType::WINDOW_FOCUS_GAINED;
@@ -150,6 +151,7 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
     }
 
     case WM_KILLFOCUS: {
+        self->release_held_keys();
         self->m_state.is_focused = false;
         WindowEvent ev;
         ev.type = WindowEventType::WINDOW_FOCUS_LOST;
@@ -168,10 +170,11 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         if (key == IO::Keys::Unknown)
             key = from_win32_key(wp);
 
+        self->m_modifier_keys_ui.set(key, true);
         const WindowEvent::KeyData kd {
             .key = static_cast<int16_t>(key),
             .scancode = static_cast<int32_t>(scancode),
-            .mods = 0
+            .mods = self->update_mods()
         };
 
         self->m_held_keys_ui[kd.key] = kd;
@@ -191,10 +194,11 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         if (key == IO::Keys::Unknown)
             key = from_win32_key(wp);
 
+        self->m_modifier_keys_ui.set(key, false);
         const WindowEvent::KeyData kd {
             .key = static_cast<int16_t>(key),
             .scancode = static_cast<int32_t>(scancode),
-            .mods = 0
+            .mods = self->update_mods()
         };
 
         self->m_held_keys_ui.erase(kd.key);
@@ -263,7 +267,7 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         ev.timestamp = 0.0;
         ev.data = WindowEvent::MouseButtonData {
             .button = static_cast<int8_t>(btn),
-            .mods = 0
+            .mods = self->update_mods()
         };
         self->push_event(ev);
         return 0;
@@ -280,7 +284,7 @@ LRESULT CALLBACK Win32Window::wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
         ev.timestamp = 0.0;
         ev.data = WindowEvent::MouseButtonData {
             .button = static_cast<int8_t>(btn),
-            .mods = 0
+            .mods = self->update_mods()
         };
         self->push_event(ev);
         return 0;
@@ -312,6 +316,57 @@ void Win32Window::push_event(WindowEvent ev)
     (void)m_event_queue.push(ev);
 }
 
+int32_t Win32Window::update_mods()
+{
+    IO::Modifiers mods = m_modifier_keys_ui.held();
+    if (GetKeyState(VK_CAPITAL) & 1)
+        mods = mods | IO::Modifiers::CapsLock;
+    if (GetKeyState(VK_NUMLOCK) & 1)
+        mods = mods | IO::Modifiers::NumLock;
+
+    const auto bits = static_cast<int32_t>(mods);
+    m_mods.store(bits, std::memory_order_release);
+    return bits;
+}
+
+void Win32Window::seed_modifier_keys()
+{
+    constexpr std::array<std::pair<int, IO::Keys>, 8> k_modifier_vks { {
+        { VK_LSHIFT, IO::Keys::LShift },
+        { VK_RSHIFT, IO::Keys::RShift },
+        { VK_LCONTROL, IO::Keys::LCtrl },
+        { VK_RCONTROL, IO::Keys::RCtrl },
+        { VK_LMENU, IO::Keys::LAlt },
+        { VK_RMENU, IO::Keys::RAlt },
+        { VK_LWIN, IO::Keys::LSuper },
+        { VK_RWIN, IO::Keys::RSuper },
+    } };
+
+    m_modifier_keys_ui.clear();
+    for (const auto& [vk, key] : k_modifier_vks)
+        m_modifier_keys_ui.set(key, (GetKeyState(vk) & 0x8000) != 0);
+    update_mods();
+}
+
+void Win32Window::release_held_keys()
+{
+    const auto held = std::move(m_held_keys_ui);
+    m_held_keys_ui.clear();
+    m_modifier_keys_ui.clear();
+    m_keys_dirty.store(true, std::memory_order_release);
+    const int32_t mods = update_mods();
+
+    for (const auto& [k, kd] : held) {
+        WindowEvent::KeyData released = kd;
+        released.mods = mods;
+        WindowEvent ev;
+        ev.type = WindowEventType::KEY_RELEASED;
+        ev.timestamp = 0.0;
+        ev.data = released;
+        push_event(ev);
+    }
+}
+
 // ============================================================================
 // poll (graphics thread)
 // ============================================================================
@@ -337,11 +392,14 @@ void Win32Window::poll()
     const ULONGLONG now = GetTickCount64();
     if (!m_held_keys.empty() && now >= m_repeat_next_tick) {
         m_repeat_next_tick = now + m_key_repeat_config.interval_ms;
+        const int32_t mods = m_mods.load(std::memory_order_acquire);
         for (const auto& [k, kd] : m_held_keys) {
+            WindowEvent::KeyData repeated = kd;
+            repeated.mods = mods;
             WindowEvent rev;
             rev.type = WindowEventType::KEY_REPEAT;
             rev.timestamp = 0.0;
-            rev.data = kd;
+            rev.data = repeated;
             m_event_source.signal(rev);
             if (m_event_callback)
                 m_event_callback(rev);

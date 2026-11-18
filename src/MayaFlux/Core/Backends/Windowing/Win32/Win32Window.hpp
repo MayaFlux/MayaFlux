@@ -2,6 +2,7 @@
 
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 
+#include "MayaFlux/Core/Backends/Windowing/ModifierKeyState.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -106,12 +107,24 @@ private:
     ULONGLONG m_repeat_next_tick { 0 };
     uint16_t m_pending_high_surrogate { 0 };
 
+    ModifierKeyState m_modifier_keys_ui;
+    std::atomic<int32_t> m_mods { 0 };
+
     std::vector<std::weak_ptr<Buffers::VKBuffer>> m_rendering_buffers;
     std::vector<uint64_t> m_frame_commands;
     mutable std::mutex m_render_tracking_mutex;
 
     void ui_thread_main();
     void push_event(WindowEvent ev);
+
+    /** @brief UI thread: IO::Modifiers bits for the held modifier keys and the lock state, also published for poll(). */
+    int32_t update_mods();
+
+    /** @brief UI thread: seed the held modifier keys from the keyboard state when focus arrives. */
+    void seed_modifier_keys();
+
+    /** @brief UI thread: release every held key and modifier, as when focus is lost. */
+    void release_held_keys();
 };
 
 } // namespace MayaFlux::Core
