@@ -447,6 +447,11 @@ struct WindowState {
 /**
  * @enum CursorMode
  * @brief Cursor visibility and behavior
+ *
+ * While the cursor is locked (DISABLED and CAPTURED), MOUSE_MOTION carries a
+ * virtual position that starts at the window centre and accumulates motion
+ * without bound. Take the difference between successive positions; it is not
+ * an absolute position.
  */
 enum class CursorMode : uint8_t {
     NORMAL, ///< Visible and movable

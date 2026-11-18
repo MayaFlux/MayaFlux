@@ -9,6 +9,7 @@
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "wayland-cursor-shape-v1-client-protocol.h"
 #include "wayland-pointer-constraints-unstable-v1-client-protocol.h"
 #include "wayland-relative-pointer-unstable-v1-client-protocol.h"
 #include "wayland-xdg-decoration-unstable-v1-client-protocol.h"
@@ -53,7 +54,7 @@ public:
     [[nodiscard]] const WindowState& get_state() const override { return m_state; }
     [[nodiscard]] const WindowCreateInfo& get_create_info() const override { return m_create_info; }
 
-    void set_input_config(const InputConfig& config) override { m_input_config = config; }
+    void set_input_config(const InputConfig& config) override;
     [[nodiscard]] const InputConfig& get_input_config() const override { return m_input_config; }
 
     void set_event_callback(WindowEventCallback callback) override;
@@ -95,6 +96,7 @@ private:
     wl_data_device_manager* m_data_device_manager {};
     zwp_pointer_constraints_v1* m_pointer_constraints {};
     zwp_relative_pointer_manager_v1* m_relative_pointer_manager {};
+    wp_cursor_shape_manager_v1* m_cursor_shape_manager {};
 
     // -------------------------------------------------------------------------
     // Per-window objects
@@ -122,6 +124,16 @@ private:
 
     uint32_t m_input_serial {};
     uint32_t m_pointer_enter_serial {};
+
+    zwp_locked_pointer_v1* m_locked_pointer {};
+    zwp_relative_pointer_v1* m_relative_pointer {};
+    wp_cursor_shape_device_v1* m_cursor_shape_device {};
+    bool m_cursor_locked {};
+    bool m_cursor_hidden {};
+    bool m_pointer_inside {};
+    double m_virtual_x {};
+    double m_virtual_y {};
+    std::atomic<bool> m_cursor_mode_dirty { false };
 
     int m_repeat_fd { -1 };
     int m_text_repeat_fd { -1 };
@@ -172,6 +184,19 @@ private:
 
     /** @brief Release every held key and modifier, as when focus is lost. */
     void release_held_keys();
+
+    /**
+     * @brief Bring the pointer lock and cursor visibility in line with the input config.
+     *
+     * Locks while the window has keyboard focus in DISABLED or CAPTURED, hides the
+     * cursor in every mode but NORMAL, and falls back to NORMAL behaviour when the
+     * compositor lacks pointer constraints or relative pointer.
+     */
+    void apply_cursor_mode();
+    void lock_cursor();
+    void unlock_cursor();
+    void update_cursor_visibility();
+    [[nodiscard]] bool cursor_should_hide() const;
 
     // -------------------------------------------------------------------------
     // Registry listener (static trampoline + instance handler)
@@ -254,6 +279,23 @@ private:
         .key = on_keyboard_key,
         .modifiers = on_keyboard_modifiers,
         .repeat_info = on_keyboard_repeat_info,
+    };
+
+    // -------------------------------------------------------------------------
+    // zwp_locked_pointer_v1 and zwp_relative_pointer_v1 listeners
+    // -------------------------------------------------------------------------
+    static void on_pointer_locked(void* data, zwp_locked_pointer_v1*);
+    static void on_pointer_unlocked(void* data, zwp_locked_pointer_v1*);
+    static constexpr zwp_locked_pointer_v1_listener s_locked_pointer_listener {
+        .locked = on_pointer_locked,
+        .unlocked = on_pointer_unlocked,
+    };
+
+    static void on_relative_motion(void* data, zwp_relative_pointer_v1*,
+        uint32_t utime_hi, uint32_t utime_lo,
+        wl_fixed_t dx, wl_fixed_t dy, wl_fixed_t dx_unaccel, wl_fixed_t dy_unaccel);
+    static constexpr zwp_relative_pointer_v1_listener s_relative_pointer_listener {
+        .relative_motion = on_relative_motion,
     };
 
     // -------------------------------------------------------------------------

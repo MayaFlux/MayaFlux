@@ -109,6 +109,11 @@ void WaylandWindow::destroy()
         wl_keyboard_destroy(m_keyboard);
         m_keyboard = nullptr;
     }
+    unlock_cursor();
+    if (m_cursor_shape_device) {
+        wp_cursor_shape_device_v1_destroy(m_cursor_shape_device);
+        m_cursor_shape_device = nullptr;
+    }
     if (m_pointer) {
         wl_pointer_destroy(m_pointer);
         m_pointer = nullptr;
@@ -134,6 +139,10 @@ void WaylandWindow::destroy()
     if (m_decoration_manager) {
         zxdg_decoration_manager_v1_destroy(m_decoration_manager);
         m_decoration_manager = nullptr;
+    }
+    if (m_cursor_shape_manager) {
+        wp_cursor_shape_manager_v1_destroy(m_cursor_shape_manager);
+        m_cursor_shape_manager = nullptr;
     }
     if (m_relative_pointer_manager) {
         zwp_relative_pointer_manager_v1_destroy(m_relative_pointer_manager);
@@ -197,6 +206,9 @@ void WaylandWindow::poll()
 {
     if (!m_display)
         return;
+
+    if (m_cursor_mode_dirty.exchange(false))
+        apply_cursor_mode();
 
     while (wl_display_prepare_read(m_display) != 0) {
         if (wl_display_dispatch_pending(m_display) < 0) {
@@ -286,6 +298,12 @@ void WaylandWindow::handle_display_error()
         ev.type = WindowEventType::WINDOW_CLOSED;
         emit(ev);
     }
+}
+
+void WaylandWindow::set_input_config(const InputConfig& config)
+{
+    m_input_config = config;
+    m_cursor_mode_dirty.store(true);
 }
 
 void WaylandWindow::set_event_callback(WindowEventCallback callback)
@@ -478,6 +496,9 @@ void WaylandWindow::on_registry_global(void* data, wl_registry* reg,
     } else if (std::string_view(iface) == zwp_relative_pointer_manager_v1_interface.name) {
         self->m_relative_pointer_manager = static_cast<zwp_relative_pointer_manager_v1*>(
             wl_registry_bind(reg, name, &zwp_relative_pointer_manager_v1_interface, 1U));
+    } else if (std::string_view(iface) == wp_cursor_shape_manager_v1_interface.name) {
+        self->m_cursor_shape_manager = static_cast<wp_cursor_shape_manager_v1*>(
+            wl_registry_bind(reg, name, &wp_cursor_shape_manager_v1_interface, 1U));
     }
 }
 
@@ -590,9 +611,17 @@ void WaylandWindow::on_seat_capabilities(void* data, wl_seat* seat, uint32_t cap
     if (has_ptr && !self->m_pointer) {
         self->m_pointer = wl_seat_get_pointer(seat);
         wl_pointer_add_listener(self->m_pointer, &s_pointer_listener, self);
+        self->m_cursor_mode_dirty.store(true);
     } else if (!has_ptr && self->m_pointer) {
+        self->unlock_cursor();
+        if (self->m_cursor_shape_device) {
+            wp_cursor_shape_device_v1_destroy(self->m_cursor_shape_device);
+            self->m_cursor_shape_device = nullptr;
+        }
         wl_pointer_destroy(self->m_pointer);
         self->m_pointer = nullptr;
+        self->m_pointer_inside = false;
+        self->m_cursor_hidden = false;
     }
 }
 
@@ -656,6 +685,7 @@ void WaylandWindow::on_keyboard_enter(void* data, wl_keyboard*,
         self->m_modifier_keys.set(self->resolve_key(*code), true);
 
     self->m_state.is_focused = true;
+    self->apply_cursor_mode();
     WindowEvent ev;
     ev.type = WindowEventType::WINDOW_FOCUS_GAINED;
     self->emit(ev);
@@ -667,6 +697,7 @@ void WaylandWindow::on_keyboard_leave(void* data, wl_keyboard*,
     auto* self = static_cast<WaylandWindow*>(data);
     self->release_held_keys();
     self->m_state.is_focused = false;
+    self->apply_cursor_mode();
     WindowEvent ev;
     ev.type = WindowEventType::WINDOW_FOCUS_LOST;
     self->emit(ev);
@@ -789,6 +820,139 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
 }
 
 // ============================================================================
+// Cursor mode
+// ============================================================================
+
+bool WaylandWindow::cursor_should_hide() const
+{
+    switch (m_input_config.cursor_mode) {
+    case CursorMode::HIDDEN:
+        return true;
+    case CursorMode::DISABLED:
+    case CursorMode::CAPTURED:
+        return m_pointer_constraints && m_relative_pointer_manager;
+    case CursorMode::NORMAL:
+        break;
+    }
+    return false;
+}
+
+void WaylandWindow::apply_cursor_mode()
+{
+    const CursorMode mode = m_input_config.cursor_mode;
+    const bool wants_lock = mode == CursorMode::DISABLED || mode == CursorMode::CAPTURED;
+
+    if (wants_lock && !(m_pointer_constraints && m_relative_pointer_manager)) {
+        MF_WARN_ONCE(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Compositor offers no pointer constraints or relative pointer; cursor_mode DISABLED and CAPTURED behave as NORMAL");
+    }
+
+    if (wants_lock && m_state.is_focused)
+        lock_cursor();
+    else
+        unlock_cursor();
+
+    update_cursor_visibility();
+}
+
+void WaylandWindow::lock_cursor()
+{
+    if (m_locked_pointer || !m_pointer || !m_surface
+        || !m_pointer_constraints || !m_relative_pointer_manager) {
+        return;
+    }
+
+    m_locked_pointer = zwp_pointer_constraints_v1_lock_pointer(
+        m_pointer_constraints, m_surface, m_pointer, nullptr,
+        ZWP_POINTER_CONSTRAINTS_V1_LIFETIME_PERSISTENT);
+    zwp_locked_pointer_v1_add_listener(m_locked_pointer, &s_locked_pointer_listener, this);
+
+    m_relative_pointer = zwp_relative_pointer_manager_v1_get_relative_pointer(
+        m_relative_pointer_manager, m_pointer);
+    zwp_relative_pointer_v1_add_listener(m_relative_pointer, &s_relative_pointer_listener, this);
+}
+
+void WaylandWindow::unlock_cursor()
+{
+    if (m_relative_pointer) {
+        zwp_relative_pointer_v1_destroy(m_relative_pointer);
+        m_relative_pointer = nullptr;
+    }
+    if (m_locked_pointer) {
+        zwp_locked_pointer_v1_destroy(m_locked_pointer);
+        m_locked_pointer = nullptr;
+    }
+    m_cursor_locked = false;
+}
+
+void WaylandWindow::update_cursor_visibility()
+{
+    if (!m_pointer || !m_pointer_inside)
+        return;
+
+    const bool hide = cursor_should_hide();
+
+    if (hide && !m_cursor_hidden) {
+        wl_pointer_set_cursor(m_pointer, m_pointer_enter_serial, nullptr, 0, 0);
+        m_cursor_hidden = true;
+        return;
+    }
+
+    if (hide || !m_cursor_hidden)
+        return;
+
+    if (!m_cursor_shape_device && m_cursor_shape_manager) {
+        m_cursor_shape_device = wp_cursor_shape_manager_v1_get_pointer(
+            m_cursor_shape_manager, m_pointer);
+    }
+
+    if (!m_cursor_shape_device) {
+        MF_WARN_ONCE(Journal::Component::Core, Journal::Context::WindowingSubsystem,
+            "Compositor offers no cursor shape protocol; a hidden cursor returns when the pointer next enters the window");
+        return;
+    }
+
+    wp_cursor_shape_device_v1_set_shape(m_cursor_shape_device, m_pointer_enter_serial,
+        WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_DEFAULT);
+    m_cursor_hidden = false;
+}
+
+void WaylandWindow::on_pointer_locked(void* data, zwp_locked_pointer_v1*)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    self->m_cursor_locked = true;
+    self->m_virtual_x = static_cast<double>(self->m_state.current_width) / 2.0;
+    self->m_virtual_y = static_cast<double>(self->m_state.current_height) / 2.0;
+}
+
+void WaylandWindow::on_pointer_unlocked(void* data, zwp_locked_pointer_v1*)
+{
+    static_cast<WaylandWindow*>(data)->m_cursor_locked = false;
+}
+
+void WaylandWindow::on_relative_motion(void* data, zwp_relative_pointer_v1*,
+    uint32_t, uint32_t, wl_fixed_t dx, wl_fixed_t dy,
+    wl_fixed_t dx_unaccel, wl_fixed_t dy_unaccel)
+{
+    auto* self = static_cast<WaylandWindow*>(data);
+    if (!self->m_cursor_locked)
+        return;
+
+    const bool unaccelerated = self->m_input_config.cursor_mode == CursorMode::CAPTURED
+        || self->m_input_config.raw_mouse_motion;
+    self->m_virtual_x += wl_fixed_to_double(unaccelerated ? dx_unaccel : dx);
+    self->m_virtual_y += wl_fixed_to_double(unaccelerated ? dy_unaccel : dy);
+
+    WindowEvent ev;
+    ev.type = WindowEventType::MOUSE_MOTION;
+    ev.data = WindowEvent::MousePosData {
+        .x = self->m_virtual_x,
+        .y = self->m_virtual_y
+    };
+    self->emit(ev);
+}
+
+// ============================================================================
 // wl_pointer
 // ============================================================================
 
@@ -797,6 +961,9 @@ void WaylandWindow::on_pointer_enter(void* data, wl_pointer*,
 {
     auto* self = static_cast<WaylandWindow*>(data);
     self->m_pointer_enter_serial = serial;
+    self->m_pointer_inside = true;
+    self->m_cursor_hidden = false;
+    self->update_cursor_visibility();
     self->m_pointer_x = wl_fixed_to_double(sx);
     self->m_pointer_y = wl_fixed_to_double(sy);
     WindowEvent ev;
@@ -807,6 +974,8 @@ void WaylandWindow::on_pointer_enter(void* data, wl_pointer*,
 void WaylandWindow::on_pointer_leave(void* data, wl_pointer*, uint32_t, wl_surface*)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_pointer_inside = false;
+    self->m_cursor_hidden = false;
     WindowEvent ev;
     ev.type = WindowEventType::MOUSE_EXITED;
     self->emit(ev);
@@ -816,6 +985,8 @@ void WaylandWindow::on_pointer_motion(void* data, wl_pointer*,
     uint32_t, wl_fixed_t sx, wl_fixed_t sy)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    if (self->m_cursor_locked)
+        return;
     self->m_pointer_x = wl_fixed_to_double(sx);
     self->m_pointer_y = wl_fixed_to_double(sy);
     WindowEvent ev;

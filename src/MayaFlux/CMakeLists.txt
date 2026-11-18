@@ -67,6 +67,16 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/unstable/relative-pointer/relative-pointer-unstable-v1.xml"
         BASENAME "relative-pointer-unstable-v1"
     )
+
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/unstable/tablet/tablet-unstable-v2.xml"
+        BASENAME "tablet-unstable-v2"
+    )
+
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/staging/cursor-shape/cursor-shape-v1.xml"
+        BASENAME "cursor-shape-v1"
+    )
 endif()
 
 set_target_properties(MayaFluxLib PROPERTIES
