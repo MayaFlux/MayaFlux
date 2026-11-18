@@ -2,6 +2,7 @@
 
 #include "Layer.hpp"
 
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/IO/Keys.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -400,6 +401,18 @@ public:
     [[nodiscard]] std::optional<uint32_t> hovered() const { return m_hovered; }
 
     [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
+
+    /**
+     * @brief Read text from the system clipboard through the window.
+     *
+     * Forwards to Core::Window::request_clipboard_text: @p callback runs later,
+     * from the window's poll(), exactly once, with nullopt when there is no text.
+     * Delivered at once with nullopt when the window is gone.
+     */
+    void request_clipboard_text(Core::ClipboardTextCallback callback) const;
+
+    /// @brief Place text on the system clipboard through the window.
+    void set_clipboard_text(const std::string& text) const;
 
     /// @brief The Layer this Context hit-tests against.
     [[nodiscard]] const std::shared_ptr<Layer>& layer() const noexcept { return m_layer; }

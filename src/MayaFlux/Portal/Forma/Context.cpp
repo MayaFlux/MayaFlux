@@ -338,6 +338,22 @@ const Vruta::WindowEventSource& Context::event_source() const
     return m_window->get_event_source();
 }
 
+void Context::request_clipboard_text(Core::ClipboardTextCallback callback) const
+{
+    if (!m_window) {
+        if (callback)
+            callback(std::nullopt);
+        return;
+    }
+    m_window->request_clipboard_text(std::move(callback));
+}
+
+void Context::set_clipboard_text(const std::string& text) const
+{
+    if (m_window)
+        m_window->set_clipboard_text(text);
+}
+
 Context& Context::key_step(
     uint32_t id,
     std::shared_ptr<MappedState<float>> state,

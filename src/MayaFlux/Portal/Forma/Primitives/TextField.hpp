@@ -38,6 +38,19 @@ class Surface;
  * places the caret at the nearest text boundary. Both use the layout already
  * drawn by the field's text run.
  *
+ * Holding Shift with Left, Right, Up, Down or a click extends a selection
+ * from where the caret was, and dragging with the left button selects from
+ * the pressed position to the pointer; EditableText::anchor holds the fixed end. The
+ * selection is drawn as translucent quads in the text tint ahead of the caret,
+ * one per line. Typing, Enter, Tab, Backspace and Delete replace or remove it.
+ * Without Shift an arrow collapses it to its start or end, and a click drops it.
+ *
+ * Select all, copy, cut and paste are on A, C, X and V with Control, or with
+ * Command on macOS. Copy and cut put the selection on the system clipboard
+ * through the window; paste arrives asynchronously, from the window's poll(),
+ * and replaces the selection. Pasted line endings are normalised to LF and
+ * other control characters dropped.
+ *
  * The text is drawn as glyph quads from the glyph atlas, and a caret rides
  * in the same slice rather than owning a buffer, Element, or Layer entry of
  * its own: it is one flat Kakshya::MeshVertex quad (Kinesis::textured_mesh_rect
