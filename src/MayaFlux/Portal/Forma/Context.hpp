@@ -201,11 +201,15 @@ public:
      * Focus is transferred on mouse press. The callback fires only once per
      * key press, even if the key is held.
      *
+     * A bare key accepts any modifiers; Keys::V | Modifiers::Ctrl accepts
+     * exactly Ctrl. The two are separate slots, so with both registered
+     * Ctrl+V reaches both, as every listener on a key sees every event.
+     *
      * @param id  Element id to bind to.
-     * @param key The key to listen for.
+     * @param key The key to listen for, with optional modifiers.
      * @param fn  Callback receiving element id.
      */
-    void on_press(uint32_t id, IO::Keys key, KeyFn fn);
+    void on_press(uint32_t id, IO::ModifiedKey key, KeyFn fn);
 
     /**
      * @brief Called when a key is released while the element has focus.
@@ -224,10 +228,10 @@ public:
      * value increments) without requiring the user to repeatedly press.
      *
      * @param id  Element id to bind to.
-     * @param key The key to listen for.
+     * @param key The key to listen for, with optional modifiers as for on_press.
      * @param fn  Callback receiving element id, fired on press and each repeat.
      */
-    void on_held(uint32_t id, IO::Keys key, KeyFn fn);
+    void on_held(uint32_t id, IO::ModifiedKey key, KeyFn fn);
 
     /**
      * @brief Called with each resolved Unicode codepoint while the element
@@ -365,12 +369,12 @@ public:
      * One fire per physical press, a clean repeat cadence after.
      *
      * @param id  Element id to bind to.
-     * @param key The key to listen for.
+     * @param key The key to listen for, with optional modifiers as for on_press.
      * @param fn  Callback receiving element id, fired once on press and
      *            again on each repeat tick.
      * @return *this for chaining.
      */
-    Context& press_and_hold(uint32_t id, IO::Keys key, KeyFn fn);
+    Context& press_and_hold(uint32_t id, IO::ModifiedKey key, KeyFn fn);
 
     /**
      * @brief Register a drag handler receiving only the cursor position.
@@ -469,10 +473,10 @@ private:
         Core::WindowEvent::EventData data = {},
         std::optional<IO::MouseButtons> button = std::nullopt,
         std::optional<IO::Keys> key = std::nullopt);
-    void handle_subscribed_key(IO::Keys key, Core::WindowEventType type);
-    void handle_key_press(IO::Keys key);
+    void handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event);
+    void handle_key_press(int key_code);
     void handle_key_release(IO::Keys key);
-    void handle_key_held(IO::Keys key);
+    void handle_key_held(int key_code);
     void handle_text(uint32_t codepoint);
     void handle_resize(uint32_t width, uint32_t height);
     void handle_close();
