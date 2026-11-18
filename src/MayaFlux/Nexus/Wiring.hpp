@@ -70,18 +70,19 @@ public:
     /**
      * @brief Fire the entity on a key event from a window.
      * @param window Source window.
-     * @param key    Key to listen for.
+     * @param key    Key to listen for, with optional modifiers (IO::Keys::S | IO::Modifiers::Ctrl).
      */
-    Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key);
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key);
 
     /**
      * @brief Fire the entity repeatedly while a key is held, invoking a release callback on release.
      * @param window      Source window.
-     * @param key         Key to listen for.
+     * @param key         Key to listen for, with optional modifiers. The release
+     *                    callback matches the key alone.
      * @param held        If true, fires on repeat ticks while held.
      * @param on_release  Called when the key is released.
      */
-    Wiring& on(std::shared_ptr<Core::Window> window, IO::Keys key, bool held,
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key, bool held,
         std::function<void()> on_release = nullptr);
 
     /**
@@ -262,7 +263,7 @@ private:
 
     struct KeyTrigger {
         std::shared_ptr<Core::Window> window;
-        IO::Keys key;
+        IO::ModifiedKey key;
         std::optional<std::function<void()>> on_release;
         bool held {};
     };

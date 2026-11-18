@@ -226,6 +226,7 @@ struct Description<::MayaFlux::Nexus::State::WiringRecord> {
             Member<&::MayaFlux::Nexus::State::WiringRecord::interval_token> { "interval_token" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::duration_token> { "duration_token" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::key> { "key" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::key_modifiers> { "key_modifiers" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::button> { "button" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::held> { "held" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::position_fn_name> { "position_fn_name" },

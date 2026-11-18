@@ -138,7 +138,8 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
             using T = std::decay_t<decltype(trigger)>;
             if constexpr (std::is_same_v<T, Wiring::KeyTrigger>) {
                 rec.kind = State::WiringKind::Key;
-                rec.key = trigger.key;
+                rec.key = trigger.key.key;
+                rec.key_modifiers = trigger.key.modifiers;
                 rec.held = trigger.held;
             } else if constexpr (std::is_same_v<T, Wiring::MouseTrigger>) {
                 rec.kind = State::WiringKind::Mouse;
