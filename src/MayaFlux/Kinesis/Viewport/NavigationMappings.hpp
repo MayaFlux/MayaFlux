@@ -36,7 +36,7 @@ struct FlyKeyMap {
  * convention as FlyKeyMap.
  */
 struct OrbitKeyMap {
-    IO::Keys pan_modifier { IO::Keys::LShift }; ///< Held during MMB drag to pan instead of rotate
+    IO::Keys pan_modifier { IO::Keys::LShift }; ///< Held during MMB drag to pan instead of rotate; either side of a modifier key counts
 
     std::optional<IO::Keys> ortho_front { IO::Keys::KP1 };
     std::optional<IO::Keys> ortho_right { IO::Keys::KP3 };

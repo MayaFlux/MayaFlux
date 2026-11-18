@@ -7,6 +7,7 @@
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux {
 
@@ -179,10 +180,11 @@ void bind_orbit_preset(
 
     on_mouse_released(window, IO::MouseButtons::Middle, [st](double /*x*/, double /*y*/) { st->mmb_held = false; }, event_name(name, "mmb_up"));
 
-    on_key_pressed(window, key_map.pan_modifier, [st] { st->pan_held = true; }, event_name(name, "pan_mod_dn"));
-    on_key_released(window, key_map.pan_modifier, [st] { st->pan_held = false; }, event_name(name, "pan_mod_up"));
+    const IO::Keys pan_key = key_map.pan_modifier;
+    const IO::Modifiers pan_flag = IO::modifier_of(pan_key);
+    const std::weak_ptr<Core::Window> weak_window = window;
 
-    on_mouse_move(window, [st](double x, double y) {
+    on_mouse_move(window, [st, weak_window, pan_key, pan_flag](double x, double y) {
         if (!st->mmb_held) {
             st->first_mouse = true;
             return;
@@ -197,6 +199,13 @@ void bind_orbit_preset(
         const auto  dy = static_cast<float>(y - st->last_y);
         st->last_x = x;
         st->last_y = y;
+
+        if (const auto live_window = weak_window.lock()) {
+            const auto& source = live_window->get_event_source();
+            st->pan_held = pan_flag != IO::Modifiers::None
+                ? has_flag(source.modifiers(), pan_flag)
+                : source.is_key_pressed(pan_key);
+        }
 
         if (st->pan_held) {
             Kinesis::apply_orbit_pan(*st, dx, dy);
