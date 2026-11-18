@@ -160,7 +160,7 @@ private:
     [[nodiscard]] IO::Keys resolve_key(uint32_t evdev_key) const;
 
     /** @brief IO::Modifiers bits for the held modifier keys and the lock state. */
-    [[nodiscard]] int32_t current_mods() const;
+    [[nodiscard]] IO::Modifiers current_mods() const;
 
     /** @brief Release every held key and modifier, as when focus is lost. */
     void release_held_keys();

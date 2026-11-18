@@ -1,6 +1,8 @@
 #pragma once
 
+#include "MayaFlux/IO/Keys.hpp"
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
+#include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
 namespace MayaFlux::Core {
 
@@ -519,7 +521,8 @@ struct WindowEvent {
     };
     struct KeyData {
         int16_t key;
-        int32_t scancode, mods;
+        int32_t scancode;
+        Reflect::EnumByte<IO::Modifiers> mods;
     };
     /// @brief Resolved Unicode codepoint, layout/shift/dead-key/IME composed.
     struct TextData {
@@ -530,7 +533,7 @@ struct WindowEvent {
     };
     struct MouseButtonData {
         int8_t button;
-        int32_t mods;
+        Reflect::EnumByte<IO::Modifiers> mods;
     };
     struct ScrollData {
         double x_offset, y_offset;

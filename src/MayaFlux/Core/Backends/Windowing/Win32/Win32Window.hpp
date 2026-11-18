@@ -108,7 +108,7 @@ private:
     uint16_t m_pending_high_surrogate { 0 };
 
     ModifierKeyState m_modifier_keys_ui;
-    std::atomic<int32_t> m_mods { 0 };
+    std::atomic<IO::Modifiers> m_mods { IO::Modifiers::None };
 
     std::vector<std::weak_ptr<Buffers::VKBuffer>> m_rendering_buffers;
     std::vector<uint64_t> m_frame_commands;
@@ -118,7 +118,7 @@ private:
     void push_event(WindowEvent ev);
 
     /** @brief UI thread: IO::Modifiers bits for the held modifier keys and the lock state, also published for poll(). */
-    int32_t update_mods();
+    IO::Modifiers update_mods();
 
     /** @brief UI thread: seed the held modifier keys from the keyboard state when focus arrives. */
     void seed_modifier_keys();

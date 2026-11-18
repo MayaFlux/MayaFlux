@@ -18,7 +18,7 @@ double event_time(NSEvent* event)
     return event ? event.timestamp : NSProcessInfo.processInfo.systemUptime;
 }
 
-int32_t translate_mods(NSEventModifierFlags flags)
+MayaFlux::IO::Modifiers translate_mods(NSEventModifierFlags flags)
 {
     using MayaFlux::IO::Modifiers;
     Modifiers mods = Modifiers::None;
@@ -32,7 +32,7 @@ int32_t translate_mods(NSEventModifierFlags flags)
         mods = mods | Modifiers::Super;
     if (flags & NSEventModifierFlagCapsLock)
         mods = mods | Modifiers::CapsLock;
-    return static_cast<int32_t>(mods);
+    return mods;
 }
 
 NSEventModifierFlags modifier_mask(MayaFlux::IO::Keys key)

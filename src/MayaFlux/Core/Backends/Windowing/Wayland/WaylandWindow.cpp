@@ -221,7 +221,7 @@ void WaylandWindow::poll()
         uint64_t expirations = 0;
         if (read(m_repeat_fd, &expirations, sizeof(expirations)) == sizeof(expirations)
             && expirations > 0) {
-            const int32_t mods = current_mods();
+            const IO::Modifiers mods = current_mods();
             for (const auto& [k, kd] : m_held_keys) {
                 WindowEvent::KeyData repeated = kd;
                 repeated.mods = mods;
@@ -388,7 +388,7 @@ IO::Keys WaylandWindow::resolve_key(uint32_t evdev_key) const
     return key;
 }
 
-int32_t WaylandWindow::current_mods() const
+IO::Modifiers WaylandWindow::current_mods() const
 {
     IO::Modifiers mods = m_modifier_keys.held();
 
@@ -403,7 +403,7 @@ int32_t WaylandWindow::current_mods() const
             mods = mods | IO::Modifiers::NumLock;
     }
 
-    return static_cast<int32_t>(mods);
+    return mods;
 }
 
 void WaylandWindow::release_held_keys()
@@ -419,7 +419,7 @@ void WaylandWindow::release_held_keys()
     if (m_text_repeat_fd >= 0)
         timerfd_settime(m_text_repeat_fd, 0, &stop, nullptr);
 
-    const int32_t mods = current_mods();
+    const IO::Modifiers mods = current_mods();
     for (const auto& [k, kd] : held) {
         WindowEvent::KeyData released = kd;
         released.mods = mods;
