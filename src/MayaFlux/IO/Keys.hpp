@@ -163,13 +163,38 @@ enum class Modifiers : uint8_t {
 MF_BITMASK_OPERATORS(Modifiers)
 
 /**
- * @brief True when every bit of required is set in an event's mods field.
- * @param mods Raw mods value from KeyData or MouseButtonData.
- * @param required Modifiers that must all be set.
+ * @struct ModifiedKey
+ * @brief A key with an optional requirement on the held modifiers.
+ *
+ * A bare Keys value converts to a ModifiedKey that accepts any modifiers.
+ * With modifiers set, an event matches only when exactly those of Shift, Ctrl,
+ * Alt and Super are held; CapsLock and NumLock are ignored. Build one with
+ * Keys::V | Modifiers::Ctrl.
  */
-[[nodiscard]] constexpr bool has_modifiers(int32_t mods, Modifiers required) noexcept
+struct ModifiedKey {
+    Keys key;
+    std::optional<Modifiers> modifiers;
+
+    constexpr ModifiedKey(Keys k) noexcept
+        : key(k)
+    {
+    }
+
+    constexpr ModifiedKey(Keys k, Modifiers m) noexcept
+        : key(k)
+        , modifiers(m)
+    {
+    }
+};
+
+[[nodiscard]] constexpr ModifiedKey operator|(Keys key, Modifiers mods) noexcept
 {
-    return has_flag(static_cast<Modifiers>(mods), required);
+    return { key, mods };
+}
+
+[[nodiscard]] constexpr ModifiedKey operator|(ModifiedKey key, Modifiers mods) noexcept
+{
+    return { key.key, key.modifiers.value_or(Modifiers::None) | mods };
 }
 
 /**
@@ -228,6 +253,13 @@ MAYAFLUX_API bool is_printable(Keys key) noexcept;
  * @return True if the key is a modifier, false otherwise.
  */
 MAYAFLUX_API bool is_modifier(Keys key) noexcept;
+
+/**
+ * @brief The modifier a key holds down.
+ * @param key The key to check.
+ * @return Shift, Ctrl, Alt or Super for either side's key, None for any other key.
+ */
+MAYAFLUX_API Modifiers modifier_of(Keys key) noexcept;
 
 /**
  * @brief Checks if a key is a function key (e.g., F1-F25).
