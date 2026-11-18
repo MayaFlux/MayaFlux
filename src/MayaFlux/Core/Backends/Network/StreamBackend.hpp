@@ -21,6 +21,43 @@
 
 namespace MayaFlux::Core {
 
+namespace detail {
+
+    /**
+     * @brief The framer for raw streams: every read is one message, with nothing to reassemble.
+     */
+    struct RawChunkFramer {
+        template <Transitive::Protocol::MessageSink Sink>
+        Transitive::Protocol::FrameReport push(Transitive::Protocol::Message bytes, Sink&& sink)
+        {
+            Transitive::Protocol::FrameReport report;
+            if (!bytes.empty()) {
+                sink(bytes);
+                report.messages = 1;
+            }
+            return report;
+        }
+
+        void reset() noexcept { }
+    };
+
+    using StreamFramer = std::variant<Transitive::Protocol::LengthPrefixFramer,
+        Transitive::Protocol::LineFramer, RawChunkFramer>;
+
+    inline StreamFramer make_stream_framer(FramingPolicy framing)
+    {
+        if (framing == FramingPolicy::LINE) {
+            return StreamFramer { std::in_place_type<Transitive::Protocol::LineFramer> };
+        }
+        if (framing == FramingPolicy::NONE) {
+            return StreamFramer { std::in_place_type<RawChunkFramer> };
+        }
+        return StreamFramer { std::in_place_type<Transitive::Protocol::LengthPrefixFramer>,
+            Transitive::Protocol::default_max_frame, true };
+    }
+
+}
+
 /**
  * @class StreamBackend
  * @brief Connection-oriented reliable message transport over an Asio stream protocol
@@ -41,8 +78,13 @@ namespace MayaFlux::Core {
  *
  * Endpoints are listeners or connections. A listener announces each accepted
  * connection through the state callback as a new endpoint whose parent_id is the
- * listener. Every message on the wire is a four byte big-endian length followed by
- * the payload. A zero length, or one above 64 MiB, closes the connection.
+ * listener. Messages are delimited by EndpointInfo::framing, chosen per endpoint
+ * and inherited by a listener's connections. AUTO and LENGTH_PREFIX are a four byte
+ * big-endian length followed by the payload, where a zero length, or one above
+ * 64 MiB, closes the connection. LINE delivers each LF terminated line as a message
+ * and drops a line over 1 MiB without closing the connection. NONE is raw bytes: each
+ * read is delivered as one message with no boundaries, and a send writes its payload
+ * as it is. CHUNKED is refused.
  *
  * All I/O is async on the shared io_context.
  */
@@ -109,15 +151,14 @@ private:
         EndpointInfo info;
         typename Protocol::socket socket;
         std::vector<uint8_t> read_buffer;
-        Transitive::Protocol::LengthPrefixFramer framer {
-            Transitive::Protocol::default_max_frame, true
-        };
+        detail::StreamFramer framer;
         std::unique_ptr<asio::steady_timer> reconnect_timer;
         bool is_outbound {};
 
-        explicit ConnectionState(asio::io_context& ctx)
+        ConnectionState(asio::io_context& ctx, FramingPolicy framing)
             : socket(ctx)
             , read_buffer(k_read_chunk)
+            , framer(detail::make_stream_framer(framing))
         {
         }
     };

@@ -32,6 +32,29 @@ enum class EndpointRole : uint8_t {
 };
 
 /**
+ * @enum FramingPolicy
+ * @brief How messages are delimited on the wire
+ *
+ * NONE: raw bytes, no framing. A datagram on UDP. On TCP and UDS there are no message
+ * boundaries: each read, up to 64 KiB, is delivered as one message and a send writes
+ * its bytes as they are.
+ * LENGTH_PREFIX: a four byte big-endian size before each payload. Carries any bytes.
+ * CHUNKED: split large payloads into MTU-sized chunks with sequence numbers.
+ * Not supported by any backend yet; stream endpoints refuse it.
+ * LINE: TCP and UDS only. One LF terminated line per message, with one trailing
+ * CR accepted on receive, for text peers such as nc and socat. A payload that
+ * contains LF cannot be sent.
+ * AUTO: the transport's own. NONE on UDP and LENGTH_PREFIX on TCP and UDS.
+ */
+enum class FramingPolicy : uint8_t {
+    NONE,
+    LENGTH_PREFIX,
+    CHUNKED,
+    LINE,
+    AUTO
+};
+
+/**
  * @enum EndpointState
  * @brief Observable connection state for an endpoint
  */
@@ -69,6 +92,10 @@ struct MAYAFLUX_API EndpointInfo {
 
     /// Listener that accepted this connection, or 0 for an endpoint opened directly.
     uint64_t parent_id {};
+
+    /// TCP and UDS: how messages are delimited. Both ends must agree, and a listener's
+    /// accepted connections use the listener's. UDP ignores it.
+    FramingPolicy framing { FramingPolicy::AUTO };
 };
 
 /**

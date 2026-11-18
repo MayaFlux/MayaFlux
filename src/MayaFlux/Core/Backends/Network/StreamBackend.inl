@@ -131,6 +131,13 @@ void StreamBackend<Transport>::close_listener(ListenerState& listener)
 template <typename Transport>
 uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
 {
+    if (info.framing == FramingPolicy::CHUNKED) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
+            "{} endpoint {} refused: CHUNKED framing is not supported on streams",
+            Transport::label, info.id);
+        return 0;
+    }
+
     if (Transport::is_listener(info)) {
         auto listener = std::make_unique<ListenerState>(m_context);
         listener->info = info;
@@ -165,7 +172,7 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
         return info.id;
     }
 
-    auto conn = std::make_unique<ConnectionState>(m_context);
+    auto conn = std::make_unique<ConnectionState>(m_context, info.framing);
     conn->info = info;
     conn->info.state = EndpointState::OPENING;
     conn->is_outbound = true;
@@ -288,9 +295,22 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
 
     auto frame = std::make_shared<std::vector<uint8_t>>();
     frame->reserve(sizeof(uint32_t) + size);
-    if (!Transitive::Protocol::encode_length_prefixed(
-            Transitive::Protocol::Message { data, size }, *frame,
-            Transitive::Protocol::default_max_frame, true)) {
+    const Transitive::Protocol::Message payload { data, size };
+    bool encoded = false;
+    switch (conn.info.framing) {
+    case FramingPolicy::LINE:
+        encoded = Transitive::Protocol::encode_line(payload, *frame);
+        break;
+    case FramingPolicy::NONE:
+        encoded = !payload.empty();
+        frame->assign(payload.begin(), payload.end());
+        break;
+    default:
+        encoded = Transitive::Protocol::encode_length_prefixed(
+            payload, *frame, Transitive::Protocol::default_max_frame, true);
+        break;
+    }
+    if (!encoded) {
         return false;
     }
 
@@ -420,7 +440,7 @@ void StreamBackend<Transport>::start_accept(ListenerState& listener)
                 new_id = m_allocate_endpoint_id();
             }
 
-            auto conn = std::make_unique<ConnectionState>(m_context);
+            auto conn = std::make_unique<ConnectionState>(m_context, lst.info.framing);
             conn->socket = std::move(lst.pending_socket);
             conn->is_outbound = false;
             conn->info.id = new_id;
@@ -428,6 +448,7 @@ void StreamBackend<Transport>::start_accept(ListenerState& listener)
             conn->info.role = EndpointRole::BIDIRECTIONAL;
             conn->info.state = EndpointState::OPEN;
             conn->info.parent_id = listener_id;
+            conn->info.framing = lst.info.framing;
             Transport::describe_accepted(conn->socket, lst.info, conn->info);
 
             auto* raw = conn.get();
@@ -480,21 +501,38 @@ void StreamBackend<Transport>::on_bytes_received(ConnectionState& conn,
     }
 
     const std::string peer = Transport::peer_label(conn.info);
+    const Transitive::Protocol::Message chunk { conn.read_buffer.data(), bytes };
 
-    const auto report = conn.framer.push(
-        Transitive::Protocol::Message { conn.read_buffer.data(), bytes },
-        [&](Transitive::Protocol::Message message) {
-            if (m_receive_callback) {
-                m_receive_callback(conn.info.id, message.data(), message.size(), peer);
+    auto deliver = [&](Transitive::Protocol::Message message) {
+        if (m_receive_callback) {
+            m_receive_callback(conn.info.id, message.data(), message.size(), peer);
+        }
+    };
+
+    bool corrupt = false;
+    size_t dropped = 0;
+    std::visit(
+        [&](auto& framer) {
+            const auto report = framer.push(chunk, deliver);
+            dropped = report.discarded;
+            if constexpr (std::is_same_v<std::decay_t<decltype(framer)>, Transitive::Protocol::LengthPrefixFramer>) {
+                corrupt = !report.ok();
             }
-        });
+        },
+        conn.framer);
 
-    if (!report.ok()) {
+    if (corrupt) {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "{} endpoint {} received an invalid frame length",
             Transport::label, conn.info.id);
         on_connection_error(conn, asio::error::message_size);
         return;
+    }
+
+    if (dropped != 0) {
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+            "{} endpoint {} dropped {} line(s) over the length limit",
+            Transport::label, conn.info.id, dropped);
     }
 
     start_receive_chain(conn);
@@ -558,7 +596,7 @@ void StreamBackend<Transport>::schedule_reconnect(ConnectionState& conn)
             auto& c = *it->second;
 
             c.socket = typename Protocol::socket(m_context);
-            c.framer.reset();
+            std::visit([](auto& framer) { framer.reset(); }, c.framer);
 
             MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "{} endpoint {} attempting reconnect to {}",

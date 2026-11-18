@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Core/GlobalNetworkConfig.hpp"
+
 namespace MayaFlux::Portal::Network {
 
 //=============================================================================
@@ -56,18 +58,12 @@ enum class StreamProfile : uint8_t {
 };
 
 /**
- * @enum FramingPolicy
- * @brief How outbound payloads are framed on the wire.
+ * @brief How payloads are framed on the wire: NONE, LENGTH_PREFIX, CHUNKED, LINE or AUTO.
  *
- * NONE: raw bytes, no framing (UDP default).
- * LENGTH_PREFIX: 4-byte big-endian size header before each message (TCP default).
- * CHUNKED: split large payloads into MTU-sized chunks with sequence numbers.
+ * The same type Core::EndpointInfo carries, so a StreamConfig value reaches the
+ * backend unchanged. See Core::FramingPolicy for what each value means.
  */
-enum class FramingPolicy : uint8_t {
-    NONE,
-    LENGTH_PREFIX,
-    CHUNKED
-};
+using FramingPolicy = Core::FramingPolicy;
 
 //=============================================================================
 // Stream handle type
@@ -119,7 +115,7 @@ struct MAYAFLUX_API StreamConfig {
     StreamEndpoint endpoint;
     StreamProfile profile { StreamProfile::ARBITRARY };
     NetworkTransportHint transport { NetworkTransportHint::AUTO };
-    FramingPolicy framing { FramingPolicy::NONE };
+    FramingPolicy framing { FramingPolicy::AUTO };
 };
 
 //=============================================================================
