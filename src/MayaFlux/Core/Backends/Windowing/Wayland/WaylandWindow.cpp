@@ -135,6 +135,18 @@ void WaylandWindow::destroy()
         zxdg_decoration_manager_v1_destroy(m_decoration_manager);
         m_decoration_manager = nullptr;
     }
+    if (m_relative_pointer_manager) {
+        zwp_relative_pointer_manager_v1_destroy(m_relative_pointer_manager);
+        m_relative_pointer_manager = nullptr;
+    }
+    if (m_pointer_constraints) {
+        zwp_pointer_constraints_v1_destroy(m_pointer_constraints);
+        m_pointer_constraints = nullptr;
+    }
+    if (m_data_device_manager) {
+        wl_data_device_manager_destroy(m_data_device_manager);
+        m_data_device_manager = nullptr;
+    }
     if (m_xdg_toplevel) {
         xdg_toplevel_destroy(m_xdg_toplevel);
         m_xdg_toplevel = nullptr;
@@ -456,6 +468,16 @@ void WaylandWindow::on_registry_global(void* data, wl_registry* reg,
     } else if (std::string_view(iface) == zxdg_decoration_manager_v1_interface.name) {
         self->m_decoration_manager = static_cast<zxdg_decoration_manager_v1*>(
             wl_registry_bind(reg, name, &zxdg_decoration_manager_v1_interface, 1U));
+    } else if (std::string_view(iface) == wl_data_device_manager_interface.name) {
+        self->m_data_device_manager = static_cast<wl_data_device_manager*>(
+            wl_registry_bind(reg, name, &wl_data_device_manager_interface,
+                std::min(version, 3U)));
+    } else if (std::string_view(iface) == zwp_pointer_constraints_v1_interface.name) {
+        self->m_pointer_constraints = static_cast<zwp_pointer_constraints_v1*>(
+            wl_registry_bind(reg, name, &zwp_pointer_constraints_v1_interface, 1U));
+    } else if (std::string_view(iface) == zwp_relative_pointer_manager_v1_interface.name) {
+        self->m_relative_pointer_manager = static_cast<zwp_relative_pointer_manager_v1*>(
+            wl_registry_bind(reg, name, &zwp_relative_pointer_manager_v1_interface, 1U));
     }
 }
 
@@ -651,9 +673,10 @@ void WaylandWindow::on_keyboard_leave(void* data, wl_keyboard*,
 }
 
 void WaylandWindow::on_keyboard_key(void* data, wl_keyboard*,
-    uint32_t, uint32_t, uint32_t key, uint32_t state)
+    uint32_t serial, uint32_t, uint32_t key, uint32_t state)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_input_serial = serial;
     if (!self->m_xkb_state)
         return;
 
@@ -770,9 +793,10 @@ void WaylandWindow::on_keyboard_repeat_info(void* data, wl_keyboard*,
 // ============================================================================
 
 void WaylandWindow::on_pointer_enter(void* data, wl_pointer*,
-    uint32_t, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
+    uint32_t serial, wl_surface*, wl_fixed_t sx, wl_fixed_t sy)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_pointer_enter_serial = serial;
     self->m_pointer_x = wl_fixed_to_double(sx);
     self->m_pointer_y = wl_fixed_to_double(sy);
     WindowEvent ev;
@@ -804,9 +828,10 @@ void WaylandWindow::on_pointer_motion(void* data, wl_pointer*,
 }
 
 void WaylandWindow::on_pointer_button(void* data, wl_pointer*,
-    uint32_t, uint32_t, uint32_t button, uint32_t state)
+    uint32_t serial, uint32_t, uint32_t button, uint32_t state)
 {
     auto* self = static_cast<WaylandWindow*>(data);
+    self->m_input_serial = serial;
 
     IO::MouseButtons btn = IO::MouseButtons::Unknown;
     switch (button) {

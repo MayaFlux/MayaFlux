@@ -57,6 +57,16 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
         PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/stable/presentation-time/presentation-time.xml"
         BASENAME "presentation-time"
     )
+
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
+        BASENAME "pointer-constraints-unstable-v1"
+    )
+
+    mf_add_wayland_protocol(MayaFluxLib
+        PROTOCOL "${WAYLAND_PROTOCOLS_DIR}/unstable/relative-pointer/relative-pointer-unstable-v1.xml"
+        BASENAME "relative-pointer-unstable-v1"
+    )
 endif()
 
 set_target_properties(MayaFluxLib PROPERTIES

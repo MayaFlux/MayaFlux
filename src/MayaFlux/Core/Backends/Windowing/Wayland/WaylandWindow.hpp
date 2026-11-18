@@ -9,6 +9,8 @@
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
 
+#include "wayland-pointer-constraints-unstable-v1-client-protocol.h"
+#include "wayland-relative-pointer-unstable-v1-client-protocol.h"
 #include "wayland-xdg-decoration-unstable-v1-client-protocol.h"
 #include "wayland-xdg-shell-client-protocol.h"
 
@@ -90,6 +92,9 @@ private:
     wl_seat* m_seat {};
     xdg_wm_base* m_xdg_wm_base {};
     zxdg_decoration_manager_v1* m_decoration_manager {};
+    wl_data_device_manager* m_data_device_manager {};
+    zwp_pointer_constraints_v1* m_pointer_constraints {};
+    zwp_relative_pointer_manager_v1* m_relative_pointer_manager {};
 
     // -------------------------------------------------------------------------
     // Per-window objects
@@ -114,6 +119,9 @@ private:
 
     double m_pointer_x {};
     double m_pointer_y {};
+
+    uint32_t m_input_serial {};
+    uint32_t m_pointer_enter_serial {};
 
     int m_repeat_fd { -1 };
     int m_text_repeat_fd { -1 };
