@@ -452,6 +452,9 @@ struct WindowState {
  * virtual position that starts at the window centre and accumulates motion
  * without bound. Take the difference between successive positions; it is not
  * an absolute position.
+ *
+ * Set it through InputConfig::cursor_mode with Window::set_input_config(), which
+ * every backend honours; there is no separate cursor call.
  */
 enum class CursorMode : uint8_t {
     NORMAL, ///< Visible and movable

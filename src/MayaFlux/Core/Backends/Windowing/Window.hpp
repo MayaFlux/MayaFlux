@@ -71,6 +71,16 @@ public:
     /**
      * @brief Set input configuration (keyboard, mouse, cursor)
      * @param config Input configuration settings
+     *
+     * This is the one control point for the cursor on every backend:
+     * InputConfig::cursor_mode hides it or locks it, and the backends do the
+     * rest. Change one field by reading the config, editing it and setting it back:
+     *
+     * @code
+     * auto config = window->get_input_config();
+     * config.cursor_mode = Core::CursorMode::CAPTURED;
+     * window->set_input_config(config);
+     * @endcode
      */
     virtual void set_input_config(const InputConfig& config) = 0;
 
