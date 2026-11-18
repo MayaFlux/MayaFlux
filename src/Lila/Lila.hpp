@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Address.hpp"
+#include "EvalReport.hpp"
 #include "Result.hpp"
 
 namespace Lila {
@@ -77,6 +78,26 @@ public:
     Status eval(const std::string& code);
 
     /**
+     * @brief Registers an observer of every evaluation, local and from clients.
+     *
+     * Each eval, whether it succeeded or not, reaches every observer once, on the
+     * thread that ran it. Registration and removal are safe from any thread and
+     * from inside an observer. After remove_eval_observer returns, a call that
+     * was already running may still be finishing on another thread, so keep
+     * @p user alive until the Lila object is destroyed or listening has stopped.
+     *
+     * @param observer Called with @p user and a report. Must not be null.
+     * @param user Handed back unchanged.
+     * @return An id for remove_eval_observer, never zero.
+     */
+    uint64_t add_eval_observer(EvalObserver observer, void* user);
+
+    /**
+     * @brief Removes an observer. An unknown id is ignored.
+     */
+    void remove_eval_observer(uint64_t id);
+
+    /**
      * @brief Load a shared library into the JIT symbol table.
      * @param path Full path to the shared library.
      */
@@ -115,11 +136,16 @@ public:
     void request_shutdown();
 
 private:
+    struct Observers;
+
     Result<std::string> handle_message(std::string_view message);
+
+    Status evaluate(const std::string& code, EvalOrigin origin);
 
     static Status refuse(std::string reason);
 
     std::unique_ptr<ClangInterpreter> m_interpreter;
+    std::unique_ptr<Observers> m_observers;
     std::unique_ptr<Listener> m_listener;
     std::optional<Address> m_bound;
     std::atomic<bool> m_shutdown_requested { false };

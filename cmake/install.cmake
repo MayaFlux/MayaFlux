@@ -102,6 +102,7 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/src/Lila/Commentator.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Lila.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Address.hpp
+    ${CMAKE_SOURCE_DIR}/src/Lila/EvalReport.hpp
     ${CMAKE_SOURCE_DIR}/src/Lila/Result.hpp
     DESTINATION include/Lila
 )

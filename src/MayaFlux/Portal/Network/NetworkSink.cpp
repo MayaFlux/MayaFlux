@@ -18,6 +18,8 @@ namespace {
             return Core::NetworkTransport::TCP;
         case NetworkTransportHint::SHARED_MEMORY:
             return Core::NetworkTransport::SHARED_MEMORY;
+        case NetworkTransportHint::UDS:
+            return Core::NetworkTransport::UDS;
         case NetworkTransportHint::AUTO:
             switch (profile) {
             case StreamProfile::ORDERED_BULK:
@@ -48,10 +50,22 @@ NetworkSink::NetworkSink(const StreamConfig& config)
     Core::EndpointInfo info;
     info.transport = resolve_transport(config.transport, config.profile);
     info.role = Core::EndpointRole::SEND;
-    info.remote_address = config.endpoint.address;
-    info.remote_port = config.endpoint.port;
-    info.local_port = config.endpoint.local_port;
     info.label = config.name;
+    info.framing = config.framing;
+    info.max_message_size = config.max_message_size;
+
+    if (info.transport == Core::NetworkTransport::UDS) {
+        if (config.endpoint.path.empty()) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::Networking,
+                "NetworkSink '{}': UDS needs a path", m_name);
+            return;
+        }
+        info.remote_path = config.endpoint.path;
+    } else {
+        info.remote_address = config.endpoint.address;
+        info.remote_port = config.endpoint.port;
+        info.local_port = config.endpoint.local_port;
+    }
 
     m_endpoint_id = svc->open_endpoint(info);
 
@@ -65,9 +79,30 @@ NetworkSink::NetworkSink(const StreamConfig& config)
         "NetworkSink '{}' opened endpoint {}", m_name, m_endpoint_id);
 }
 
+NetworkSink::NetworkSink(Borrowed, uint64_t connection_id, std::string name)
+    : m_name(std::move(name))
+    , m_owns(false)
+{
+    m_service = Registry::BackendRegistry::instance()
+                    .get_service<Registry::Service::NetworkService>();
+
+    if (!m_service) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::Networking,
+            "NetworkSink '{}': NetworkService not available", m_name);
+        return;
+    }
+
+    m_endpoint_id = connection_id;
+}
+
+NetworkSink NetworkSink::to_connection(uint64_t connection_id, std::string name)
+{
+    return NetworkSink(Borrowed {}, connection_id, std::move(name));
+}
+
 NetworkSink::~NetworkSink()
 {
-    if (m_endpoint_id == 0 || !m_service) {
+    if (!m_owns || m_endpoint_id == 0 || !m_service) {
         return;
     }
     m_service->close_endpoint(m_endpoint_id);
@@ -76,6 +111,7 @@ NetworkSink::~NetworkSink()
 NetworkSink::NetworkSink(NetworkSink&& other) noexcept
     : m_name(std::move(other.m_name))
     , m_endpoint_id(other.m_endpoint_id)
+    , m_owns(other.m_owns)
     , m_service(other.m_service)
 {
     other.m_endpoint_id = 0;
@@ -85,11 +121,12 @@ NetworkSink::NetworkSink(NetworkSink&& other) noexcept
 NetworkSink& NetworkSink::operator=(NetworkSink&& other) noexcept
 {
     if (this != &other) {
-        if (m_endpoint_id != 0 && m_service) {
+        if (m_owns && m_endpoint_id != 0 && m_service) {
             m_service->close_endpoint(m_endpoint_id);
         }
         m_name = std::move(other.m_name);
         m_endpoint_id = other.m_endpoint_id;
+        m_owns = other.m_owns;
         m_service = other.m_service;
         other.m_endpoint_id = 0;
         other.m_service = nullptr;

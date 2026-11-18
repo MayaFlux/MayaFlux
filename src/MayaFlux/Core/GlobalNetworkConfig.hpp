@@ -17,7 +17,8 @@ namespace MayaFlux::Core {
 enum class NetworkTransport : uint8_t {
     UDP,
     TCP,
-    SHARED_MEMORY
+    SHARED_MEMORY,
+    UDS
 };
 
 /**
@@ -28,6 +29,29 @@ enum class EndpointRole : uint8_t {
     SEND,
     RECEIVE,
     BIDIRECTIONAL
+};
+
+/**
+ * @enum FramingPolicy
+ * @brief How messages are delimited on the wire
+ *
+ * NONE: raw bytes, no framing. A datagram on UDP. On TCP and UDS there are no message
+ * boundaries: each read, up to 64 KiB, is delivered as one message and a send writes
+ * its bytes as they are.
+ * LENGTH_PREFIX: a four byte big-endian size before each payload. Carries any bytes.
+ * CHUNKED: split large payloads into MTU-sized chunks with sequence numbers.
+ * Not supported by any backend yet; stream endpoints refuse it.
+ * LINE: TCP and UDS only. One LF terminated line per message, with one trailing
+ * CR accepted on receive, for text peers such as nc and socat. A payload that
+ * contains LF cannot be sent.
+ * AUTO: the transport's own. NONE on UDP and LENGTH_PREFIX on TCP and UDS.
+ */
+enum class FramingPolicy : uint8_t {
+    NONE,
+    LENGTH_PREFIX,
+    CHUNKED,
+    LINE,
+    AUTO
 };
 
 /**
@@ -59,6 +83,25 @@ struct MAYAFLUX_API EndpointInfo {
     std::string remote_address;
     uint16_t remote_port {};
     uint16_t local_port {};
+
+    /// UDS: socket to listen on. A bare file name is placed in the user's runtime directory.
+    std::string local_path;
+
+    /// UDS: socket to connect to, given the same way as local_path.
+    std::string remote_path;
+
+    /// Listener that accepted this connection, or 0 for an endpoint opened directly.
+    uint64_t parent_id {};
+
+    /// TCP and UDS: how messages are delimited. Both ends must agree, and a listener's
+    /// accepted connections use the listener's. UDP ignores it.
+    FramingPolicy framing { FramingPolicy::AUTO };
+
+    /// TCP and UDS: the largest message in bytes, 0 for the framing's own limit. For LENGTH_PREFIX
+    /// it is the largest payload, 64 MiB by default, and a larger one closes the connection on
+    /// receive and is refused on send. For LINE it is the longest line, 1 MiB by default, and a
+    /// longer one is dropped on receive. NONE ignores it.
+    size_t max_message_size {};
 };
 
 /**
@@ -121,6 +164,22 @@ struct MAYAFLUX_API TCPBackendInfo {
 MF_DESCRIBE(TCPBackendInfo)
 
 /**
+ * @struct UDSBackendInfo
+ * @brief Configuration for the Unix domain socket transport backend
+ *
+ * Reliable, ordered, length-prefixed messages between processes on the same
+ * machine, addressed by a socket path instead of an IP address and port. A
+ * listener is owner-only on POSIX. Windows relies on the socket directory's ACL.
+ */
+struct MAYAFLUX_API UDSBackendInfo {
+    bool enabled { false };
+    bool auto_reconnect { true };
+    uint32_t reconnect_interval_ms { 2000 };
+};
+
+MF_DESCRIBE(UDSBackendInfo)
+
+/**
  * @struct SharedMemoryBackendInfo
  * @brief Configuration for local inter-process shared memory transport
  *
@@ -160,6 +219,14 @@ struct MAYAFLUX_API GlobalNetworkConfig {
     UDPBackendInfo udp;
     TCPBackendInfo tcp;
     SharedMemoryBackendInfo shared_memory;
+    UDSBackendInfo uds;
+
+    static GlobalNetworkConfig with_uds()
+    {
+        GlobalNetworkConfig config;
+        config.uds.enabled = true;
+        return config;
+    }
 
     static GlobalNetworkConfig with_udp(uint16_t recv_port = 8000, uint16_t send_port = 9000)
     {
@@ -185,7 +252,7 @@ struct MAYAFLUX_API GlobalNetworkConfig {
 
     [[nodiscard]] bool any_enabled() const
     {
-        return udp.enabled || tcp.enabled || shared_memory.enabled;
+        return udp.enabled || tcp.enabled || shared_memory.enabled || uds.enabled;
     }
 
 };

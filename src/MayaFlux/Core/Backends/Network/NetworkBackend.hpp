@@ -201,8 +201,21 @@ public:
      * Fired when an endpoint transitions state (OPENING -> OPEN,
      * OPEN -> ERROR, ERROR -> RECONNECTING, etc.). The subsystem uses
      * this to resume co_open_endpoint awaitables and to notify consumers.
+     *
+     * An accepted connection is announced as CLOSED -> OPEN with
+     * EndpointInfo::parent_id set to the listener that accepted it, before
+     * its first receive callback.
      */
     virtual void set_state_callback(EndpointStateCallback callback) = 0;
+
+    /**
+     * @brief Provide the allocator for endpoint ids the backend creates itself
+     *
+     * A backend that accepts connections needs globally unique ids for them.
+     * The subsystem supplies this before start(). Backends that never create
+     * endpoints on their own ignore it.
+     */
+    virtual void set_endpoint_id_allocator(std::function<uint64_t()> /*allocator*/) { }
 };
 
 } // namespace MayaFlux::Core

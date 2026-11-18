@@ -210,7 +210,7 @@ Frame-rate pipelines can capture camera or video frames into a `DynamicVideoStre
 
 `Timer` and `TimedAction` provide fire-once and fire-with-cleanup scheduling.
 
-Input events enter the scheduling system through `InputEvents`: `any_key`, `mouse_pressed`, `mouse_released`, `mouse_move`. Network events enter through `NetworkEvents`: `on_message`, `on_message_from`, `on_message_matching`.
+Input events enter the scheduling system through `InputEvents`: `any_key`, `mouse_pressed`, `mouse_released`, `mouse_move`. Network events enter through `NetworkEvents`: `message_received`, which takes an optional filter, either a sender address, a connection id or a predicate.
 
 ---
 

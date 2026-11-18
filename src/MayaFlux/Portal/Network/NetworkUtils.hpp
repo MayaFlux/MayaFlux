@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Core/GlobalNetworkConfig.hpp"
+
 namespace MayaFlux::Portal::Network {
 
 //=============================================================================
@@ -18,7 +20,9 @@ enum class NetworkTransportHint : uint8_t {
     UDP, ///< Low-latency, unordered datagrams. OSC, control, sparse streams.
     TCP, ///< Reliable ordered byte stream. Bulk data, session-oriented.
     SHARED_MEMORY, ///< Zero-copy IPC on the same machine.
-    AUTO ///< Let NetworkFoundry pick based on StreamProfile.
+    UDS, ///< Reliable ordered messages to a Unix domain socket on the same machine.
+         ///< Addressed by StreamEndpoint::path, never chosen by AUTO.
+    AUTO ///< Pick UDP or TCP from the StreamProfile.
 };
 
 //=============================================================================
@@ -54,18 +58,12 @@ enum class StreamProfile : uint8_t {
 };
 
 /**
- * @enum FramingPolicy
- * @brief How outbound payloads are framed on the wire.
+ * @brief How payloads are framed on the wire: NONE, LENGTH_PREFIX, CHUNKED, LINE or AUTO.
  *
- * NONE: raw bytes, no framing (UDP default).
- * LENGTH_PREFIX: 4-byte big-endian size header before each message (TCP default).
- * CHUNKED: split large payloads into MTU-sized chunks with sequence numbers.
+ * The same type Core::EndpointInfo carries, so a StreamConfig value reaches the
+ * backend unchanged. See Core::FramingPolicy for what each value means.
  */
-enum class FramingPolicy : uint8_t {
-    NONE,
-    LENGTH_PREFIX,
-    CHUNKED
-};
+using FramingPolicy = Core::FramingPolicy;
 
 //=============================================================================
 // Stream handle type
@@ -98,6 +96,7 @@ struct MAYAFLUX_API StreamEndpoint {
     std::string address; ///< Remote address. Empty = listen only.
     uint16_t port { 0 }; ///< Remote port (send) or local port (receive).
     uint16_t local_port { 0 }; ///< Explicit local bind port. 0 = OS-assigned.
+    std::string path; ///< UDS only: socket to connect to. A bare name is looked up in the runtime directory.
 };
 
 //=============================================================================
@@ -116,7 +115,8 @@ struct MAYAFLUX_API StreamConfig {
     StreamEndpoint endpoint;
     StreamProfile profile { StreamProfile::ARBITRARY };
     NetworkTransportHint transport { NetworkTransportHint::AUTO };
-    FramingPolicy framing { FramingPolicy::NONE };
+    FramingPolicy framing { FramingPolicy::AUTO };
+    size_t max_message_size {}; ///< TCP and UDS: largest message or line in bytes. 0 = the framing's own limit.
 };
 
 //=============================================================================

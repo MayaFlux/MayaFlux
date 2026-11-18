@@ -158,6 +158,17 @@ namespace detail {
 }
 
 /**
+ * @brief Resolve a Unix socket request to a path, for a client that connects to an existing socket.
+ *
+ * Applies the same name and path resolution as acquire_unix_socket and checks nothing
+ * else: the entry is not inspected, nothing is removed and the length limit is not applied.
+ */
+[[nodiscard]] inline Acquired<std::filesystem::path> resolve_unix_socket_path(const UnixSocketSource& source)
+{
+    return detail::resolve_socket_path(source);
+}
+
+/**
  * @brief Decide whether a Unix socket path can be bound, and clear a stale one.
  *
  * The path is resolved, then refused if it contains a control character (NUL

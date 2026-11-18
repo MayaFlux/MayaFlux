@@ -17,7 +17,8 @@ namespace MayaFlux::Portal::Network {
  * and send_to as the only public interface.
  *
  * Lifetime matches the stream: the endpoint is opened on construction
- * and closed on destruction. Move-only.
+ * and closed on destruction. Move-only. A sink made with to_connection
+ * borrows an existing connection instead and never closes it.
  *
  * Consumers hold a shared_ptr<NetworkSink>. A metro coroutine,
  * a node output callback, or a future Portal::Network::PacketFlow
@@ -52,7 +53,28 @@ public:
     explicit NetworkSink(const StreamConfig& config);
 
     /**
-     * @brief Close the endpoint and release resources.
+     * @brief A sink over a connection that already exists, which it does not own.
+     * @param connection_id Endpoint id of the connection, usually NetworkMessage::endpoint_id
+     *                      of a message a listener received.
+     * @param name          Optional name for the sink.
+     *
+     * For replying to a client of a listener, or sending to it later. The sink only
+     * sends: destroying it leaves the connection open, and the connection ending leaves
+     * the sink valid but send returns false. The framing is the connection's own.
+     * is_open reports that a connection id and the service are held, not that the
+     * peer is still there. Send is the test of that.
+     *
+     * @code
+     * on_message_received(source, [](const Core::NetworkMessage& msg) {
+     *     auto reply = Portal::Network::NetworkSink::to_connection(msg.endpoint_id);
+     *     (void)reply.send(answer);
+     * });
+     * @endcode
+     */
+    [[nodiscard]] static NetworkSink to_connection(uint64_t connection_id, std::string name = {});
+
+    /**
+     * @brief Close the endpoint and release resources, unless the sink does not own it.
      */
     ~NetworkSink();
 
@@ -67,7 +89,8 @@ public:
      * @return true if the send was accepted by the backend.
      *
      * For UDP: non-blocking sendto() to the address in StreamConfig::endpoint.
-     * For TCP: writes a framed message; may block briefly on backpressure.
+     * For TCP and UDS: writes a framed message once the connection is open,
+     * and returns false while it is still connecting or after it failed.
      */
     [[nodiscard]] bool send(ByteView data) const;
 
@@ -79,7 +102,7 @@ public:
      * @return true if the send was accepted.
      *
      * Primary use: UDP fan-out to a different peer than the default target.
-     * TCP ignores address/port and uses the connected peer.
+     * TCP and UDS ignore address/port and use the connected peer.
      */
     [[nodiscard]] bool send_to(ByteView data, const std::string& address, uint16_t port) const;
 
@@ -94,8 +117,13 @@ public:
     [[nodiscard]] const std::string& name() const { return m_name; }
 
 private:
+    struct Borrowed { };
+
+    NetworkSink(Borrowed, uint64_t connection_id, std::string name);
+
     std::string m_name;
     uint64_t m_endpoint_id { 0 };
+    bool m_owns { true };
 
     Registry::Service::NetworkService* m_service { nullptr };
 };

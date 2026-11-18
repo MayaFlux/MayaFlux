@@ -455,7 +455,7 @@ MAYAFLUX_API uint64_t samples_to_blocks(uint64_t samples);
 MAYAFLUX_API double samples_to_seconds(uint64_t samples);
 
 /**
- * @brief Schedule an on_message handler with an existing NetworkSource
+ * @brief Schedule a handler for every message received by an existing NetworkSource
  * @param source   Shared NetworkSource; coroutine frame takes co-ownership
  * @param callback Invoked with each received message
  * @param name     Optional name for the event handler
@@ -463,81 +463,137 @@ MAYAFLUX_API double samples_to_seconds(uint64_t samples);
  * @code
  * auto src = std::make_shared<Vruta::NetworkSource>(
  *     Core::EndpointInfo{ .transport = Core::NetworkTransport::UDP, .local_port = 8000 });
- * MayaFlux::on_network_message(src, [](const Core::NetworkMessage& msg) { });
+ * MayaFlux::on_message_received(src, [](const Core::NetworkMessage& msg) { });
  * @endcode
  */
-MAYAFLUX_API void on_network_message(
+MAYAFLUX_API void on_message_received(
     std::shared_ptr<Vruta::NetworkSource> source,
     std::function<void(const Core::NetworkMessage&)> callback,
     std::string name = "");
 
 /**
- * @brief Schedule an on_message handler, constructing the NetworkSource from config
- * @param info     Endpoint configuration used to open the source
- * @param callback Invoked with each received message
- * @param name     Optional name for the event handler
- * @return Shared pointer to the opened NetworkSource (caller owns lifetime anchor)
- *
- * @code
- * auto src = MayaFlux::on_network_message(
- *     Core::EndpointInfo{ .transport = Core::NetworkTransport::UDP, .local_port = 8000 },
- *     [](const Core::NetworkMessage& msg) { });
- * @endcode
- */
-MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message(
-    const Core::EndpointInfo& info,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
-/**
- * @brief Schedule an on_message_from handler with an existing NetworkSource
+ * @brief Schedule a handler for messages from one sender address
  * @param source         Shared NetworkSource
- * @param sender_address Sender IP address to filter on
+ * @param sender_address Matched against NetworkMessage::sender_address. A listener reports the
+ *                       same address for every connection it accepts over a Unix socket, so use
+ *                       the connection overload to separate clients there.
  * @param callback       Invoked with each matching message
  * @param name           Optional name for the event handler
  */
-MAYAFLUX_API void on_network_message_from(
+MAYAFLUX_API void on_message_received(
     std::shared_ptr<Vruta::NetworkSource> source,
     std::string sender_address,
     std::function<void(const Core::NetworkMessage&)> callback,
     std::string name = "");
 
 /**
- * @brief Schedule an on_message_from handler, constructing the NetworkSource from config
- * @param info           Endpoint configuration used to open the source
- * @param sender_address Sender IP address to filter on
- * @param callback       Invoked with each matching message
- * @param name           Optional name for the event handler
- * @return Shared pointer to the opened NetworkSource
+ * @brief Schedule a handler for messages from one connection
+ * @param source        Shared NetworkSource
+ * @param connection_id NetworkMessage::endpoint_id to match; for a listener, the id of an
+ *                      accepted connection as its first message reports it
+ * @param callback      Invoked with each message from that connection
+ * @param name          Optional name for the event handler
  */
-MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message_from(
-    const Core::EndpointInfo& info,
-    std::string sender_address,
+MAYAFLUX_API void on_message_received(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    uint64_t connection_id,
     std::function<void(const Core::NetworkMessage&)> callback,
     std::string name = "");
 
 /**
- * @brief Schedule an on_message_matching handler with an existing NetworkSource
+ * @brief Schedule a handler for messages a predicate accepts
  * @param source    Shared NetworkSource
  * @param predicate Filter; only matching messages invoke callback
  * @param callback  Invoked with each matching message
  * @param name      Optional name for the event handler
  */
-MAYAFLUX_API void on_network_message_matching(
+MAYAFLUX_API void on_message_received(
     std::shared_ptr<Vruta::NetworkSource> source,
     std::function<bool(const Core::NetworkMessage&)> predicate,
     std::function<void(const Core::NetworkMessage&)> callback,
     std::string name = "");
 
 /**
- * @brief Schedule an on_message_matching handler, constructing the NetworkSource from config
+ * @brief Schedule a handler for every message, opening the NetworkSource from config
+ * @param info     Endpoint configuration used to open the source
+ * @param callback Invoked with each received message
+ * @param name     Optional name for the event handler
+ * @return Shared pointer to the opened NetworkSource (caller owns lifetime anchor)
+ *
+ * @code
+ * auto src = MayaFlux::on_message_received(
+ *     Core::EndpointInfo{ .transport = Core::NetworkTransport::UDP, .local_port = 8000 },
+ *     [](const Core::NetworkMessage& msg) { });
+ * @endcode
+ */
+MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_message_received(
+    const Core::EndpointInfo& info,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a handler for messages from one sender address, opening the NetworkSource from config
+ * @param info           Endpoint configuration used to open the source
+ * @param sender_address Matched against NetworkMessage::sender_address
+ * @param callback       Invoked with each matching message
+ * @param name           Optional name for the event handler
+ * @return Shared pointer to the opened NetworkSource
+ */
+MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_message_received(
+    const Core::EndpointInfo& info,
+    std::string sender_address,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/**
+ * @brief Schedule a handler for messages a predicate accepts, opening the NetworkSource from config
  * @param info      Endpoint configuration used to open the source
  * @param predicate Filter; only matching messages invoke callback
  * @param callback  Invoked with each matching message
  * @param name      Optional name for the event handler
  * @return Shared pointer to the opened NetworkSource
  */
-MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message_matching(
+MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_message_received(
+    const Core::EndpointInfo& info,
+    std::function<bool(const Core::NetworkMessage&)> predicate,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/** @brief Replaced by on_message_received(source, callback, name). */
+[[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/** @brief Replaced by on_message_received(info, callback, name). */
+[[deprecated("use on_message_received")]] MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message(
+    const Core::EndpointInfo& info,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/** @brief Replaced by on_message_received(source, sender_address, callback, name). */
+[[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message_from(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    std::string sender_address,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/** @brief Replaced by on_message_received(info, sender_address, callback, name). */
+[[deprecated("use on_message_received")]] MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message_from(
+    const Core::EndpointInfo& info,
+    std::string sender_address,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/** @brief Replaced by on_message_received(source, predicate, callback, name). */
+[[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message_matching(
+    std::shared_ptr<Vruta::NetworkSource> source,
+    std::function<bool(const Core::NetworkMessage&)> predicate,
+    std::function<void(const Core::NetworkMessage&)> callback,
+    std::string name = "");
+
+/** @brief Replaced by on_message_received(info, predicate, callback, name). */
+[[deprecated("use on_message_received")]] MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message_matching(
     const Core::EndpointInfo& info,
     std::function<bool(const Core::NetworkMessage&)> predicate,
     std::function<void(const Core::NetworkMessage&)> callback,

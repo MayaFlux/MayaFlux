@@ -11,6 +11,7 @@ set(LILA_HEADERS
     Commentator.hpp
     Lila.hpp
     Address.hpp
+    EvalReport.hpp
     Listener.hpp
     Result.hpp
 )

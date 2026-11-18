@@ -146,6 +146,7 @@ private:
     std::unique_ptr<Impl> m_impl;
     std::string m_last_error;
 
+    bool verify_library_version();
     bool setup_compiler_instance();
     bool create_interpreter();
     std::string preprocess_code(const std::string& code);

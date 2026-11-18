@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Core/Backends/Network/TCPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDPBackend.hpp"
+#include "MayaFlux/Core/Backends/Network/UDSBackend.hpp"
 
 #include "MayaFlux/Portal/Network/Network.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -50,6 +51,9 @@ void NetworkSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
     if (m_config.shared_memory.enabled) {
         initialize_shm_backend();
+    }
+    if (m_config.uds.enabled) {
+        initialize_uds_backend();
     }
 
     register_backend_service();
@@ -152,15 +156,7 @@ void NetworkSubsystem::shutdown()
 {
     stop();
 
-    {
-        std::unique_lock lock(m_routing_mutex);
-        m_endpoint_routing.clear();
-    }
-
-    {
-        std::unique_lock lock(m_callbacks_mutex);
-        m_endpoint_callbacks.clear();
-    }
+    m_routes.reset();
 
     {
         std::unique_lock lock(m_backends_mutex);
@@ -228,11 +224,9 @@ bool NetworkSubsystem::add_backend(std::unique_ptr<INetworkBackend> backend)
             on_backend_state_change(info, prev, curr);
         });
 
-    if (auto* tcp = dynamic_cast<TCPBackend*>(backend.get())) {
-        tcp->set_endpoint_id_allocator([this]() -> uint64_t {
-            return m_next_endpoint_id.fetch_add(1);
-        });
-    }
+    backend->set_endpoint_id_allocator([this]() -> uint64_t {
+        return m_next_endpoint_id.fetch_add(1);
+    });
 
     MF_INFO(Journal::Component::Core, Journal::Context::NetworkSubsystem,
         "Added network backend: {}", backend->get_name());
@@ -275,14 +269,14 @@ uint64_t NetworkSubsystem::open_endpoint(const EndpointInfo& info)
     EndpointInfo ep = info;
     ep.id = m_next_endpoint_id.fetch_add(1);
 
+    m_routes.update([&](RouteTable& routes) {
+        routes.insert_or_assign(ep.id, Route { .transport = info.transport });
+    });
+
     uint64_t backend_id = backend->open_endpoint(ep);
     if (backend_id == 0) {
+        m_routes.update([id = ep.id](RouteTable& routes) { return routes.erase(id); });
         return 0;
-    }
-
-    {
-        std::unique_lock lock(m_routing_mutex);
-        m_endpoint_routing[ep.id] = info.transport;
     }
 
     return ep.id;
@@ -295,17 +289,22 @@ void NetworkSubsystem::close_endpoint(uint64_t endpoint_id)
         return;
     }
 
+    std::vector<uint64_t> accepted;
+    m_routes.update([&](RouteTable& routes) {
+        accepted.clear();
+        for (const auto& [child, route] : routes) {
+            if (route.parent_id == endpoint_id) {
+                accepted.push_back(child);
+            }
+        }
+        routes.erase(endpoint_id);
+    });
+
+    for (uint64_t child : accepted) {
+        close_endpoint(child);
+    }
+
     backend->close_endpoint(endpoint_id);
-
-    {
-        std::unique_lock lock(m_routing_mutex);
-        m_endpoint_routing.erase(endpoint_id);
-    }
-
-    {
-        std::unique_lock lock(m_callbacks_mutex);
-        m_endpoint_callbacks.erase(endpoint_id);
-    }
 }
 
 bool NetworkSubsystem::send(uint64_t endpoint_id, const uint8_t* data, size_t size)
@@ -339,8 +338,20 @@ EndpointState NetworkSubsystem::get_endpoint_state(uint64_t endpoint_id) const
 void NetworkSubsystem::set_endpoint_receive_callback(uint64_t endpoint_id,
     NetworkReceiveCallback callback)
 {
-    std::unique_lock lock(m_callbacks_mutex);
-    m_endpoint_callbacks[endpoint_id] = std::move(callback);
+    const auto held = callback
+        ? std::make_shared<const NetworkReceiveCallback>(std::move(callback))
+        : std::shared_ptr<const NetworkReceiveCallback> {};
+
+    m_routes.update([&](RouteTable& routes) {
+        const auto it = routes.find(endpoint_id);
+        if (it == routes.end()) {
+            return false;
+        }
+        Route route = it->second;
+        route.callback = held;
+        routes.insert_or_assign(endpoint_id, std::move(route));
+        return true;
+    });
 }
 
 std::vector<EndpointInfo> NetworkSubsystem::get_all_endpoints() const
@@ -368,6 +379,12 @@ void NetworkSubsystem::initialize_tcp_backend()
 {
     auto tcp = std::make_unique<TCPBackend>(m_config.tcp, *m_io_context);
     add_backend(std::move(tcp));
+}
+
+void NetworkSubsystem::initialize_uds_backend()
+{
+    auto uds = std::make_unique<UDSBackend>(m_config.uds, *m_io_context);
+    add_backend(std::move(uds));
 }
 
 void NetworkSubsystem::initialize_shm_backend()
@@ -426,16 +443,48 @@ void NetworkSubsystem::register_backend_service()
 void NetworkSubsystem::on_backend_receive(uint64_t endpoint_id, const uint8_t* data,
     size_t size, std::string_view sender_addr)
 {
-    std::shared_lock lock(m_callbacks_mutex);
-    auto it = m_endpoint_callbacks.find(endpoint_id);
-    if (it != m_endpoint_callbacks.end() && it->second) {
-        it->second(endpoint_id, data, size, sender_addr);
+    std::shared_ptr<const NetworkReceiveCallback> callback;
+
+    {
+        const auto routes = m_routes.read();
+        if (!routes) {
+            return;
+        }
+
+        const auto it = routes->find(endpoint_id);
+        if (it == routes->end()) {
+            return;
+        }
+
+        callback = it->second.callback;
+        if (!callback && it->second.parent_id != 0) {
+            const auto parent = routes->find(it->second.parent_id);
+            if (parent != routes->end()) {
+                callback = parent->second.callback;
+            }
+        }
+    }
+
+    if (callback && *callback) {
+        (*callback)(endpoint_id, data, size, sender_addr);
     }
 }
 
 void NetworkSubsystem::on_backend_state_change(const EndpointInfo& info,
     EndpointState previous, EndpointState current)
 {
+    if (info.parent_id != 0 && previous == EndpointState::CLOSED
+        && current == EndpointState::OPEN) {
+        m_routes.update([&](RouteTable& routes) {
+            if (routes.find(info.parent_id) == routes.end()) {
+                return false;
+            }
+            routes.insert_or_assign(info.id,
+                Route { .transport = info.transport, .parent_id = info.parent_id });
+            return true;
+        });
+    }
+
     MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkSubsystem,
         "Endpoint {} state: {} -> {}",
         info.id, static_cast<int>(previous), static_cast<int>(current));
@@ -449,12 +498,15 @@ INetworkBackend* NetworkSubsystem::resolve_backend(uint64_t endpoint_id) const
 {
     NetworkTransport transport {};
     {
-        std::shared_lock lock(m_routing_mutex);
-        auto it = m_endpoint_routing.find(endpoint_id);
-        if (it == m_endpoint_routing.end()) {
+        const auto routes = m_routes.read();
+        if (!routes) {
             return nullptr;
         }
-        transport = it->second;
+        const auto it = routes->find(endpoint_id);
+        if (it == routes->end()) {
+            return nullptr;
+        }
+        transport = it->second.transport;
     }
 
     return get_backend(transport);
