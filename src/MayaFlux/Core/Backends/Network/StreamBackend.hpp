@@ -2,6 +2,8 @@
 
 #include "NetworkBackend.hpp"
 
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 #include "MayaFlux/Transitive/Protocol/Framing.hpp"
 
 #include <expected>
@@ -88,7 +90,9 @@ namespace detail {
  * read is delivered as one message with no boundaries, and a send writes its payload
  * as it is. CHUNKED is refused.
  *
- * All I/O is async on the shared io_context.
+ * All I/O is async on the shared io_context. The connection and listener tables are
+ * lock free snapshots and no lock or guard is held while a callback runs, so a callback
+ * may send, close an endpoint or open another from inside itself.
  */
 template <typename Transport>
 class StreamBackend : public INetworkBackend {
@@ -149,8 +153,16 @@ private:
 
     using Bound = typename Transport::Bound;
 
+    /**
+     * One connection. info is fixed once the connection is published, and state, which the
+     * io thread writes and any thread reads, is atomic. The socket, the read buffer and the
+     * framer belong to the io thread. Handlers hold a shared_ptr, so a connection that
+     * close_endpoint removes stays valid until the handlers that still hold it return.
+     */
     struct ConnectionState {
         EndpointInfo info;
+        std::atomic<EndpointState> state { EndpointState::CLOSED };
+        std::atomic<bool> closed { false };
         typename Protocol::socket socket;
         std::vector<uint8_t> read_buffer;
         detail::StreamFramer framer;
@@ -163,10 +175,18 @@ private:
             , framer(detail::make_stream_framer(framing, max_message_size))
         {
         }
+
+        [[nodiscard]] EndpointInfo snapshot() const
+        {
+            EndpointInfo copy = info;
+            copy.state = state.load();
+            return copy;
+        }
     };
 
     struct ListenerState {
         EndpointInfo info;
+        std::atomic<bool> closed { false };
         typename Protocol::acceptor acceptor;
         typename Protocol::socket pending_socket;
         Bound bound;
@@ -178,30 +198,35 @@ private:
         }
     };
 
+    using ConnectionPtr = std::shared_ptr<ConnectionState>;
+    using ListenerPtr = std::shared_ptr<ListenerState>;
+    using ConnectionTable = Memory::FlatMap<uint64_t, ConnectionPtr>;
+    using ListenerTable = Memory::FlatMap<uint64_t, ListenerPtr>;
+
     Config m_config;
     asio::io_context& m_context;
 
     std::atomic<bool> m_initialized { false };
     std::atomic<bool> m_running { false };
 
-    mutable std::shared_mutex m_connections_mutex;
-    std::unordered_map<uint64_t, std::unique_ptr<ConnectionState>> m_connections;
-
-    mutable std::shared_mutex m_listeners_mutex;
-    std::unordered_map<uint64_t, std::unique_ptr<ListenerState>> m_listeners;
+    Memory::SnapshotCell<ConnectionTable> m_connections;
+    Memory::SnapshotCell<ListenerTable> m_listeners;
 
     NetworkReceiveCallback m_receive_callback;
     EndpointStateCallback m_state_callback;
     std::function<uint64_t()> m_allocate_endpoint_id;
 
+    [[nodiscard]] ConnectionPtr find_connection(uint64_t endpoint_id) const;
+    [[nodiscard]] ListenerPtr find_listener(uint64_t endpoint_id) const;
+
     void close_listener(ListenerState& listener);
-    void start_connect(ConnectionState& conn);
-    void start_accept(ListenerState& listener);
-    void start_receive_chain(ConnectionState& conn);
-    void on_bytes_received(ConnectionState& conn, const asio::error_code& ec, size_t bytes);
-    void on_connection_error(ConnectionState& conn, const asio::error_code& ec);
-    void schedule_reconnect(ConnectionState& conn);
-    void transition_state(EndpointInfo& info, EndpointState new_state);
+    void start_connect(const ConnectionPtr& conn);
+    void start_accept(const ListenerPtr& listener);
+    void start_receive_chain(const ConnectionPtr& conn);
+    void on_bytes_received(const ConnectionPtr& conn, const asio::error_code& ec, size_t bytes);
+    void on_connection_error(const ConnectionPtr& conn, const asio::error_code& ec);
+    void schedule_reconnect(const ConnectionPtr& conn);
+    void transition_state(ConnectionState& conn, EndpointState new_state);
 };
 
 } // namespace MayaFlux::Core

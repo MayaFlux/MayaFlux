@@ -62,9 +62,8 @@ void StreamBackend<Transport>::stop()
 
     m_running.store(false);
 
-    {
-        std::shared_lock lock(m_connections_mutex);
-        for (auto& [id, conn] : m_connections) {
+    if (const auto connections = m_connections.read()) {
+        for (const auto& [id, conn] : *connections) {
             asio::error_code ec;
 
             if (conn->socket.close(ec)) {
@@ -78,9 +77,8 @@ void StreamBackend<Transport>::stop()
         }
     }
 
-    {
-        std::shared_lock lock(m_listeners_mutex);
-        for (auto& [id, listener] : m_listeners) {
+    if (const auto listeners = m_listeners.read()) {
+        for (const auto& [id, listener] : *listeners) {
             close_listener(*listener);
         }
     }
@@ -94,18 +92,25 @@ void StreamBackend<Transport>::shutdown()
 {
     stop();
 
-    {
-        std::unique_lock lock(m_connections_mutex);
-        m_connections.clear();
+    if (const auto connections = m_connections.read()) {
+        for (const auto& [id, conn] : *connections) {
+            conn->closed.store(true);
+            asio::error_code ec;
+            (void)conn->socket.close(ec);
+            if (conn->reconnect_timer) {
+                conn->reconnect_timer->cancel();
+            }
+        }
     }
 
-    {
-        std::unique_lock lock(m_listeners_mutex);
-        for (auto& [id, listener] : m_listeners) {
+    if (const auto listeners = m_listeners.read()) {
+        for (const auto& [id, listener] : *listeners) {
             close_listener(*listener);
         }
-        m_listeners.clear();
     }
+
+    m_connections.reset();
+    m_listeners.reset();
 
     m_initialized.store(false);
 
@@ -116,12 +121,36 @@ void StreamBackend<Transport>::shutdown()
 template <typename Transport>
 void StreamBackend<Transport>::close_listener(ListenerState& listener)
 {
+    listener.closed.store(true);
+
     asio::error_code ec;
     if (listener.acceptor.close(ec)) {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "Error closing {} listener {}: {}", Transport::label, listener.info.id, ec.message());
     }
     Transport::release(listener.bound);
+}
+
+template <typename Transport>
+auto StreamBackend<Transport>::find_connection(uint64_t endpoint_id) const -> ConnectionPtr
+{
+    const auto table = m_connections.read();
+    if (!table) {
+        return nullptr;
+    }
+    const auto it = table->find(endpoint_id);
+    return it == table->end() ? nullptr : it->second;
+}
+
+template <typename Transport>
+auto StreamBackend<Transport>::find_listener(uint64_t endpoint_id) const -> ListenerPtr
+{
+    const auto table = m_listeners.read();
+    if (!table) {
+        return nullptr;
+    }
+    const auto it = table->find(endpoint_id);
+    return it == table->end() ? nullptr : it->second;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,7 +168,7 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
     }
 
     if (Transport::is_listener(info)) {
-        auto listener = std::make_unique<ListenerState>(m_context);
+        auto listener = std::make_shared<ListenerState>(m_context);
         listener->info = info;
         listener->info.state = EndpointState::OPENING;
 
@@ -153,18 +182,15 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
         listener->bound = std::move(*bound);
         listener->info.state = EndpointState::OPEN;
 
-        auto* raw = listener.get();
-
-        {
-            std::unique_lock lock(m_listeners_mutex);
-            m_listeners[info.id] = std::move(listener);
-        }
+        m_listeners.update([&](ListenerTable& table) {
+            table.insert_or_assign(info.id, listener);
+        });
 
         if (m_state_callback) {
-            m_state_callback(raw->info, EndpointState::OPENING, EndpointState::OPEN);
+            m_state_callback(listener->info, EndpointState::OPENING, EndpointState::OPEN);
         }
 
-        start_accept(*raw);
+        start_accept(listener);
 
         MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
             "{} listener {} opened on {}", Transport::label, info.id, Transport::describe(info));
@@ -172,19 +198,16 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
         return info.id;
     }
 
-    auto conn = std::make_unique<ConnectionState>(m_context, info.framing, info.max_message_size);
+    auto conn = std::make_shared<ConnectionState>(m_context, info.framing, info.max_message_size);
     conn->info = info;
-    conn->info.state = EndpointState::OPENING;
+    conn->state.store(EndpointState::OPENING);
     conn->is_outbound = true;
 
-    auto* raw = conn.get();
+    m_connections.update([&](ConnectionTable& table) {
+        table.insert_or_assign(info.id, conn);
+    });
 
-    {
-        std::unique_lock lock(m_connections_mutex);
-        m_connections[info.id] = std::move(conn);
-    }
-
-    start_connect(*raw);
+    start_connect(conn);
 
     MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
         "{} connection {} opening to {}", Transport::label, info.id, Transport::describe(info));
@@ -195,58 +218,49 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
 template <typename Transport>
 void StreamBackend<Transport>::close_endpoint(uint64_t endpoint_id)
 {
-    {
-        std::unique_lock lock(m_connections_mutex);
-        auto it = m_connections.find(endpoint_id);
-        if (it != m_connections.end()) {
-            asio::error_code ec;
+    if (const auto conn = find_connection(endpoint_id)) {
+        conn->closed.store(true);
 
-            if (it->second->socket.close(ec)) {
-                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-                    "Error closing {} connection {}: {}", Transport::label, endpoint_id, ec.message());
-            }
-
-            if (it->second->reconnect_timer) {
-                it->second->reconnect_timer->cancel();
-            }
-            m_connections.erase(it);
-
-            MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
-                "{} connection {} closed", Transport::label, endpoint_id);
-            return;
+        asio::error_code ec;
+        if (conn->socket.close(ec)) {
+            MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+                "Error closing {} connection {}: {}", Transport::label, endpoint_id, ec.message());
         }
+
+        if (conn->reconnect_timer) {
+            conn->reconnect_timer->cancel();
+        }
+
+        m_connections.update([endpoint_id](ConnectionTable& table) {
+            return table.erase(endpoint_id);
+        });
+
+        MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
+            "{} connection {} closed", Transport::label, endpoint_id);
+        return;
     }
 
-    {
-        std::unique_lock lock(m_listeners_mutex);
-        auto it = m_listeners.find(endpoint_id);
-        if (it != m_listeners.end()) {
-            close_listener(*it->second);
-            m_listeners.erase(it);
+    if (const auto listener = find_listener(endpoint_id)) {
+        close_listener(*listener);
 
-            MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
-                "{} listener {} closed", Transport::label, endpoint_id);
-        }
+        m_listeners.update([endpoint_id](ListenerTable& table) {
+            return table.erase(endpoint_id);
+        });
+
+        MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
+            "{} listener {} closed", Transport::label, endpoint_id);
     }
 }
 
 template <typename Transport>
 EndpointState StreamBackend<Transport>::get_endpoint_state(uint64_t endpoint_id) const
 {
-    {
-        std::shared_lock lock(m_connections_mutex);
-        auto it = m_connections.find(endpoint_id);
-        if (it != m_connections.end()) {
-            return it->second->info.state;
-        }
+    if (const auto conn = find_connection(endpoint_id)) {
+        return conn->state.load();
     }
 
-    {
-        std::shared_lock lock(m_listeners_mutex);
-        auto it = m_listeners.find(endpoint_id);
-        if (it != m_listeners.end()) {
-            return it->second->info.state;
-        }
+    if (const auto listener = find_listener(endpoint_id)) {
+        return listener->info.state;
     }
 
     return EndpointState::CLOSED;
@@ -257,17 +271,15 @@ std::vector<EndpointInfo> StreamBackend<Transport>::get_endpoints() const
 {
     std::vector<EndpointInfo> result;
 
-    {
-        std::shared_lock lock(m_connections_mutex);
-        result.reserve(m_connections.size());
-        for (const auto& [id, conn] : m_connections) {
-            result.push_back(conn->info);
+    if (const auto connections = m_connections.read()) {
+        result.reserve(connections->size());
+        for (const auto& [id, conn] : *connections) {
+            result.push_back(conn->snapshot());
         }
     }
 
-    {
-        std::shared_lock lock(m_listeners_mutex);
-        for (const auto& [id, listener] : m_listeners) {
+    if (const auto listeners = m_listeners.read()) {
+        for (const auto& [id, listener] : *listeners) {
             result.push_back(listener->info);
         }
     }
@@ -282,14 +294,8 @@ std::vector<EndpointInfo> StreamBackend<Transport>::get_endpoints() const
 template <typename Transport>
 bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, size_t size)
 {
-    std::shared_lock lock(m_connections_mutex);
-    auto it = m_connections.find(endpoint_id);
-    if (it == m_connections.end()) {
-        return false;
-    }
-
-    auto& conn = *it->second;
-    if (conn.info.state != EndpointState::OPEN) {
+    const auto conn = find_connection(endpoint_id);
+    if (!conn || conn->closed.load() || conn->state.load() != EndpointState::OPEN) {
         return false;
     }
 
@@ -297,7 +303,7 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
     frame->reserve(sizeof(uint32_t) + size);
     const Transitive::Protocol::Message payload { data, size };
     bool encoded = false;
-    switch (conn.info.framing) {
+    switch (conn->info.framing) {
     case FramingPolicy::LINE:
         encoded = Transitive::Protocol::encode_line(payload, *frame);
         break;
@@ -308,7 +314,7 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
     default:
         encoded = Transitive::Protocol::encode_length_prefixed(
             payload, *frame,
-            conn.info.max_message_size != 0 ? conn.info.max_message_size : Transitive::Protocol::default_max_frame,
+            conn->info.max_message_size != 0 ? conn->info.max_message_size : Transitive::Protocol::default_max_frame,
             true);
         break;
     }
@@ -317,18 +323,13 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
     }
 
     asio::async_write(
-        conn.socket,
+        conn->socket,
         asio::buffer(*frame),
-        [frame, endpoint_id, this](const asio::error_code& ec, size_t) {
+        [this, conn, frame](const asio::error_code& ec, size_t) {
             if (ec) {
                 MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-                    "{} write failed on endpoint {}: {}", Transport::label, endpoint_id, ec.message());
-
-                std::shared_lock lk(m_connections_mutex);
-                auto cit = m_connections.find(endpoint_id);
-                if (cit != m_connections.end()) {
-                    on_connection_error(*cit->second, ec);
-                }
+                    "{} write failed on endpoint {}: {}", Transport::label, conn->info.id, ec.message());
+                on_connection_error(conn, ec);
             }
         });
 
@@ -363,47 +364,43 @@ void StreamBackend<Transport>::set_state_callback(EndpointStateCallback callback
 // ─────────────────────────────────────────────────────────────────────────────
 
 template <typename Transport>
-void StreamBackend<Transport>::start_connect(ConnectionState& conn)
+void StreamBackend<Transport>::start_connect(const ConnectionPtr& conn)
 {
-    auto target = Transport::connect_target(conn.info);
+    auto target = Transport::connect_target(conn->info);
     if (!target) {
         MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "Invalid {} target for endpoint {}: {}", Transport::label, conn.info.id, target.error());
-        transition_state(conn.info, EndpointState::ERROR);
+            "Invalid {} target for endpoint {}: {}", Transport::label, conn->info.id, target.error());
+        transition_state(*conn, EndpointState::ERROR);
         return;
     }
 
-    conn.socket.async_connect(
+    conn->socket.async_connect(
         *target,
-        [this, ep_id = conn.info.id](const asio::error_code& connect_ec) {
-            std::shared_lock lock(m_connections_mutex);
-            auto it = m_connections.find(ep_id);
-            if (it == m_connections.end()) {
+        [this, conn](const asio::error_code& connect_ec) {
+            if (conn->closed.load() || connect_ec == asio::error::operation_aborted) {
                 return;
             }
-
-            auto& c = *it->second;
 
             if (connect_ec) {
                 MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
                     "{} connect failed for endpoint {}: {}",
-                    Transport::label, ep_id, connect_ec.message());
+                    Transport::label, conn->info.id, connect_ec.message());
 
                 if (m_config.auto_reconnect) {
-                    transition_state(c.info, EndpointState::RECONNECTING);
-                    schedule_reconnect(c);
+                    transition_state(*conn, EndpointState::RECONNECTING);
+                    schedule_reconnect(conn);
                 } else {
-                    transition_state(c.info, EndpointState::ERROR);
+                    transition_state(*conn, EndpointState::ERROR);
                 }
                 return;
             }
 
-            transition_state(c.info, EndpointState::OPEN);
-            start_receive_chain(c);
+            transition_state(*conn, EndpointState::OPEN);
+            start_receive_chain(conn);
 
             MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "{} endpoint {} connected to {}",
-                Transport::label, ep_id, Transport::describe(c.info));
+                Transport::label, conn->info.id, Transport::describe(conn->info));
         });
 }
 
@@ -412,28 +409,24 @@ void StreamBackend<Transport>::start_connect(ConnectionState& conn)
 // ─────────────────────────────────────────────────────────────────────────────
 
 template <typename Transport>
-void StreamBackend<Transport>::start_accept(ListenerState& listener)
+void StreamBackend<Transport>::start_accept(const ListenerPtr& listener)
 {
-    listener.pending_socket = typename Protocol::socket(m_context);
+    listener->pending_socket = typename Protocol::socket(m_context);
 
-    listener.acceptor.async_accept(
-        listener.pending_socket,
-        [this, listener_id = listener.info.id](const asio::error_code& ec) {
-            std::shared_lock lock(m_listeners_mutex);
-            auto it = m_listeners.find(listener_id);
-            if (it == m_listeners.end()) {
+    listener->acceptor.async_accept(
+        listener->pending_socket,
+        [this, listener](const asio::error_code& ec) {
+            if (listener->closed.load()) {
                 return;
             }
-
-            auto& lst = *it->second;
 
             if (ec) {
                 if (ec == asio::error::operation_aborted) {
                     return;
                 }
                 MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-                    "{} accept error on listener {}: {}", Transport::label, listener_id, ec.message());
-                start_accept(lst);
+                    "{} accept error on listener {}: {}", Transport::label, listener->info.id, ec.message());
+                start_accept(listener);
                 return;
             }
 
@@ -442,36 +435,34 @@ void StreamBackend<Transport>::start_accept(ListenerState& listener)
                 new_id = m_allocate_endpoint_id();
             }
 
-            auto conn = std::make_unique<ConnectionState>(m_context, lst.info.framing, lst.info.max_message_size);
-            conn->socket = std::move(lst.pending_socket);
+            auto conn = std::make_shared<ConnectionState>(
+                m_context, listener->info.framing, listener->info.max_message_size);
+            conn->socket = std::move(listener->pending_socket);
             conn->is_outbound = false;
             conn->info.id = new_id;
             conn->info.transport = Transport::id;
             conn->info.role = EndpointRole::BIDIRECTIONAL;
-            conn->info.state = EndpointState::OPEN;
-            conn->info.parent_id = listener_id;
-            conn->info.framing = lst.info.framing;
-            conn->info.max_message_size = lst.info.max_message_size;
-            Transport::describe_accepted(conn->socket, lst.info, conn->info);
+            conn->info.parent_id = listener->info.id;
+            conn->info.framing = listener->info.framing;
+            conn->info.max_message_size = listener->info.max_message_size;
+            Transport::describe_accepted(conn->socket, listener->info, conn->info);
+            conn->state.store(EndpointState::OPEN);
 
-            auto* raw = conn.get();
-
-            {
-                std::unique_lock conn_lock(m_connections_mutex);
-                m_connections[new_id] = std::move(conn);
-            }
+            m_connections.update([&](ConnectionTable& table) {
+                table.insert_or_assign(new_id, conn);
+            });
 
             if (m_state_callback) {
-                m_state_callback(raw->info, EndpointState::CLOSED, EndpointState::OPEN);
+                m_state_callback(conn->snapshot(), EndpointState::CLOSED, EndpointState::OPEN);
             }
 
-            start_receive_chain(*raw);
+            start_receive_chain(conn);
 
             MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "{} accepted connection {} from {} on listener {}",
-                Transport::label, new_id, Transport::describe(raw->info), listener_id);
+                Transport::label, new_id, Transport::describe(conn->info), listener->info.id);
 
-            start_accept(lst);
+            start_accept(listener);
         });
 }
 
@@ -480,35 +471,34 @@ void StreamBackend<Transport>::start_accept(ListenerState& listener)
 // ─────────────────────────────────────────────────────────────────────────────
 
 template <typename Transport>
-void StreamBackend<Transport>::start_receive_chain(ConnectionState& conn)
+void StreamBackend<Transport>::start_receive_chain(const ConnectionPtr& conn)
 {
-    conn.socket.async_read_some(
-        asio::buffer(conn.read_buffer),
-        [this, ep_id = conn.info.id](const asio::error_code& ec, size_t bytes) {
-            std::shared_lock lock(m_connections_mutex);
-            auto it = m_connections.find(ep_id);
-            if (it == m_connections.end()) {
-                return;
-            }
-            on_bytes_received(*it->second, ec, bytes);
+    conn->socket.async_read_some(
+        asio::buffer(conn->read_buffer),
+        [this, conn](const asio::error_code& ec, size_t bytes) {
+            on_bytes_received(conn, ec, bytes);
         });
 }
 
 template <typename Transport>
-void StreamBackend<Transport>::on_bytes_received(ConnectionState& conn,
+void StreamBackend<Transport>::on_bytes_received(const ConnectionPtr& conn,
     const asio::error_code& ec, size_t bytes)
 {
+    if (conn->closed.load()) {
+        return;
+    }
+
     if (ec) {
         on_connection_error(conn, ec);
         return;
     }
 
-    const std::string peer = Transport::peer_label(conn.info);
-    const Transitive::Protocol::Message chunk { conn.read_buffer.data(), bytes };
+    const std::string peer = Transport::peer_label(conn->info);
+    const Transitive::Protocol::Message chunk { conn->read_buffer.data(), bytes };
 
     auto deliver = [&](Transitive::Protocol::Message message) {
         if (m_receive_callback) {
-            m_receive_callback(conn.info.id, message.data(), message.size(), peer);
+            m_receive_callback(conn->info.id, message.data(), message.size(), peer);
         }
     };
 
@@ -522,12 +512,12 @@ void StreamBackend<Transport>::on_bytes_received(ConnectionState& conn,
                 corrupt = !report.ok();
             }
         },
-        conn.framer);
+        conn->framer);
 
     if (corrupt) {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "{} endpoint {} received an invalid frame length",
-            Transport::label, conn.info.id);
+            Transport::label, conn->info.id);
         on_connection_error(conn, asio::error::message_size);
         return;
     }
@@ -535,7 +525,11 @@ void StreamBackend<Transport>::on_bytes_received(ConnectionState& conn,
     if (dropped != 0) {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
             "{} endpoint {} dropped {} line(s) over max_message_size",
-            Transport::label, conn.info.id, dropped);
+            Transport::label, conn->info.id, dropped);
+    }
+
+    if (conn->closed.load()) {
+        return;
     }
 
     start_receive_chain(conn);
@@ -546,7 +540,7 @@ void StreamBackend<Transport>::on_bytes_received(ConnectionState& conn,
 // ─────────────────────────────────────────────────────────────────────────────
 
 template <typename Transport>
-void StreamBackend<Transport>::on_connection_error(ConnectionState& conn, const asio::error_code& ec)
+void StreamBackend<Transport>::on_connection_error(const ConnectionPtr& conn, const asio::error_code& ec)
 {
     if (ec == asio::error::operation_aborted) {
         return;
@@ -554,69 +548,65 @@ void StreamBackend<Transport>::on_connection_error(ConnectionState& conn, const 
 
     if (ec == asio::error::eof) {
         MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "{} endpoint {} peer disconnected", Transport::label, conn.info.id);
+            "{} endpoint {} peer disconnected", Transport::label, conn->info.id);
     } else {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "{} endpoint {} error: {}", Transport::label, conn.info.id, ec.message());
+            "{} endpoint {} error: {}", Transport::label, conn->info.id, ec.message());
     }
 
     asio::error_code close_ec;
-    if (conn.socket.close(close_ec)) {
+    if (conn->socket.close(close_ec)) {
         MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "Error closing {} socket for endpoint {}: {}", Transport::label, conn.info.id, close_ec.message());
+            "Error closing {} socket for endpoint {}: {}", Transport::label, conn->info.id, close_ec.message());
     }
 
-    if (conn.is_outbound && m_config.auto_reconnect) {
-        transition_state(conn.info, EndpointState::RECONNECTING);
+    if (conn->is_outbound && m_config.auto_reconnect) {
+        transition_state(*conn, EndpointState::RECONNECTING);
         schedule_reconnect(conn);
     } else {
-        transition_state(conn.info, EndpointState::ERROR);
+        transition_state(*conn, EndpointState::ERROR);
     }
 }
 
 template <typename Transport>
-void StreamBackend<Transport>::schedule_reconnect(ConnectionState& conn)
+void StreamBackend<Transport>::schedule_reconnect(const ConnectionPtr& conn)
 {
-    if (!conn.reconnect_timer) {
-        conn.reconnect_timer = std::make_unique<asio::steady_timer>(m_context);
+    if (!conn->reconnect_timer) {
+        conn->reconnect_timer = std::make_unique<asio::steady_timer>(m_context);
     }
 
-    conn.reconnect_timer->expires_after(
+    conn->reconnect_timer->expires_after(
         std::chrono::milliseconds(m_config.reconnect_interval_ms));
 
-    conn.reconnect_timer->async_wait(
-        [this, ep_id = conn.info.id](const asio::error_code& ec) {
+    conn->reconnect_timer->async_wait(
+        [this, weak = std::weak_ptr<ConnectionState>(conn)](const asio::error_code& ec) {
             if (ec == asio::error::operation_aborted) {
                 return;
             }
 
-            std::shared_lock lock(m_connections_mutex);
-            auto it = m_connections.find(ep_id);
-            if (it == m_connections.end()) {
+            const auto c = weak.lock();
+            if (!c || c->closed.load()) {
                 return;
             }
 
-            auto& c = *it->second;
-
-            c.socket = typename Protocol::socket(m_context);
-            std::visit([](auto& framer) { framer.reset(); }, c.framer);
+            c->socket = typename Protocol::socket(m_context);
+            std::visit([](auto& framer) { framer.reset(); }, c->framer);
 
             MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,
                 "{} endpoint {} attempting reconnect to {}",
-                Transport::label, ep_id, Transport::describe(c.info));
+                Transport::label, c->info.id, Transport::describe(c->info));
 
             start_connect(c);
         });
 }
 
 template <typename Transport>
-void StreamBackend<Transport>::transition_state(EndpointInfo& info, EndpointState new_state)
+void StreamBackend<Transport>::transition_state(ConnectionState& conn, EndpointState new_state)
 {
-    EndpointState prev = info.state;
-    info.state = new_state;
+    const EndpointState previous = conn.state.exchange(new_state);
 
-    if (m_state_callback && prev != new_state) {
-        m_state_callback(info, prev, new_state);
+    if (m_state_callback && previous != new_state) {
+        m_state_callback(conn.snapshot(), previous, new_state);
     }
 }
 

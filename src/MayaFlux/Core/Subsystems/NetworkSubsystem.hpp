@@ -4,6 +4,9 @@
 
 #include "MayaFlux/Core/Backends/Network/NetworkBackend.hpp"
 
+#include "MayaFlux/Transitive/Memory/FlatMap.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -197,27 +200,30 @@ private:
     std::shared_ptr<Registry::Service::NetworkService> m_network_service;
 
     /**
-     * @brief Maps endpoint_id -> transport for routing send/close/query
-     *        to the correct backend without scanning all backends.
+     * @brief Everything the subsystem knows about one endpoint id.
+     *
+     * transport routes send, close and queries to the right backend without
+     * scanning them. parent_id is the listener that accepted a connection, 0
+     * otherwise: a connection without a receive callback of its own delivers to
+     * its listener's callback, and closing the listener closes its connections.
+     * callback is the receiver set through set_endpoint_receive_callback.
      */
-    mutable std::shared_mutex m_routing_mutex;
-    std::unordered_map<uint64_t, NetworkTransport> m_endpoint_routing;
+    struct Route {
+        NetworkTransport transport {};
+        uint64_t parent_id {};
+        std::shared_ptr<const NetworkReceiveCallback> callback;
+    };
+
+    using RouteTable = Memory::FlatMap<uint64_t, Route>;
 
     /**
-     * @brief Maps an accepted connection to the listener that accepted it.
-     *        Guarded by m_routing_mutex. A connection without a receive
-     *        callback of its own delivers to its listener's callback, and
-     *        closing the listener closes its connections.
+     * @brief The routes, as an immutable snapshot replaced on every change.
+     *
+     * Readers take a guard, copy out what they need and release it before any
+     * callback runs, so a callback can open, close or re-route endpoints from
+     * inside itself without waiting on a lock its own thread holds.
      */
-    std::unordered_map<uint64_t, uint64_t> m_endpoint_parents;
-
-    /**
-     * @brief Per-endpoint receive callbacks set by consumers via
-     *        set_endpoint_receive_callback(). Backend-level receive
-     *        callbacks route here.
-     */
-    mutable std::shared_mutex m_callbacks_mutex;
-    std::unordered_map<uint64_t, NetworkReceiveCallback> m_endpoint_callbacks;
+    Memory::SnapshotCell<RouteTable> m_routes;
 
     /**
      * @brief Global endpoint id counter shared across all backends.
@@ -235,7 +241,8 @@ private:
 
     /**
      * @brief Wired as the receive callback on each backend. Routes
-     *        to per-endpoint callbacks in m_endpoint_callbacks.
+     *        to the endpoint's callback, or its listener's, through
+     *        m_routes, and calls it with no lock or guard held.
      */
     void on_backend_receive(uint64_t endpoint_id, const uint8_t* data,
         size_t size, std::string_view sender_addr);
