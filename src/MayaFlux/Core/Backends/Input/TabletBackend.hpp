@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/Backends/Input/InputBackend.hpp"
+#include "MayaFlux/Core/Input/HIDDescriptor.hpp"
 #include "MayaFlux/Core/Input/TabletFrame.hpp"
 
 using hid_device = struct hid_device_;
@@ -18,19 +19,12 @@ struct MAYAFLUX_API TabletToolInfo : InputDeviceInfo {
 };
 
 /**
- * @brief One field located in a report by descriptor parsing.
+ * @brief A digitizer field located in a report by descriptor parsing.
  *
- * Bit offsets are measured from the first byte after the report ID when the
- * device uses numbered reports, and from byte zero when it does not.
+ * Adds the frame slot to the shared HID field. Bit offsets follow
+ * HIDInputField.
  */
-struct TabletField {
-    uint8_t report_id {};
-    uint16_t usage_page {};
-    uint16_t usage {};
-    uint32_t bit_offset {};
-    uint32_t bit_size {};
-    int32_t logical_min {};
-    int32_t logical_max {};
+struct TabletField : HIDInputField {
     size_t slot { TabletFrame::SLOT_COUNT }; ///< SLOT_COUNT means not a slot field
 };
 
