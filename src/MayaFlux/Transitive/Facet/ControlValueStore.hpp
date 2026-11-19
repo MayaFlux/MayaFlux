@@ -6,22 +6,33 @@ namespace MayaFlux {
 
 /**
  * @concept ControlSlot
- * @brief What ControlValueStore calls on the slot type it owns.
+ * @brief What ControlValueStore needs of the slot type it owns.
  *
- * A slot reports has_value and width, reads as a double, hands out a pending
- * value once per change, takes another slot's state with assign, can be settled,
- * refreshed from a source and shown the owner's real value with observe, and is
- * made from a number. ControlValue and anything derived from it qualify.
+ * A slot reports has_value, takes another slot's state with assign, can be
+ * settled and refreshed from a source. ControlValue, ControlSnapshot and
+ * anything derived from them qualify.
  */
 template <typename S>
-concept ControlSlot = requires(S slot, const S& other, double number) {
+concept ControlSlot = requires(S slot, const S& other) {
     { slot.has_value() } -> std::convertible_to<bool>;
-    { slot.width() } -> std::convertible_to<size_t>;
-    { slot.value() } -> std::convertible_to<double>;
-    { slot.pending() } -> std::same_as<std::optional<double>>;
     slot.assign(other);
     slot.refresh();
     slot.settle();
+};
+
+/**
+ * @concept NumericControlSlot
+ * @brief A ControlSlot that also reads as a number, which the named access and the scale mirror need.
+ *
+ * It reports width, reads as a double, hands out a pending value once per
+ * change, is shown the owner's real value with observe, and is made from a
+ * number. ControlValue and anything derived from it qualify.
+ */
+template <typename S>
+concept NumericControlSlot = ControlSlot<S> && requires(S slot, double number) {
+    { slot.width() } -> std::convertible_to<size_t>;
+    { slot.value() } -> std::convertible_to<double>;
+    { slot.pending() } -> std::same_as<std::optional<double>>;
     slot.observe(number);
     S(number);
 };
@@ -45,7 +56,8 @@ concept ControlSlot = requires(S slot, const S& other, double number) {
  * string based set_parameter and query_state of an operator use, so a name
  * resolves through the controls and not through a table of its own, and a
  * string set and a typed set meet in the same Slot. Only a top level member
- * named `scale` is mirrored.
+ * named `scale` is mirrored. Named number access and the scale mirror need a
+ * NumericControlSlot and are absent for any other slot kind.
  *
  * @tparam Slot A ControlSlot, the one slot type of every member.
  */
@@ -118,9 +130,11 @@ public:
             entry.slot->refresh();
         }
 
-        if (scale && m_scale) {
-            if (const auto due = m_scale->pending()) {
-                *scale = std::max(0.0, *due);
+        if constexpr (NumericControlSlot<Slot>) {
+            if (scale && m_scale) {
+                if (const auto due = m_scale->pending()) {
+                    *scale = std::max(0.0, *due);
+                }
             }
         }
     }
@@ -133,6 +147,7 @@ public:
      * A member that holds a vector is left alone, so a number cannot retype it.
      */
     bool set_named(std::string_view name, double value)
+        requires NumericControlSlot<Slot>
     {
         for (const Entry& entry : m_slots) {
             if (entry.name == name) {
@@ -169,6 +184,7 @@ public:
      * @param controls A copy from get(), so values the owner holds outside the struct are real.
      */
     template <typename C>
+        requires NumericControlSlot<Slot>
     [[nodiscard]] static std::optional<double> read_named(const C& controls, std::string_view name)
     {
         std::optional<double> found;
@@ -210,8 +226,10 @@ private:
         auto& value = member.get(owner);
         if constexpr (std::same_as<Value, Slot>) {
             m_slots.push_back({ prefix + std::string(member.name), &value });
-            if (prefix.empty() && member.name == "scale") {
-                m_scale = &value;
+            if constexpr (NumericControlSlot<Slot>) {
+                if (prefix.empty() && member.name == "scale") {
+                    m_scale = &value;
+                }
             }
         } else {
             static_assert(Reflect::Described<Value>,
@@ -247,7 +265,7 @@ private:
     template <typename Member, typename C>
     static void observe_scale(const Member& member, C& current, double scale)
     {
-        if constexpr (std::same_as<typename Member::value_type, Slot>) {
+        if constexpr (NumericControlSlot<Slot> && std::same_as<typename Member::value_type, Slot>) {
             if (member.name == "scale") {
                 member.get(current).observe(scale);
             }
@@ -275,6 +293,71 @@ private:
     const void* m_tag = nullptr;
     std::vector<Entry> m_slots;
     Slot* m_scale = nullptr;
+};
+
+/**
+ * @class ControlValueTable
+ * @brief One ControlValueStore per key, for a host with a runtime count of tunable groups.
+ *
+ * Each key owns its own store and so its own described struct, for example one
+ * per control of a device. declare() creates or replaces the store of a key, and
+ * the store is then used through find(). Adding or removing a key belongs
+ * outside the block that reads the stores, as with any source change.
+ *
+ * @tparam Key An ordered key type.
+ * @tparam Slot A ControlSlot, the slot type of every store.
+ */
+template <typename Key, ControlSlot Slot>
+class ControlValueTable {
+public:
+    using Store = ControlValueStore<Slot>;
+
+    /** @brief Creates the store of @p key, replacing any it had, and returns its struct. */
+    template <typename C>
+    [[nodiscard]] C& declare(const Key& key)
+    {
+        auto& store = m_stores[key];
+        store = std::make_unique<Store>();
+        return store->template declare<C>();
+    }
+
+    /** @brief The store of @p key, or null when it has none. */
+    [[nodiscard]] Store* find(const Key& key) noexcept
+    {
+        const auto found = m_stores.find(key);
+        return found == m_stores.end() ? nullptr : found->second.get();
+    }
+
+    [[nodiscard]] const Store* find(const Key& key) const noexcept
+    {
+        const auto found = m_stores.find(key);
+        return found == m_stores.end() ? nullptr : found->second.get();
+    }
+
+    /** @brief Drops the store of @p key. @return False when it had none. */
+    bool erase(const Key& key) { return m_stores.erase(key) != 0; }
+
+    [[nodiscard]] size_t size() const noexcept { return m_stores.size(); }
+
+    /** @brief Reads the sources of every store. */
+    void refresh()
+    {
+        for (const auto& entry : m_stores) {
+            entry.second->refresh();
+        }
+    }
+
+    /** @brief Calls visit(key, store) for every store in key order. */
+    template <typename Visit>
+    void for_each(const Visit& visit)
+    {
+        for (const auto& entry : m_stores) {
+            visit(entry.first, *entry.second);
+        }
+    }
+
+private:
+    std::map<Key, std::unique_ptr<Store>> m_stores;
 };
 
 }
