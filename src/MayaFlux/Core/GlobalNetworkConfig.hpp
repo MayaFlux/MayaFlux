@@ -18,7 +18,8 @@ enum class NetworkTransport : uint8_t {
     UDP,
     TCP,
     SHARED_MEMORY,
-    UDS
+    UDS,
+    SERIAL
 };
 
 /**
@@ -36,7 +37,7 @@ enum class EndpointRole : uint8_t {
  * @brief How messages are delimited on the wire
  *
  * NONE: raw bytes, no framing. A datagram on UDP. On TCP and UDS there are no message
- * boundaries: each read, up to 64 KiB, is delivered as one message and a send writes
+ * boundaries: each read, up to read_size (64 KiB by default), is delivered as one message and a send writes
  * its bytes as they are.
  * LENGTH_PREFIX: a four byte big-endian size before each payload. Carries any bytes.
  * CHUNKED: split large payloads into MTU-sized chunks with sequence numbers.
@@ -65,6 +66,58 @@ enum class EndpointState : uint8_t {
     ERROR,
     RECONNECTING
 };
+
+/**
+ * @enum SerialParity
+ * @brief Parity bit of a serial line
+ */
+enum class SerialParity : uint8_t {
+    NONE,
+    ODD,
+    EVEN
+};
+
+/**
+ * @enum SerialStopBits
+ * @brief Stop bits of a serial line
+ */
+enum class SerialStopBits : uint8_t {
+    ONE,
+    ONE_POINT_FIVE,
+    TWO
+};
+
+/**
+ * @enum SerialFlowControl
+ * @brief Flow control of a serial line: XON/XOFF in software, or RTS/CTS in hardware
+ */
+enum class SerialFlowControl : uint8_t {
+    NONE,
+    SOFTWARE,
+    HARDWARE
+};
+
+/**
+ * @struct SerialLineSettings
+ * @brief Line setup applied when a serial endpoint opens
+ *
+ * baud_rate may be any value the platform accepts. dtr_on_open and rts_on_open
+ * set the control lines at open, and asserting DTR resets some boards, so those
+ * are turned off for them. settle_ms is how long the endpoint stays OPENING after
+ * the port opens, for boards that restart on open.
+ */
+struct MAYAFLUX_API SerialLineSettings {
+    uint32_t baud_rate { 115200 };
+    uint8_t data_bits { 8 };
+    SerialParity parity { SerialParity::NONE };
+    SerialStopBits stop_bits { SerialStopBits::ONE };
+    SerialFlowControl flow_control { SerialFlowControl::NONE };
+    bool dtr_on_open { true };
+    bool rts_on_open { true };
+    uint32_t settle_ms {};
+};
+
+MF_DESCRIBE(SerialLineSettings)
 
 /**
  * @struct EndpointInfo
@@ -102,6 +155,13 @@ struct MAYAFLUX_API EndpointInfo {
     /// receive and is refused on send. For LINE it is the longest line, 1 MiB by default, and a
     /// longer one is dropped on receive. NONE ignores it.
     size_t max_message_size {};
+
+    /// TCP, UDS and serial: bytes requested per read, 0 for 64 KiB. Small keeps latency low
+    /// on commands, large raises throughput on streams. A listener's accepted connections use its own.
+    size_t read_size {};
+
+    /// Serial: the line setup applied at open. The device path is remote_path.
+    SerialLineSettings serial;
 };
 
 /**
@@ -180,6 +240,22 @@ struct MAYAFLUX_API UDSBackendInfo {
 MF_DESCRIBE(UDSBackendInfo)
 
 /**
+ * @struct SerialLinkInfo
+ * @brief Configuration for the serial port transport backend
+ *
+ * Opens a serial device path as a byte stream endpoint. The line setup is
+ * EndpointInfo::serial and the device path is EndpointInfo::remote_path. A port
+ * that is unplugged or not there yet reopens every reconnect_interval_ms.
+ */
+struct MAYAFLUX_API SerialLinkInfo {
+    bool enabled { false };
+    bool auto_reconnect { true };
+    uint32_t reconnect_interval_ms { 2000 };
+};
+
+MF_DESCRIBE(SerialLinkInfo)
+
+/**
  * @struct SharedMemoryBackendInfo
  * @brief Configuration for local inter-process shared memory transport
  *
@@ -220,6 +296,14 @@ struct MAYAFLUX_API GlobalNetworkConfig {
     TCPBackendInfo tcp;
     SharedMemoryBackendInfo shared_memory;
     UDSBackendInfo uds;
+    SerialLinkInfo serial;
+
+    static GlobalNetworkConfig with_serial()
+    {
+        GlobalNetworkConfig config;
+        config.serial.enabled = true;
+        return config;
+    }
 
     static GlobalNetworkConfig with_uds()
     {
@@ -252,7 +336,7 @@ struct MAYAFLUX_API GlobalNetworkConfig {
 
     [[nodiscard]] bool any_enabled() const
     {
-        return udp.enabled || tcp.enabled || shared_memory.enabled || uds.enabled;
+        return udp.enabled || tcp.enabled || shared_memory.enabled || uds.enabled || serial.enabled;
     }
 
 };

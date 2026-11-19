@@ -101,7 +101,9 @@ struct Description<::MayaFlux::Core::SerialBackendInfo> {
             Member<&::MayaFlux::Core::SerialBackendInfo::enabled> { "enabled" },
             Member<&::MayaFlux::Core::SerialBackendInfo::ports> { "ports" },
             Member<&::MayaFlux::Core::SerialBackendInfo::auto_detect_arduino> { "auto_detect_arduino" },
-            Member<&::MayaFlux::Core::SerialBackendInfo::default_baud_rate> { "default_baud_rate" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::detected_line> { "detected_line" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::auto_reconnect> { "auto_reconnect" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::reconnect_interval_ms> { "reconnect_interval_ms" },
         };
     }
 };
@@ -114,11 +116,7 @@ struct Description<::MayaFlux::Core::SerialPortConfig> {
     {
         return std::tuple {
             Member<&::MayaFlux::Core::SerialPortConfig::port_name> { "port_name" },
-            Member<&::MayaFlux::Core::SerialPortConfig::baud_rate> { "baud_rate" },
-            Member<&::MayaFlux::Core::SerialPortConfig::data_bits> { "data_bits" },
-            Member<&::MayaFlux::Core::SerialPortConfig::stop_bits> { "stop_bits" },
-            Member<&::MayaFlux::Core::SerialPortConfig::parity> { "parity" },
-            Member<&::MayaFlux::Core::SerialPortConfig::flow_control> { "flow_control" },
+            Member<&::MayaFlux::Core::SerialPortConfig::line> { "line" },
         };
     }
 };

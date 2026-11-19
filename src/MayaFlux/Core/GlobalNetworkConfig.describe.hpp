@@ -17,6 +17,40 @@ struct Description<::MayaFlux::Core::GlobalNetworkConfig> {
             Member<&::MayaFlux::Core::GlobalNetworkConfig::tcp> { "tcp" },
             Member<&::MayaFlux::Core::GlobalNetworkConfig::shared_memory> { "shared_memory" },
             Member<&::MayaFlux::Core::GlobalNetworkConfig::uds> { "uds" },
+            Member<&::MayaFlux::Core::GlobalNetworkConfig::serial> { "serial" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Core::SerialLineSettings> {
+    static constexpr std::string_view name = "MayaFlux::Core::SerialLineSettings";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Core::SerialLineSettings::baud_rate> { "baud_rate" },
+            Member<&::MayaFlux::Core::SerialLineSettings::data_bits> { "data_bits" },
+            Member<&::MayaFlux::Core::SerialLineSettings::parity> { "parity" },
+            Member<&::MayaFlux::Core::SerialLineSettings::stop_bits> { "stop_bits" },
+            Member<&::MayaFlux::Core::SerialLineSettings::flow_control> { "flow_control" },
+            Member<&::MayaFlux::Core::SerialLineSettings::dtr_on_open> { "dtr_on_open" },
+            Member<&::MayaFlux::Core::SerialLineSettings::rts_on_open> { "rts_on_open" },
+            Member<&::MayaFlux::Core::SerialLineSettings::settle_ms> { "settle_ms" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Core::SerialLinkInfo> {
+    static constexpr std::string_view name = "MayaFlux::Core::SerialLinkInfo";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Core::SerialLinkInfo::enabled> { "enabled" },
+            Member<&::MayaFlux::Core::SerialLinkInfo::auto_reconnect> { "auto_reconnect" },
+            Member<&::MayaFlux::Core::SerialLinkInfo::reconnect_interval_ms> { "reconnect_interval_ms" },
         };
     }
 };

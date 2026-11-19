@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
+#include "MayaFlux/Core/GlobalNetworkConfig.hpp"
 #include "MayaFlux/Core/Input/InputBinding.hpp"
 
 namespace MayaFlux::Core {
@@ -173,19 +174,15 @@ struct MAYAFLUX_API OSCConfigInfo {
 MF_DESCRIBE(OSCConfigInfo)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Serial Configuration (Future)
+// Serial Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * @brief Serial port configuration
+ * @brief One serial port and the line setup it opens with
  */
 struct MAYAFLUX_API SerialPortConfig {
     std::string port_name; ///< e.g., "/dev/ttyUSB0" or "COM3"
-    uint32_t baud_rate { 9600 }; ///< Baud rate
-    uint8_t data_bits { 8 }; ///< Data bits (5, 6, 7, or 8)
-    uint8_t stop_bits { 1 }; ///< Stop bits (1 or 2)
-    char parity { 'N' }; ///< Parity: 'N'one, 'E'ven, 'O'dd
-    bool flow_control { false }; ///< Hardware flow control
+    SerialLineSettings line; ///< Baud, framing bits, flow control, control lines at open
 
 };
 
@@ -198,7 +195,9 @@ struct MAYAFLUX_API SerialBackendInfo {
     bool enabled { false }; ///< Enable Serial backend
     std::vector<SerialPortConfig> ports; ///< Ports to open
     bool auto_detect_arduino { false }; ///< Auto-detect Arduino devices
-    uint32_t default_baud_rate { 115200 }; ///< Default baud for auto-detected devices
+    SerialLineSettings detected_line; ///< Line setup for auto-detected devices
+    bool auto_reconnect { true }; ///< Reopen a port after it is unplugged and returns
+    uint32_t reconnect_interval_ms { 2000 }; ///< Delay between reopen attempts
 
 };
 
