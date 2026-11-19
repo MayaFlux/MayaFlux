@@ -114,6 +114,16 @@ public:
      */
     explicit AudioSubsystem(GlobalStreamInfo& stream_info);
 
+    /**
+     * @brief Adjusts a requested stream configuration to what the default devices provide
+     * @param stream_info Requested configuration, updated in place
+     *
+     * Call before sizing anything from the configuration. Only backends that renegotiate
+     * the format need it, currently WASAPI; elsewhere it does nothing. Uses a throwaway
+     * backend and opens no stream.
+     */
+    static void resolve_stream_info(GlobalStreamInfo& stream_info);
+
     inline SubsystemType get_type() const override { return m_type; }
 
     SubsystemProcessingHandle* get_processing_context_handle() override { return m_handle; }
@@ -123,7 +133,7 @@ private:
     void register_backend_service();
     void notify_loop();
 
-    GlobalStreamInfo m_stream_info; ///< Audio stream configuration
+    GlobalStreamInfo& m_stream_info; ///< Audio stream configuration shared with the engine
 
     std::unique_ptr<IAudioBackend> m_audiobackend; ///< Audio backend implementation
     std::unique_ptr<AudioDevice> m_audio_device; ///< Audio device manager

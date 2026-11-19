@@ -38,6 +38,11 @@ public:
         GlobalStreamInfo& stream_info,
         void* user_data) override;
 
+    void resolve_stream_info(
+        unsigned int output_device_id,
+        unsigned int input_device_id,
+        GlobalStreamInfo& stream_info) override;
+
     [[nodiscard]] std::string get_version_string() const override;
 
     void cleanup() override;
@@ -138,20 +143,6 @@ private:
     static DWORD WINAPI render_thread_proc(LPVOID param);
     void render_loop();
 
-    /**
-     * @brief Negotiates a WAVEFORMATEXTENSIBLE for shared-mode float32.
-     * @param client IAudioClient to negotiate against.
-     * @param channels Requested channel count.
-     * @param sample_rate Requested sample rate.
-     * @param[out] out_fmt Populated on success; caller frees with CoTaskMemFree.
-     * @return true if negotiation succeeded.
-     */
-    bool negotiate_format(
-        IAudioClient* client,
-        uint32_t channels,
-        uint32_t sample_rate,
-        WAVEFORMATEX** out_fmt);
-
     IMMDevice* m_output_device = nullptr;
     IMMDevice* m_input_device = nullptr;
 
@@ -172,7 +163,6 @@ private:
     uint32_t m_negotiated_output_rate = 0;
     uint32_t m_negotiated_input_rate = 0;
     uint32_t m_negotiated_output_channels = 0;
-    uint32_t m_negotiated_input_channels = 0;
 
     std::vector<float> m_render_staging;
     std::vector<double> m_output_staging;

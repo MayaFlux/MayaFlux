@@ -68,6 +68,14 @@ public:
     }
 
     /**
+     * @brief Let each subsystem adjust its requested configuration to what the system provides
+     * @param stream_info Requested stream configuration, updated in place
+     *
+     * Call before sizing anything from the configurations, and before any subsystem exists.
+     */
+    static void resolve_configs(GlobalStreamInfo& stream_info);
+
+    /**
      * @brief Create and register the audio subsystem
      * @tparam Args Constructor argument types
      *

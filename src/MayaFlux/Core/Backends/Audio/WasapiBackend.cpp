@@ -66,6 +66,78 @@ namespace {
         return name;
     }
 
+    /**
+     * @brief Negotiates a WAVEFORMATEXTENSIBLE for shared-mode float32.
+     * @param client IAudioClient to negotiate against.
+     * @param channels Requested channel count.
+     * @param sample_rate Requested sample rate.
+     * @param[out] out_fmt Populated on success; caller frees with CoTaskMemFree.
+     * @return true if negotiation succeeded.
+     */
+    bool negotiate_format(
+        IAudioClient* client,
+        uint32_t channels,
+        uint32_t sample_rate,
+        WAVEFORMATEX** out_fmt)
+    {
+        auto* wfx = static_cast<WAVEFORMATEXTENSIBLE*>(
+            CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE)));
+        if (!wfx)
+            return false;
+
+        std::memset(wfx, 0, sizeof(WAVEFORMATEXTENSIBLE));
+        wfx->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+        wfx->Format.nChannels = static_cast<WORD>(channels);
+        wfx->Format.nSamplesPerSec = sample_rate;
+        wfx->Format.wBitsPerSample = 32;
+        wfx->Format.nBlockAlign = static_cast<WORD>(channels * sizeof(float));
+        wfx->Format.nAvgBytesPerSec = wfx->Format.nBlockAlign * sample_rate;
+        wfx->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+        wfx->Samples.wValidBitsPerSample = 32;
+        wfx->dwChannelMask = (channels == 2)
+            ? (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT)
+            : KSAUDIO_SPEAKER_DIRECTOUT;
+        wfx->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+
+        WAVEFORMATEX* closest = nullptr;
+        HRESULT hr = client->IsFormatSupported(
+            AUDCLNT_SHAREMODE_SHARED,
+            reinterpret_cast<WAVEFORMATEX*>(wfx),
+            &closest);
+
+        if (hr == S_OK) {
+            *out_fmt = reinterpret_cast<WAVEFORMATEX*>(wfx);
+            if (closest)
+                CoTaskMemFree(closest);
+            return true;
+        }
+
+        CoTaskMemFree(wfx);
+
+        if (hr == S_FALSE && closest) {
+            MF_INFO(C, X,
+                "WASAPI shared mode: negotiated mix format ({} Hz, {} ch); "
+                "engine converts float64<->float32 on the render path.",
+                closest->nSamplesPerSec, closest->nChannels);
+            *out_fmt = closest;
+            return true;
+        }
+
+        if (closest)
+            CoTaskMemFree(closest);
+
+        WAVEFORMATEX* mix = nullptr;
+        if (SUCCEEDED(client->GetMixFormat(&mix))) {
+            MF_INFO(C, X,
+                "WASAPI shared mode: using device mix format ({} Hz, {} ch).",
+                mix->nSamplesPerSec, mix->nChannels);
+            *out_fmt = mix;
+            return true;
+        }
+
+        return false;
+    }
+
 } // namespace
 
 // ============================================================================
@@ -114,6 +186,58 @@ std::unique_ptr<AudioStream> WasapiBackend::create_stream(
         in_dev = dev_mgr.resolve_device(input_device_id, eCapture);
 
     return std::make_unique<WasapiStream>(out_dev, in_dev, stream_info, user_data);
+}
+
+void WasapiBackend::resolve_stream_info(
+    unsigned int output_device_id,
+    unsigned int input_device_id,
+    GlobalStreamInfo& stream_info)
+{
+    auto dev_mgr = WasapiDevice(m_enumerator);
+
+    if (IMMDevice* device = dev_mgr.resolve_device(output_device_id, eRender)) {
+        IAudioClient* client = nullptr;
+        if (SUCCEEDED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr,
+                reinterpret_cast<void**>(&client)))) {
+            WAVEFORMATEX* format = nullptr;
+            if (negotiate_format(client, stream_info.output.channels, stream_info.sample_rate, &format)) {
+                stream_info.output.channels = format->nChannels;
+                stream_info.sample_rate = format->nSamplesPerSec;
+                CoTaskMemFree(format);
+            }
+            client->Release();
+        }
+        device->Release();
+    }
+
+    if (!stream_info.input.enabled || stream_info.input.channels == 0)
+        return;
+
+    bool resolved = false;
+    if (IMMDevice* device = dev_mgr.resolve_device(input_device_id, eCapture)) {
+        IAudioClient* client = nullptr;
+        if (SUCCEEDED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr,
+                reinterpret_cast<void**>(&client)))) {
+            WAVEFORMATEX* format = nullptr;
+            if (negotiate_format(client, stream_info.input.channels, stream_info.sample_rate, &format)) {
+                stream_info.input.channels = format->nChannels;
+                if (format->nSamplesPerSec != stream_info.sample_rate) {
+                    MF_WARN(C, X, "WASAPI capture: device rate {} Hz differs from the stream rate {} Hz; input is not converted",
+                        format->nSamplesPerSec, stream_info.sample_rate);
+                }
+                CoTaskMemFree(format);
+                resolved = true;
+            }
+            client->Release();
+        }
+        device->Release();
+    }
+
+    if (!resolved) {
+        MF_WARN(C, X, "WASAPI capture: no usable input device; input disabled");
+        stream_info.input.enabled = false;
+        stream_info.input.channels = 0;
+    }
 }
 
 std::string WasapiBackend::get_version_string() const
@@ -277,70 +401,6 @@ WasapiStream::~WasapiStream()
         close();
 }
 
-bool WasapiStream::negotiate_format(
-    IAudioClient* client,
-    uint32_t channels,
-    uint32_t sample_rate,
-    WAVEFORMATEX** out_fmt)
-{
-    auto* wfx = static_cast<WAVEFORMATEXTENSIBLE*>(
-        CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE)));
-    if (!wfx)
-        return false;
-
-    std::memset(wfx, 0, sizeof(WAVEFORMATEXTENSIBLE));
-    wfx->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    wfx->Format.nChannels = static_cast<WORD>(channels);
-    wfx->Format.nSamplesPerSec = sample_rate;
-    wfx->Format.wBitsPerSample = 32;
-    wfx->Format.nBlockAlign = static_cast<WORD>(channels * sizeof(float));
-    wfx->Format.nAvgBytesPerSec = wfx->Format.nBlockAlign * sample_rate;
-    wfx->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-    wfx->Samples.wValidBitsPerSample = 32;
-    wfx->dwChannelMask = (channels == 2)
-        ? (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT)
-        : KSAUDIO_SPEAKER_DIRECTOUT;
-    wfx->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-
-    WAVEFORMATEX* closest = nullptr;
-    HRESULT hr = client->IsFormatSupported(
-        AUDCLNT_SHAREMODE_SHARED,
-        reinterpret_cast<WAVEFORMATEX*>(wfx),
-        &closest);
-
-    if (hr == S_OK) {
-        *out_fmt = reinterpret_cast<WAVEFORMATEX*>(wfx);
-        if (closest)
-            CoTaskMemFree(closest);
-        return true;
-    }
-
-    CoTaskMemFree(wfx);
-
-    if (hr == S_FALSE && closest) {
-        MF_INFO(C, X,
-            "WASAPI shared mode: negotiated mix format ({} Hz, {} ch); "
-            "engine converts float64<->float32 on the render path.",
-            closest->nSamplesPerSec, closest->nChannels);
-        *out_fmt = closest;
-        return true;
-    }
-
-    if (closest)
-        CoTaskMemFree(closest);
-
-    WAVEFORMATEX* mix = nullptr;
-    if (SUCCEEDED(client->GetMixFormat(&mix))) {
-        MF_INFO(C, X,
-            "WASAPI shared mode: using device mix format ({} Hz, {} ch).",
-            mix->nSamplesPerSec, mix->nChannels);
-        *out_fmt = mix;
-        return true;
-    }
-
-    return false;
-}
-
 void WasapiStream::open()
 {
     if (m_is_open.load())
@@ -434,9 +494,14 @@ void WasapiStream::open()
             MF_WARN(C, X, "WasapiStream: capture format negotiation failed; input disabled");
             m_capture_client->Release();
             m_capture_client = nullptr;
+        } else if (fmt->nChannels != m_stream_info.input.channels) {
+            MF_WARN(C, X, "WASAPI capture: device provides {} channels, the stream expects {}; input disabled",
+                fmt->nChannels, m_stream_info.input.channels);
+            CoTaskMemFree(fmt);
+            m_capture_client->Release();
+            m_capture_client = nullptr;
         } else {
             m_negotiated_input_rate = fmt->nSamplesPerSec;
-            m_negotiated_input_channels = fmt->nChannels;
 
             const REFERENCE_TIME period = static_cast<REFERENCE_TIME>(
                 10000.0 * 1000.0 * m_stream_info.buffer_size / m_stream_info.sample_rate);
@@ -646,8 +711,7 @@ DWORD WINAPI WasapiStream::render_thread_proc(LPVOID param)
 void WasapiStream::render_loop()
 {
     const uint32_t out_ch = m_negotiated_output_channels;
-    const uint32_t in_ch_wire = m_negotiated_input_channels;
-    const uint32_t in_ch_engine = m_stream_info.input.channels;
+    const uint32_t in_ch = m_stream_info.input.channels;
     const uint32_t hw_frames = m_render_buffer_frames;
     const uint32_t eng_frames = m_stream_info.buffer_size;
     const uint32_t ring_frames = m_ring_frames;
@@ -661,7 +725,7 @@ void WasapiStream::render_loop()
         if (wait == WAIT_OBJECT_0 + 1 || wait == WAIT_FAILED || wait == WAIT_TIMEOUT)
             break;
 
-        if (m_capture_src && in_ch_wire > 0) {
+        if (m_capture_src && in_ch > 0) {
             BYTE* data = nullptr;
             UINT32 cap_frames = 0;
             DWORD flags = 0;
@@ -669,13 +733,10 @@ void WasapiStream::render_loop()
             if (SUCCEEDED(m_capture_src->GetBuffer(&data, &cap_frames, &flags, nullptr, nullptr))) {
                 if (data && !(flags & AUDCLNT_BUFFERFLAGS_SILENT)) {
                     const auto* src = reinterpret_cast<const float*>(data);
-                    const uint32_t copy_ch = std::min(in_ch_wire, in_ch_engine);
                     for (uint32_t f = 0; f < cap_frames; ++f) {
-                        const uint32_t dst = m_cap_ring_write_pos * in_ch_engine;
-                        for (uint32_t c = 0; c < copy_ch; ++c)
-                            m_capture_ring[dst + c] = static_cast<double>(src[f * in_ch_wire + c]);
-                        for (uint32_t c = copy_ch; c < in_ch_engine; ++c)
-                            m_capture_ring[dst + c] = 0.0;
+                        const uint32_t dst = m_cap_ring_write_pos * in_ch;
+                        for (uint32_t c = 0; c < in_ch; ++c)
+                            m_capture_ring[dst + c] = static_cast<double>(src[f * in_ch + c]);
                         m_cap_ring_write_pos = (m_cap_ring_write_pos + 1) % cap_ring_frames;
                     }
                 }
@@ -704,14 +765,14 @@ void WasapiStream::render_loop()
 
             double* in_ptr = nullptr;
             if (cap_ring_used() >= eng_frames) {
-                const size_t in_n = static_cast<size_t>(eng_frames) * in_ch_engine;
+                const size_t in_n = static_cast<size_t>(eng_frames) * in_ch;
                 if (in_n > m_input_staging.size())
                     m_input_staging.resize(in_n);
 
                 for (uint32_t f = 0; f < eng_frames; ++f) {
-                    const uint32_t src = m_cap_ring_read_pos * in_ch_engine;
-                    const uint32_t dst = f * in_ch_engine;
-                    for (uint32_t c = 0; c < in_ch_engine; ++c)
+                    const uint32_t src = m_cap_ring_read_pos * in_ch;
+                    const uint32_t dst = f * in_ch;
+                    for (uint32_t c = 0; c < in_ch; ++c)
                         m_input_staging[dst + c] = m_capture_ring[src + c];
                     m_cap_ring_read_pos = (m_cap_ring_read_pos + 1) % cap_ring_frames;
                 }
