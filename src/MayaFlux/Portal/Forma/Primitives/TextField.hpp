@@ -15,6 +15,29 @@ class Context;
 class Surface;
 
 /**
+ * @struct TextFieldBehavior
+ * @brief What a TextField does beyond editing, shared by every copy of the field.
+ *
+ * Read when an event arrives, not when the field is placed, so it can be set
+ * before or after place().
+ */
+struct TextFieldBehavior {
+    /// @brief Enter commits instead of inserting a line break, and Tab, Up and Down
+    ///        no longer move through lines. Pasted line breaks are dropped.
+    bool single_line {};
+
+    /// @brief Called with the new text after every edit, before it is drawn, so
+    ///        a callback may change the shared PressParams and have it show at once.
+    std::function<void(const std::string&)> on_change;
+
+    /// @brief Called with the text when Enter is pressed in a single line field.
+    std::function<void(const std::string&)> on_commit;
+
+    /// @brief Called when Escape is pressed.
+    std::function<void()> on_cancel;
+};
+
+/**
  * @struct TextField
  * @brief An editable text region: keyboard/text-input wiring over an
  *        Element the caller already has a buffer for.
@@ -44,6 +67,13 @@ class Surface;
  * selection is drawn as translucent quads in the text tint ahead of the caret,
  * one per line. Typing, Enter, Tab, Backspace and Delete replace or remove it.
  * Without Shift an arrow collapses it to its start or end, and a click drops it.
+ *
+ * Home and End move to the start and end of the caret's line, with Shift
+ * extending the selection. A single line field, set through single_line(),
+ * keeps its text on one line: Enter calls on_commit, Up and Down jump to the
+ * start and end, and Tab does nothing. Escape calls on_cancel in either mode.
+ * on_change reports every edit, which is how a prompt checks its text as it is
+ * typed.
  *
  * Select all, copy, cut and paste are on A, C, X and V with Control, or with
  * Command on macOS. Copy and cut put the selection on the system clipboard
@@ -127,6 +157,41 @@ struct TextField {
 
     /// @brief Field region, satisfying Kinesis::HasBounds.
     [[nodiscard]] Kinesis::AABB2D bounds() const noexcept { return field_bounds; }
+
+    // =========================================================================
+    // Behaviour - may be set before or after place()
+    // =========================================================================
+
+    /// @brief Shared with every copy of this field and with the handlers wired by place().
+    std::shared_ptr<TextFieldBehavior> behavior = std::make_shared<TextFieldBehavior>();
+
+    /// @brief Keep the text on one line, with Enter committing it.
+    TextField& single_line(bool enabled = true)
+    {
+        behavior->single_line = enabled;
+        return *this;
+    }
+
+    /// @brief Call @p fn with the new text after every edit, before it is drawn.
+    TextField& on_change(std::function<void(const std::string&)> fn)
+    {
+        behavior->on_change = std::move(fn);
+        return *this;
+    }
+
+    /// @brief Call @p fn with the text when Enter is pressed in a single line field.
+    TextField& on_commit(std::function<void(const std::string&)> fn)
+    {
+        behavior->on_commit = std::move(fn);
+        return *this;
+    }
+
+    /// @brief Call @p fn when Escape is pressed.
+    TextField& on_cancel(std::function<void()> fn)
+    {
+        behavior->on_cancel = std::move(fn);
+        return *this;
+    }
 
     // =========================================================================
     // Placement
