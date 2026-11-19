@@ -400,6 +400,13 @@ bool StreamBackend<Transport>::send_to(uint64_t endpoint_id, const uint8_t* data
     return send(endpoint_id, data, size);
 }
 
+template <typename Transport>
+size_t StreamBackend<Transport>::get_write_backlog(uint64_t endpoint_id) const
+{
+    const auto conn = find_connection(endpoint_id);
+    return conn ? conn->pending_bytes.load() : 0;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Callbacks
 // ─────────────────────────────────────────────────────────────────────────────

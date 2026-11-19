@@ -132,6 +132,77 @@ struct MAYAFLUX_API NetworkService {
     std::function<void(uint64_t endpoint_id,
         std::function<void(uint64_t, const uint8_t*, size_t, std::string_view)> callback)>
         set_endpoint_receive_callback;
+
+    /**
+     * @brief Register a per-endpoint state callback
+     * @param endpoint_id Endpoint to observe.
+     * @param callback    Called with the endpoint id, the state it left and the state it entered.
+     *
+     * Fires on the io thread at every transition, including RECONNECTING and back to OPEN.
+     * A connection a listener accepted reports through the listener's callback with its own
+     * id, as CLOSED to OPEN, unless it has a callback of its own. Overrides any previous
+     * callback for this endpoint. Transitions before registration are not replayed, so read
+     * get_endpoint_state after registering. Like the receive callback, it may send, close
+     * or open endpoints from inside itself.
+     */
+    std::function<void(uint64_t endpoint_id,
+        std::function<void(uint64_t, Core::EndpointState, Core::EndpointState)> callback)>
+        set_endpoint_state_callback;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Write backlog
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Bytes accepted by send and not yet written to the peer
+     * @return 0 for an unknown endpoint or a transport that does not queue.
+     *
+     * A control rate writer can skip a write while this is high, and a stream
+     * producer reads backpressure from it.
+     */
+    std::function<size_t(uint64_t endpoint_id)> get_write_backlog;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Serial line control
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Set the DTR and RTS lines of an open serial endpoint
+     * @param endpoint_id Serial endpoint.
+     * @param dtr         New DTR level, or nothing to leave it.
+     * @param rts         New RTS level, or nothing to leave it.
+     * @return false for an endpoint that is not an open serial port.
+     */
+    std::function<bool(uint64_t endpoint_id, std::optional<bool> dtr, std::optional<bool> rts)>
+        set_control_lines;
+
+    /**
+     * @brief Hold the transmit line of an open serial endpoint in break
+     * @return false for an endpoint that is not an open serial port.
+     */
+    std::function<bool(uint64_t endpoint_id)> send_break;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Timer
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Run a callable once after a delay, on the thread that runs the endpoint callbacks
+     * @param delay    Time from now.
+     * @param callback Called once, never concurrently with a receive or state callback.
+     * @return A token for cancel_post, never 0.
+     *
+     * Serves idle-gap frame ends and response timeouts, which must not race a chunk.
+     */
+    std::function<uint64_t(std::chrono::milliseconds delay, std::function<void()> callback)> post_after;
+
+    /**
+     * @brief Cancel a timer from post_after
+     * @param token The token post_after returned. No-op when the timer already ran.
+     *
+     * Once this returns the callable no longer runs, unless it has already started.
+     */
+    std::function<void(uint64_t token)> cancel_post;
 };
 
 } // namespace MayaFlux::Registry::Service

@@ -181,6 +181,36 @@ public:
     virtual bool send_to(uint64_t endpoint_id, const uint8_t* data, size_t size,
         const std::string& address, uint16_t port) = 0;
 
+    /**
+     * @brief Bytes accepted by send and not yet written to the peer
+     * @param endpoint_id Endpoint to query.
+     * @return The queued bytes, 0 for an unknown endpoint or a backend that does not queue.
+     */
+    [[nodiscard]] virtual size_t get_write_backlog(uint64_t /*endpoint_id*/) const { return 0; }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Serial line control
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * @brief Set the DTR and RTS lines of an open serial endpoint
+     * @param endpoint_id Target endpoint.
+     * @param dtr New DTR level, or nothing to leave it.
+     * @param rts New RTS level, or nothing to leave it.
+     * @return false for an endpoint that is not an open serial port, and for every other transport.
+     */
+    virtual bool set_control_lines(uint64_t /*endpoint_id*/,
+        std::optional<bool> /*dtr*/, std::optional<bool> /*rts*/)
+    {
+        return false;
+    }
+
+    /**
+     * @brief Hold the transmit line of an open serial endpoint in break
+     * @return false for an endpoint that is not an open serial port, and for every other transport.
+     */
+    virtual bool send_break(uint64_t /*endpoint_id*/) { return false; }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Callbacks
     // ─────────────────────────────────────────────────────────────────────────

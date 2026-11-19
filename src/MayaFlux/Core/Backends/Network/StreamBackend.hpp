@@ -141,6 +141,8 @@ public:
     bool send_to(uint64_t endpoint_id, const uint8_t* data, size_t size,
         const std::string& address, uint16_t port) override;
 
+    [[nodiscard]] size_t get_write_backlog(uint64_t endpoint_id) const override;
+
     void set_receive_callback(NetworkReceiveCallback callback) override;
     void set_state_callback(EndpointStateCallback callback) override;
 
