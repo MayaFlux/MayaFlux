@@ -258,6 +258,16 @@ bool HIDBackend::open_device(uint32_t device_id)
     state_ptr->read_buffer.resize(m_config.read_buffer_size);
     state_ptr->active.store(true);
 
+    std::vector<uint8_t> descriptor(4096);
+    const int written = hid_get_report_descriptor(handle, descriptor.data(), descriptor.size());
+    if (written > 0) {
+        descriptor.resize(static_cast<size_t>(written));
+        state_ptr->layout = std::make_shared<const HIDReportLayout>(parse_hid_descriptor(descriptor));
+    } else {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
+            "Could not read report descriptor of HID device {}", device_id);
+    }
+
     m_open_devices.insert_or_assign(device_id, state_ptr);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
@@ -284,6 +294,14 @@ void HIDBackend::close_device(uint32_t device_id)
         "Closed HID device {}: {}", device_id, it->second->info.name);
 
     m_open_devices.erase(it);
+}
+
+std::shared_ptr<const HIDReportLayout> HIDBackend::get_layout(uint32_t device_id) const
+{
+    std::lock_guard lock(m_devices_mutex);
+
+    auto it = m_open_devices.find(device_id);
+    return it != m_open_devices.end() ? it->second->layout : nullptr;
 }
 
 bool HIDBackend::is_device_open(uint32_t device_id) const

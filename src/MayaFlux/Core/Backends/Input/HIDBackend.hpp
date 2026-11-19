@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/Backends/Input/InputBackend.hpp"
+#include "MayaFlux/Core/Input/HIDDescriptor.hpp"
 
 using hid_device = struct hid_device_;
 
@@ -23,6 +24,7 @@ struct HIDDeviceInfoExt : InputDeviceInfo {
 struct HIDDeviceState {
     hid_device* handle { nullptr };
     HIDDeviceInfoExt info;
+    std::shared_ptr<const HIDReportLayout> layout;
     std::vector<uint8_t> read_buffer;
     std::atomic<bool> active { false };
 };
@@ -136,6 +138,17 @@ public:
      * @return Extended info, or nullopt if device not found
      */
     [[nodiscard]] std::optional<HIDDeviceInfoExt> get_device_info_ext(uint32_t device_id) const;
+
+    /**
+     * @brief Parsed input report layout of an open device
+     *
+     * Read from the device's report descriptor when it is opened. The snapshot
+     * is immutable, so it stays valid after the device closes.
+     *
+     * @param device_id Device identifier
+     * @return Layout, or nullptr if the device is not open or reports no descriptor
+     */
+    [[nodiscard]] std::shared_ptr<const HIDReportLayout> get_layout(uint32_t device_id) const;
 
     /**
      * @brief Send a feature report to a device
