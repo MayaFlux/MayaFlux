@@ -1,32 +1,15 @@
 include_guard(GLOBAL)
 
-file(GLOB_RECURSE TRANSITIVE_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
-)
+add_library(Transitive INTERFACE)
 
-file(GLOB_RECURSE TRANSITIVE_HEADERS CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_LIST_DIR}/*.h"
-    "${CMAKE_CURRENT_LIST_DIR}/*.hpp"
-)
+target_link_libraries(Transitive INTERFACE Transitive_Free)
 
-add_library(Transitive OBJECT ${TRANSITIVE_SOURCES} ${TRANSITIVE_HEADERS})
-
-set_target_properties(Transitive PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-)
-
-target_include_directories(Transitive PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/../..
-)
-
-target_precompile_headers(Transitive PRIVATE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
+target_precompile_headers(Transitive INTERFACE ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 
 if(WIN32)
-    target_link_libraries(Transitive PUBLIC magic_enum nlohmann_json::nlohmann_json)
-    target_compile_options(Transitive PRIVATE /MD)
-    target_compile_definitions(Transitive PRIVATE MAYAFLUX_EXPORTS)
+    target_link_libraries(Transitive INTERFACE magic_enum nlohmann_json::nlohmann_json)
 else()
-    target_link_libraries(Transitive PUBLIC magic_enum PkgConfig::nlohmann_json)
+    target_link_libraries(Transitive INTERFACE magic_enum PkgConfig::nlohmann_json)
 endif()
 
 add_library(Transitive_Free INTERFACE)
