@@ -28,3 +28,35 @@ if(WIN32)
 else()
     target_link_libraries(Transitive PUBLIC magic_enum PkgConfig::nlohmann_json)
 endif()
+
+add_library(Transitive_Free INTERFACE)
+
+target_sources(Transitive_Free INTERFACE
+    FILE_SET HEADERS
+    BASE_DIRS ${CMAKE_CURRENT_LIST_DIR}/../..
+    FILES
+        ${CMAKE_CURRENT_LIST_DIR}/Facet/Facets.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Memory/FlatMap.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Memory/PendingQueue.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Memory/RingBuffer.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Memory/SeqLock.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Memory/SnapshotCell.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Memory/SweepList.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Parallel/AsyncGroup.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Parallel/Dispatch.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Platform/Acquisition.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Platform/HostEnvironment.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Platform/Process.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Platform/Toolchain.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Platform/UnixSocket.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Protocol/BinaryBuffer.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Protocol/BitField.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Protocol/Framing.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Protocol/HostPort.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Reflect/Describe.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Reflect/DescribedBinding.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Reflect/Mirror.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Reflect/TypeInfo.hpp
+)
+
+target_precompile_headers(Transitive_Free INTERFACE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
