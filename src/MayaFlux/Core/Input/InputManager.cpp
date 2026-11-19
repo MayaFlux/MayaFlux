@@ -124,6 +124,8 @@ void InputManager::register_node(
     if (!node)
         return;
 
+    std::optional<InputBinding> pattern;
+
     if (binding.hid_vendor_id || binding.hid_product_id) {
         if (!m_input_service) {
             MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
@@ -134,6 +136,7 @@ void InputManager::register_node(
         auto devices = m_input_service->get_all_devices();
         auto resolved = resolve_vid_pid(binding, devices);
         if (resolved) {
+            pattern = binding;
             binding = *resolved;
         } else {
             MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
@@ -152,8 +155,8 @@ void InputManager::register_node(
         m_input_service->open_device(binding.backend, binding.device_id);
     }
 
-    m_registrations.update([&node, &binding](RegistrationList& list) {
-        list.push_back({ .node = node, .binding = binding });
+    m_registrations.update([&node, &binding, &pattern](RegistrationList& list) {
+        list.push_back({ .node = node, .binding = binding, .pattern = pattern });
     });
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::InputManagement,
@@ -182,6 +185,49 @@ std::optional<InputBinding> InputManager::resolve_vid_pid(
     }
 
     return std::nullopt;
+}
+
+void InputManager::on_device_change(const InputDeviceInfo& info, bool connected)
+{
+    std::vector<InputBinding> to_open;
+
+    m_registrations.update([&](RegistrationList& list) {
+        to_open.clear();
+        bool changed = false;
+
+        for (auto& reg : list) {
+            if (!reg.pattern || reg.pattern->backend != info.backend_type) {
+                continue;
+            }
+
+            if (!connected) {
+                if (reg.binding.device_id == info.id) {
+                    reg.binding.device_id = k_unbound_device;
+                    changed = true;
+                }
+                continue;
+            }
+
+            const bool vid_match = !reg.pattern->hid_vendor_id || *reg.pattern->hid_vendor_id == info.vendor_id;
+            const bool pid_match = !reg.pattern->hid_product_id || *reg.pattern->hid_product_id == info.product_id;
+
+            if (vid_match && pid_match && reg.binding.device_id == k_unbound_device) {
+                reg.binding.device_id = info.id;
+                to_open.push_back(reg.binding);
+                changed = true;
+            }
+        }
+
+        return changed;
+    });
+
+    if (!m_input_service) {
+        return;
+    }
+
+    for (const auto& binding : to_open) {
+        m_input_service->open_device(binding.backend, binding.device_id);
+    }
 }
 
 void InputManager::unregister_node(const std::shared_ptr<Nodes::Input::InputNode>& node)

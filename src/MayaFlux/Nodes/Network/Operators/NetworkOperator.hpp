@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Network/ControlStore.hpp"
+#include "MayaFlux/Nodes/Network/Control.hpp"
 #include "ParameterResolver.hpp"
 
 namespace MayaFlux::Nodes::Network {

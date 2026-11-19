@@ -18,9 +18,11 @@ std::expected<TcpTransport::Bound, std::string> TcpTransport::bind(
     if (acceptor.open(endpoint.protocol(), ec)) {
         return std::unexpected("failed to open acceptor: " + ec.message());
     }
+#if !defined(MAYAFLUX_PLATFORM_WINDOWS)
     if (acceptor.set_option(asio::socket_base::reuse_address(true), ec)) {
         return std::unexpected("failed to set SO_REUSEADDR: " + ec.message());
     }
+#endif
     if (acceptor.bind(endpoint, ec)) {
         return std::unexpected("failed to bind port " + std::to_string(info.local_port) + ": " + ec.message());
     }

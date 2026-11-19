@@ -82,6 +82,14 @@ void InputSubsystem::register_backend_service()
         close_device(type, id);
     };
 
+    input_service->write = [this](InputType type, uint32_t id, std::span<const uint8_t> data) {
+        return write(type, id, data);
+    };
+
+    input_service->send_feature_report = [this](InputType type, uint32_t id, std::span<const uint8_t> data) {
+        return send_feature_report(type, id, data);
+    };
+
     m_input_service = input_service;
 
     registry.register_service<Registry::Service::InputService>(
@@ -289,6 +297,20 @@ void InputSubsystem::close_device(InputType backend_type, uint32_t device_id)
     }
 }
 
+int InputSubsystem::write(InputType backend_type, uint32_t device_id, std::span<const uint8_t> data)
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(backend_type);
+    return it == m_backends.end() ? -1 : it->second->write(device_id, data);
+}
+
+int InputSubsystem::send_feature_report(InputType backend_type, uint32_t device_id, std::span<const uint8_t> data)
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(backend_type);
+    return it == m_backends.end() ? -1 : it->second->send_feature_report(device_id, data);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Private: Backend Initialization
 // ─────────────────────────────────────────────────────────────────────────────
@@ -299,11 +321,13 @@ void InputSubsystem::wire_backend_to_manager(IInputBackend* backend)
         m_handle->inputs.enqueue_input(value);
     });
 
-    backend->set_device_callback([](const InputDeviceInfo& info, bool connected) {
+    backend->set_device_callback([this](const InputDeviceInfo& info, bool connected) {
         MF_INFO(Journal::Component::Core, Journal::Context::InputSubsystem,
             "Device {}: {} ({})",
             connected ? "connected" : "disconnected",
             info.name, static_cast<int>(info.backend_type));
+
+        m_handle->inputs.on_device_change(info, connected);
     });
 }
 

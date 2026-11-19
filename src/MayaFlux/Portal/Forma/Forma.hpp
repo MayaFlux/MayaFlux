@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Primitives/Picker.hpp"
+#include "Primitives/Prompt.hpp"
 #include "Tend.hpp"
 
 namespace MayaFlux::Vruta {

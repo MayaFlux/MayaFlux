@@ -227,6 +227,24 @@ std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
     return node;
 }
 
+std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(const Nodes::Input::HIDConfig& config)
+{
+    const auto device = choose_input_device(Core::InputType::HID);
+    if (!device) {
+        return nullptr;
+    }
+    return read_hid(config, device->to_binding());
+}
+
+std::shared_ptr<Nodes::Input::MIDINode> Creator::read_midi(const Nodes::Input::MIDIConfig& config)
+{
+    const auto device = choose_input_device(Core::InputType::MIDI);
+    if (!device) {
+        return nullptr;
+    }
+    return read_midi(config, device->to_binding());
+}
+
 std::shared_ptr<Nodes::Input::MIDINode> Creator::read_midi(
     const Nodes::Input::MIDIConfig& config,
     const Core::InputBinding& binding)
@@ -243,6 +261,15 @@ std::shared_ptr<Nodes::Input::OSCNode> Creator::read_osc(
     auto node = std::make_shared<Nodes::Input::OSCNode>(config);
     register_input_node(node, binding);
     return node;
+}
+
+std::shared_ptr<Nodes::Input::TabletNode> Creator::read_tablet(const Nodes::Input::TabletConfig& config)
+{
+    const auto device = choose_input_device(Core::InputType::TABLET);
+    if (!device) {
+        return nullptr;
+    }
+    return read_tablet(config, device->to_binding());
 }
 
 std::shared_ptr<Nodes::Input::TabletNode> Creator::read_tablet(

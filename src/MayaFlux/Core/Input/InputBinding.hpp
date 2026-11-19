@@ -2,6 +2,8 @@
 
 namespace MayaFlux::Core {
 
+struct HIDReportLayout;
+
 /**
  * @brief Input backend type enumeration
  */
@@ -219,7 +221,8 @@ struct MAYAFLUX_API InputValue {
         VECTOR, ///< Multiple float values (e.g., accelerometer xyz)
         BYTES, ///< Raw byte data (HID reports, sysex)
         MIDI, ///< Structured MIDI message
-        OSC ///< Structured OSC message
+        OSC, ///< Structured OSC message
+        HID ///< Decoded state of a HID device
     };
 
     /**
@@ -280,13 +283,32 @@ struct MAYAFLUX_API InputValue {
         [[nodiscard]] std::optional<std::vector<uint8_t>> get_blob(size_t index = 0) const noexcept;
     };
 
+    /**
+     * @brief Complete decoded state of one HID device.
+     *
+     * raw holds one integer per field of layout, in layout order, read exactly
+     * as the device reported it. Fields a report did not carry keep their last
+     * value. The layout is immutable and shared, so a consumer can cache work
+     * keyed on its address. A device with no readable descriptor has a layout
+     * with no fields.
+     *
+     * report holds the bytes of the report that produced this state, report ID
+     * included, exactly as the device sent them.
+     */
+    struct HIDFrame {
+        std::shared_ptr<const HIDReportLayout> layout;
+        std::vector<int32_t> raw;
+        std::vector<uint8_t> report;
+    };
+
     Type type;
     std::variant<
         double, ///< SCALAR
         std::vector<double>, ///< VECTOR
         std::vector<uint8_t>, ///< BYTES
         MIDIMessage, ///< MIDI
-        OSCMessage ///< OSC
+        OSCMessage, ///< OSC
+        HIDFrame ///< HID
         >
         data;
 
@@ -299,6 +321,7 @@ struct MAYAFLUX_API InputValue {
     [[nodiscard]] const std::vector<uint8_t>& as_bytes() const { return std::get<std::vector<uint8_t>>(data); }
     [[nodiscard]] const MIDIMessage& as_midi() const { return std::get<MIDIMessage>(data); }
     [[nodiscard]] const OSCMessage& as_osc() const { return std::get<OSCMessage>(data); }
+    [[nodiscard]] const HIDFrame& as_hid() const { return std::get<HIDFrame>(data); }
 
     static InputValue make_scalar(double v, uint32_t dev_id, InputType src);
 
@@ -309,6 +332,9 @@ struct MAYAFLUX_API InputValue {
     static InputValue make_midi(uint8_t status, uint8_t d1, uint8_t d2, uint32_t dev_id);
 
     static InputValue make_osc(std::string addr, std::vector<OSCArg> args, uint32_t dev_id);
+
+    static InputValue make_hid(std::shared_ptr<const HIDReportLayout> layout, std::vector<int32_t> raw,
+        std::vector<uint8_t> report, uint32_t dev_id);
 
     /**
      * @brief Safe scalar extraction.
@@ -339,6 +365,12 @@ struct MAYAFLUX_API InputValue {
      * @return Pointer to OSCMessage, or nullptr if this is not OSC.
      */
     [[nodiscard]] const OSCMessage* try_osc() const noexcept;
+
+    /**
+     * @brief Safe HID frame extraction.
+     * @return Pointer to the frame, or nullptr if this is not HID.
+     */
+    [[nodiscard]] const HIDFrame* try_hid() const noexcept;
 };
 
 } // namespace MayaFlux::Core

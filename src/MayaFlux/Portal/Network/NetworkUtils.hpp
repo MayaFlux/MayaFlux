@@ -119,6 +119,48 @@ struct MAYAFLUX_API StreamConfig {
     size_t max_message_size {}; ///< TCP and UDS: largest message or line in bytes. 0 = the framing's own limit.
 };
 
+/**
+ * @brief The StreamConfig that opens a sink to the remote side of an endpoint.
+ *
+ * Takes what a sink needs from a Core::EndpointInfo: the transport, the remote
+ * address and port or the remote socket path, the local port, the framing and
+ * the message size limit. The label becomes the stream name.
+ *
+ * @param info Endpoint as chosen or written by hand.
+ */
+[[nodiscard]] inline StreamConfig to_stream_config(const Core::EndpointInfo& info)
+{
+    StreamConfig config;
+    config.name = info.label;
+    config.framing = info.framing;
+    config.max_message_size = info.max_message_size;
+
+    switch (info.transport) {
+    case Core::NetworkTransport::TCP:
+        config.transport = NetworkTransportHint::TCP;
+        break;
+    case Core::NetworkTransport::SHARED_MEMORY:
+        config.transport = NetworkTransportHint::SHARED_MEMORY;
+        break;
+    case Core::NetworkTransport::UDS:
+        config.transport = NetworkTransportHint::UDS;
+        break;
+    case Core::NetworkTransport::UDP:
+        config.transport = NetworkTransportHint::UDP;
+        break;
+    }
+
+    if (info.transport == Core::NetworkTransport::UDS) {
+        config.endpoint.path = info.remote_path;
+    } else {
+        config.endpoint.address = info.remote_address;
+        config.endpoint.port = info.remote_port;
+        config.endpoint.local_port = info.local_port;
+    }
+
+    return config;
+}
+
 //=============================================================================
 // Payload helpers
 //=============================================================================

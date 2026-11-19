@@ -100,6 +100,19 @@ public:
         InputBinding binding);
 
     /**
+     * @brief Follow a device that appears or disappears
+     * @param info The device
+     * @param connected True when it appeared, false when it went away
+     *
+     * A node registered by vendor and product keeps that pattern. When its
+     * device goes away it receives nothing, and when a matching device appears
+     * it is bound to that device's id and the device is opened, so a device that
+     * returns under a new id is followed. A node registered by id is untouched.
+     * Thread-safe. Called from backend threads after the backend released its lock.
+     */
+    void on_device_change(const InputDeviceInfo& info, bool connected);
+
+    /**
      * @brief Unregister a node
      * @param node The node to unregister
      *
@@ -171,9 +184,12 @@ private:
     // Node Registry
     // ─────────────────────────────────────────────────────────────────────
 
+    static constexpr uint32_t k_unbound_device = std::numeric_limits<uint32_t>::max();
+
     struct NodeRegistration {
         std::shared_ptr<Nodes::Input::InputNode> node;
         InputBinding binding;
+        std::optional<InputBinding> pattern;
     };
     using RegistrationList = std::vector<NodeRegistration>;
 

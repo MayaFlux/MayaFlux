@@ -43,6 +43,24 @@ struct MAYAFLUX_API InputService {
      * Safe to call on already-closed or non-existent devices (no-op).
      */
     std::function<void(Core::InputType, uint32_t)> close_device;
+
+    /**
+     * @brief Send an output report to an open device
+     * @param backend_type Backend type
+     * @param device_id Device identifier
+     * @param data Report bytes, the first being the report id when the device uses report ids
+     * @return Bytes sent, or -1 when the backend is missing, the device is not open or the backend cannot write
+     */
+    std::function<int(Core::InputType, uint32_t, std::span<const uint8_t>)> write;
+
+    /**
+     * @brief Send a feature report to an open device
+     * @param backend_type Backend type
+     * @param device_id Device identifier
+     * @param data Report bytes, the first being the report id
+     * @return Bytes sent, or -1 when the backend is missing, the device is not open or the backend cannot send one
+     */
+    std::function<int(Core::InputType, uint32_t, std::span<const uint8_t>)> send_feature_report;
 };
 
 } // namespace MayaFlux::Registry::Service

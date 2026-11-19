@@ -5,7 +5,24 @@
 #include "MayaFlux/Core/Input/InputManager.hpp"
 #include "MayaFlux/Core/Subsystems/InputSubsystem.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Forma/Primitives/Picker.hpp"
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
+
 namespace MayaFlux {
+
+namespace {
+
+    std::string describe_device(const Core::InputDeviceInfo& device)
+    {
+        std::string text = device.name;
+        if (device.vendor_id != 0 || device.product_id != 0) {
+            text += std::format("  {:04x}:{:04x}", device.vendor_id, device.product_id);
+        }
+        return text + std::format("  #{}", device.id);
+    }
+
+}
 
 const Core::InputSubsystem& get_input_subsystem()
 {
@@ -53,6 +70,32 @@ std::optional<Core::InputDeviceInfo> find_hid_device(
     uint16_t product_id)
 {
     return get_input_subsystem().find_hid_device(vendor_id, product_id);
+}
+
+std::optional<Core::InputDeviceInfo> choose_input_device(Core::InputType type)
+{
+    std::vector<Core::InputDeviceInfo> devices;
+    for (auto& device : get_all_input_devices()) {
+        if (device.backend_type == type) {
+            devices.push_back(std::move(device));
+        }
+    }
+
+    if (devices.empty()) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "choose_input_device: no devices found");
+        return std::nullopt;
+    }
+
+    auto promise = std::make_shared<std::promise<std::optional<Core::InputDeviceInfo>>>();
+    auto future = promise->get_future();
+
+    Portal::Forma::pick("Choose a device", std::move(devices), describe_device,
+        [promise](std::optional<Core::InputDeviceInfo> device) {
+            promise->set_value(std::move(device));
+        });
+
+    return Parallel::await_future(std::move(future));
 }
 
 Core::InputBinding bind_hid(uint32_t device_id)

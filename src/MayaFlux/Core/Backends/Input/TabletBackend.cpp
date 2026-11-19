@@ -15,6 +15,10 @@ namespace {
     constexpr uint16_t k_page_generic = 0x01;
     constexpr uint16_t k_page_digitizer = 0x0D;
 
+    constexpr uint16_t k_usage_pointer = 0x01;
+    constexpr uint16_t k_usage_mouse = 0x02;
+    constexpr uint16_t k_usage_keyboard = 0x06;
+
     constexpr uint16_t k_usage_x = 0x30;
     constexpr uint16_t k_usage_y = 0x31;
     constexpr uint16_t k_usage_z = 0x32;
@@ -121,52 +125,16 @@ namespace {
         }
     }
 
-    /**
-     * @brief Read a little-endian signed value of @p bytes width.
-     */
-    int32_t item_signed(const uint8_t* data, size_t bytes) noexcept
-    {
-        int32_t value = 0;
-        for (size_t i = 0; i < bytes; ++i)
-            value |= static_cast<int32_t>(data[i]) << (8U * i);
-
-        if (bytes > 0 && bytes < 4) {
-            const auto sign_bit = static_cast<int32_t>(1U << (8U * bytes - 1U));
-            if ((value & sign_bit) != 0)
-                value -= (sign_bit << 1);
-        }
-        return value;
-    }
-
-    uint32_t item_unsigned(const uint8_t* data, size_t bytes) noexcept
-    {
-        uint32_t value = 0;
-        for (size_t i = 0; i < bytes; ++i)
-            value |= static_cast<uint32_t>(data[i]) << (8U * i);
-        return value;
-    }
+    constexpr uint8_t k_collection_application = 0x01;
 
     /**
-     * @brief Extract a field from a report, LSB first, sign extended.
+     * @brief True for a top-level Application collection of Digitizer or Pen usage.
      */
-    int32_t extract_field(std::span<const uint8_t> report, const TabletField& field) noexcept
+    bool is_digitizer_collection(const HIDCollection& collection) noexcept
     {
-        uint32_t raw = 0;
-        for (uint32_t i = 0; i < field.bit_size; ++i) {
-            const uint32_t bit = field.bit_offset + i;
-            const size_t byte = bit / 8U;
-            if (byte >= report.size())
-                break;
-            if (((report[byte] >> (bit % 8U)) & 1U) != 0U)
-                raw |= (1U << i);
-        }
-
-        if (field.logical_min < 0 && field.bit_size > 0 && field.bit_size < 32) {
-            const auto sign_bit = 1U << (field.bit_size - 1U);
-            if ((raw & sign_bit) != 0U)
-                return static_cast<int32_t>(raw) - static_cast<int32_t>(sign_bit << 1U);
-        }
-        return static_cast<int32_t>(raw);
+        return collection.type == k_collection_application
+            && collection.usage_page == k_page_digitizer
+            && (collection.usage == k_usage_digitizer || collection.usage == k_usage_pen);
     }
 
     double normalise(int32_t raw, int32_t lo, int32_t hi) noexcept
@@ -221,28 +189,11 @@ namespace {
         return text.empty() ? std::string("no detail from HIDAPI") : text;
     }
 
-    /**
-     * @brief Global item state, saved and restored by Push and Pop.
-     */
-    struct GlobalState {
-        uint16_t usage_page {};
-        int32_t logical_min {};
-        int32_t logical_max {};
-        uint32_t report_size {};
-        uint32_t report_count {};
-        uint8_t report_id {};
-    };
-
-    /**
-     * @brief A local usage carrying its own page.
-     *
-     * Extended 32-bit usages embed a page that applies only to that usage,
-     * so the page cannot be folded into the global state.
-     */
-    struct LocalUsage {
-        uint16_t page {};
-        uint16_t usage {};
-    };
+    bool is_keyboard_or_pointer(uint16_t usage_page, uint16_t usage)
+    {
+        return usage_page == k_page_generic
+            && (usage == k_usage_pointer || usage == k_usage_mouse || usage == k_usage_keyboard);
+    }
 
 } // namespace
 
@@ -252,197 +203,28 @@ namespace {
 
 TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor)
 {
-
     TabletLayout layout;
 
-    GlobalState global;
-    std::vector<GlobalState> global_stack;
+    const HIDReportLayout parsed = parse_hid_descriptor(descriptor);
+    layout.uses_report_ids = parsed.uses_report_ids;
 
-    std::vector<LocalUsage> local_usages;
-    uint32_t usage_min = 0;
-    uint32_t usage_max = 0;
-    bool has_usage_range = false;
-
-    std::unordered_map<uint8_t, uint32_t> bit_cursor;
-    bool digitizer_seen = false;
-
-    const auto clear_locals = [&]() {
-        local_usages.clear();
-        usage_min = 0;
-        usage_max = 0;
-        has_usage_range = false;
-    };
-
-    size_t i = 0;
-    while (i < descriptor.size()) {
-        const uint8_t prefix = descriptor[i];
-
-        if (prefix == 0xFE) {
-            if (i + 1 >= descriptor.size())
-                break;
-            i += 2U + descriptor[i + 1];
+    for (const auto& input : parsed.fields) {
+        if (!is_digitizer_collection(input.collection))
             continue;
-        }
 
-        size_t size = prefix & 0x03U;
-        if (size == 3)
-            size = 4;
-        const uint8_t type = (prefix >> 2U) & 0x03U;
-        const uint8_t tag = (prefix >> 4U) & 0x0FU;
-
-        ++i;
-        if (i + size > descriptor.size())
-            break;
-
-        const uint8_t* payload = descriptor.data() + i;
-        i += size;
-
-        if (type == 1) {
-            switch (tag) {
-            case 0x0:
-                global.usage_page = static_cast<uint16_t>(item_unsigned(payload, size));
-                if (global.usage_page == k_page_digitizer)
-                    digitizer_seen = true;
-                break;
-
-            case 0x1:
-                global.logical_min = item_signed(payload, size);
-                break;
-
-            case 0x2: {
-                const int32_t as_signed = item_signed(payload, size);
-                global.logical_max = (global.logical_min >= 0 && as_signed < 0)
-                    ? static_cast<int32_t>(item_unsigned(payload, size))
-                    : as_signed;
-                break;
-            }
-
-            case 0x7:
-                global.report_size = item_unsigned(payload, size);
-                break;
-
-            case 0x8:
-                global.report_id = static_cast<uint8_t>(item_unsigned(payload, size));
-                layout.uses_report_ids = true;
-                break;
-
-            case 0x9:
-                global.report_count = item_unsigned(payload, size);
-                break;
-
-            case 0xA:
-                global_stack.push_back(global);
-                break;
-
-            case 0xB:
-                if (!global_stack.empty()) {
-                    global = global_stack.back();
-                    global_stack.pop_back();
-                }
-                break;
-
-            default:
-                break;
-            }
+        const size_t slot = slot_for_usage(input.usage_page, input.usage);
+        if (slot == k_slot_none)
             continue;
-        }
 
-        if (type == 2) {
-            switch (tag) {
-            case 0x0:
-                if (size == 4) {
-                    const uint32_t full = item_unsigned(payload, size);
-                    const auto page = static_cast<uint16_t>(full >> 16U);
-                    local_usages.push_back({ .page = page, .usage = static_cast<uint16_t>(full & 0xFFFFU) });
-                    if (page == k_page_digitizer)
-                        digitizer_seen = true;
-                } else {
-                    local_usages.push_back({ .page = global.usage_page,
-                        .usage = static_cast<uint16_t>(item_unsigned(payload, size)) });
-                }
-                break;
+        layout.fields.push_back(TabletField { input, slot });
 
-            case 0x1:
-                usage_min = item_unsigned(payload, size);
-                has_usage_range = true;
-                break;
-
-            case 0x2:
-                usage_max = item_unsigned(payload, size);
-                has_usage_range = true;
-                break;
-
-            default:
-                break;
-            }
-            continue;
-        }
-
-        if (type != 0) {
-            continue;
-        }
-
-        if (tag != 0x8) {
-            clear_locals();
-            continue;
-        }
-
-        const uint32_t flags = item_unsigned(payload, size);
-        const bool is_constant = (flags & 0x01U) != 0U;
-
-        if (global.report_size == 0 || global.report_count == 0) {
-            clear_locals();
-            continue;
-        }
-
-        uint32_t& cursor = bit_cursor[global.report_id];
-
-        for (uint32_t index = 0; index < global.report_count; ++index) {
-            LocalUsage current { .page = global.usage_page, .usage = 0 };
-
-            if (!is_constant) {
-                if (index < local_usages.size()) {
-                    current = local_usages[index];
-                } else if (!local_usages.empty()) {
-                    current = local_usages.back();
-                } else if (has_usage_range) {
-                    current.usage = static_cast<uint16_t>(
-                        std::min(usage_min + index, usage_max));
-                }
-            }
-
-            const size_t slot = is_constant
-                ? k_slot_none
-                : slot_for_usage(current.page, current.usage);
-
-            if (slot != k_slot_none) {
-                TabletField field;
-                field.report_id = global.report_id;
-                field.usage_page = current.page;
-                field.usage = current.usage;
-                field.bit_offset = cursor;
-                field.bit_size = global.report_size;
-                field.logical_min = global.logical_min;
-                field.logical_max = global.logical_max;
-                field.slot = slot;
-                layout.fields.push_back(field);
-
-                if (slot < TabletFrame::SLOT_COUNT)
-                    layout.axes |= axis_for_slot(slot);
-                if (slot == k_pseudo_invert)
-                    layout.has_invert = true;
-                if (slot == k_pseudo_serial)
-                    layout.has_serial = true;
-            }
-
-            cursor += global.report_size;
-        }
-
-        clear_locals();
+        if (slot < TabletFrame::SLOT_COUNT)
+            layout.axes |= axis_for_slot(slot);
+        if (slot == k_pseudo_invert)
+            layout.has_invert = true;
+        if (slot == k_pseudo_serial)
+            layout.has_serial = true;
     }
-
-    if (!digitizer_seen)
-        layout.fields.clear();
 
     return layout;
 }
@@ -575,6 +357,9 @@ size_t TabletBackend::refresh_devices()
     hid_device_info* devs = hid_enumerate(0x0, 0x0);
 
     for (hid_device_info* cur = devs; cur != nullptr; cur = cur->next) {
+        if (is_keyboard_or_pointer(cur->usage_page, cur->usage))
+            continue;
+
         if (!m_config.probe_all_devices
             && cur->usage_page != k_page_digitizer
             && cur->usage_page != 0)
@@ -592,7 +377,8 @@ size_t TabletBackend::refresh_devices()
         if (name.empty())
             name = "Tablet";
 
-        adopt_device(path, cur->vendor_id, cur->product_id, std::move(name));
+        adopt_device(path, cur->vendor_id, cur->product_id, std::move(name),
+            cur->usage_page == k_page_digitizer);
     }
 
     hid_free_enumeration(devs);
@@ -602,13 +388,23 @@ size_t TabletBackend::refresh_devices()
 }
 
 bool TabletBackend::adopt_device(const std::string& path, uint16_t vid,
-    uint16_t pid, std::string name)
+    uint16_t pid, std::string name, bool announced_digitizer)
 {
     hid_device* handle = hid_open_path(path.c_str());
     if (!handle) {
-        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
-            "Could not open HID device {} ({}): {}",
-            name, path, hid_failure_reason(nullptr));
+        const std::string reason = hid_failure_reason(nullptr);
+        if (!announced_digitizer) {
+            MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
+                "Could not open HID device {} ({}): {}", name, path, reason);
+            return false;
+        }
+
+        MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
+            "Failed to open tablet {} ({}): {}", name, path, reason);
+
+        if (const auto hint = hid_open_failure_hint(vid, pid, reason); !hint.empty()) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend, "{}", hint);
+        }
         return false;
     }
 
@@ -769,7 +565,7 @@ void TabletBackend::unpack_report(TabletDevice& device, std::span<const uint8_t>
             continue;
 
         matched = true;
-        const int32_t raw = extract_field(body, field);
+        const int32_t raw = read_hid_field(body, field);
 
         switch (field.slot) {
         case TabletFrame::X:

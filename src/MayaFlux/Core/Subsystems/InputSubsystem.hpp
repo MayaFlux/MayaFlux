@@ -101,6 +101,18 @@ public:
      */
     void close_device(InputType backend_type, uint32_t device_id);
 
+    /**
+     * @brief Send an output report through a backend to an open device
+     * @return Bytes sent, or -1 when the backend is missing, the device is not open or the backend cannot write
+     */
+    int write(InputType backend_type, uint32_t device_id, std::span<const uint8_t> data);
+
+    /**
+     * @brief Send a feature report through a backend to an open device
+     * @return Bytes sent, or -1 when the backend is missing, the device is not open or the backend cannot send one
+     */
+    int send_feature_report(InputType backend_type, uint32_t device_id, std::span<const uint8_t> data);
+
     // ────────────────────────────────────────────────────────────────────────────
     // Device Discovery (User-Facing API)
     // ────────────────────────────────────────────────────────────────────────────

@@ -309,6 +309,30 @@ public:
         const Core::InputBinding& binding);
 
     /**
+     * @brief Let the user pick a HID device, then read it as above.
+     *
+     * Opens the picker via choose_input_device(). Blocks until the user
+     * chooses or closes the window.
+     *
+     * @param config HID input configuration.
+     * @return Shared pointer to HIDNode (already registered), or nullptr on
+     *         cancellation or when no HID device is found.
+     */
+    std::shared_ptr<Nodes::Input::HIDNode> read_hid(const Nodes::Input::HIDConfig& config);
+
+    /**
+     * @brief Let the user pick a MIDI device, then read it as below.
+     *
+     * Opens the picker via choose_input_device(). Blocks until the user
+     * chooses or closes the window.
+     *
+     * @param config MIDI input configuration.
+     * @return Shared pointer to MIDINode (already registered), or nullptr on
+     *         cancellation or when no MIDI device is found.
+     */
+    std::shared_ptr<Nodes::Input::MIDINode> read_midi(const Nodes::Input::MIDIConfig& config);
+
+    /**
      * @brief Create and register MIDI input node.
      * @param config MIDI input configuration.
      * @param binding MIDI input binding.
@@ -327,6 +351,18 @@ public:
     std::shared_ptr<Nodes::Input::OSCNode> read_osc(
         const Nodes::Input::OSCConfig& config,
         const Core::InputBinding& binding);
+
+    /**
+     * @brief Let the user pick a tablet tool, then read it as below.
+     *
+     * Opens the picker via choose_input_device(). Blocks until the user
+     * chooses or closes the window. A pen and an eraser are separate tools.
+     *
+     * @param config Tablet input configuration.
+     * @return Shared pointer to TabletNode (already registered), or nullptr on
+     *         cancellation or when no tablet tool is found.
+     */
+    std::shared_ptr<Nodes::Input::TabletNode> read_tablet(const Nodes::Input::TabletConfig& config);
 
     /**
      * @brief Create and register tablet input node.

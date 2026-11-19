@@ -20,6 +20,18 @@ AudioSubsystem::AudioSubsystem(GlobalStreamInfo& stream_info)
 {
 }
 
+void AudioSubsystem::resolve_stream_info([[maybe_unused]] GlobalStreamInfo& stream_info)
+{
+#ifdef WASAPI_BACKEND
+    auto backend = AudioBackendFactory::create_backend(stream_info.backend);
+    auto devices = backend->create_device_manager();
+    backend->resolve_stream_info(
+        devices->get_default_output_device(),
+        devices->get_default_input_device(),
+        stream_info);
+#endif
+}
+
 void AudioSubsystem::initialize(SubsystemProcessingHandle& handle)
 {
     m_handle = &handle;

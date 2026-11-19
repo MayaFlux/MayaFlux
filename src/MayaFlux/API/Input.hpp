@@ -8,6 +8,7 @@ namespace Core {
     class InputManager;
     class InputSubsystem;
     struct InputDeviceInfo;
+    enum class InputType : uint8_t;
 }
 
 namespace Nodes::Input {
@@ -70,6 +71,20 @@ MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_all_input_devices();
 MAYAFLUX_API std::optional<Core::InputDeviceInfo> find_hid_device(
     uint16_t vendor_id,
     uint16_t product_id);
+
+/**
+ * @brief Let the user pick one of the connected devices of an input backend.
+ *
+ * The picker is a Portal::Forma window driven by the engine, as in
+ * choose_camera(). Blocks until the user chooses or closes the window, so it
+ * must not be called from the event thread. Portal::Forma must be initialized
+ * and the engine running.
+ *
+ * @param type Backend whose devices are listed.
+ * @return The chosen device, ready for InputDeviceInfo::to_binding(), or
+ *         nothing on cancellation or when the backend has no devices.
+ */
+MAYAFLUX_API std::optional<Core::InputDeviceInfo> choose_input_device(Core::InputType type);
 
 /**
  * @brief Gets the input subsystem

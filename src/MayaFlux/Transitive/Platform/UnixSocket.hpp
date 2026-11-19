@@ -158,6 +158,50 @@ namespace detail {
 }
 
 /**
+ * @brief Whether a path holds a Unix socket file, without following a symbolic link.
+ *
+ * On Windows a socket file is a reparse point, which the standard library does not
+ * report as a socket, so it is recognised here by its reparse tag.
+ */
+[[nodiscard]] inline bool is_unix_socket(const std::filesystem::path& path)
+{
+    std::error_code ec;
+    const auto entry = std::filesystem::symlink_status(path, ec);
+    return !ec && detail::entry_is_socket(entry, path);
+}
+
+/**
+ * @brief The Unix sockets that sit in the user's runtime directories, sorted by path.
+ *
+ * Every directory of runtime_directory_candidates() that can be read is listed,
+ * once each however many candidates name it, and the entries that
+ * is_unix_socket() accepts are returned. Directories that are missing or
+ * unreadable are skipped. Nothing is probed: a socket nothing answers on is listed too.
+ */
+[[nodiscard]] inline std::vector<std::filesystem::path> list_unix_sockets()
+{
+    std::vector<std::filesystem::path> sockets;
+
+    for (const auto& directory : runtime_directory_candidates()) {
+        std::error_code ec;
+        std::filesystem::directory_iterator entry(directory, ec);
+        const std::filesystem::directory_iterator end;
+
+        while (!ec && entry != end) {
+            if (is_unix_socket(entry->path())) {
+                sockets.push_back(entry->path());
+            }
+            entry.increment(ec);
+        }
+    }
+
+    std::ranges::sort(sockets);
+    const auto duplicates = std::ranges::unique(sockets);
+    sockets.erase(duplicates.begin(), duplicates.end());
+    return sockets;
+}
+
+/**
  * @brief Resolve a Unix socket request to a path, for a client that connects to an existing socket.
  *
  * Applies the same name and path resolution as acquire_unix_socket and checks nothing

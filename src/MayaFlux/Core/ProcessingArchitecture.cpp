@@ -242,6 +242,13 @@ void InputManagerHandle::enqueue_input(const InputValue& value)
     }
 }
 
+void InputManagerHandle::on_device_change(const InputDeviceInfo& info, bool connected)
+{
+    if (m_input_manager) {
+        m_input_manager->on_device_change(info, connected);
+    }
+}
+
 void InputManagerHandle::setup_osc_bridge(const OSCConfigInfo& config)
 {
     if (m_input_manager) {

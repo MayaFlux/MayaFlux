@@ -40,7 +40,6 @@ env:
     Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   LLVM_ROOT: "C:/LLVM_CI"
-  MSVC_TOOLSET_VER: "14.51"
 
 jobs:
   build:
@@ -102,7 +101,7 @@ jobs:
       - name: Setup MSVC environment
         shell: pwsh
         run: |
-          $compilerEnvironment = & $env:ComSpec /d /c ('call "{0}" x64 -vcvars_ver={1} && set' -f $env:VCVARS_PATH, $env:MSVC_TOOLSET_VER)
+          $compilerEnvironment = & $env:ComSpec /d /c ('call "{0}" x64 && set' -f $env:VCVARS_PATH)
           if ($LASTEXITCODE -ne 0) {
             $compilerEnvironment | Write-Host
             throw "MSVC environment setup failed with exit code $LASTEXITCODE."
@@ -266,6 +265,36 @@ jobs:
         with:
           path: ${{ env.LLVM_ROOT }}
           key: ${{ steps.llvm-cache.outputs.cache-primary-key }}
+
+      - name: Patch clang Diagnostic.h for MSVC 14.52
+        shell: pwsh
+        run: |
+          $header = "${{ env.LLVM_ROOT }}/include/clang/Basic/Diagnostic.h"
+          $text = [System.IO.File]::ReadAllText($header)
+          $inline = '  std::unique_ptr<DiagnosticConsumer> takeClient() { return std::move(Owner); }'
+          $declaration = '  std::unique_ptr<DiagnosticConsumer> takeClient();'
+          $closing = '} // namespace clang'
+          $definition = "inline std::unique_ptr<DiagnosticConsumer> DiagnosticsEngine::takeClient() {`n  return std::move(Owner);`n}`n`n"
+
+          if ($text.Contains('DiagnosticsEngine::takeClient()')) {
+            Write-Host "Diagnostic.h already patched"
+            exit 0
+          }
+          if (-not $text.Contains($inline) -or $text.IndexOf($closing) -lt 0) {
+            Write-Host "Diagnostic.h no longer has the inline takeClient(); remove this step" -ForegroundColor Red
+            exit 1
+          }
+
+          $text = $text.Replace($inline, $declaration)
+          $last = $text.LastIndexOf($closing)
+          $text = $text.Insert($last, $definition)
+          [System.IO.File]::WriteAllText($header, $text, (New-Object System.Text.UTF8Encoding($false)))
+
+          if (-not (Select-String -Path $header -SimpleMatch 'DiagnosticsEngine::takeClient()' -Quiet)) {
+            Write-Host "Diagnostic.h patch verification failed" -ForegroundColor Red
+            exit 1
+          }
+          Write-Host "Diagnostic.h patched"
 
       - name: Install FFmpeg
         id: install-ffmpeg

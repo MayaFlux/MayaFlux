@@ -63,6 +63,11 @@ SubsystemManager::SubsystemManager(
     }
 }
 
+void SubsystemManager::resolve_configs(GlobalStreamInfo& stream_info)
+{
+    AudioSubsystem::resolve_stream_info(stream_info);
+}
+
 void SubsystemManager::create_audio_subsystem(GlobalStreamInfo& stream_info)
 {
     create_subsystem_internal<AudioSubsystem>(SubsystemType::AUDIO, stream_info);

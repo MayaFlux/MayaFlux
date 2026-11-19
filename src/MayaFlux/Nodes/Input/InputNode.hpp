@@ -3,7 +3,10 @@
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 
+#include "MayaFlux/Transitive/Facet/ControlValue.hpp"
+#include "MayaFlux/Transitive/Facet/ControlValueStore.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Nodes::Input {
 
@@ -71,6 +74,21 @@ struct InputConfig {
     double default_value { 0.0 }; ///< Initial output value
     size_t history_size { 8 }; ///< Input history buffer size
 };
+
+/**
+ * @struct InputTuning
+ * @brief Smoothing settings an input node can change while it runs.
+ *
+ * A member that holds a value replaces the same setting of the node's
+ * InputConfig. An empty member leaves the config's setting in force.
+ */
+struct InputTuning {
+    ControlValue smoothing; ///< A SmoothingMode
+    ControlValue smoothing_factor; ///< 0-1, higher = faster response
+    ControlValue slew_rate; ///< Max change per sample (SLEW mode)
+};
+
+MF_DESCRIBE(InputTuning)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // InputNode - Base class for input-driven nodes
@@ -181,6 +199,17 @@ public:
     }
     void set_slew_rate(double rate) { m_config.slew_rate = rate; }
     [[nodiscard]] const InputConfig& get_config() const { return m_config; }
+
+    /**
+     * @brief Applies the members of @p tuning that hold a value.
+     *
+     * Safe from any thread. A tuned setting takes effect on the next sample or
+     * the next input and wins over the same setting of the config.
+     */
+    void set_tuning(const InputTuning& tuning);
+
+    /** @brief The tuned settings. A member that holds no value is not tuned. */
+    [[nodiscard]] InputTuning get_tuning() const;
 
     // ─────────────────────────────────────────────────────────────────────
     // Context Access (for callbacks)
@@ -316,6 +345,9 @@ protected:
     InputContext m_context;
 
 private:
+    ControlValueStore<ControlValue> m_tuning_store;
+    InputTuning* m_tuning { nullptr };
+
     std::atomic<double> m_target_value { 0.0 };
     std::atomic<double> m_current_value { 0.0 };
     std::atomic<bool> m_has_new_input { false };
@@ -339,3 +371,5 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Input
+
+#include "InputNode.describe.hpp"

@@ -32,7 +32,7 @@ target_include_directories(Lila PUBLIC
     ${CLANG_INCLUDE_DIRS}
 )
 
-target_precompile_headers(Lila PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
+target_link_libraries(Lila PUBLIC Transitive_Free)
 target_include_directories(Lila PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 if(CLANG_DEFINITIONS)
@@ -109,8 +109,4 @@ endif()
 
 if(APPLE)
     target_link_libraries(Lila PRIVATE "-framework CoreFoundation")
-endif()
-
-if(WIN32)
-    target_link_libraries(Lila PUBLIC magic_enum nlohmann_json::nlohmann_json)
 endif()

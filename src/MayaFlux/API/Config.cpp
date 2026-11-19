@@ -9,8 +9,6 @@
 
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
 
-#include "MayaFlux/IO/GlmSerializer.hpp"
-
 namespace MayaFlux {
 
 bool is_engine_configured()
@@ -20,6 +18,20 @@ bool is_engine_configured()
 }
 
 namespace MayaFlux::Config {
+
+namespace {
+    std::string s_project_root;
+}
+
+std::string project_root()
+{
+    return s_project_root.empty() ? std::string(SOURCE_DIR) : s_project_root;
+}
+
+void set_project_root(std::string path)
+{
+    s_project_root = std::move(path);
+}
 
 Core::GlobalStreamInfo& get_global_stream_info()
 {

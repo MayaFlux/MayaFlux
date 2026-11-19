@@ -24,6 +24,13 @@ struct TcpTransport {
     static constexpr std::string_view name = "TCP (Asio)";
 
     static bool is_listener(const EndpointInfo& info);
+    /**
+     * @brief Open, bind and listen on the endpoint's local port
+     *
+     * A port with a live listener is refused. A restart can rebind over leftover
+     * TIME_WAIT connections: elsewhere by SO_REUSEADDR, on Windows by the plain
+     * bind, since SO_REUSEADDR there would let a second socket take a live port.
+     */
     static std::expected<Bound, std::string> bind(Protocol::acceptor& acceptor, const EndpointInfo& info);
     static void release(const Bound& bound);
     static std::expected<Protocol::endpoint, std::string> connect_target(const EndpointInfo& info);

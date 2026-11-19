@@ -34,6 +34,7 @@ class WindowManager;
 class InputManager;
 
 struct InputValue;
+struct InputDeviceInfo;
 struct OSCConfigInfo;
 
 /**
@@ -261,6 +262,9 @@ public:
 
     /** @brief enqueue input value to InputManager */
     void enqueue_input(const InputValue& value);
+
+    /** @brief let InputManager follow a device that appeared or went away */
+    void on_device_change(const InputDeviceInfo& info, bool connected);
 
     /** @brief enqueue batch of input values to InputManager */
     void setup_osc_bridge(const OSCConfigInfo& config);

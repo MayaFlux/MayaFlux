@@ -25,6 +25,19 @@ using DeviceCallback = std::function<void(const InputDeviceInfo&, bool connected
 MAYAFLUX_API std::string wide_to_utf8(const wchar_t* ws);
 
 /**
+ * @brief What a user can do when the system refuses to open a HID device.
+ * @param vendor_id USB vendor id of the device.
+ * @param product_id USB product id of the device.
+ * @param reason The error text HIDAPI gave for the failed open.
+ * @return Guidance for this platform, or an empty string when there is none to give.
+ *
+ * On Linux, a permission failure yields the udev rule for this device. On macOS
+ * it names the Input Monitoring permission. Other cases yield nothing.
+ */
+MAYAFLUX_API std::string hid_open_failure_hint(uint16_t vendor_id, uint16_t product_id,
+    const std::string& reason);
+
+/**
  * @class IInputBackend
  * @brief Abstract interface for input device backends
  *
@@ -131,6 +144,22 @@ public:
      * @brief Get list of currently open device IDs
      */
     [[nodiscard]] virtual std::vector<uint32_t> get_open_devices() const = 0;
+
+    /**
+     * @brief Send an output report to an open device, for rumble, LEDs or commands
+     * @param device_id Target device
+     * @param data Report bytes, the first being the report id when the device uses report ids
+     * @return Bytes sent, or -1 when the device is not open or the backend cannot write
+     */
+    virtual int write(uint32_t, std::span<const uint8_t>) { return -1; }
+
+    /**
+     * @brief Send a feature report to an open device
+     * @param device_id Target device
+     * @param data Report bytes, the first being the report id
+     * @return Bytes sent, or -1 when the device is not open or the backend cannot send one
+     */
+    virtual int send_feature_report(uint32_t, std::span<const uint8_t>) { return -1; }
 
     // ─────────────────────────────────────────────────────────────────────
     // Callbacks

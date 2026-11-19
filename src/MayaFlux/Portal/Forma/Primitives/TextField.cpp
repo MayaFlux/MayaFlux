@@ -245,6 +245,36 @@ namespace {
         Portal::Text::move_to(edit, index_on_line(run, px, target_top), extend);
     }
 
+    /// @brief Byte offset of the start of the line the cursor is on.
+    size_t line_start(const std::string& text, size_t cursor)
+    {
+        if (cursor == 0)
+            return 0;
+        const size_t newline = text.rfind('\n', cursor - 1);
+        return newline == std::string::npos ? 0 : newline + 1;
+    }
+
+    /// @brief Byte offset of the end of the line the cursor is on.
+    size_t line_end(const std::string& text, size_t cursor)
+    {
+        const size_t newline = text.find('\n', cursor);
+        return newline == std::string::npos ? text.size() : newline;
+    }
+
+    /// @brief Report an edit to the behaviour hook, before the text is drawn.
+    void edited(const TextFieldBehavior& behavior, const Portal::Text::EditableText& edit)
+    {
+        if (behavior.on_change)
+            behavior.on_change(edit.text);
+    }
+
+    /// @brief The text without carriage returns and line feeds.
+    std::string without_line_breaks(std::string text)
+    {
+        std::erase_if(text, [](char c) { return c == '\n' || c == '\r'; });
+        return text;
+    }
+
 } // namespace
 
 TextField& TextField::place(
@@ -285,44 +315,63 @@ TextField& TextField::place(
 
 void TextField::wire(Context& ctx)
 {
-    ctx.on_text(element_id, [sl = slice, s = state, p = params](uint32_t, uint32_t codepoint) mutable {
+    ctx.on_text(element_id, [sl = slice, s = state, p = params, b = behavior](uint32_t, uint32_t codepoint) mutable {
         Portal::Text::EditableText edit = s->value;
         Portal::Text::insert_codepoint(edit, codepoint);
         s->write(edit);
+        edited(*b, edit);
         render_text(*sl, edit, *p);
         render_tail(*sl, edit, *p);
     });
 
-    ctx.press_and_hold(element_id, IO::Keys::Backspace, [sl = slice, s = state, p = params](uint32_t) mutable {
+    ctx.press_and_hold(element_id, IO::Keys::Backspace, [sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
         Portal::Text::erase(edit, -1);
         s->write(edit);
+        edited(*b, edit);
         render_text(*sl, edit, *p);
         render_tail(*sl, edit, *p);
     });
 
-    ctx.press_and_hold(element_id, IO::Keys::Delete, [sl = slice, s = state, p = params](uint32_t) mutable {
+    ctx.press_and_hold(element_id, IO::Keys::Delete, [sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
         Portal::Text::erase(edit, 1);
         s->write(edit);
+        edited(*b, edit);
         render_text(*sl, edit, *p);
         render_tail(*sl, edit, *p);
     });
 
-    ctx.press_and_hold(element_id, IO::Keys::Tab, [sl = slice, s = state, p = params](uint32_t) mutable {
+    ctx.press_and_hold(element_id, IO::Keys::Tab, [sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
+        if (b->single_line)
+            return;
         Portal::Text::EditableText edit = s->value;
         Portal::Text::insert_literal(edit, '\t');
         s->write(edit);
+        edited(*b, edit);
         render_text(*sl, edit, *p);
         render_tail(*sl, edit, *p);
     });
 
-    ctx.press_and_hold(element_id, IO::Keys::Enter, [sl = slice, s = state, p = params](uint32_t) mutable {
+    ctx.press_and_hold(element_id, IO::Keys::Enter, [sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
+        if (b->single_line)
+            return;
         Portal::Text::EditableText edit = s->value;
         Portal::Text::insert_literal(edit, '\n');
         s->write(edit);
+        edited(*b, edit);
         render_text(*sl, edit, *p);
         render_tail(*sl, edit, *p);
+    });
+
+    ctx.on_press(element_id, IO::Keys::Enter, [s = state, b = behavior](uint32_t) {
+        if (b->single_line && b->on_commit)
+            b->on_commit(s->value.text);
+    });
+
+    ctx.on_press(element_id, IO::Keys::Escape, [b = behavior](uint32_t) {
+        if (b->on_cancel)
+            b->on_cancel();
     });
 
     const Context* cx = &ctx;
@@ -347,16 +396,36 @@ void TextField::wire(Context& ctx)
         render_tail(*sl, edit, *p);
     });
 
-    ctx.press_and_hold(element_id, IO::Keys::Up, [cx, sl = slice, s = state, p = params](uint32_t) mutable {
+    ctx.press_and_hold(element_id, IO::Keys::Up, [cx, sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
-        move_vertical(edit, *sl, -1, shift_held(*cx));
+        if (b->single_line)
+            Portal::Text::move_to(edit, 0, shift_held(*cx));
+        else
+            move_vertical(edit, *sl, -1, shift_held(*cx));
         s->write(edit);
         render_tail(*sl, edit, *p);
     });
 
-    ctx.press_and_hold(element_id, IO::Keys::Down, [cx, sl = slice, s = state, p = params](uint32_t) mutable {
+    ctx.press_and_hold(element_id, IO::Keys::Down, [cx, sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
         Portal::Text::EditableText edit = s->value;
-        move_vertical(edit, *sl, 1, shift_held(*cx));
+        if (b->single_line)
+            Portal::Text::move_to(edit, edit.text.size(), shift_held(*cx));
+        else
+            move_vertical(edit, *sl, 1, shift_held(*cx));
+        s->write(edit);
+        render_tail(*sl, edit, *p);
+    });
+
+    ctx.press_and_hold(element_id, IO::Keys::Home, [cx, sl = slice, s = state, p = params](uint32_t) mutable {
+        Portal::Text::EditableText edit = s->value;
+        Portal::Text::move_to(edit, line_start(edit.text, edit.cursor), shift_held(*cx));
+        s->write(edit);
+        render_tail(*sl, edit, *p);
+    });
+
+    ctx.press_and_hold(element_id, IO::Keys::End, [cx, sl = slice, s = state, p = params](uint32_t) mutable {
+        Portal::Text::EditableText edit = s->value;
+        Portal::Text::move_to(edit, line_end(edit.text, edit.cursor), shift_held(*cx));
         s->write(edit);
         render_tail(*sl, edit, *p);
     });
@@ -392,7 +461,7 @@ void TextField::wire(Context& ctx)
         });
 
     ctx.on_press(element_id, IO::Keys::X | k_shortcut_modifier,
-        [cx, sl = slice, s = state, p = params](uint32_t) mutable {
+        [cx, sl = slice, s = state, p = params, b = behavior](uint32_t) mutable {
             Portal::Text::EditableText edit = s->value;
             const std::string text = Portal::Text::selected_text(edit);
             if (text.empty())
@@ -400,18 +469,23 @@ void TextField::wire(Context& ctx)
             cx->set_clipboard_text(text);
             Portal::Text::erase_selection(edit);
             s->write(edit);
+            edited(*b, edit);
             render_text(*sl, edit, *p);
             render_tail(*sl, edit, *p);
         });
 
     ctx.on_press(element_id, IO::Keys::V | k_shortcut_modifier,
-        [cx, sl = slice, s = state, p = params](uint32_t) {
-            cx->request_clipboard_text([sl, s, p](std::optional<std::string> text) {
-                if (!text || text->empty())
+        [cx, sl = slice, s = state, p = params, b = behavior](uint32_t) {
+            cx->request_clipboard_text([sl, s, p, b](std::optional<std::string> text) {
+                if (!text)
+                    return;
+                const std::string pasted = b->single_line ? without_line_breaks(*text) : *text;
+                if (pasted.empty())
                     return;
                 Portal::Text::EditableText edit = s->value;
-                Portal::Text::insert_text(edit, *text);
+                Portal::Text::insert_text(edit, pasted);
                 s->write(edit);
+                edited(*b, edit);
                 render_text(*sl, edit, *p);
                 render_tail(*sl, edit, *p);
             });

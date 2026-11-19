@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/Backends/Input/InputBackend.hpp"
+#include "MayaFlux/Core/Input/HIDDescriptor.hpp"
 #include "MayaFlux/Core/Input/TabletFrame.hpp"
 
 using hid_device = struct hid_device_;
@@ -18,19 +19,12 @@ struct MAYAFLUX_API TabletToolInfo : InputDeviceInfo {
 };
 
 /**
- * @brief One field located in a report by descriptor parsing.
+ * @brief A digitizer field located in a report by descriptor parsing.
  *
- * Bit offsets are measured from the first byte after the report ID when the
- * device uses numbered reports, and from byte zero when it does not.
+ * Adds the frame slot to the shared HID field. Bit offsets follow
+ * HIDInputField.
  */
-struct TabletField {
-    uint8_t report_id {};
-    uint16_t usage_page {};
-    uint16_t usage {};
-    uint32_t bit_offset {};
-    uint32_t bit_size {};
-    int32_t logical_min {};
-    int32_t logical_max {};
+struct TabletField : HIDInputField {
     size_t slot { TabletFrame::SLOT_COUNT }; ///< SLOT_COUNT means not a slot field
 };
 
@@ -57,7 +51,9 @@ struct TabletLayout {
  *
  * Devices are selected by HID usage page 0x0D, usages Digitizer (0x01) and
  * Pen (0x02). Where HIDAPI does not report a usage page during enumeration,
- * the descriptor is fetched and inspected instead.
+ * the descriptor is fetched and inspected instead. Fields are read only from
+ * a top-level collection of that kind, so a mouse or keyboard interface of the
+ * same tablet is not adopted even if its reports carry a digitizer usage.
  *
  * A device carrying an Invert usage presents two tools and therefore two
  * device ids, one pen and one eraser. Reports route to whichever the Invert
@@ -86,7 +82,7 @@ public:
         size_t read_buffer_size { 256 }; ///< Per-device read buffer
         int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
         bool split_eraser { true }; ///< Report the eraser end as its own tool
-        bool probe_all_devices { true }; ///< Read every HID descriptor rather than trusting enumeration
+        bool probe_all_devices { true }; ///< Read every descriptor rather than trusting enumeration; keyboards and pointing devices are never opened
     };
 
     TabletBackend();
@@ -200,7 +196,7 @@ private:
     void emit_frame(TabletDevice& device);
 
     bool adopt_device(const std::string& path, uint16_t vid, uint16_t pid,
-        std::string name);
+        std::string name, bool announced_digitizer);
 
     void notify_input(const InputValue& value);
     void notify_device_change(const InputDeviceInfo& info, bool connected);

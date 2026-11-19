@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MayaFlux/IO/GlmTextCodec.hpp"
+#include "BoundsText.hpp"
+
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/Geometry.hpp"
 #include "MayaFlux/Transitive/Reflect/AttributeChecks.hpp"

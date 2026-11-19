@@ -84,6 +84,25 @@ public:
      * @brief Retrieves the backend implementation version
      * @return String representation of the backend version
      */
+    /**
+     * @brief Adjusts a requested stream configuration to what the device provides
+     * @param output_device_id System identifier for the target audio output device
+     * @param input_device_id System identifier for the target audio input device
+     * @param stream_info Requested configuration, updated in place
+     *
+     * Never creates or opens a stream. Backends that honour the request as given
+     * keep the default, which leaves the configuration untouched.
+     */
+    virtual void resolve_stream_info(
+        unsigned int output_device_id,
+        unsigned int input_device_id,
+        GlobalStreamInfo& stream_info)
+    {
+        (void)output_device_id;
+        (void)input_device_id;
+        (void)stream_info;
+    }
+
     [[nodiscard]] virtual std::string get_version_string() const = 0;
 
     /**
