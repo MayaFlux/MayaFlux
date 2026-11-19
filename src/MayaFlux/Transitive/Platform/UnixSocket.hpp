@@ -158,6 +158,19 @@ namespace detail {
 }
 
 /**
+ * @brief Whether a path holds a Unix socket file, without following a symbolic link.
+ *
+ * On Windows a socket file is a reparse point, which the standard library does not
+ * report as a socket, so it is recognised here by its reparse tag.
+ */
+[[nodiscard]] inline bool is_unix_socket(const std::filesystem::path& path)
+{
+    std::error_code ec;
+    const auto entry = std::filesystem::symlink_status(path, ec);
+    return !ec && detail::entry_is_socket(entry, path);
+}
+
+/**
  * @brief Resolve a Unix socket request to a path, for a client that connects to an existing socket.
  *
  * Applies the same name and path resolution as acquire_unix_socket and checks nothing
