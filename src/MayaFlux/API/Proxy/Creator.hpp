@@ -309,6 +309,18 @@ public:
         const Core::InputBinding& binding);
 
     /**
+     * @brief Let the user pick a HID device, then read it as above.
+     *
+     * Opens the picker via choose_input_device(). Blocks until the user
+     * chooses or closes the window.
+     *
+     * @param config HID input configuration.
+     * @return Shared pointer to HIDNode (already registered), or nullptr on
+     *         cancellation or when no HID device is found.
+     */
+    std::shared_ptr<Nodes::Input::HIDNode> read_hid(const Nodes::Input::HIDConfig& config);
+
+    /**
      * @brief Create and register MIDI input node.
      * @param config MIDI input configuration.
      * @param binding MIDI input binding.

@@ -227,6 +227,15 @@ std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(
     return node;
 }
 
+std::shared_ptr<Nodes::Input::HIDNode> Creator::read_hid(const Nodes::Input::HIDConfig& config)
+{
+    const auto device = choose_input_device(Core::InputType::HID);
+    if (!device) {
+        return nullptr;
+    }
+    return read_hid(config, device->to_binding());
+}
+
 std::shared_ptr<Nodes::Input::MIDINode> Creator::read_midi(
     const Nodes::Input::MIDIConfig& config,
     const Core::InputBinding& binding)
