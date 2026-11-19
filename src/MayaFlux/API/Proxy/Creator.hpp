@@ -321,6 +321,18 @@ public:
     std::shared_ptr<Nodes::Input::HIDNode> read_hid(const Nodes::Input::HIDConfig& config);
 
     /**
+     * @brief Let the user pick a MIDI device, then read it as below.
+     *
+     * Opens the picker via choose_input_device(). Blocks until the user
+     * chooses or closes the window.
+     *
+     * @param config MIDI input configuration.
+     * @return Shared pointer to MIDINode (already registered), or nullptr on
+     *         cancellation or when no MIDI device is found.
+     */
+    std::shared_ptr<Nodes::Input::MIDINode> read_midi(const Nodes::Input::MIDIConfig& config);
+
+    /**
      * @brief Create and register MIDI input node.
      * @param config MIDI input configuration.
      * @param binding MIDI input binding.
