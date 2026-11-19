@@ -145,6 +145,22 @@ public:
      */
     [[nodiscard]] virtual std::vector<uint32_t> get_open_devices() const = 0;
 
+    /**
+     * @brief Send an output report to an open device, for rumble, LEDs or commands
+     * @param device_id Target device
+     * @param data Report bytes, the first being the report id when the device uses report ids
+     * @return Bytes sent, or -1 when the device is not open or the backend cannot write
+     */
+    virtual int write(uint32_t, std::span<const uint8_t>) { return -1; }
+
+    /**
+     * @brief Send a feature report to an open device
+     * @param device_id Target device
+     * @param data Report bytes, the first being the report id
+     * @return Bytes sent, or -1 when the device is not open or the backend cannot send one
+     */
+    virtual int send_feature_report(uint32_t, std::span<const uint8_t>) { return -1; }
+
     // ─────────────────────────────────────────────────────────────────────
     // Callbacks
     // ─────────────────────────────────────────────────────────────────────

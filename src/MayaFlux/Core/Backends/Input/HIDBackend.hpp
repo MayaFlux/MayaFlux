@@ -169,7 +169,7 @@ public:
      * @param data Report data (first byte is report ID)
      * @return Number of bytes sent, or -1 on error
      */
-    int send_feature_report(uint32_t device_id, std::span<const uint8_t> data);
+    int send_feature_report(uint32_t device_id, std::span<const uint8_t> data) override;
 
     /**
      * @brief Get a feature report from a device
@@ -186,7 +186,7 @@ public:
      * @param data Report data
      * @return Number of bytes sent, or -1 on error
      */
-    int write(uint32_t device_id, std::span<const uint8_t> data);
+    int write(uint32_t device_id, std::span<const uint8_t> data) override;
 
 private:
     Config m_config;

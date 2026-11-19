@@ -82,6 +82,14 @@ void InputSubsystem::register_backend_service()
         close_device(type, id);
     };
 
+    input_service->write = [this](InputType type, uint32_t id, std::span<const uint8_t> data) {
+        return write(type, id, data);
+    };
+
+    input_service->send_feature_report = [this](InputType type, uint32_t id, std::span<const uint8_t> data) {
+        return send_feature_report(type, id, data);
+    };
+
     m_input_service = input_service;
 
     registry.register_service<Registry::Service::InputService>(
@@ -287,6 +295,20 @@ void InputSubsystem::close_device(InputType backend_type, uint32_t device_id)
     if (it != m_backends.end()) {
         it->second->close_device(device_id);
     }
+}
+
+int InputSubsystem::write(InputType backend_type, uint32_t device_id, std::span<const uint8_t> data)
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(backend_type);
+    return it == m_backends.end() ? -1 : it->second->write(device_id, data);
+}
+
+int InputSubsystem::send_feature_report(InputType backend_type, uint32_t device_id, std::span<const uint8_t> data)
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(backend_type);
+    return it == m_backends.end() ? -1 : it->second->send_feature_report(device_id, data);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
