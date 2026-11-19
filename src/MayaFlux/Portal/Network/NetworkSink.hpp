@@ -107,6 +107,28 @@ public:
     [[nodiscard]] bool send_to(ByteView data, const std::string& address, uint16_t port) const;
 
     /**
+     * @brief Bytes accepted by send and not yet written to the peer.
+     * @return 0 when the sink is not open or the transport does not queue.
+     *
+     * A control rate writer can skip a write while this is high.
+     */
+    [[nodiscard]] size_t write_backlog() const;
+
+    /**
+     * @brief Set the DTR and RTS lines of a serial stream.
+     * @param dtr New DTR level, or nothing to leave it.
+     * @param rts New RTS level, or nothing to leave it.
+     * @return false unless this is an open serial stream.
+     */
+    bool set_control_lines(std::optional<bool> dtr, std::optional<bool> rts) const;
+
+    /**
+     * @brief Hold the transmit line of a serial stream in break.
+     * @return false unless this is an open serial stream.
+     */
+    bool send_break() const;
+
+    /**
      * @brief Return true if the endpoint was opened successfully.
      */
     [[nodiscard]] bool is_open() const { return m_endpoint_id != 0; }

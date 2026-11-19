@@ -20,6 +20,8 @@ namespace {
             return Core::NetworkTransport::SHARED_MEMORY;
         case NetworkTransportHint::UDS:
             return Core::NetworkTransport::UDS;
+        case NetworkTransportHint::SERIAL:
+            return Core::NetworkTransport::SERIAL;
         case NetworkTransportHint::AUTO:
             switch (profile) {
             case StreamProfile::ORDERED_BULK:
@@ -53,11 +55,12 @@ NetworkSink::NetworkSink(const StreamConfig& config)
     info.label = config.name;
     info.framing = config.framing;
     info.max_message_size = config.max_message_size;
+    info.serial = config.serial;
 
-    if (info.transport == Core::NetworkTransport::UDS) {
+    if (info.transport == Core::NetworkTransport::UDS || info.transport == Core::NetworkTransport::SERIAL) {
         if (config.endpoint.path.empty()) {
             MF_WARN(Journal::Component::Portal, Journal::Context::Networking,
-                "NetworkSink '{}': UDS needs a path", m_name);
+                "NetworkSink '{}': a path is needed for this transport", m_name);
             return;
         }
         info.remote_path = config.endpoint.path;
@@ -148,6 +151,30 @@ bool NetworkSink::send_to(ByteView data, const std::string& address, uint16_t po
         return false;
     }
     return m_service->send_to(m_endpoint_id, data.data(), data.size(), address, port);
+}
+
+size_t NetworkSink::write_backlog() const
+{
+    if (m_endpoint_id == 0 || !m_service || !m_service->get_write_backlog) {
+        return 0;
+    }
+    return m_service->get_write_backlog(m_endpoint_id);
+}
+
+bool NetworkSink::set_control_lines(std::optional<bool> dtr, std::optional<bool> rts) const
+{
+    if (m_endpoint_id == 0 || !m_service || !m_service->set_control_lines) {
+        return false;
+    }
+    return m_service->set_control_lines(m_endpoint_id, dtr, rts);
+}
+
+bool NetworkSink::send_break() const
+{
+    if (m_endpoint_id == 0 || !m_service || !m_service->send_break) {
+        return false;
+    }
+    return m_service->send_break(m_endpoint_id);
 }
 
 } // namespace MayaFlux::Portal::Network

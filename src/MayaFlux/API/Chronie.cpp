@@ -541,6 +541,8 @@ namespace {
             return listens
                 ? std::format("udp receive {}", info.local_port)
                 : std::format("udp send {}:{}", info.remote_address, info.remote_port);
+        case Core::NetworkTransport::SERIAL:
+            return std::format("serial {}", info.remote_path);
         case Core::NetworkTransport::SHARED_MEMORY:
             break;
         }

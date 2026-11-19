@@ -22,6 +22,8 @@ enum class NetworkTransportHint : uint8_t {
     SHARED_MEMORY, ///< Zero-copy IPC on the same machine.
     UDS, ///< Reliable ordered messages to a Unix domain socket on the same machine.
          ///< Addressed by StreamEndpoint::path, never chosen by AUTO.
+    SERIAL, ///< A serial port, as a byte stream. Addressed by StreamEndpoint::path with
+            ///< the line setup in StreamConfig::serial, never chosen by AUTO.
     AUTO ///< Pick UDP or TCP from the StreamProfile.
 };
 
@@ -65,6 +67,16 @@ enum class StreamProfile : uint8_t {
  */
 using FramingPolicy = Core::FramingPolicy;
 
+/**
+ * @brief The serial line vocabulary Core::EndpointInfo carries, for StreamConfig::serial.
+ *
+ * See Core::SerialLineSettings for what each field means.
+ */
+using SerialParity = Core::SerialParity;
+using SerialStopBits = Core::SerialStopBits;
+using SerialFlowControl = Core::SerialFlowControl;
+using SerialLineSettings = Core::SerialLineSettings;
+
 //=============================================================================
 // Stream handle type
 //=============================================================================
@@ -96,7 +108,7 @@ struct MAYAFLUX_API StreamEndpoint {
     std::string address; ///< Remote address. Empty = listen only.
     uint16_t port { 0 }; ///< Remote port (send) or local port (receive).
     uint16_t local_port { 0 }; ///< Explicit local bind port. 0 = OS-assigned.
-    std::string path; ///< UDS only: socket to connect to. A bare name is looked up in the runtime directory.
+    std::string path; ///< UDS: socket to connect to, a bare name being looked up in the runtime directory. Serial: the device path.
 };
 
 //=============================================================================
@@ -117,6 +129,7 @@ struct MAYAFLUX_API StreamConfig {
     NetworkTransportHint transport { NetworkTransportHint::AUTO };
     FramingPolicy framing { FramingPolicy::AUTO };
     size_t max_message_size {}; ///< TCP and UDS: largest message or line in bytes. 0 = the framing's own limit.
+    SerialLineSettings serial; ///< Serial: the line setup applied at open.
 };
 
 /**
@@ -148,9 +161,14 @@ struct MAYAFLUX_API StreamConfig {
     case Core::NetworkTransport::UDP:
         config.transport = NetworkTransportHint::UDP;
         break;
+    case Core::NetworkTransport::SERIAL:
+        config.transport = NetworkTransportHint::SERIAL;
+        break;
     }
 
-    if (info.transport == Core::NetworkTransport::UDS) {
+    config.serial = info.serial;
+
+    if (info.transport == Core::NetworkTransport::UDS || info.transport == Core::NetworkTransport::SERIAL) {
         config.endpoint.path = info.remote_path;
     } else {
         config.endpoint.address = info.remote_address;
