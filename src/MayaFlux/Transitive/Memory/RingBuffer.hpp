@@ -14,31 +14,15 @@ concept TriviallyCopyable = std::is_trivially_copyable_v<T>;
 
 /**
  * @struct FixedStorage
- * @brief Compile-time fixed-capacity storage using std::array
+ * @brief Compile-time fixed-capacity storage in a std::array.
  *
- * Provides zero-overhead compile-time buffer allocation with capacity
- * known at compile time. Required for lock-free contexts and real-time
- * audio processing where dynamic allocation is forbidden.
- *
- * Capacity must be a power of 2 for efficient modulo operations using
- * bitwise AND instead of division.
+ * Allocates nothing, so it suits the audio thread and lock-free queues.
+ * Capacity must be a power of 2.
  *
  * @tparam T Element type
- * @tparam Capacity Buffer size (must be power of 2)
- *
- * **Memory Layout:**
- * - Stack-allocated std::array<T, Capacity>
- * - Zero initialization overhead
- * - Cache-friendly contiguous memory
- *
- * **Use Cases:**
- * - Lock-free queues for input events
- * - Real-time logging buffers
- * - Fixed-size delay lines
- * - MIDI message queues
+ * @tparam Capacity Buffer size (power of 2)
  *
  * @code{.cpp}
- * // 4096-element lock-free queue for input events
  * using InputQueue = RingBuffer<InputValue,
  *                               FixedStorage<InputValue, 4096>,
  *                               LockFreePolicy,
@@ -62,24 +46,12 @@ struct FixedStorage {
 
 /**
  * @struct DynamicStorage
- * @brief Runtime-resizable storage using std::vector
+ * @brief Runtime-resizable storage in a std::vector.
  *
- * Provides dynamic capacity management for non-realtime contexts where
- * buffer size cannot be determined at compile time. Supports resize()
- * operations but may trigger heap allocations.
+ * For non-realtime use where the size is not known at compile time. resize()
+ * may allocate.
  *
  * @tparam T Element type
- *
- * **Memory Layout:**
- * - Heap-allocated std::vector<T>
- * - Resizable via resize() method
- * - May reallocate on capacity change
- *
- * **Use Cases:**
- * - Variable-length delay lines in non-realtime contexts
- * - Recording buffers with unknown duration
- * - Feedback processors with modulated delay times
- * - Non-audio processing chains
  */
 template <typename T>
 struct DynamicStorage {
@@ -100,59 +72,23 @@ struct DynamicStorage {
 
 /**
  * @struct LockFreePolicy
- * @brief Lock-free SPSC (Single Producer Single Consumer) concurrency
+ * @brief Lock-free SPSC (single producer, single consumer) concurrency.
  *
- * Implements wait-free push and lock-free pop using C++20 atomic operations
- * with careful memory ordering. Designed for real-time producer threads
- * writing to non-realtime consumer threads.
- *
- * **Thread Safety:**
- * - ONE writer thread (producer)
- * - ONE reader thread (consumer)
- * - NO mutex locks (real-time safe)
- * - Cache-line aligned atomics prevent false sharing
- *
- * **Memory Ordering:**
- * - relaxed: Initial atomic read (no synchronization needed)
- * - acquire: Read from other thread (synchronizes-with release)
- * - release: Write for other thread (synchronizes-with acquire)
- *
- * **SPSC Safety with Non-Trivial Types:**
- * Unlike MPMC (multi-producer multi-consumer), SPSC queues are safe for
- * non-trivially-copyable types because:
- * - Each slot written by ONLY ONE thread (producer)
- * - Each slot read by ONLY ONE thread (consumer)
- * - No concurrent access to same slot (guaranteed by SPSC protocol)
- * - Assignment `buffer[i] = value` is sequentially consistent per slot
- *
- * This means InputValue with std::string/std::vector is SAFE here.
- * The atomic indices synchronize which slots are readable/writable,
- * but the actual data copy happens in exclusive ownership.
+ * push() is wait-free and pop() is lock-free. Exactly one thread may push and
+ * one may pop. Each slot has one writer and one reader, so element types need
+ * not be trivially copyable.
  *
  * **Requirements:**
- * - Storage MUST be FixedStorage (compile-time capacity)
- * - Capacity MUST be power of 2
- * - SPSC only (single producer, single consumer)
- *
- * **Performance:**
- * - Wait-free push: O(1) without blocking
- * - Lock-free pop: O(1) without mutex
- * - ~10-20 CPU cycles per operation
+ * - Storage must be FixedStorage
+ * - Capacity must be a power of 2
  *
  * @code{.cpp}
- * // Works with complex types (SPSC safe)
- * LockFreeQueue<InputValue, 4096> input_queue;  // Contains strings/vectors
+ * LockFreeQueue<InputValue, 4096> input_queue;
  *
- * // Producer thread
- * void enqueue_event(const InputValue& event) {
- *     input_queue.push(event);  // Safe: exclusive write to slot
- * }
+ * input_queue.push(event);
  *
- * // Consumer thread
- * void process_events() {
- *     while (auto event = input_queue.pop()) {
- *         handle(*event);  // Safe: exclusive read from slot
- *     }
+ * while (auto event = input_queue.pop()) {
+ *     handle(*event);
  * }
  * @endcode
  */
@@ -179,38 +115,19 @@ struct LockFreePolicy {
 
 /**
  * @struct SingleThreadedPolicy
- * @brief Non-atomic single-threaded operation
+ * @brief No synchronisation, for one thread or externally synchronised use.
  *
- * Provides minimal overhead when all access is from a single thread or
- * when synchronization is handled externally (e.g., mutex-protected).
- *
- * **Thread Safety:**
- * - NO thread synchronization
- * - Use when externally synchronized OR single-threaded
- *
- * **Benefits:**
- * - No atomic overhead (~2-5 CPU cycles faster per operation)
- * - Works with any element type (no TriviallyCopyable requirement)
- * - Compatible with both FixedStorage and DynamicStorage
- *
- * **When to Use:**
- * - DSP delay lines in audio callback (single thread)
- * - Polynomial node history buffers (single thread)
- * - Non-realtime data structures
- * - Already protected by external mutex
+ * Works with any element type and with both FixedStorage and DynamicStorage.
  *
  * @code{.cpp}
- * // Single-threaded delay line for audio DSP
  * using AudioDelay = RingBuffer<double,
  *                               DynamicStorage<double>,
  *                               SingleThreadedPolicy,
  *                               HomogeneousAccess>;
  *
- * void audio_process_callback() {
- *     AudioDelay delay(1000);  // No thread sync overhead
- *     delay.push(input_sample);
- *     auto delayed = delay.peek_oldest();
- * }
+ * AudioDelay delay(1000);
+ * delay.push(input_sample);
+ * auto delayed = delay.peek_oldest();
  * @endcode
  */
 struct SingleThreadedPolicy {
@@ -250,36 +167,18 @@ static constexpr bool policy_is_mpsc<Policy> = Policy::is_mpsc;
 
 /**
  * @struct MPSCPolicy
- * @brief Lock-free MPSC (Multi-Producer Single-Consumer) concurrency.
+ * @brief Lock-free MPSC (multi-producer, single-consumer) concurrency.
  *
- * Producers claim a slot atomically via fetch_add on a shared claim index,
- * write into that slot, then mark it ready via a per-slot atomic flag.
- * The single consumer spins on the ready flag of its current read slot
- * before consuming - the spin is bounded because producers only stall the
- * consumer for the duration of one slot write, not an unbounded critical
- * section.
- *
- * Push is wait-free per producer in the uncontended case (one fetch_add,
- * one store, one flag set). Under contention producers do not interfere
- * with each other's slots - each owns its claimed index exclusively.
- *
- * Pop is wait-free when the ready flag is already set. It spins only if
- * a producer has claimed the slot but not yet finished writing - this
- * window is a handful of cycles (the slot assignment), not a lock hold.
+ * Producers claim a slot with fetch_add, write it, then set its ready flag.
+ * The consumer waits on the ready flag of its current slot, which is only
+ * unset while a producer is mid-write.
  *
  * **Requirements:**
- * - Storage MUST be FixedStorage (compile-time capacity, power of 2).
- * - Single consumer only.
- * - Multiple concurrent producers are safe.
+ * - Storage must be FixedStorage (power of 2 capacity)
+ * - One consumer, any number of producers
  *
- * **Not suitable for:**
- * - Multiple concurrent consumers.
- * - DynamicStorage (ready flag array is fixed at compile time).
- *
- * **Approximate metrics:**
- * - size() and empty() compare claim_index to read_index. A slot claimed
- *   but not yet written counts as occupied. Both are safe to call but
- *   may overcount transiently under concurrent push.
+ * size() and empty() count a claimed but unwritten slot as occupied, so they
+ * can overcount while producers are pushing.
  */
 struct MPSCPolicy {
     static constexpr bool is_thread_safe = true;
@@ -314,31 +213,18 @@ struct MPSCPolicy {
 
 /**
  * @struct QueueAccess
- * @brief FIFO queue semantics (oldest data first)
+ * @brief FIFO queue semantics (oldest first).
  *
- * Traditional queue behavior: enqueue at back, dequeue from front.
- * Data ordering: [0] = oldest inserted, [N-1] = newest inserted.
- *
- * **Operations:**
- * - push(): Add to back of queue
- * - pop(): Remove from front of queue
- * - linearized_view(): [oldest → newest]
- *
- * **Use Cases:**
- * - Event queues (input, MIDI, OSC)
- * - Message passing between threads
- * - Task queues
- * - Logging buffers
+ * push() adds at the back, pop() removes from the front, and linearized_view()
+ * runs oldest to newest.
  *
  * @code{.cpp}
  * LockFreeQueue<InputEvent, 2048> event_queue;
  *
- * // Producer: add events as they arrive
  * event_queue.push(event);
  *
- * // Consumer: process in arrival order
  * while (auto event = event_queue.pop()) {
- *     process(*event);  // Oldest event first
+ *     process(*event);
  * }
  * @endcode
  */
@@ -391,34 +277,26 @@ struct HistoryBufferAccess {
 };
 
 /**
- * @brief History buffer for difference equations and recursive relations
+ * @brief History buffer for difference equations and recursive relations.
  *
- * Specialized ring buffer for maintaining temporal history in mathematical
- * computations. Pre-initialized to full capacity with zeros to match
- * standard mathematical notation where y[n-k] is defined for all k < N
- * from the start (initial conditions = 0).
- *
- * **Key Differences from Generic RingBuffer:**
- * - Pre-filled to capacity on construction (all zeros)
- * - Always returns full-size mutable spans (size = capacity)
- * - Direct mutable element access via operator[]
- * - Matches mathematical notation: y[0] = newest, y[k] = k steps back
+ * Pre-filled to capacity with zeros, so y[n-k] is defined for every k below the
+ * capacity from the start. Spans are always full size, operator[] gives mutable
+ * access, and y[0] is the newest sample.
  *
  * @tparam T Element type
  *
  * @code{.cpp}
- * // IIR filter: y[n] = 0.8·y[n-1] - 0.5·y[n-2] + x[n]
- * HistoryBuffer<double> y_history(2);  // Pre-filled with [0.0, 0.0]
+ * HistoryBuffer<double> y_history(2);
  *
  * for (auto x : input_signal) {
- *     y_history.push(x);  // Current input becomes y[0]
+ *     y_history.push(x);
  *
- *     double y_n = y_history[0];     // y[n] (just pushed)
- *     double y_n1 = y_history[1];    // y[n-1]
- *     double y_n2 = y_history[2];    // y[n-2]
+ *     double y_n = y_history[0];
+ *     double y_n1 = y_history[1];
+ *     double y_n2 = y_history[2];
  *
  *     double output = 0.8*y_n1 - 0.5*y_n2 + y_n;
- *     y_history.overwrite_newest(output);  // Replace y[n] with computed output
+ *     y_history.overwrite_newest(output);
  * }
  * @endcode
  */
@@ -688,56 +566,28 @@ private:
 
 /**
  * @class RingBuffer
- * @brief Policy-driven unified circular buffer implementation
+ * @brief Circular buffer configured by storage, concurrency and access policies.
  *
- * Provides a single, flexible ring buffer that adapts to different use cases
- * through compile-time policy selection. Policies control storage allocation,
- * thread safety, and access patterns independently.
- *
- * **Design Philosophy:**
- * - Zero runtime cost: All policy dispatch via templates (no virtual calls)
- * - Type-safe: Policy constraints enforced at compile time
- * - Composable: Policies combine orthogonally
- * - Minimal: No features you don't need based on policy selection
- *
- * **Policy Dimensions:**
- * 1. **Storage**: FixedStorage (compile-time) vs DynamicStorage (runtime)
- * 2. **Concurrency**: LockFreePolicy (SPSC) vs SingleThreadedPolicy (no sync)
- * 3. **Access**: QueueAccess (FIFO) vs HistoryBufferAccess (newest-first)
- *
- * **Common Configurations:**
+ * **Policies:**
+ * 1. Storage: FixedStorage (compile-time capacity) or DynamicStorage (runtime)
+ * 2. Concurrency: LockFreePolicy (SPSC), MPSCPolicy or SingleThreadedPolicy
+ * 3. Access: QueueAccess (FIFO) or HistoryBufferAccess (newest first)
  *
  * @code{.cpp}
- * // Lock-free input event queue (realtime → worker thread)
  * using InputQueue = RingBuffer<InputValue,
  *                               FixedStorage<InputValue, 4096>,
  *                               LockFreePolicy,
  *                               QueueAccess>;
  *
- * // Single-threaded audio delay line (DSP processing)
  * using AudioDelay = RingBuffer<double,
  *                               DynamicStorage<double>,
  *                               SingleThreadedPolicy,
  *                               HistoryBufferAccess>;
- *
- * // Lock-free logging buffer (audio thread → disk writer)
- * using LogBuffer = RingBuffer<RealtimeEntry,
- *                              FixedStorage<RealtimeEntry, 8192>,
- *                              LockFreePolicy,
- *                              QueueAccess>;
- *
- * // Polynomial node history buffer (single-threaded DSP)
- * using NodeHistory = RingBuffer<double,
- *                                FixedStorage<double, 64>,
- *                                SingleThreadedPolicy,
- *                                HistoryBufferAccess>;
  * @endcode
- *
- * **Migration from Legacy Implementations:**
  *
  * @tparam T Element type
  * @tparam StoragePolicy FixedStorage<T,N> or DynamicStorage<T>
- * @tparam ConcurrencyPolicy LockFreePolicy or SingleThreadedPolicy
+ * @tparam ConcurrencyPolicy LockFreePolicy, MPSCPolicy or SingleThreadedPolicy
  * @tparam AccessPattern QueueAccess or HistoryBufferAccess
  */
 template <
@@ -1005,8 +855,6 @@ public:
         std::vector<T> result;
 
         if constexpr (is_mpsc) {
-            // snapshot() is not defined for MPSC - ready flags make a consistent
-            // index-walk impossible without stopping producers. Use pop() to drain.
             return result;
         } else if constexpr (is_lock_free) {
             const size_t cap = m_storage.capacity();
@@ -1236,26 +1084,15 @@ private:
 };
 
 /**
- * @brief Type alias: Lock-free SPSC queue with fixed capacity
- * @tparam T Element type (must be TriviallyCopyable)
- * @tparam Capacity Buffer size (must be power of 2)
+ * @brief Lock-free SPSC queue with fixed capacity.
+ * @tparam T Element type
+ * @tparam Capacity Buffer size (power of 2)
  *
- * Common configuration for real-time producer → non-realtime consumer.
- *
- * **Use Cases:**
- * - Input event queues (MIDI, OSC, HID)
- * - Real-time logging buffers
- * - Audio thread → worker thread communication
- *
- * **Example:**
  * @code{.cpp}
- * // Replace: Memory::LockFreeRingBuffer<InputValue, 4096>
  * LockFreeQueue<InputValue, 4096> input_queue;
  *
- * // Audio thread (realtime)
- * input_queue.push(event);  // Wait-free
+ * input_queue.push(event);
  *
- * // Worker thread (non-realtime)
  * while (auto event = input_queue.pop()) {
  *     process_event(*event);
  * }

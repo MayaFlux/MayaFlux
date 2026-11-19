@@ -10,29 +10,17 @@ namespace MayaFlux::Parallel {
  * @class AsyncGroup
  * @brief Owns a set of in-flight std::async futures on behalf of a subsystem.
  *
- * Centralizes the future-ownership mechanics that subsystems such as
- * IOManager and Yantra::ComputeMatrix each implemented independently: submit
- * work, retain the future past the initiating call, prune completed work
- * opportunistically, and block on everything remaining at teardown.
+ * Retains each future past the initiating call, prunes completed work on later
+ * submissions, and blocks on whatever remains at teardown. It is not a thread
+ * pool: callers launch the work themselves, with std::async or anything
+ * returning a std::future<T>, and hand the future to submit(). Submission, pruning
+ * and drain are lock-free.
  *
- * AsyncGroup is not a thread pool or scheduler. It does not launch work
- * itself; callers still call std::async (or any callable returning
- * std::future<T>) and hand the future to submit(). It does not reuse
- * threads, size a queue, or impose priorities or affinity. It only answers
- * "who owns this future until it's done, and who notices if it failed."
+ * An exception from a submitted task goes to the handler given at construction.
+ * Without one it is kept and returned by take_errors().
  *
- * Storage is MayaFlux::Memory::SweepList, so submission, opportunistic
- * pruning, and drain are all lock-free and unbounded; see SweepList.hpp for
- * the concurrency shape.
- *
- * Exceptions from a submitted task are never silently discarded. Each one is
- * reported to a policy: a caller-supplied handler if one was set at
- * construction, or, absent a handler, retained internally and returned by
- * take_errors() so a caller can inspect them explicitly.
- *
- * @tparam T Result type of the tracked futures. Use AsyncGroup<void> for
- *           completion-only tracking, AsyncGroup<bool> for a group whose
- *           tasks report success/failure, and so on.
+ * @tparam T Result type of the tracked futures. AsyncGroup<void> tracks
+ *           completion only.
  *
  * @code{.cpp}
  * Parallel::AsyncGroup<bool> save_tasks(
@@ -43,7 +31,6 @@ namespace MayaFlux::Parallel {
  *
  * save_tasks.submit(std::async(std::launch::async, [] { return write_file(); }));
  *
- * // Later, at teardown:
  * save_tasks.drain();
  * @endcode
  */
@@ -87,16 +74,13 @@ public:
     }
 
     /**
-     * @brief Retains @p fut and opportunistically reclaims completed work.
+     * @brief Retains @p fut and reclaims completed work.
      *
-     * Thread-safe: any number of threads may call submit() concurrently.
-     * Every call also performs a non-blocking sweep of previously submitted
-     * futures, so the retained set does not grow unbounded under steady
-     * submission even though no background thread ever runs.
+     * Safe from any thread. Each call also sweeps previously submitted futures
+     * without blocking, so the retained set does not grow under steady submission.
      *
-     * @param fut Future to retain. Must have been launched already, for
-     *            example via std::async(std::launch::async, ...); submit()
-     *            does not start the work.
+     * @param fut A future for work that is already running, for example from
+     *            std::async(std::launch::async, ...). submit() does not start it.
      */
     void submit(std::future<T> fut)
     {

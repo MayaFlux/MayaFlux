@@ -8,28 +8,18 @@ namespace MayaFlux::Memory {
  * @class SnapshotCell
  * @brief Lock-free cell holding one immutable snapshot of a value, read without blocking.
  *
- * Readers take a Guard and see the snapshot that was current when read() ran.
- * It stays valid, and never changes, for as long as the Guard lives, whatever
- * writers publish meanwhile. Writers never edit a published snapshot: update()
- * copies the current one, edits the copy and swaps it in with a compare-exchange,
- * retrying when another writer got there first. publish() and reset() replace it
- * unconditionally. Replaced snapshots are retired on a SweepList and freed by a
- * later writer once no Guard is held.
+ * read() returns a Guard on the snapshot that was current at that moment. It stays
+ * valid and unchanged while the Guard lives, whatever writers publish meanwhile.
+ * update() copies the current snapshot, edits the copy and swaps it in, retrying
+ * when another writer got there first. publish() and reset() replace it
+ * unconditionally.
  *
- * A single reader count protects every snapshot, which is the HookList scheme
- * without a fixed reader table: any number of concurrent readers, none refused.
- * All operations on the count and the head use sequentially consistent ordering.
- * That is deliberate: a reader's increment must be ordered before its load of
- * the head, and a reclaimer's load of the count after the swap, which weaker
- * orderings do not guarantee on Apple Silicon.
+ * Replaced snapshots are freed by a later writer once no Guard is held, so a Guard
+ * kept for long delays freeing. Hold a Guard for the lookup only, and never past
+ * the cell's lifetime.
  *
- * Reclamation is deferred while any Guard is held, so a Guard kept for a long
- * time delays freeing, and retired snapshots accumulate at the writers' rate
- * until the last Guard drops. Hold a Guard for the lookup, not for the lifetime
- * of a caller. A Guard must not outlive its cell.
- *
- * Suited to values read often and replaced rarely. Every update copies the whole
- * value, so the cost of a write grows with its size.
+ * Suited to values read often and replaced rarely, since every update copies the
+ * whole value.
  *
  * @tparam T Snapshot type. Readers see it as const, so it needs no internal
  *           synchronisation. update() needs it default constructible and copyable.

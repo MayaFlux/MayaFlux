@@ -6,11 +6,10 @@ namespace MayaFlux::Memory {
  * @class FlatMap
  * @brief Map kept as one sorted vector, cheap to copy.
  *
- * Intended as the value of a SnapshotCell, whose every update copies the whole
- * value: copying this is one allocation and a memcpy for trivially copyable
- * entries, where a node based map allocates once per entry. Lookup is a binary
- * search; insert and erase shift the tail, so it suits maps of up to a few
- * thousand entries that are read far more often than they change.
+ * Meant as the value of a SnapshotCell, which copies the whole value on every
+ * update. Lookup is a binary search, and insert and erase shift the tail, so it
+ * suits maps of up to a few thousand entries that are read far more often than
+ * they change.
  *
  * Iteration is in key order. Insert and erase invalidate iterators.
  *
