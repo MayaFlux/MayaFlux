@@ -15,6 +15,12 @@
 #include "MayaFlux/Kriya/NetworkEvents.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 
+#include "MayaFlux/Portal/Forma/Primitives/Picker.hpp"
+#include "MayaFlux/Portal/Forma/Primitives/Prompt.hpp"
+#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
+#include "MayaFlux/Transitive/Platform/UnixSocket.hpp"
+#include "MayaFlux/Transitive/Protocol/HostPort.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux {
@@ -458,6 +464,173 @@ std::shared_ptr<Vruta::NetworkSource> on_network_message_matching(
     std::string name)
 {
     return on_message_received(info, std::move(predicate), std::move(callback), std::move(name));
+}
+
+namespace {
+
+    struct EndpointChoice {
+        Core::NetworkTransport transport;
+        Core::EndpointRole role;
+        std::string label;
+    };
+
+    struct FramingChoice {
+        Core::FramingPolicy framing;
+        std::string label;
+    };
+
+    template <typename T>
+    std::optional<T> pick_one(std::string title, std::vector<T> items,
+        std::function<std::string(const T&)> label)
+    {
+        auto promise = std::make_shared<std::promise<std::optional<T>>>();
+        auto future = promise->get_future();
+
+        Portal::Forma::pick<T>(std::move(title), std::move(items), std::move(label),
+            [promise](std::optional<T> chosen) { promise->set_value(std::move(chosen)); });
+
+        return Parallel::await_future(std::move(future));
+    }
+
+    std::optional<std::string> ask_one(std::string title, std::string initial,
+        Portal::Forma::AskValidator validator)
+    {
+        auto promise = std::make_shared<std::promise<std::optional<std::string>>>();
+        auto future = promise->get_future();
+
+        Portal::Forma::ask(std::move(title), std::move(initial), std::move(validator),
+            [promise](std::optional<std::string> text) { promise->set_value(std::move(text)); });
+
+        return Parallel::await_future(std::move(future));
+    }
+
+    bool is_socket_name(std::string_view text)
+    {
+        return !text.empty()
+            && std::ranges::none_of(text, [](char c) { return static_cast<unsigned char>(c) < ' ' || c == 0x7F; });
+    }
+
+    bool is_port(std::string_view text)
+    {
+        return Transitive::Protocol::parse_port(text).has_value();
+    }
+
+    bool is_host_port(std::string_view text)
+    {
+        return Transitive::Protocol::parse_host_port(text).has_value();
+    }
+
+    bool has_stream_framing(Core::NetworkTransport transport)
+    {
+        return transport == Core::NetworkTransport::UDS || transport == Core::NetworkTransport::TCP;
+    }
+
+    std::string describe_endpoint(const Core::EndpointInfo& info)
+    {
+        const bool listens = info.role == Core::EndpointRole::RECEIVE;
+
+        switch (info.transport) {
+        case Core::NetworkTransport::UDS:
+            return std::format("uds {} {}", listens ? "listen" : "connect",
+                listens ? info.local_path : info.remote_path);
+        case Core::NetworkTransport::TCP:
+            return listens
+                ? std::format("tcp listen {}", info.local_port)
+                : std::format("tcp connect {}:{}", info.remote_address, info.remote_port);
+        case Core::NetworkTransport::UDP:
+            return listens
+                ? std::format("udp receive {}", info.local_port)
+                : std::format("udp send {}:{}", info.remote_address, info.remote_port);
+        case Core::NetworkTransport::SHARED_MEMORY:
+            break;
+        }
+        return "endpoint";
+    }
+
+    std::optional<std::string> choose_socket_to_connect()
+    {
+        const auto sockets = Platform::list_unix_sockets();
+
+        if (sockets.empty()) {
+            return ask_one("Socket to connect to, a name or a path", "", is_socket_name);
+        }
+
+        const auto chosen = pick_one<std::filesystem::path>("Choose a socket", sockets,
+            [](const std::filesystem::path& path) { return path.string(); });
+        return chosen ? std::optional<std::string>(chosen->string()) : std::nullopt;
+    }
+
+}
+
+std::optional<Core::EndpointInfo> choose_endpoint()
+{
+    const std::vector<EndpointChoice> kinds {
+        { Core::NetworkTransport::UDS, Core::EndpointRole::RECEIVE, "Unix socket: listen" },
+        { Core::NetworkTransport::UDS, Core::EndpointRole::BIDIRECTIONAL, "Unix socket: connect" },
+        { Core::NetworkTransport::TCP, Core::EndpointRole::RECEIVE, "TCP: listen on a port" },
+        { Core::NetworkTransport::TCP, Core::EndpointRole::BIDIRECTIONAL, "TCP: connect to a host" },
+        { Core::NetworkTransport::UDP, Core::EndpointRole::RECEIVE, "UDP: receive on a port" },
+        { Core::NetworkTransport::UDP, Core::EndpointRole::SEND, "UDP: send to a host" },
+    };
+
+    const auto kind = pick_one<EndpointChoice>("Network endpoint", kinds,
+        [](const EndpointChoice& choice) { return choice.label; });
+    if (!kind) {
+        return std::nullopt;
+    }
+
+    Core::EndpointInfo info;
+    info.transport = kind->transport;
+    info.role = kind->role;
+    const bool listens = kind->role == Core::EndpointRole::RECEIVE;
+
+    if (kind->transport == Core::NetworkTransport::UDS) {
+        if (listens) {
+            const auto name = ask_one("Socket name", "mayaflux.sock", is_socket_name);
+            if (!name) {
+                return std::nullopt;
+            }
+            info.local_path = *name;
+        } else {
+            const auto path = choose_socket_to_connect();
+            if (!path) {
+                return std::nullopt;
+            }
+            info.remote_path = *path;
+        }
+    } else if (listens) {
+        const auto text = ask_one("Port to listen on", "9000", is_port);
+        if (!text) {
+            return std::nullopt;
+        }
+        info.local_port = *Transitive::Protocol::parse_port(*text);
+    } else {
+        const auto text = ask_one("Host and port", "127.0.0.1:9000", is_host_port);
+        if (!text) {
+            return std::nullopt;
+        }
+        const auto target = *Transitive::Protocol::parse_host_port(*text);
+        info.remote_address = target.host;
+        info.remote_port = target.port;
+    }
+
+    if (has_stream_framing(info.transport)) {
+        const std::vector<FramingChoice> framings {
+            { Core::FramingPolicy::LINE, "Lines of text, one message per line" },
+            { Core::FramingPolicy::LENGTH_PREFIX, "Length prefixed bytes, a four byte size first" },
+            { Core::FramingPolicy::NONE, "Raw bytes, no boundaries" },
+        };
+
+        const auto framing = pick_one<FramingChoice>("Message framing", framings,
+            [](const FramingChoice& choice) { return choice.label; });
+        if (!framing) {
+            return std::nullopt;
+        }
+        info.framing = framing->framing;
+    }
+
+    info.label = describe_endpoint(info);
+    return info;
 }
 
 }

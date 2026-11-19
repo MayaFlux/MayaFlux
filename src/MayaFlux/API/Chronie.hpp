@@ -559,6 +559,30 @@ MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_message_received(
     std::function<void(const Core::NetworkMessage&)> callback,
     std::string name = "");
 
+/**
+ * @brief Let the user describe a network endpoint in a few Forma windows.
+ *
+ * Chains pickers and one line prompts, the way choose_camera() chains its two
+ * pickers, and blocks until the user finishes or closes a window. It must not
+ * be called from the event thread. Portal::Forma must be initialized and the
+ * engine running. Nothing is opened: the result is a description to hand to
+ * on_message_received(), or to Portal::Network::to_stream_config() for a sink.
+ *
+ * The first window picks the transport and whether to listen or connect. Then:
+ * - Unix socket, listen: a socket name, placed in the runtime directory.
+ * - Unix socket, connect: a pick from the sockets in the runtime directory, or
+ *   a name or path to type when there are none.
+ * - TCP or UDP, listen or receive: a port.
+ * - TCP or UDP, connect or send: "host:port", with an IPv6 host in brackets.
+ * - Unix socket and TCP: how messages are delimited, as lines, length prefixed
+ *   bytes or raw bytes.
+ *
+ * Text that is not valid is tinted and cannot be accepted.
+ *
+ * @return The endpoint, or nothing if any window was closed or cancelled.
+ */
+MAYAFLUX_API std::optional<Core::EndpointInfo> choose_endpoint();
+
 /** @brief Replaced by on_message_received(source, callback, name). */
 [[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message(
     std::shared_ptr<Vruta::NetworkSource> source,
