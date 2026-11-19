@@ -45,6 +45,14 @@ struct HIDDeviceState {
  * field the descriptor declares, and the report bytes. A device without a
  * readable descriptor has no fields and carries the bytes alone.
  *
+ * A device keeps its id across a replug: a device with a serial number is
+ * identified by vendor, product, serial, interface and usage, and one without
+ * by its path. With auto_reconnect the poll thread rescans every
+ * reconnect_interval_ms, and a device that was open when it dropped, or whose
+ * read failed, is reopened when it is present again. Closing a device yourself
+ * keeps it closed. Device callbacks run after the backend has released its own
+ * lock, so a callback may call back into the backend.
+ *
  * Threading model:
  * - Device enumeration: Main thread safe
  * - Input polling: Dedicated poll thread
@@ -79,8 +87,8 @@ public:
         std::vector<HIDDeviceFilter> filters; ///< Device filters (empty = all devices)
         size_t read_buffer_size { 64 }; ///< Per-device read buffer size
         int poll_timeout_ms { 10 }; ///< Timeout for hid_read_timeout
-        bool auto_reconnect { true }; ///< Auto-reopen disconnected devices
-        uint32_t reconnect_interval_ms { 1000 }; ///< Reconnection attempt interval
+        bool auto_reconnect { true }; ///< Rescan every interval and reopen devices that were open when they dropped
+        uint32_t reconnect_interval_ms { 1000 }; ///< Rescan and reopen interval
     };
 
     HIDBackend();
@@ -190,6 +198,8 @@ private:
     mutable std::mutex m_devices_mutex;
     std::unordered_map<uint32_t, HIDDeviceInfoExt> m_enumerated_devices;
     std::unordered_map<uint32_t, std::shared_ptr<HIDDeviceState>> m_open_devices;
+    std::unordered_map<std::string, uint32_t> m_identity_ids;
+    std::unordered_set<uint32_t> m_reopen;
     uint32_t m_next_device_id { 1 };
 
     std::thread m_poll_thread;
@@ -197,11 +207,17 @@ private:
     DeviceCallback m_device_callback;
     mutable std::mutex m_callback_mutex;
 
+    using DeviceEvent = std::pair<InputDeviceInfo, bool>;
+
     void poll_thread_func();
     void poll_device(uint32_t device_id, HIDDeviceState& state);
 
+    size_t refresh_locked(std::vector<DeviceEvent>& events);
+    bool open_locked(uint32_t device_id, bool quiet);
+    void release_lost(std::vector<DeviceEvent>& events);
+
     bool matches_any_filter(uint16_t vid, uint16_t pid, uint16_t usage_page, uint16_t usage) const;
-    uint32_t find_or_assign_device_id(const std::string& path);
+    uint32_t find_or_assign_device_id(const std::string& identity);
 
     void notify_input(const InputValue& value);
     void notify_device_change(const InputDeviceInfo& info, bool connected);
