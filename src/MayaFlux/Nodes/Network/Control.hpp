@@ -146,7 +146,7 @@ private:
 /**
  * @brief The store of Control members for a NodeNetwork or a NetworkOperator.
  *
- * See ControlValueStore. Every member of the declared struct must be a Control.
+ * See ControlValueStore. Every member of the declared struct is a Control or a described struct of them.
  */
 using ControlStore = ControlValueStore<Control>;
 
