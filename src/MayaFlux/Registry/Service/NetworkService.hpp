@@ -60,6 +60,10 @@ struct MAYAFLUX_API NetworkService {
      * For UDP: non-blocking (bind is instant).
      * For TCP with EndpointRole::RECEIVE (listener): non-blocking.
      * For TCP with outbound connection: blocks until connected or timeout.
+     * For serial: the port opens synchronously and 0 means it failed, unless the
+     * backend reconnects, where a port that is not there yet returns an id and
+     * the endpoint enters RECONNECTING. The settle time then runs with the
+     * endpoint in OPENING.
      */
     std::function<uint64_t(const Core::EndpointInfo& info)> open_endpoint;
 

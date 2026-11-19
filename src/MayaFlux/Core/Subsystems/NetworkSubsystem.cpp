@@ -1,5 +1,6 @@
 #include "NetworkSubsystem.hpp"
 
+#include "MayaFlux/Core/Backends/Network/SerialBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/TCPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDSBackend.hpp"
@@ -67,6 +68,9 @@ void NetworkSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
     if (m_config.uds.enabled) {
         initialize_uds_backend();
+    }
+    if (m_config.serial.enabled) {
+        initialize_serial_backend();
     }
 
     register_backend_service();
@@ -479,6 +483,12 @@ void NetworkSubsystem::initialize_uds_backend()
 {
     auto uds = std::make_unique<UDSBackend>(m_config.uds, *m_io_context);
     add_backend(std::move(uds));
+}
+
+void NetworkSubsystem::initialize_serial_backend()
+{
+    auto serial = std::make_unique<SerialBackend>(m_config.serial, *m_io_context);
+    add_backend(std::move(serial));
 }
 
 void NetworkSubsystem::initialize_shm_backend()

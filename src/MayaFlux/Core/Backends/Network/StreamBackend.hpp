@@ -68,6 +68,32 @@ namespace detail {
     };
 
     /**
+     * @brief A synchronous-open transport that holds the endpoint in OPENING for a while after the open
+     */
+    template <typename Transport>
+    concept HasSettle = requires(const EndpointInfo& info) {
+        { Transport::settle_time(info) } -> std::convertible_to<std::chrono::milliseconds>;
+    };
+
+    /**
+     * @brief A transport that prepares the stream just before the endpoint reports OPEN
+     */
+    template <typename Transport>
+    concept HasReady = requires(typename Transport::Stream& stream, const EndpointInfo& info) {
+        Transport::ready(stream, info);
+    };
+
+    template <typename Transport>
+    concept HasControlLines = requires(typename Transport::Stream& stream, std::optional<bool> level) {
+        { Transport::set_control_lines(stream, level, level) } -> std::same_as<bool>;
+    };
+
+    template <typename Transport>
+    concept HasBreak = requires(typename Transport::Stream& stream) {
+        { Transport::send_break(stream) } -> std::same_as<bool>;
+    };
+
+    /**
      * @brief What a listener holds, which a transport without listeners does not have
      */
     template <typename Transport, bool = Transport::listens>
@@ -115,6 +141,36 @@ namespace detail {
  *
  * With a synchronous open, open_endpoint returns 0 when the first open fails and
  * auto_reconnect is off. With it on, the endpoint enters RECONNECTING and retries.
+ *
+ * A transport may also provide, each optional:
+ *   - settle_time(info): how long the endpoint stays OPENING after the open, before
+ *     reads begin, for boards that restart on open.
+ *   - ready(stream, info): called as the endpoint becomes OPEN, after any settle time.
+ *   - set_control_lines(stream, dtr, rts) and send_break(stream), each returning bool,
+ *     behind INetworkBackend::set_control_lines and send_break. They run on the
+ *     caller's thread against an OPEN endpoint and return false otherwise.
+ *
+ * Endpoints are listeners or connections. A listener announces each accepted
+ * connection through the state callback as a new endpoint whose parent_id is the
+ * listener. Messages are delimited by EndpointInfo::framing, chosen per endpoint
+ * and inherited by a listener's connections. AUTO and LENGTH_PREFIX are a four byte
+ * big-endian length followed by the payload, where a zero length, or one above
+ * max_message_size (64 MiB by default), closes the connection. LINE delivers each LF
+ * terminated line as a message and drops a line over max_message_size (1 MiB by
+ * default) without closing the connection. NONE is raw bytes: each
+ * read is delivered as one message with no boundaries, and a send writes its payload
+ * as it is. CHUNKED is refused.
+ *
+ * All I/O is async on the shared io_context. The connection and listener tables are
+ * lock free snapshots and no lock or guard is held while a callback runs, so a callback
+ * may send, close an endpoint or open another from inside itself.
+ *
+ * send encodes the frame on the caller's thread and posts it to the io thread, where each
+ * connection keeps a queue with one write in flight, so frames from any number of threads
+ * reach the peer whole and in the order they were posted. It returns true once the frame is
+ * accepted, and false when the connection is not open, the payload cannot be encoded, or
+ * the peer has left more than four times max_message_size unread (256 MiB by default). A
+ * failed write is reported through the state callback and drops what was still queued.
  */
 template <typename Transport>
 class StreamBackend : public INetworkBackend {
@@ -157,6 +213,9 @@ public:
 
     [[nodiscard]] size_t get_write_backlog(uint64_t endpoint_id) const override;
 
+    bool set_control_lines(uint64_t endpoint_id, std::optional<bool> dtr, std::optional<bool> rts) override;
+    bool send_break(uint64_t endpoint_id) override;
+
     void set_receive_callback(NetworkReceiveCallback callback) override;
     void set_state_callback(EndpointStateCallback callback) override;
 
@@ -193,6 +252,7 @@ private:
         std::vector<uint8_t> read_buffer;
         detail::StreamFramer framer;
         std::unique_ptr<asio::steady_timer> reconnect_timer;
+        std::unique_ptr<asio::steady_timer> settle_timer;
         std::vector<Frame> outbox;
         size_t outbox_head {};
         bool writing {};
@@ -279,6 +339,8 @@ private:
     void drop_queued_writes(ConnectionState& conn);
     void start_connect(const ConnectionPtr& conn);
     void on_connect_complete(const ConnectionPtr& conn, const asio::error_code& ec);
+    void finish_open(const ConnectionPtr& conn);
+    void cancel_timers(ConnectionState& conn);
     void start_accept(const ListenerPtr& listener);
     void start_receive_chain(const ConnectionPtr& conn);
     void on_bytes_received(const ConnectionPtr& conn, const asio::error_code& ec, size_t bytes);

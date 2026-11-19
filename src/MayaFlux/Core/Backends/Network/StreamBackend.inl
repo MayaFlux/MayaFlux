@@ -72,9 +72,7 @@ void StreamBackend<Transport>::stop()
                     "Error closing {} connection {}: {}", Transport::label, id, ec.message());
             }
 
-            if (conn->reconnect_timer) {
-                conn->reconnect_timer->cancel();
-            }
+            cancel_timers(*conn);
         }
     }
 
@@ -98,9 +96,7 @@ void StreamBackend<Transport>::shutdown()
             conn->closed.store(true);
             asio::error_code ec;
             (void)conn->socket.close(ec);
-            if (conn->reconnect_timer) {
-                conn->reconnect_timer->cancel();
-            }
+            cancel_timers(*conn);
         }
     }
 
@@ -248,9 +244,7 @@ void StreamBackend<Transport>::close_endpoint(uint64_t endpoint_id)
                 "Error closing {} connection {}: {}", Transport::label, endpoint_id, ec.message());
         }
 
-        if (conn->reconnect_timer) {
-            conn->reconnect_timer->cancel();
-        }
+        cancel_timers(*conn);
 
         m_connections.update([endpoint_id](ConnectionTable& table) {
             return table.erase(endpoint_id);
@@ -427,6 +421,39 @@ size_t StreamBackend<Transport>::get_write_backlog(uint64_t endpoint_id) const
     return conn ? conn->pending_bytes.load() : 0;
 }
 
+template <typename Transport>
+bool StreamBackend<Transport>::set_control_lines(uint64_t endpoint_id,
+    std::optional<bool> dtr, std::optional<bool> rts)
+{
+    if constexpr (detail::HasControlLines<Transport>) {
+        const auto conn = find_connection(endpoint_id);
+        if (!conn || conn->closed.load() || conn->state.load() != EndpointState::OPEN) {
+            return false;
+        }
+        return Transport::set_control_lines(conn->socket, dtr, rts);
+    } else {
+        static_cast<void>(endpoint_id);
+        static_cast<void>(dtr);
+        static_cast<void>(rts);
+        return false;
+    }
+}
+
+template <typename Transport>
+bool StreamBackend<Transport>::send_break(uint64_t endpoint_id)
+{
+    if constexpr (detail::HasBreak<Transport>) {
+        const auto conn = find_connection(endpoint_id);
+        if (!conn || conn->closed.load() || conn->state.load() != EndpointState::OPEN) {
+            return false;
+        }
+        return Transport::send_break(conn->socket);
+    } else {
+        static_cast<void>(endpoint_id);
+        return false;
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Callbacks
 // ─────────────────────────────────────────────────────────────────────────────
@@ -490,6 +517,37 @@ void StreamBackend<Transport>::on_connect_complete(const ConnectionPtr& conn, co
         return;
     }
 
+    if constexpr (detail::HasSettle<Transport>) {
+        const std::chrono::milliseconds settle = Transport::settle_time(conn->info);
+        if (settle.count() > 0) {
+            if (!conn->settle_timer) {
+                conn->settle_timer = std::make_unique<asio::steady_timer>(m_context);
+            }
+            conn->settle_timer->expires_after(settle);
+            conn->settle_timer->async_wait(
+                [this, weak = std::weak_ptr<ConnectionState>(conn)](const asio::error_code& wait_ec) {
+                    if (wait_ec == asio::error::operation_aborted) {
+                        return;
+                    }
+                    const auto c = weak.lock();
+                    if (c && !c->closed.load()) {
+                        finish_open(c);
+                    }
+                });
+            return;
+        }
+    }
+
+    finish_open(conn);
+}
+
+template <typename Transport>
+void StreamBackend<Transport>::finish_open(const ConnectionPtr& conn)
+{
+    if constexpr (detail::HasReady<Transport>) {
+        Transport::ready(conn->socket, conn->info);
+    }
+
     transition_state(*conn, EndpointState::OPEN);
     start_receive_chain(conn);
 
@@ -497,6 +555,21 @@ void StreamBackend<Transport>::on_connect_complete(const ConnectionPtr& conn, co
         "{} endpoint {} connected to {}",
         Transport::label, conn->info.id, Transport::describe(conn->info));
 }
+
+template <typename Transport>
+void StreamBackend<Transport>::cancel_timers(ConnectionState& conn)
+{
+    if (conn.reconnect_timer) {
+        conn.reconnect_timer->cancel();
+    }
+    if (conn.settle_timer) {
+        conn.settle_timer->cancel();
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Private: async accept
+// ─────────────────────────────────────────────────────────────────────────────
 
 template <typename Transport>
 void StreamBackend<Transport>::start_accept(const ListenerPtr& listener)
