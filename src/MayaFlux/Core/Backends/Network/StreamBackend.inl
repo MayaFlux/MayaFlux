@@ -124,12 +124,14 @@ void StreamBackend<Transport>::close_listener(ListenerState& listener)
 {
     listener.closed.store(true);
 
-    asio::error_code ec;
-    if (listener.acceptor.close(ec)) {
-        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "Error closing {} listener {}: {}", Transport::label, listener.info.id, ec.message());
+    if constexpr (Transport::listens) {
+        asio::error_code ec;
+        if (listener.accept.acceptor.close(ec)) {
+            MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+                "Error closing {} listener {}: {}", Transport::label, listener.info.id, ec.message());
+        }
+        Transport::release(listener.accept.bound);
     }
-    Transport::release(listener.bound);
 }
 
 template <typename Transport>
@@ -168,47 +170,65 @@ uint64_t StreamBackend<Transport>::open_endpoint(const EndpointInfo& info)
         return 0;
     }
 
-    if (Transport::is_listener(info)) {
-        auto listener = std::make_shared<ListenerState>(m_context);
-        listener->info = info;
-        listener->info.state = EndpointState::OPENING;
+    if constexpr (Transport::listens) {
+        if (Transport::is_listener(info)) {
+            auto listener = std::make_shared<ListenerState>(m_context);
+            listener->info = info;
+            listener->info.state = EndpointState::OPENING;
 
-        auto bound = Transport::bind(listener->acceptor, info);
-        if (!bound) {
-            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
-                "{} listener {} failed to open: {}", Transport::label, info.id, bound.error());
-            return 0;
+            auto bound = Transport::bind(listener->accept.acceptor, info);
+            if (!bound) {
+                MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
+                    "{} listener {} failed to open: {}", Transport::label, info.id, bound.error());
+                return 0;
+            }
+
+            listener->accept.bound = std::move(*bound);
+            listener->info.state = EndpointState::OPEN;
+
+            m_listeners.update([&](ListenerTable& table) {
+                table.insert_or_assign(info.id, listener);
+            });
+
+            if (m_state_callback) {
+                m_state_callback(listener->info, EndpointState::OPENING, EndpointState::OPEN);
+            }
+
+            start_accept(listener);
+
+            MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
+                "{} listener {} opened on {}", Transport::label, info.id, Transport::describe(info));
+
+            return info.id;
         }
-
-        listener->bound = std::move(*bound);
-        listener->info.state = EndpointState::OPEN;
-
-        m_listeners.update([&](ListenerTable& table) {
-            table.insert_or_assign(info.id, listener);
-        });
-
-        if (m_state_callback) {
-            m_state_callback(listener->info, EndpointState::OPENING, EndpointState::OPEN);
-        }
-
-        start_accept(listener);
-
-        MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "{} listener {} opened on {}", Transport::label, info.id, Transport::describe(info));
-
-        return info.id;
     }
 
-    auto conn = std::make_shared<ConnectionState>(m_context, info.framing, info.max_message_size);
+    auto conn = std::make_shared<ConnectionState>(
+        m_context, resolve_framing(info.framing), info.max_message_size, info.read_size);
     conn->info = info;
     conn->state.store(EndpointState::OPENING);
     conn->is_outbound = true;
+
+    asio::error_code opened;
+    if constexpr (detail::SynchronousOpen<Transport>) {
+        opened = Transport::open(conn->socket, conn->info);
+        if (opened && !m_config.auto_reconnect) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
+                "{} endpoint {} failed to open {}: {}",
+                Transport::label, info.id, Transport::describe(info), opened.message());
+            return 0;
+        }
+    }
 
     m_connections.update([&](ConnectionTable& table) {
         table.insert_or_assign(info.id, conn);
     });
 
-    start_connect(conn);
+    if constexpr (detail::SynchronousOpen<Transport>) {
+        on_connect_complete(conn, opened);
+    } else {
+        start_connect(conn);
+    }
 
     MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
         "{} connection {} opening to {}", Transport::label, info.id, Transport::describe(info));
@@ -304,7 +324,7 @@ bool StreamBackend<Transport>::send(uint64_t endpoint_id, const uint8_t* data, s
     frame->reserve(sizeof(uint32_t) + size);
     const Transitive::Protocol::Message payload { data, size };
     bool encoded = false;
-    switch (conn->info.framing) {
+    switch (resolve_framing(conn->info.framing)) {
     case FramingPolicy::LINE:
         encoded = Transitive::Protocol::encode_line(payload, *frame);
         break;
@@ -430,104 +450,113 @@ void StreamBackend<Transport>::set_state_callback(EndpointStateCallback callback
 template <typename Transport>
 void StreamBackend<Transport>::start_connect(const ConnectionPtr& conn)
 {
-    auto target = Transport::connect_target(conn->info);
-    if (!target) {
-        MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
-            "Invalid {} target for endpoint {}: {}", Transport::label, conn->info.id, target.error());
-        transition_state(*conn, EndpointState::ERROR);
+    if constexpr (detail::SynchronousOpen<Transport>) {
+        on_connect_complete(conn, Transport::open(conn->socket, conn->info));
+    } else {
+        auto target = Transport::connect_target(conn->info);
+        if (!target) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::NetworkBackend,
+                "Invalid {} target for endpoint {}: {}", Transport::label, conn->info.id, target.error());
+            transition_state(*conn, EndpointState::ERROR);
+            return;
+        }
+
+        conn->socket.async_connect(
+            *target,
+            [this, conn](const asio::error_code& connect_ec) {
+                on_connect_complete(conn, connect_ec);
+            });
+    }
+}
+
+template <typename Transport>
+void StreamBackend<Transport>::on_connect_complete(const ConnectionPtr& conn, const asio::error_code& connect_ec)
+{
+    if (conn->closed.load() || connect_ec == asio::error::operation_aborted) {
         return;
     }
 
-    conn->socket.async_connect(
-        *target,
-        [this, conn](const asio::error_code& connect_ec) {
-            if (conn->closed.load() || connect_ec == asio::error::operation_aborted) {
-                return;
-            }
+    if (connect_ec) {
+        MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+            "{} connect failed for endpoint {}: {}",
+            Transport::label, conn->info.id, connect_ec.message());
 
-            if (connect_ec) {
-                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-                    "{} connect failed for endpoint {}: {}",
-                    Transport::label, conn->info.id, connect_ec.message());
+        if (m_config.auto_reconnect) {
+            transition_state(*conn, EndpointState::RECONNECTING);
+            schedule_reconnect(conn);
+        } else {
+            transition_state(*conn, EndpointState::ERROR);
+        }
+        return;
+    }
 
-                if (m_config.auto_reconnect) {
-                    transition_state(*conn, EndpointState::RECONNECTING);
-                    schedule_reconnect(conn);
-                } else {
-                    transition_state(*conn, EndpointState::ERROR);
-                }
-                return;
-            }
+    transition_state(*conn, EndpointState::OPEN);
+    start_receive_chain(conn);
 
-            transition_state(*conn, EndpointState::OPEN);
-            start_receive_chain(conn);
-
-            MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
-                "{} endpoint {} connected to {}",
-                Transport::label, conn->info.id, Transport::describe(conn->info));
-        });
+    MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
+        "{} endpoint {} connected to {}",
+        Transport::label, conn->info.id, Transport::describe(conn->info));
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Private: async accept
-// ─────────────────────────────────────────────────────────────────────────────
 
 template <typename Transport>
 void StreamBackend<Transport>::start_accept(const ListenerPtr& listener)
 {
-    listener->pending_socket = typename Protocol::socket(m_context);
+    if constexpr (Transport::listens) {
+        listener->accept.pending_socket = typename Transport::Protocol::socket(m_context);
 
-    listener->acceptor.async_accept(
-        listener->pending_socket,
-        [this, listener](const asio::error_code& ec) {
-            if (listener->closed.load()) {
-                return;
-            }
-
-            if (ec) {
-                if (ec == asio::error::operation_aborted) {
+        listener->accept.acceptor.async_accept(
+            listener->accept.pending_socket,
+            [this, listener](const asio::error_code& ec) {
+                if (listener->closed.load()) {
                     return;
                 }
-                MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
-                    "{} accept error on listener {}: {}", Transport::label, listener->info.id, ec.message());
+
+                if (ec) {
+                    if (ec == asio::error::operation_aborted) {
+                        return;
+                    }
+                    MF_WARN(Journal::Component::Core, Journal::Context::NetworkBackend,
+                        "{} accept error on listener {}: {}", Transport::label, listener->info.id, ec.message());
+                    start_accept(listener);
+                    return;
+                }
+
+                uint64_t new_id = 0;
+                if (m_allocate_endpoint_id) {
+                    new_id = m_allocate_endpoint_id();
+                }
+
+                auto conn = std::make_shared<ConnectionState>(
+                    m_context, resolve_framing(listener->info.framing), listener->info.max_message_size, listener->info.read_size);
+                conn->socket = std::move(listener->accept.pending_socket);
+                conn->is_outbound = false;
+                conn->info.id = new_id;
+                conn->info.transport = Transport::id;
+                conn->info.role = EndpointRole::BIDIRECTIONAL;
+                conn->info.parent_id = listener->info.id;
+                conn->info.framing = listener->info.framing;
+                conn->info.max_message_size = listener->info.max_message_size;
+                conn->info.read_size = listener->info.read_size;
+                Transport::describe_accepted(conn->socket, listener->info, conn->info);
+                conn->state.store(EndpointState::OPEN);
+
+                m_connections.update([&](ConnectionTable& table) {
+                    table.insert_or_assign(new_id, conn);
+                });
+
+                if (m_state_callback) {
+                    m_state_callback(conn->snapshot(), EndpointState::CLOSED, EndpointState::OPEN);
+                }
+
+                start_receive_chain(conn);
+
+                MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
+                    "{} accepted connection {} from {} on listener {}",
+                    Transport::label, new_id, Transport::describe(conn->info), listener->info.id);
+
                 start_accept(listener);
-                return;
-            }
-
-            uint64_t new_id = 0;
-            if (m_allocate_endpoint_id) {
-                new_id = m_allocate_endpoint_id();
-            }
-
-            auto conn = std::make_shared<ConnectionState>(
-                m_context, listener->info.framing, listener->info.max_message_size);
-            conn->socket = std::move(listener->pending_socket);
-            conn->is_outbound = false;
-            conn->info.id = new_id;
-            conn->info.transport = Transport::id;
-            conn->info.role = EndpointRole::BIDIRECTIONAL;
-            conn->info.parent_id = listener->info.id;
-            conn->info.framing = listener->info.framing;
-            conn->info.max_message_size = listener->info.max_message_size;
-            Transport::describe_accepted(conn->socket, listener->info, conn->info);
-            conn->state.store(EndpointState::OPEN);
-
-            m_connections.update([&](ConnectionTable& table) {
-                table.insert_or_assign(new_id, conn);
             });
-
-            if (m_state_callback) {
-                m_state_callback(conn->snapshot(), EndpointState::CLOSED, EndpointState::OPEN);
-            }
-
-            start_receive_chain(conn);
-
-            MF_INFO(Journal::Component::Core, Journal::Context::NetworkBackend,
-                "{} accepted connection {} from {} on listener {}",
-                Transport::label, new_id, Transport::describe(conn->info), listener->info.id);
-
-            start_accept(listener);
-        });
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -653,7 +682,7 @@ void StreamBackend<Transport>::schedule_reconnect(const ConnectionPtr& conn)
                 return;
             }
 
-            c->socket = typename Protocol::socket(m_context);
+            c->socket = Stream(m_context);
             std::visit([](auto& framer) { framer.reset(); }, c->framer);
 
             MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkBackend,

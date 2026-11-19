@@ -59,52 +59,66 @@ namespace detail {
             max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_frame, true };
     }
 
+    /**
+     * @brief A transport whose stream opens in one synchronous call instead of async_connect
+     */
+    template <typename Transport>
+    concept SynchronousOpen = requires(typename Transport::Stream& stream, const EndpointInfo& info) {
+        { Transport::open(stream, info) } -> std::same_as<asio::error_code>;
+    };
+
+    /**
+     * @brief What a listener holds, which a transport without listeners does not have
+     */
+    template <typename Transport, bool = Transport::listens>
+    struct AcceptSide {
+        typename Transport::Protocol::acceptor acceptor;
+        typename Transport::Protocol::socket pending_socket;
+        typename Transport::Bound bound;
+
+        explicit AcceptSide(asio::io_context& ctx)
+            : acceptor(ctx)
+            , pending_socket(ctx)
+        {
+        }
+    };
+
+    template <typename Transport>
+    struct AcceptSide<Transport, false> {
+        explicit AcceptSide(asio::io_context&) { }
+    };
+
 }
 
 /**
  * @class StreamBackend
  * @brief Connection-oriented reliable message transport over an Asio stream protocol
  *
- * Everything that does not depend on the socket type lives here: listener and
+ * Everything that does not depend on the stream type lives here: listener and
  * connection bookkeeping, async accept, connect and reconnect, the framed receive
  * chain and the framed send. A Transport policy supplies what differs, so TCP and
  * Unix domain sockets are two instances of one backend.
  *
  * A Transport provides:
- *   - Protocol: an Asio stream protocol (asio::ip::tcp, asio::local::stream_protocol).
+ *   - Stream: the connection's Asio stream, with async_read_some, close and
+ *     asio::async_write (a protocol's socket, or asio::serial_port).
  *   - Config: a struct with auto_reconnect and reconnect_interval_ms.
- *   - Bound: what a listener holds while it is bound, default constructible.
  *   - id, label, name: the NetworkTransport, a log label and the backend name.
- *   - is_listener(info), bind(acceptor, info), release(bound).
- *   - connect_target(info), describe_accepted(socket, listener, accepted).
+ *   - automatic_framing: what FramingPolicy::AUTO means.
  *   - describe(info) for logs and peer_label(info) for the sender string of a receive.
+ *   - listens: whether the transport has listeners. If so, also Protocol (an Asio stream
+ *     protocol), Bound (what a listener holds while bound, default constructible),
+ *     is_listener(info), bind(acceptor, info), release(bound) and
+ *     describe_accepted(socket, listener, accepted).
+ *   - Either connect_target(info), which names where async_connect goes, or
+ *     open(stream, info), a synchronous open returning an asio::error_code.
  *
- * Endpoints are listeners or connections. A listener announces each accepted
- * connection through the state callback as a new endpoint whose parent_id is the
- * listener. Messages are delimited by EndpointInfo::framing, chosen per endpoint
- * and inherited by a listener's connections. AUTO and LENGTH_PREFIX are a four byte
- * big-endian length followed by the payload, where a zero length, or one above
- * max_message_size (64 MiB by default), closes the connection. LINE delivers each LF
- * terminated line as a message and drops a line over max_message_size (1 MiB by
- * default) without closing the connection. NONE is raw bytes: each
- * read is delivered as one message with no boundaries, and a send writes its payload
- * as it is. CHUNKED is refused.
- *
- * All I/O is async on the shared io_context. The connection and listener tables are
- * lock free snapshots and no lock or guard is held while a callback runs, so a callback
- * may send, close an endpoint or open another from inside itself.
- *
- * send encodes the frame on the caller's thread and posts it to the io thread, where each
- * connection keeps a queue with one write in flight, so frames from any number of threads
- * reach the peer whole and in the order they were posted. It returns true once the frame is
- * accepted, and false when the connection is not open, the payload cannot be encoded, or
- * the peer has left more than four times max_message_size unread (256 MiB by default). A
- * failed write is reported through the state callback and drops what was still queued.
+ * With a synchronous open, open_endpoint returns 0 when the first open fails and
+ * auto_reconnect is off. With it on, the endpoint enters RECONNECTING and retries.
  */
 template <typename Transport>
 class StreamBackend : public INetworkBackend {
 public:
-    using Protocol = typename Transport::Protocol;
     using Config = typename Transport::Config;
 
     /**
@@ -158,9 +172,9 @@ public:
     }
 
 private:
-    static constexpr size_t k_read_chunk = size_t { 64 } * 1024;
+    static constexpr size_t k_default_read_size = size_t { 64 } * 1024;
 
-    using Bound = typename Transport::Bound;
+    using Stream = typename Transport::Stream;
 
     /**
      * One connection. info is fixed once the connection is published, and state, which the
@@ -175,7 +189,7 @@ private:
         std::atomic<EndpointState> state { EndpointState::CLOSED };
         std::atomic<bool> closed { false };
         std::atomic<size_t> pending_bytes { 0 };
-        typename Protocol::socket socket;
+        Stream socket;
         std::vector<uint8_t> read_buffer;
         detail::StreamFramer framer;
         std::unique_ptr<asio::steady_timer> reconnect_timer;
@@ -184,9 +198,9 @@ private:
         bool writing {};
         bool is_outbound {};
 
-        ConnectionState(asio::io_context& ctx, FramingPolicy framing, size_t max_message_size)
+        ConnectionState(asio::io_context& ctx, FramingPolicy framing, size_t max_message_size, size_t read_size)
             : socket(ctx)
-            , read_buffer(k_read_chunk)
+            , read_buffer(read_size != 0 ? read_size : k_default_read_size)
             , framer(detail::make_stream_framer(framing, max_message_size))
         {
         }
@@ -225,13 +239,10 @@ private:
     struct ListenerState {
         EndpointInfo info;
         std::atomic<bool> closed { false };
-        typename Protocol::acceptor acceptor;
-        typename Protocol::socket pending_socket;
-        Bound bound;
+        detail::AcceptSide<Transport> accept;
 
         explicit ListenerState(asio::io_context& ctx)
-            : acceptor(ctx)
-            , pending_socket(ctx)
+            : accept(ctx)
         {
         }
     };
@@ -254,6 +265,11 @@ private:
     EndpointStateCallback m_state_callback;
     std::function<uint64_t()> m_allocate_endpoint_id;
 
+    [[nodiscard]] static constexpr FramingPolicy resolve_framing(FramingPolicy framing)
+    {
+        return framing == FramingPolicy::AUTO ? Transport::automatic_framing : framing;
+    }
+
     [[nodiscard]] ConnectionPtr find_connection(uint64_t endpoint_id) const;
     [[nodiscard]] ListenerPtr find_listener(uint64_t endpoint_id) const;
 
@@ -262,6 +278,7 @@ private:
     void start_write(const ConnectionPtr& conn);
     void drop_queued_writes(ConnectionState& conn);
     void start_connect(const ConnectionPtr& conn);
+    void on_connect_complete(const ConnectionPtr& conn, const asio::error_code& ec);
     void start_accept(const ListenerPtr& listener);
     void start_receive_chain(const ConnectionPtr& conn);
     void on_bytes_received(const ConnectionPtr& conn, const asio::error_code& ec, size_t bytes);
