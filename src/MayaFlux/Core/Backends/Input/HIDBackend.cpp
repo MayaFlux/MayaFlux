@@ -269,10 +269,17 @@ bool HIDBackend::open_device(uint32_t device_id)
     const int written = hid_get_report_descriptor(handle, descriptor.data(), descriptor.size());
     if (written > 0) {
         descriptor.resize(static_cast<size_t>(written));
-        state_ptr->layout = std::make_shared<const HIDReportLayout>(parse_hid_descriptor(descriptor));
+        auto layout = std::make_shared<const HIDReportLayout>(parse_hid_descriptor(descriptor));
+        if (!layout->fields.empty()) {
+            state_ptr->raw.assign(layout->fields.size(), 0);
+            state_ptr->read_buffer.resize(
+                std::max(m_config.read_buffer_size, hid_input_report_size(*layout)));
+        }
+        state_ptr->layout = std::move(layout);
     } else {
         MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
             "Could not read report descriptor of HID device {}", device_id);
+        state_ptr->layout = std::make_shared<const HIDReportLayout>();
     }
 
     m_open_devices.insert_or_assign(device_id, state_ptr);
@@ -431,8 +438,7 @@ void HIDBackend::poll_device(uint32_t device_id, HIDDeviceState& state)
 
     if (bytes_read > 0) {
         std::span<const uint8_t> report(state.read_buffer.data(), bytes_read);
-        InputValue value = parse_hid_report(device_id, report);
-        notify_input(value);
+        notify_input(decode_hid_report(device_id, state, report));
     } else if (bytes_read < 0) {
         MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
             "HID read error on device {}", device_id);
@@ -476,15 +482,26 @@ void HIDBackend::notify_device_change(const InputDeviceInfo& info, bool connecte
     }
 }
 
-InputValue HIDBackend::parse_hid_report(uint32_t device_id, std::span<const uint8_t> report)
+InputValue HIDBackend::decode_hid_report(uint32_t device_id, HIDDeviceState& state,
+    std::span<const uint8_t> report)
 {
-    InputValue value;
-    value.type = InputValue::Type::BYTES;
-    value.data = std::vector<uint8_t>(report.begin(), report.end());
-    value.timestamp_ns = static_cast<uint64_t>(
-        std::chrono::steady_clock::now().time_since_epoch().count());
-    value.device_id = device_id;
-    value.source_type = InputType::HID;
-    return value;
+    uint8_t report_id = 0;
+    std::span<const uint8_t> body = report;
+
+    if (state.layout->uses_report_ids) {
+        report_id = report[0];
+        body = report.subspan(1);
+    }
+
+    const auto& fields = state.layout->fields;
+
+    for (size_t i = 0; i < fields.size(); ++i) {
+        if (fields[i].report_id == report_id) {
+            state.raw[i] = read_hid_field(body, fields[i]);
+        }
+    }
+
+    return InputValue::make_hid(state.layout, state.raw,
+        std::vector<uint8_t>(report.begin(), report.end()), device_id);
 }
 } // namespace MayaFlux::Core

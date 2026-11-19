@@ -25,6 +25,7 @@ struct HIDDeviceState {
     hid_device* handle { nullptr };
     HIDDeviceInfoExt info;
     std::shared_ptr<const HIDReportLayout> layout;
+    std::vector<int32_t> raw;
     std::vector<uint8_t> read_buffer;
     std::atomic<bool> active { false };
 };
@@ -39,6 +40,10 @@ struct HIDDeviceState {
  * - Joysticks and flight sticks
  *
  * Uses HIDAPI for cross-platform HID communication.
+ *
+ * Every report becomes one InputValue::Type::HID carrying the state of every
+ * field the descriptor declares, and the report bytes. A device without a
+ * readable descriptor has no fields and carries the bytes alone.
  *
  * Threading model:
  * - Device enumeration: Main thread safe
@@ -146,7 +151,7 @@ public:
      * is immutable, so it stays valid after the device closes.
      *
      * @param device_id Device identifier
-     * @return Layout, or nullptr if the device is not open or reports no descriptor
+     * @return Layout, with no fields if the device reports no descriptor, or nullptr if the device is not open
      */
     [[nodiscard]] std::shared_ptr<const HIDReportLayout> get_layout(uint32_t device_id) const;
 
@@ -201,7 +206,8 @@ private:
     void notify_input(const InputValue& value);
     void notify_device_change(const InputDeviceInfo& info, bool connected);
 
-    InputValue parse_hid_report(uint32_t device_id, std::span<const uint8_t> report);
+    InputValue decode_hid_report(uint32_t device_id, HIDDeviceState& state,
+        std::span<const uint8_t> report);
 };
 
 } // namespace MayaFlux::Core

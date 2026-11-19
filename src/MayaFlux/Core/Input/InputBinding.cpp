@@ -263,6 +263,19 @@ InputValue InputValue::make_osc(std::string addr, std::vector<OSCArg> args, uint
     };
 }
 
+InputValue InputValue::make_hid(std::shared_ptr<const HIDReportLayout> layout, std::vector<int32_t> raw,
+    std::vector<uint8_t> report, uint32_t dev_id)
+{
+    return {
+        .type = Type::HID,
+        .data = HIDFrame { .layout = std::move(layout), .raw = std::move(raw), .report = std::move(report) },
+        .timestamp_ns = static_cast<uint64_t>(
+            std::chrono::steady_clock::now().time_since_epoch().count()),
+        .device_id = dev_id,
+        .source_type = InputType::HID
+    };
+}
+
 std::optional<double> InputValue::try_scalar() const noexcept
 {
     if (type != Type::SCALAR)
@@ -296,6 +309,13 @@ const InputValue::OSCMessage* InputValue::try_osc() const noexcept
     if (type != Type::OSC)
         return nullptr;
     return &std::get<OSCMessage>(data);
+}
+
+const InputValue::HIDFrame* InputValue::try_hid() const noexcept
+{
+    if (type != Type::HID)
+        return nullptr;
+    return &std::get<HIDFrame>(data);
 }
 
 } // namespace MayaFlux::Core

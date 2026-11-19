@@ -29,6 +29,8 @@ struct HIDInputField {
     int32_t logical_min {};
     int32_t logical_max {};
     HIDCollection collection;
+    bool is_array { false }; ///< Selector array, whose usages are not carried by the field itself
+    bool is_relative { false }; ///< Reports a change since the last report, not a level
 };
 
 /**
@@ -51,6 +53,14 @@ struct HIDReportLayout {
  * @return Parsed layout. No fields means the descriptor declared no usable input.
  */
 [[nodiscard]] MAYAFLUX_API HIDReportLayout parse_hid_descriptor(std::span<const uint8_t> descriptor);
+
+/**
+ * @brief Bytes an input report of this layout occupies, report ID included.
+ *
+ * Derived from the furthest field, so trailing padding is not counted. It is
+ * enough to read every field of the layout.
+ */
+[[nodiscard]] MAYAFLUX_API size_t hid_input_report_size(const HIDReportLayout& layout) noexcept;
 
 /**
  * @brief Read one field from a report as a signed integer.

@@ -230,6 +230,8 @@ HIDReportLayout parse_hid_descriptor(std::span<const uint8_t> descriptor)
                     .logical_min = global.logical_min,
                     .logical_max = global.logical_max,
                     .collection = top_level,
+                    .is_array = (flags & 0x02U) == 0U,
+                    .is_relative = (flags & 0x04U) != 0U,
                 });
             }
 
@@ -240,6 +242,15 @@ HIDReportLayout parse_hid_descriptor(std::span<const uint8_t> descriptor)
     }
 
     return layout;
+}
+
+size_t hid_input_report_size(const HIDReportLayout& layout) noexcept
+{
+    uint32_t bits = 0;
+    for (const auto& field : layout.fields) {
+        bits = std::max(bits, field.bit_offset + field.bit_size);
+    }
+    return (static_cast<size_t>(bits) + 7U) / 8U + (layout.uses_report_ids ? 1U : 0U);
 }
 
 int32_t read_hid_field(std::span<const uint8_t> report, const HIDInputField& field) noexcept
