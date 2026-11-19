@@ -82,7 +82,7 @@ public:
         size_t read_buffer_size { 256 }; ///< Per-device read buffer
         int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
         bool split_eraser { true }; ///< Report the eraser end as its own tool
-        bool probe_all_devices { true }; ///< Read every HID descriptor rather than trusting enumeration
+        bool probe_all_devices { true }; ///< Read every descriptor rather than trusting enumeration; keyboards and pointing devices are never opened
     };
 
     TabletBackend();
@@ -196,7 +196,7 @@ private:
     void emit_frame(TabletDevice& device);
 
     bool adopt_device(const std::string& path, uint16_t vid, uint16_t pid,
-        std::string name);
+        std::string name, bool announced_digitizer);
 
     void notify_input(const InputValue& value);
     void notify_device_change(const InputDeviceInfo& info, bool connected);

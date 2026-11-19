@@ -299,11 +299,13 @@ void InputSubsystem::wire_backend_to_manager(IInputBackend* backend)
         m_handle->inputs.enqueue_input(value);
     });
 
-    backend->set_device_callback([](const InputDeviceInfo& info, bool connected) {
+    backend->set_device_callback([this](const InputDeviceInfo& info, bool connected) {
         MF_INFO(Journal::Component::Core, Journal::Context::InputSubsystem,
             "Device {}: {} ({})",
             connected ? "connected" : "disconnected",
             info.name, static_cast<int>(info.backend_type));
+
+        m_handle->inputs.on_device_change(info, connected);
     });
 }
 

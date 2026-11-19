@@ -15,6 +15,10 @@ namespace {
     constexpr uint16_t k_page_generic = 0x01;
     constexpr uint16_t k_page_digitizer = 0x0D;
 
+    constexpr uint16_t k_usage_pointer = 0x01;
+    constexpr uint16_t k_usage_mouse = 0x02;
+    constexpr uint16_t k_usage_keyboard = 0x06;
+
     constexpr uint16_t k_usage_x = 0x30;
     constexpr uint16_t k_usage_y = 0x31;
     constexpr uint16_t k_usage_z = 0x32;
@@ -185,6 +189,12 @@ namespace {
         return text.empty() ? std::string("no detail from HIDAPI") : text;
     }
 
+    bool is_keyboard_or_pointer(uint16_t usage_page, uint16_t usage)
+    {
+        return usage_page == k_page_generic
+            && (usage == k_usage_pointer || usage == k_usage_mouse || usage == k_usage_keyboard);
+    }
+
 } // namespace
 
 // =============================================================================
@@ -347,6 +357,9 @@ size_t TabletBackend::refresh_devices()
     hid_device_info* devs = hid_enumerate(0x0, 0x0);
 
     for (hid_device_info* cur = devs; cur != nullptr; cur = cur->next) {
+        if (is_keyboard_or_pointer(cur->usage_page, cur->usage))
+            continue;
+
         if (!m_config.probe_all_devices
             && cur->usage_page != k_page_digitizer
             && cur->usage_page != 0)
@@ -364,7 +377,8 @@ size_t TabletBackend::refresh_devices()
         if (name.empty())
             name = "Tablet";
 
-        adopt_device(path, cur->vendor_id, cur->product_id, std::move(name));
+        adopt_device(path, cur->vendor_id, cur->product_id, std::move(name),
+            cur->usage_page == k_page_digitizer);
     }
 
     hid_free_enumeration(devs);
@@ -374,13 +388,23 @@ size_t TabletBackend::refresh_devices()
 }
 
 bool TabletBackend::adopt_device(const std::string& path, uint16_t vid,
-    uint16_t pid, std::string name)
+    uint16_t pid, std::string name, bool announced_digitizer)
 {
     hid_device* handle = hid_open_path(path.c_str());
     if (!handle) {
-        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
-            "Could not open HID device {} ({}): {}",
-            name, path, hid_failure_reason(nullptr));
+        const std::string reason = hid_failure_reason(nullptr);
+        if (!announced_digitizer) {
+            MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
+                "Could not open HID device {} ({}): {}", name, path, reason);
+            return false;
+        }
+
+        MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
+            "Failed to open tablet {} ({}): {}", name, path, reason);
+
+        if (const auto hint = hid_open_failure_hint(vid, pid, reason); !hint.empty()) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend, "{}", hint);
+        }
         return false;
     }
 

@@ -289,7 +289,7 @@ bool HIDBackend::open_device(uint32_t device_id)
 bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
 {
     if (m_open_devices.find(device_id) != m_open_devices.end()) {
-        MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
+        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
             "HID device {} already open", device_id);
         return true;
     }
