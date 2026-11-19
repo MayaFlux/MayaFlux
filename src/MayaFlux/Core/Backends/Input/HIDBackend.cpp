@@ -177,7 +177,8 @@ size_t HIDBackend::refresh_devices()
         info.manufacturer = wide_to_utf8(cur->manufacturer_string);
         if (cur->product_string) {
             info.name = wide_to_utf8(cur->product_string);
-        } else {
+        }
+        if (info.name.empty()) {
             info.name = "HID Device " + std::to_string(cur->vendor_id) + ":" + std::to_string(cur->product_id);
         }
         info.serial_number = wide_to_utf8(cur->serial_number);
