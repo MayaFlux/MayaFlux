@@ -263,6 +263,15 @@ std::shared_ptr<Nodes::Input::OSCNode> Creator::read_osc(
     return node;
 }
 
+std::shared_ptr<Nodes::Input::TabletNode> Creator::read_tablet(const Nodes::Input::TabletConfig& config)
+{
+    const auto device = choose_input_device(Core::InputType::TABLET);
+    if (!device) {
+        return nullptr;
+    }
+    return read_tablet(config, device->to_binding());
+}
+
 std::shared_ptr<Nodes::Input::TabletNode> Creator::read_tablet(
     const Nodes::Input::TabletConfig& config,
     const Core::InputBinding& binding)

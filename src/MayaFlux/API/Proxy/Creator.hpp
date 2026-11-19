@@ -353,6 +353,18 @@ public:
         const Core::InputBinding& binding);
 
     /**
+     * @brief Let the user pick a tablet tool, then read it as below.
+     *
+     * Opens the picker via choose_input_device(). Blocks until the user
+     * chooses or closes the window. A pen and an eraser are separate tools.
+     *
+     * @param config Tablet input configuration.
+     * @return Shared pointer to TabletNode (already registered), or nullptr on
+     *         cancellation or when no tablet tool is found.
+     */
+    std::shared_ptr<Nodes::Input::TabletNode> read_tablet(const Nodes::Input::TabletConfig& config);
+
+    /**
      * @brief Create and register tablet input node.
      * @param config Tablet input configuration.
      * @param binding Tablet input binding (use InputBinding::tablet(id)).
