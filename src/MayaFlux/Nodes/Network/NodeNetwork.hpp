@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MayaFlux/Nodes/Network/ControlStore.hpp"
+#include "MayaFlux/Nodes/Network/Control.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 #include "MayaFlux/Nodes/Node.hpp"
 

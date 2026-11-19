@@ -1,39 +1,42 @@
 #pragma once
 
-#include "Control.hpp"
+#include "ControlValue.hpp"
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
-namespace MayaFlux::Nodes::Network {
+namespace MayaFlux {
 
 /**
- * @class ControlStore
- * @brief Owns one described struct of Control members for a NodeNetwork or a NetworkOperator.
+ * @class ControlValueStore
+ * @brief Owns one described struct of Slot members for a host such as a network or an operator.
  *
  * A host holds one as a member and forwards to it. It is not a base class.
  * declare() creates the struct and keeps it alive for the host's lifetime,
  * merge() applies the members an incoming struct holds, snapshot() copies the
- * struct for get(), and refresh() reads node sources once per block. A member
+ * struct for get(), and refresh() reads sources once per block. A member
  * named `scale` is mirrored to a value the host passes in, so a network can map
  * it to its output scale and an operator, which has none, passes nothing.
- * Every member of the struct must be a Control. What a Control holds, a number,
- * a flag, an enum or a glm vector, is the Control's own business.
+ * Every member of the struct must be a Slot. What a Slot holds is the Slot's own business.
  *
  * A member is also reachable by its name, the one the struct declares, through
  * set_named() and read_named(). That is what the string based set_parameter and
  * query_state of an operator use, so a name resolves through the controls and
  * not through a table of its own, and a string set and a typed set meet in the
- * same Control.
+ * same Slot.
+ *
+ * @tparam Slot A ControlValue or a type derived from it with an assign(const Slot&) and a refresh().
  */
-class MAYAFLUX_API ControlStore {
+template <typename Slot>
+    requires std::derived_from<Slot, ControlValue>
+class ControlValueStore {
 public:
-    ControlStore() = default;
-    ~ControlStore() = default;
+    ControlValueStore() = default;
+    ~ControlValueStore() = default;
 
-    ControlStore(const ControlStore&) = delete;
-    ControlStore& operator=(const ControlStore&) = delete;
-    ControlStore(ControlStore&&) = delete;
-    ControlStore& operator=(ControlStore&&) = delete;
+    ControlValueStore(const ControlValueStore&) = delete;
+    ControlValueStore& operator=(const ControlValueStore&) = delete;
+    ControlValueStore(ControlValueStore&&) = delete;
+    ControlValueStore& operator=(ControlValueStore&&) = delete;
 
     /** @brief Creates the struct and returns it, for the host to hold by reference. */
     template <typename C>
@@ -49,8 +52,8 @@ public:
 
         std::apply(
             [&](const auto&... member) {
-                static_assert((std::same_as<typename std::remove_cvref_t<decltype(member)>::value_type, Control> && ...),
-                    "every member of a controls struct must be a Control");
+                static_assert((std::same_as<typename std::remove_cvref_t<decltype(member)>::value_type, Slot> && ...),
+                    "every member of a controls struct must be the store's slot type");
                 (add(member.name, member.get(controls)), ...);
             },
             Reflect::Generated::Description<C>::members());
@@ -68,7 +71,7 @@ public:
 
         auto& live = *static_cast<C*>(m_storage.get());
         const auto merge_one = [&](const auto& member) {
-            const Control& given = member.get(incoming);
+            const Slot& given = member.get(incoming);
             if (given.has_value()) {
                 member.get(live).assign(given);
             }
@@ -99,13 +102,13 @@ public:
     }
 
     /**
-     * @brief Reads node sources into their controls.
+     * @brief Reads sources into their slots.
      * @param scale Where a member named `scale` is written when it is due, or null.
      */
     void refresh(double* scale = nullptr)
     {
-        for (const Slot& slot : m_slots) {
-            slot.control->refresh();
+        for (const Entry& entry : m_slots) {
+            entry.slot->refresh();
         }
 
         if (scale && m_scale) {
@@ -124,12 +127,12 @@ public:
      */
     bool set_named(std::string_view name, double value)
     {
-        for (const Slot& slot : m_slots) {
-            if (slot.name == name) {
-                if (slot.control->width() > 1) {
+        for (const Entry& entry : m_slots) {
+            if (entry.name == name) {
+                if (entry.slot->width() > 1) {
                     return false;
                 }
-                slot.control->assign(Control(value));
+                entry.slot->assign(Slot(value));
                 return true;
             }
         }
@@ -145,9 +148,9 @@ public:
      */
     bool settle_named(std::string_view name)
     {
-        for (const Slot& slot : m_slots) {
-            if (slot.name == name) {
-                slot.control->settle();
+        for (const Entry& entry : m_slots) {
+            if (entry.name == name) {
+                entry.slot->settle();
                 return true;
             }
         }
@@ -174,9 +177,9 @@ public:
     }
 
 private:
-    struct Slot {
+    struct Entry {
         std::string_view name;
-        Control* control {};
+        Slot* slot {};
     };
 
     template <typename C>
@@ -186,18 +189,18 @@ private:
         return &value;
     }
 
-    void add(std::string_view name, Control& control)
+    void add(std::string_view name, Slot& slot)
     {
-        m_slots.push_back({ name, &control });
+        m_slots.push_back({ name, &slot });
         if (name == "scale") {
-            m_scale = &control;
+            m_scale = &slot;
         }
     }
 
     std::shared_ptr<void> m_storage;
     const void* m_tag = nullptr;
-    std::vector<Slot> m_slots;
-    Control* m_scale = nullptr;
+    std::vector<Entry> m_slots;
+    Slot* m_scale = nullptr;
 };
 
 }
