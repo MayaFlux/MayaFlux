@@ -487,7 +487,6 @@ if(NOT TARGET MayaFlux::Lila)
         target_compile_definitions(MayaFlux::Lila INTERFACE ASIO_STANDALONE)
 
         target_link_libraries(MayaFlux::Lila INTERFACE
-            MayaFlux::MayaFluxLib
             asio::asio
             ws2_32
             legacy_stdio_definitions
@@ -520,7 +519,6 @@ if(NOT TARGET MayaFlux::Lila)
         target_compile_definitions(MayaFlux::Lila INTERFACE ASIO_STANDALONE)
 
         target_link_libraries(MayaFlux::Lila INTERFACE
-            MayaFlux::MayaFluxLib
             ${_LILA_LLVM_LDFLAGS_LIST}
             ${_LILA_LLVM_LIBS_LIST}
             ${_LILA_LLVM_SYSTEM_LIBS_LIST}
