@@ -102,7 +102,7 @@ The executable that runs your code. Built from `main.cpp` plus `${USER_SOURCES}`
 Core shared library and the actual deliverable. Built from `add_subdirectory(MayaFlux)`. Everything under `src/MayaFlux/` (Nexus, Yantra, Kakshya, Kinesis, Vruta, Kriya, Portal, and the rest) compiles into this target. No entry point. `project_launcher` links against this.
 
 **MayaFluxHost**
-Pulled in via `include(Host/Host.cmake)`. Embeds Lila directly into a host process instead of running it as a separate server. `Host::attach_lila` is the in-process attachment point. `project_launcher` links `MayaFluxLib MayaFluxHost`.
+Built from `src/Host/CMakeLists.txt`. Embeds Lila directly into a host process instead of running it as a separate server. `Host::attach_lila` is the in-process attachment point. `project_launcher` links `MayaFluxLib MayaFluxHost`.
 
 **Lila**
 The JIT library, built from `add_subdirectory(Lila)`. Provides LLVM ORC JIT evaluation of arbitrary C++20/23 via an embedded Clang interpreter. `MayaFluxHost` embeds this.

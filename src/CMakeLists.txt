@@ -4,7 +4,7 @@ add_subdirectory(Lila)
 
 add_subdirectory(Tools/Reflect)
 
-include(Host/Host.cmake)
+add_subdirectory(Host)
 
 add_executable(lila_server lila_server.cpp)
 target_link_libraries(lila_server PRIVATE Lila)

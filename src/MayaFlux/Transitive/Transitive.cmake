@@ -60,3 +60,20 @@ target_sources(Transitive_Free INTERFACE
 )
 
 target_precompile_headers(Transitive_Free INTERFACE ${CMAKE_SOURCE_DIR}/cmake/pch_minimal.h)
+
+add_library(Transitive_Live OBJECT
+    ${CMAKE_CURRENT_LIST_DIR}/Memory/LiveArena.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/Memory/LiveArena.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/Memory/Persist.hpp
+)
+
+set_target_properties(Transitive_Live PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+)
+
+target_link_libraries(Transitive_Live PUBLIC Transitive_Free)
+
+if(WIN32)
+    target_compile_options(Transitive_Live PRIVATE /MD)
+    target_compile_definitions(Transitive_Live PRIVATE MAYAFLUX_EXPORTS)
+endif()
