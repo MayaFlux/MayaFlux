@@ -13,6 +13,17 @@ InputNode::InputNode(InputConfig config)
 {
     m_target_value.store(m_config.default_value);
     m_current_value.store(m_config.default_value);
+    m_tuning = &m_tuning_store.declare<InputTuning>();
+}
+
+void InputNode::set_tuning(const InputTuning& tuning)
+{
+    m_tuning_store.merge(tuning);
+}
+
+InputTuning InputNode::get_tuning() const
+{
+    return m_tuning_store.snapshot<InputTuning>();
 }
 
 double InputNode::process_sample(double /*input*/)
@@ -105,26 +116,36 @@ void InputNode::update_context(double value)
 
 double InputNode::apply_smoothing(double target, double current) const
 {
-    switch (m_config.smoothing) {
+    const SmoothingMode mode = m_tuning->smoothing.has_value()
+        ? m_tuning->smoothing.value<SmoothingMode>()
+        : m_config.smoothing;
+    const double factor = m_tuning->smoothing_factor.has_value()
+        ? m_tuning->smoothing_factor.value()
+        : m_config.smoothing_factor;
+    const double slew_rate = m_tuning->slew_rate.has_value()
+        ? m_tuning->slew_rate.value()
+        : m_config.slew_rate;
+
+    switch (mode) {
     case SmoothingMode::NONE:
         return target;
 
     case SmoothingMode::LINEAR: {
         double diff = target - current;
-        return current + diff * m_config.smoothing_factor;
+        return current + diff * factor;
     }
 
     case SmoothingMode::EXPONENTIAL: {
         // y[n] = a * x[n] + (1-a) * y[n-1]
-        return m_config.smoothing_factor * target + (1.0 - m_config.smoothing_factor) * current;
+        return factor * target + (1.0 - factor) * current;
     }
 
     case SmoothingMode::SLEW: {
         double diff = target - current;
-        if (std::abs(diff) <= m_config.slew_rate) {
+        if (std::abs(diff) <= slew_rate) {
             return target;
         }
-        return current + (diff > 0 ? m_config.slew_rate : -m_config.slew_rate);
+        return current + (diff > 0 ? slew_rate : -slew_rate);
     }
 
     default:

@@ -61,6 +61,73 @@ namespace {
         return spec;
     }
 
+    template <typename Entries>
+    auto tuning_of(const Entries& entries, uint64_t key) -> decltype(entries->front().live)
+    {
+        if (!entries) {
+            return nullptr;
+        }
+        for (const auto& entry : *entries) {
+            if (entry.key == key) {
+                return entry.live;
+            }
+        }
+        return nullptr;
+    }
+
+    HIDControlSpec overlay(HIDControlSpec spec, const HIDControlTuning& tuning)
+    {
+        if (tuning.rest.has_value()) {
+            spec.rest = tuning.rest.value<HIDRest>();
+        }
+        if (tuning.deadzone.has_value()) {
+            spec.deadzone = tuning.deadzone.value();
+        }
+        if (tuning.invert.has_value()) {
+            spec.invert = tuning.invert.value<bool>();
+        }
+        if (tuning.range_min.has_value() && tuning.range_max.has_value()) {
+            spec.range = std::pair { tuning.range_min.value(), tuning.range_max.value() };
+        }
+        return spec;
+    }
+
+    template <typename Tuning, typename Cell>
+    std::shared_ptr<ControlValueStore<ControlValue>> acquire_tuning(Cell& cell, uint64_t key)
+    {
+        std::shared_ptr<ControlValueStore<ControlValue>> result;
+
+        cell.update([&](auto& entries) {
+            const auto existing = std::ranges::find_if(entries,
+                [key](const auto& entry) { return entry.key == key; });
+            if (existing != entries.end()) {
+                result = existing->store;
+                return false;
+            }
+            auto store = std::make_shared<ControlValueStore<ControlValue>>();
+            Tuning* live = &store->template declare<Tuning>();
+            result = store;
+            entries.push_back({ .key = key, .store = std::move(store), .live = live });
+            return true;
+        });
+
+        return result;
+    }
+
+    template <typename Tuning, typename Cell>
+    Tuning snapshot_tuning(const Cell& cell, uint64_t key)
+    {
+        const auto entries = cell.read();
+        if (entries) {
+            for (const auto& entry : *entries) {
+                if (entry.key == key) {
+                    return entry.store->template snapshot<Tuning>();
+                }
+            }
+        }
+        return {};
+    }
+
 } // namespace
 
 std::vector<HIDControlInfo> hid_controls(const Core::HIDReportLayout& layout)
@@ -239,10 +306,31 @@ std::vector<HIDControlInfo> HIDNode::controls() const
     return snapshot ? hid_controls(*snapshot->layout) : std::vector<HIDControlInfo> {};
 }
 
+void HIDNode::set_tuning(HIDControl control, const HIDControlTuning& tuning)
+{
+    acquire_tuning<HIDControlTuning>(m_tunings, control.key())->merge(tuning);
+}
+
+HIDControlTuning HIDNode::get_tuning(HIDControl control) const
+{
+    return snapshot_tuning<HIDControlTuning>(m_tunings, control.key());
+}
+
+void HIDNode::set_stick_tuning(HIDControl x, const HIDStickTuning& tuning)
+{
+    acquire_tuning<HIDStickTuning>(m_stick_tunings, x.key())->merge(tuning);
+}
+
+HIDStickTuning HIDNode::get_stick_tuning(HIDControl x) const
+{
+    return snapshot_tuning<HIDStickTuning>(m_stick_tunings, x.key());
+}
+
 void HIDNode::resolve(const std::shared_ptr<const Core::HIDReportLayout>& layout)
 {
     m_layout = layout;
     m_lookup.clear();
+    m_field_keys.assign(layout->fields.size(), UINT64_MAX);
     m_specs.assign(layout->fields.size(), HIDControlSpec {});
     m_resolved_sticks.clear();
     m_primary.reset();
@@ -257,6 +345,7 @@ void HIDNode::resolve(const std::shared_ptr<const Core::HIDReportLayout>& layout
         const auto usage_key = (static_cast<uint32_t>(field.usage_page) << 16U) | field.usage;
         const HIDControl control { field.usage_page, field.usage, seen[usage_key]++ };
         m_lookup.emplace(control.key(), i);
+        m_field_keys[i] = control.key();
     }
 
     for (size_t i = 0; i < m_config.derived.size(); ++i) {
@@ -290,20 +379,33 @@ std::vector<double> HIDNode::convert(const Core::InputValue::HIDFrame& frame) co
     const auto& fields = frame.layout->fields;
     std::vector<double> values(fields.size());
 
+    const auto tunings = m_tunings.read();
+    const auto stick_tunings = m_stick_tunings.read();
+
+    const auto spec_of = [&](size_t index) {
+        const auto* tuning = tuning_of(tunings, m_field_keys[index]);
+        return tuning ? overlay(m_specs[index], *tuning) : m_specs[index];
+    };
+
     for (size_t i = 0; i < fields.size(); ++i) {
-        values[i] = convert_field(frame.raw[i], fields[i], m_specs[i]);
+        values[i] = convert_field(frame.raw[i], fields[i], spec_of(i));
     }
 
     for (const auto& stick : m_resolved_sticks) {
-        double x = convert_field(frame.raw[stick.x], fields[stick.x], as_stick_axis(m_specs[stick.x]));
-        double y = convert_field(frame.raw[stick.y], fields[stick.y], as_stick_axis(m_specs[stick.y]));
+        double x = convert_field(frame.raw[stick.x], fields[stick.x], as_stick_axis(spec_of(stick.x)));
+        double y = convert_field(frame.raw[stick.y], fields[stick.y], as_stick_axis(spec_of(stick.y)));
+
+        const auto* stick_tuning = tuning_of(stick_tunings, stick.control.key());
+        const double deadzone = stick_tuning && stick_tuning->deadzone.has_value()
+            ? stick_tuning->deadzone.value()
+            : stick.deadzone;
 
         const double magnitude = std::hypot(x, y);
-        if (magnitude <= stick.deadzone || stick.deadzone >= 1.0) {
+        if (magnitude <= deadzone || deadzone >= 1.0) {
             x = 0.0;
             y = 0.0;
         } else {
-            const double scale = (std::min(magnitude, 1.0) - stick.deadzone) / (1.0 - stick.deadzone) / magnitude;
+            const double scale = (std::min(magnitude, 1.0) - deadzone) / (1.0 - deadzone) / magnitude;
             x *= scale;
             y *= scale;
         }

@@ -134,6 +134,34 @@ struct HIDStick {
 };
 
 /**
+ * @struct HIDControlTuning
+ * @brief The settings of one control's HIDControlSpec that can change while the device runs.
+ *
+ * A member that holds a value replaces the same setting of the control's spec.
+ * An empty member leaves the spec in force. The range replaces the spec's range
+ * only when both ends hold a value.
+ */
+struct HIDControlTuning {
+    ControlValue rest; ///< A HIDRest
+    ControlValue deadzone;
+    ControlValue invert; ///< A bool
+    ControlValue range_min; ///< Raw value mapped to 0
+    ControlValue range_max; ///< Raw value mapped to 1
+};
+
+MF_DESCRIBE(HIDControlTuning)
+
+/**
+ * @struct HIDStickTuning
+ * @brief The radial deadzone of one configured stick, which can change while the device runs.
+ */
+struct HIDStickTuning {
+    ControlValue deadzone;
+};
+
+MF_DESCRIBE(HIDStickTuning)
+
+/**
  * @struct HIDSnapshot
  * @brief One immutable view of a device after a report.
  *
@@ -391,6 +419,27 @@ public:
     /** @brief Controls of the device, empty before the first report. */
     [[nodiscard]] std::vector<HIDControlInfo> controls() const;
 
+    using InputNode::get_tuning;
+    using InputNode::set_tuning;
+
+    /**
+     * @brief Applies the members of @p tuning that hold a value to one control.
+     *
+     * Safe from any thread, and valid before the device has reported. The
+     * tuning applies to the next report and wins over the same setting of the
+     * control's spec. A control the device lacks is kept and ignored.
+     */
+    void set_tuning(HIDControl control, const HIDControlTuning& tuning);
+
+    /** @brief The tuned settings of a control. A member that holds no value is not tuned. */
+    [[nodiscard]] HIDControlTuning get_tuning(HIDControl control) const;
+
+    /** @brief Applies the members of @p tuning that hold a value to a configured stick named by its x control. */
+    void set_stick_tuning(HIDControl x, const HIDStickTuning& tuning);
+
+    /** @brief The tuned settings of a stick. A member that holds no value is not tuned. */
+    [[nodiscard]] HIDStickTuning get_stick_tuning(HIDControl x) const;
+
 protected:
     double extract_value(const Core::InputValue& value) override;
 
@@ -420,15 +469,25 @@ private:
         std::shared_ptr<InputNode> node;
     };
 
+    template <typename Tuning>
+    struct TuningEntry {
+        uint64_t key {};
+        std::shared_ptr<ControlValueStore<ControlValue>> store;
+        Tuning* live {};
+    };
+
     HIDConfig m_config;
     HIDContext m_hid_context;
 
     Memory::SnapshotCell<std::shared_ptr<const HIDSnapshot>> m_snapshot;
     Memory::SnapshotCell<std::vector<SignalEntry>> m_signals;
+    Memory::SnapshotCell<std::vector<TuningEntry<HIDControlTuning>>> m_tunings;
+    Memory::SnapshotCell<std::vector<TuningEntry<HIDStickTuning>>> m_stick_tunings;
     HookList m_event_callbacks { *this };
 
     std::shared_ptr<const Core::HIDReportLayout> m_layout;
     std::unordered_map<uint64_t, size_t> m_lookup;
+    std::vector<uint64_t> m_field_keys;
     std::vector<HIDControlSpec> m_specs;
     std::vector<ResolvedStick> m_resolved_sticks;
     std::optional<size_t> m_primary;
@@ -449,3 +508,5 @@ private:
 };
 
 } // namespace MayaFlux::Nodes::Input
+
+#include "HIDNode.describe.hpp"
