@@ -32,4 +32,28 @@ std::string wide_to_utf8(const wchar_t* ws)
     return out;
 }
 
+std::string hid_open_failure_hint(uint16_t vendor_id, uint16_t product_id, const std::string& reason)
+{
+#if defined(MAYAFLUX_PLATFORM_MACOS)
+    (void)vendor_id;
+    (void)product_id;
+    (void)reason;
+    return "Grant Input Monitoring to this application under System Settings, Privacy & Security.";
+#elif defined(MAYAFLUX_PLATFORM_LINUX)
+    if (reason.find("Permission denied") == std::string::npos) {
+        return {};
+    }
+    return std::format(
+        "No access to the device node. Add this line to /etc/udev/rules.d/70-mayaflux-local.rules:\n"
+        "KERNEL==\"hidraw*\", ATTRS{{idVendor}}==\"{:04x}\", ATTRS{{idProduct}}==\"{:04x}\", TAG+=\"uaccess\"\n"
+        "then run: sudo udevadm control --reload-rules && sudo udevadm trigger",
+        vendor_id, product_id);
+#else
+    (void)vendor_id;
+    (void)product_id;
+    (void)reason;
+    return {};
+#endif
+}
+
 } // namespace MayaFlux::Core

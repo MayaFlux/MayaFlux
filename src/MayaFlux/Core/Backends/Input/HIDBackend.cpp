@@ -239,8 +239,15 @@ bool HIDBackend::open_device(uint32_t device_id)
 
     hid_device* handle = hid_open_path(it->second.path.c_str());
     if (!handle) {
+        const std::string reason = wide_to_utf8(hid_error(nullptr));
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
-            "Failed to open HID device {}: {}", device_id, it->second.name);
+            "Failed to open HID device {}: {} ({})", device_id, it->second.name,
+            reason.empty() ? "no detail from HIDAPI" : reason);
+
+        if (const auto hint = hid_open_failure_hint(it->second.vendor_id, it->second.product_id, reason);
+            !hint.empty()) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend, "{}", hint);
+        }
         return false;
     }
 
