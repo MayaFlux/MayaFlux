@@ -264,7 +264,8 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
     bool has_usage_range = false;
 
     std::unordered_map<uint8_t, uint32_t> bit_cursor;
-    bool digitizer_seen = false;
+    size_t depth = 0;
+    bool digitizer_collection = false;
 
     const auto clear_locals = [&]() {
         local_usages.clear();
@@ -301,8 +302,6 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
             switch (tag) {
             case 0x0:
                 global.usage_page = static_cast<uint16_t>(item_unsigned(payload, size));
-                if (global.usage_page == k_page_digitizer)
-                    digitizer_seen = true;
                 break;
 
             case 0x1:
@@ -354,8 +353,6 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
                     const uint32_t full = item_unsigned(payload, size);
                     const auto page = static_cast<uint16_t>(full >> 16U);
                     local_usages.push_back({ .page = page, .usage = static_cast<uint16_t>(full & 0xFFFFU) });
-                    if (page == k_page_digitizer)
-                        digitizer_seen = true;
                 } else {
                     local_usages.push_back({ .page = global.usage_page,
                         .usage = static_cast<uint16_t>(item_unsigned(payload, size)) });
@@ -379,6 +376,27 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
         }
 
         if (type != 0) {
+            continue;
+        }
+
+        if (tag == 0xA) {
+            if (depth == 0) {
+                digitizer_collection = false;
+                if (item_unsigned(payload, size) == 0x01U && !local_usages.empty()) {
+                    const LocalUsage top = local_usages.back();
+                    digitizer_collection = top.page == k_page_digitizer
+                        && (top.usage == k_usage_digitizer || top.usage == k_usage_pen);
+                }
+            }
+            ++depth;
+            clear_locals();
+            continue;
+        }
+
+        if (tag == 0xC) {
+            if (depth > 0 && --depth == 0)
+                digitizer_collection = false;
+            clear_locals();
             continue;
         }
 
@@ -415,7 +433,7 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
                 ? k_slot_none
                 : slot_for_usage(current.page, current.usage);
 
-            if (slot != k_slot_none) {
+            if (slot != k_slot_none && digitizer_collection) {
                 TabletField field;
                 field.report_id = global.report_id;
                 field.usage_page = current.page;
@@ -440,9 +458,6 @@ TabletLayout TabletBackend::parse_descriptor(std::span<const uint8_t> descriptor
 
         clear_locals();
     }
-
-    if (!digitizer_seen)
-        layout.fields.clear();
 
     return layout;
 }

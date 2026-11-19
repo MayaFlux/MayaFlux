@@ -57,7 +57,9 @@ struct TabletLayout {
  *
  * Devices are selected by HID usage page 0x0D, usages Digitizer (0x01) and
  * Pen (0x02). Where HIDAPI does not report a usage page during enumeration,
- * the descriptor is fetched and inspected instead.
+ * the descriptor is fetched and inspected instead. Fields are read only from
+ * a top-level collection of that kind, so a mouse or keyboard interface of the
+ * same tablet is not adopted even if its reports carry a digitizer usage.
  *
  * A device carrying an Invert usage presents two tools and therefore two
  * device ids, one pen and one eraser. Reports route to whichever the Invert
