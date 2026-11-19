@@ -1,0 +1,78 @@
+# MayaFlux HID access
+#
+# Grants the user on the active seat read and write access to the hidraw nodes
+# of the devices below, so the HID and tablet backends can read report
+# descriptors and input reports without root.
+#
+# uaccess assigns an ACL to the user of the active local seat. It has no effect
+# over SSH or on systems without systemd-logind; use MODE="0660" with a group
+# in that case.
+#
+# These rules only grant access. They do not unbind hid_uclogic or wacom, so
+# the tablet continues to work for the desktop environment. Whether the pen
+# interface exposes a hidraw node at all depends on what the kernel driver
+# claims.
+#
+# Packages install this file to /usr/lib/udev/rules.d. To change it, copy it to
+# /etc/udev/rules.d under the same name, which takes precedence. Apply with:
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# Verify:
+#   getfacl /dev/hidrawN
+#
+# Coexists with vendor rules. XP-Pen's 10-xp-pen.rules matches SUBSYSTEMS=="usb"
+# and covers the usbfs node used by its libusb driver, which is a different
+# device node from hidraw and does not overlap with these rules.
+
+# Graphics tablets
+
+# Wacom
+KERNEL=="hidraw*", ATTRS{idVendor}=="056a", TAG+="uaccess"
+
+# XP-Pen / UGEE
+KERNEL=="hidraw*", ATTRS{idVendor}=="28bd", TAG+="uaccess"
+
+# Huion
+KERNEL=="hidraw*", ATTRS{idVendor}=="256c", TAG+="uaccess"
+
+# UC-Logic, and the many rebrands built on it
+KERNEL=="hidraw*", ATTRS{idVendor}=="5543", TAG+="uaccess"
+
+# VEIKK
+KERNEL=="hidraw*", ATTRS{idVendor}=="2feb", TAG+="uaccess"
+
+# Adesso, Monoprice and other UC-Logic rebrands
+KERNEL=="hidraw*", ATTRS{idVendor}=="172f", TAG+="uaccess"
+
+# Genius / KYE
+KERNEL=="hidraw*", ATTRS{idVendor}=="0458", TAG+="uaccess"
+
+# Hanvon
+KERNEL=="hidraw*", ATTRS{idVendor}=="0b57", TAG+="uaccess"
+
+# Other HID devices, such as game controllers
+#
+# No other vendor is listed. A rule for every hidraw node would also expose
+# keyboards to every process of the seat's user, and udev cannot tell a
+# controller from a keyboard by usage. Maintained controller rule sets, such as
+# the steam-devices package, already grant access to most game controllers, so
+# a controller they cover needs no line here. When MayaFlux cannot open a device it
+# logs the exact rule for that device, vendor and product id filled in. Put it
+# in a file of your own, for example /etc/udev/rules.d/70-mayaflux-local.rules:
+#
+# KERNEL=="hidraw*", ATTRS{idVendor}=="xxxx", ATTRS{idProduct}=="yyyy", TAG+="uaccess"
+
+# Optional: silence the mouse-emulation interface.
+#
+# Interface 0 of a UGEE v2 tablet is a relative-motion mouse collection. While
+# usbhid is bound to it the tablet moves the system cursor, which interferes
+# with anything reading the pen directly.
+#
+# This unbinds interface 0 only. The pen interface and its hidraw node are
+# unaffected, and no kernel module is unloaded. Reverse by removing the line
+# and replugging.
+#
+# Uncomment and set idProduct for the specific tablet. Unbinding by vendor
+# alone would hit every device from that vendor, including ones whose pen data
+# is on interface 0.
+# ACTION=="add", SUBSYSTEM=="usb", DRIVER=="usbhid", ATTRS{idVendor}=="28bd", ATTRS{idProduct}=="0905", ATTR{bInterfaceNumber}=="00", RUN+="/bin/sh -c 'echo $kernel > /sys/bus/usb/drivers/usbhid/unbind'"

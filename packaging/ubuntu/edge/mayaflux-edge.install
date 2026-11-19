@@ -14,6 +14,9 @@ usr/lib/libtinyvdb.a
 usr/include/MayaFlux/*
 usr/include/Lila/*
 
+# udev rules granting access to HID devices
+usr/lib/udev/rules.d/*
+
 # Runtime data (Shaders, .version file, and PCH headers)
 usr/share/MayaFlux/*
 usr/share/MayaFlux/.version

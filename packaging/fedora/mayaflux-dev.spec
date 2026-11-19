@@ -169,6 +169,7 @@ EOF
 %{_datadir}/MayaFlux/
 %{_libdir}/pkgconfig/*.pc
 %{_libdir}/cmake/MayaFlux/
+%{_prefix}/lib/udev/rules.d/70-mayaflux-hid.rules
 %config(noreplace) %{_sysconfdir}/profile.d/mayaflux.sh
 %config(noreplace) %{_sysconfdir}/security/limits.d/50-mayaflux.conf
 

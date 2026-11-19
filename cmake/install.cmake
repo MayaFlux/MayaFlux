@@ -91,6 +91,12 @@ install(FILES
     DESTINATION share/MayaFlux/schema
 )
 
+if(UNIX AND NOT APPLE)
+    install(FILES ${CMAKE_SOURCE_DIR}/data/udev/70-mayaflux-hid.rules
+        DESTINATION lib/udev/rules.d
+    )
+endif()
+
 install(TARGETS Lila
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
