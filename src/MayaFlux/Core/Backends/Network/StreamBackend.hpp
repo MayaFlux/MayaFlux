@@ -25,26 +25,8 @@ namespace MayaFlux::Core {
 
 namespace detail {
 
-    /**
-     * @brief The framer for raw streams: every read is one message, with nothing to reassemble.
-     */
-    struct RawChunkFramer {
-        template <Transitive::Protocol::MessageSink Sink>
-        Transitive::Protocol::FrameReport push(Transitive::Protocol::Message bytes, Sink&& sink)
-        {
-            Transitive::Protocol::FrameReport report;
-            if (!bytes.empty()) {
-                sink(bytes);
-                report.messages = 1;
-            }
-            return report;
-        }
-
-        void reset() noexcept { }
-    };
-
     using StreamFramer = std::variant<Transitive::Protocol::LengthPrefixFramer,
-        Transitive::Protocol::LineFramer, RawChunkFramer>;
+        Transitive::Protocol::LineFramer, Transitive::Protocol::RawChunkFramer>;
 
     inline StreamFramer make_stream_framer(FramingPolicy framing, size_t max_message_size)
     {
@@ -53,7 +35,7 @@ namespace detail {
                 max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_line };
         }
         if (framing == FramingPolicy::NONE) {
-            return StreamFramer { std::in_place_type<RawChunkFramer> };
+            return StreamFramer { std::in_place_type<Transitive::Protocol::RawChunkFramer> };
         }
         return StreamFramer { std::in_place_type<Transitive::Protocol::LengthPrefixFramer>,
             max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_frame, true };
