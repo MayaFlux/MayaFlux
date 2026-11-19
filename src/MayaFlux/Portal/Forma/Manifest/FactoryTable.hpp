@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MayaFlux/IO/Composite/DescribedRecords.hpp"
-#include "MayaFlux/IO/GlmTextCodec.hpp"
 #include "MayaFlux/Portal/Forma/Primitives/Geometry.hpp"
 #include "MayaFlux/Portal/Forma/Tend.hpp"
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"

@@ -2,7 +2,6 @@
 
 #include "PlacementInputs.hpp"
 
-#include "MayaFlux/IO/GlmTextCodec.hpp"
 #include "MayaFlux/Transitive/Reflect/RecordBinding.hpp"
 
 namespace MayaFlux::Portal::Forma {

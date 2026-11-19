@@ -2,7 +2,6 @@
 
 #include "PlacementInputs.hpp"
 
-#include "MayaFlux/IO/GlmTextCodec.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Transitive/Reflect/RecordBinding.hpp"

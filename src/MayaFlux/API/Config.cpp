@@ -9,8 +9,6 @@
 
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
 
-#include "MayaFlux/IO/GlmSerializer.hpp"
-
 namespace MayaFlux {
 
 bool is_engine_configured()

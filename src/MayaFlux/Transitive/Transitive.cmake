@@ -2,7 +2,7 @@ include_guard(GLOBAL)
 
 add_library(Transitive INTERFACE)
 
-target_link_libraries(Transitive INTERFACE Transitive_Free)
+target_link_libraries(Transitive INTERFACE Transitive_Free glm::glm)
 
 target_precompile_headers(Transitive INTERFACE ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 

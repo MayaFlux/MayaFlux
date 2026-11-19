@@ -7,8 +7,6 @@
 
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
 
-#include "MayaFlux/IO/GlmSerializer.hpp"
-
 namespace MayaFlux::Nexus {
 
 namespace {
