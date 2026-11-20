@@ -72,11 +72,11 @@ struct WindowRenderContext {
 
     std::unique_ptr<CaptureState> capture;
 
-    WindowRenderContext() = default;
-    ~WindowRenderContext() = default;
+    WindowRenderContext();
+    ~WindowRenderContext();
 
-    WindowRenderContext(WindowRenderContext&&) = default;
-    WindowRenderContext& operator=(WindowRenderContext&&) = default;
+    WindowRenderContext(WindowRenderContext&&) noexcept;
+    WindowRenderContext& operator=(WindowRenderContext&&) noexcept;
     WindowRenderContext(const WindowRenderContext&) = delete;
     WindowRenderContext& operator=(const WindowRenderContext&) = delete;
 
