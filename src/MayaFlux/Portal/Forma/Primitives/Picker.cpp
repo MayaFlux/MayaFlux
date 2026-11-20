@@ -8,6 +8,7 @@
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Text/InkPress.hpp"
 #include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
+#include "MayaFlux/Portal/Text/TypeSetter.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -15,6 +16,8 @@ namespace {
 
     constexpr uint32_t k_max_visible_rows = 10;
     constexpr uint32_t k_width_px = 520;
+    constexpr uint32_t k_max_width_px = 1400;
+    constexpr uint32_t k_width_padding_px = 32;
     constexpr uint32_t k_min_row_px = 48;
     constexpr uint32_t k_row_padding_px = 16;
 
@@ -58,8 +61,17 @@ void pick(
     }
 
     uint32_t row_px = k_min_row_px;
-    if (auto atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas()) {
+    uint32_t width_px = k_width_px;
+    if (auto* atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas()) {
         row_px = std::max(row_px, static_cast<uint32_t>(atlas->pixel_size()) + k_row_padding_px);
+
+        float widest = 0.F;
+        for (const auto& label : labels) {
+            const std::string caption = internal::row_caption(label);
+            widest = std::max(widest, Text::x_at(caption, *atlas, caption.size()).x);
+        }
+        width_px = std::clamp(static_cast<uint32_t>(std::ceil(widest)) + k_width_padding_px,
+            k_width_px, k_max_width_px);
     }
 
     const auto rows = static_cast<uint32_t>(labels.size());
@@ -71,7 +83,7 @@ void pick(
 
     auto window = atelier.create_window(Core::WindowCreateInfo {
         .title = std::move(title),
-        .width = k_width_px,
+        .width = width_px,
         .height = window_h,
         .resizable = false,
     });
@@ -96,7 +108,7 @@ void pick(
         wheel = panel->wheel_handler(surface);
     }
 
-    const auto row_dims = std::make_shared<glm::uvec2>(k_width_px, row_px);
+    const auto row_dims = std::make_shared<glm::uvec2>(width_px, row_px);
 
     const float row_h = 2.F * static_cast<float>(row_px) / static_cast<float>(window_h);
     const float gap = 2.F / static_cast<float>(window_h);
