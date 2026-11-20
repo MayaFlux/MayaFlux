@@ -57,6 +57,7 @@
 #include "Nodes/Input/HIDNode.hpp"
 #include "Nodes/Input/MIDINode.hpp"
 #include "Nodes/Input/OSCNode.hpp"
+#include "Nodes/Input/SerialNode.hpp"
 #include "Nodes/Input/TabletNode.hpp"
 
 #include "Buffers/BufferManager.hpp"

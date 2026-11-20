@@ -353,6 +353,28 @@ public:
         const Core::InputBinding& binding);
 
     /**
+     * @brief Create and register a serial input node.
+     * @param config Which number of each message to follow.
+     * @param binding Serial input binding (use bind_serial(device_id)).
+     * @return Shared pointer to SerialNode (already registered).
+     */
+    std::shared_ptr<Nodes::Input::SerialNode> read_serial(
+        const Nodes::Input::SerialConfig& config,
+        const Core::InputBinding& binding);
+
+    /**
+     * @brief Let the user build a serial port, open it, then read it as above.
+     *
+     * Opens the pickers of choose_serial_port(), which block until the user finishes or
+     * closes a window.
+     *
+     * @param config Which number of each message to follow.
+     * @return Shared pointer to SerialNode (already registered), or nullptr on
+     *         cancellation or when the port cannot be opened.
+     */
+    std::shared_ptr<Nodes::Input::SerialNode> read_serial(const Nodes::Input::SerialConfig& config);
+
+    /**
      * @brief Let the user pick a tablet tool, then read it as below.
      *
      * Opens the picker via choose_input_device(). Blocks until the user
@@ -376,6 +398,10 @@ public:
 
     /**
      * @brief Create and register generic input node.
+     *
+     * For a serial binding the node follows the first number of each message, which is
+     * what an Arduino prints with Serial.println(value).
+     *
      * @param config Generic input configuration.
      * @param binding Generic input binding.
      * @return Shared pointer to InputNode (already registered).

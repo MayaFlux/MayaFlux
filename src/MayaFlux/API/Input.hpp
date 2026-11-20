@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Core/Input/SerialDevice.hpp"
+
 namespace MayaFlux {
 
 namespace Core {
@@ -9,6 +11,7 @@ namespace Core {
     class InputSubsystem;
     struct InputDeviceInfo;
     enum class InputType : uint8_t;
+    struct SerialPortConfig;
 }
 
 namespace Nodes::Input {
@@ -91,6 +94,68 @@ MAYAFLUX_API std::optional<Core::InputDeviceInfo> find_hid_device(
  *         nothing on cancellation or when the backend has no devices.
  */
 MAYAFLUX_API std::optional<Core::InputDeviceInfo> choose_input_device(Core::InputType type);
+
+/**
+ * @brief List a serial port, apply its line setup and protocol, and open it.
+ *
+ * The port is read the way @p port.protocol says and opened with @p port.line. A port
+ * already listed under the same path keeps its id and takes the new settings unless it is
+ * open. Needs GlobalInputConfig::serial and GlobalNetworkConfig::serial enabled.
+ *
+ * @param port The port, as written by hand or returned by choose_serial_port().
+ * @return The device, ready for InputDeviceInfo::to_binding() or bind_serial(), or nothing
+ *         when serial input is not enabled or the port cannot be opened.
+ */
+MAYAFLUX_API std::optional<Core::InputDeviceInfo> open_serial_port(const Core::SerialPortConfig& port);
+
+/**
+ * @brief Let the user build a serial port: which port, the baud rate, how it is read and
+ *        whether the board restarts when the port opens.
+ *
+ * A Portal::Forma picker per step, as in choose_endpoint() and choose_camera(). Blocks
+ * until the user finishes or closes a window, so it must not be called from the event
+ * thread. Portal::Forma must be initialized and the engine running. A system that exposes
+ * no ports is asked for a device path instead.
+ *
+ * @return The port for open_serial_port(), or nothing on cancellation.
+ */
+MAYAFLUX_API std::optional<Core::SerialPortConfig> choose_serial_port();
+
+/**
+ * @brief Send bytes to a serial device as they are.
+ * @param device_id Id of an open serial device.
+ * @return false when the device is not open or the bytes were refused.
+ */
+MAYAFLUX_API bool write_serial(uint32_t device_id, std::span<const uint8_t> bytes);
+
+/**
+ * @brief Send text to a serial device as it is, without adding a line end.
+ */
+MAYAFLUX_API bool write_serial(uint32_t device_id, std::string_view text);
+
+/**
+ * @brief Send one message framed the way the device is read.
+ *
+ * A line gets its LF, a COBS or SLIP message its encoding, and a delimited message its
+ * terminator. Refused when the message cannot be framed, such as an LF inside a line.
+ */
+MAYAFLUX_API bool send_serial_message(uint32_t device_id, std::span<const uint8_t> message);
+
+/**
+ * @brief The open serial device, for requests and replies, line control and statistics.
+ * @return The device, or null when it is not open.
+ */
+MAYAFLUX_API std::shared_ptr<Core::SerialDevice> get_serial_device(uint32_t device_id);
+
+/**
+ * @brief Give a serial device a spec, such as one with a parser of your own.
+ *
+ * A device that is open is closed, given the spec and opened again, and its stream starts
+ * from nothing.
+ *
+ * @return false for an unknown device or when serial input is not enabled.
+ */
+MAYAFLUX_API bool set_serial_spec(uint32_t device_id, const Core::SerialSpec& spec);
 
 /**
  * @brief Gets the input subsystem

@@ -19,6 +19,7 @@
 #include "MayaFlux/Nodes/Input/HIDNode.hpp"
 #include "MayaFlux/Nodes/Input/MIDINode.hpp"
 #include "MayaFlux/Nodes/Input/OSCNode.hpp"
+#include "MayaFlux/Nodes/Input/SerialNode.hpp"
 #include "MayaFlux/Nodes/Input/TabletNode.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -263,6 +264,28 @@ std::shared_ptr<Nodes::Input::OSCNode> Creator::read_osc(
     return node;
 }
 
+std::shared_ptr<Nodes::Input::SerialNode> Creator::read_serial(
+    const Nodes::Input::SerialConfig& config,
+    const Core::InputBinding& binding)
+{
+    auto node = std::make_shared<Nodes::Input::SerialNode>(config);
+    register_input_node(node, binding);
+    return node;
+}
+
+std::shared_ptr<Nodes::Input::SerialNode> Creator::read_serial(const Nodes::Input::SerialConfig& config)
+{
+    const auto port = choose_serial_port();
+    if (!port) {
+        return nullptr;
+    }
+    const auto device = open_serial_port(*port);
+    if (!device) {
+        return nullptr;
+    }
+    return read_serial(config, device->to_binding());
+}
+
 std::shared_ptr<Nodes::Input::TabletNode> Creator::read_tablet(const Nodes::Input::TabletConfig& config)
 {
     const auto device = choose_input_device(Core::InputType::TABLET);
@@ -294,6 +317,11 @@ std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
         return read_osc(static_cast<const Nodes::Input::OSCConfig&>(config), binding);
     case Core::InputType::TABLET:
         return read_tablet(static_cast<const Nodes::Input::TabletConfig&>(config), binding);
+    case Core::InputType::SERIAL: {
+        Nodes::Input::SerialConfig serial;
+        static_cast<Nodes::Input::InputConfig&>(serial) = config;
+        return read_serial(serial, binding);
+    }
     default:
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
             "Input type {} not yet implemented",

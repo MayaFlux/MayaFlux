@@ -47,12 +47,14 @@ namespace Nodes {
         class HIDNode;
         class MIDINode;
         class OSCNode;
+        class SerialNode;
         class TabletNode;
 
         struct InputConfig;
         struct HIDConfig;
         struct MIDIConfig;
         struct OSCConfig;
+        struct SerialConfig;
         struct TabletConfig;
     }
     class Constant;
