@@ -42,7 +42,7 @@ uint32_t SerialInputBackend::id_for(Roster& roster, const std::string& key)
 }
 
 auto SerialInputBackend::make_entry(uint32_t id, const std::string& path, const std::string& name,
-    const SerialLineSettings& line, bool configured) -> Entry
+    const SerialLineSettings& line, const SerialProtocolSettings& protocol, bool configured) -> Entry
 {
     Entry entry;
     entry.info = InputDeviceInfo {
@@ -54,7 +54,7 @@ auto SerialInputBackend::make_entry(uint32_t id, const std::string& path, const 
         .port_name = path,
         .baud_rate = line.baud_rate,
     };
-    entry.spec.line = line;
+    entry.spec = SerialSpec::from(line, protocol);
     entry.configured = configured;
     return entry;
 }
@@ -76,7 +76,7 @@ bool SerialInputBackend::initialize()
         for (const auto& port : m_config.ports) {
             const uint32_t id = id_for(roster, "c:" + port.port_name);
             roster.entries.insert_or_assign(id,
-                make_entry(id, port.port_name, port.port_name, port.line, true));
+                make_entry(id, port.port_name, port.port_name, port.line, port.protocol, true));
         }
         return true;
     });
@@ -167,7 +167,8 @@ size_t SerialInputBackend::refresh_devices()
             const uint32_t id = id_for(roster, "e:" + port.name);
             seen.insert(id);
             if (roster.entries.find(id) == roster.entries.end()) {
-                Entry entry = make_entry(id, path, port.name, m_config.detected_line, false);
+                Entry entry = make_entry(id, path, port.name, m_config.detected_line,
+                    m_config.detected_protocol, false);
                 events.emplace_back(entry.info, true);
                 roster.entries.insert_or_assign(id, std::move(entry));
                 changed = true;
@@ -313,6 +314,32 @@ void SerialInputBackend::set_input_callback(InputCallback callback)
 void SerialInputBackend::set_device_callback(DeviceCallback callback)
 {
     m_device_callback.publish(std::move(callback));
+}
+
+uint32_t SerialInputBackend::add_port(const SerialPortConfig& port)
+{
+    if (!m_initialized.load()) {
+        return 0;
+    }
+
+    uint32_t id = 0;
+    m_roster.update([&](Roster& roster) {
+        id = id_for(roster, "c:" + port.port_name);
+        const auto it = roster.entries.find(id);
+        if (it == roster.entries.end()) {
+            roster.entries.insert_or_assign(id,
+                make_entry(id, port.port_name, port.port_name, port.line, port.protocol, true));
+            return true;
+        }
+        if (it->second.device) {
+            return false;
+        }
+        Entry changed = make_entry(id, port.port_name, port.port_name, port.line, port.protocol, true);
+        changed.info.is_connected = it->second.info.is_connected;
+        roster.entries.insert_or_assign(id, std::move(changed));
+        return true;
+    });
+    return id;
 }
 
 bool SerialInputBackend::set_device_spec(uint32_t device_id, SerialSpec spec)

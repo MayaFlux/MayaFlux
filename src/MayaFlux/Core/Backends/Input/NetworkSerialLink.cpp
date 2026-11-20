@@ -54,7 +54,8 @@ bool NetworkSerialLink::open(const std::string& path, const SerialLineSettings& 
     const uint64_t endpoint = m_service->open_endpoint(info);
     if (endpoint == 0) {
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
-            "Serial link could not open {}", path);
+            "Serial link could not open {}: the port must exist, or the serial transport must be enabled in GlobalNetworkConfig and set to reconnect",
+            path);
         return false;
     }
 

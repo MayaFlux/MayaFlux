@@ -102,6 +102,7 @@ struct Description<::MayaFlux::Core::SerialBackendInfo> {
             Member<&::MayaFlux::Core::SerialBackendInfo::ports> { "ports" },
             Member<&::MayaFlux::Core::SerialBackendInfo::enumerate_ports> { "enumerate_ports" },
             Member<&::MayaFlux::Core::SerialBackendInfo::detected_line> { "detected_line" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::detected_protocol> { "detected_protocol" },
         };
     }
 };
@@ -115,6 +116,23 @@ struct Description<::MayaFlux::Core::SerialPortConfig> {
         return std::tuple {
             Member<&::MayaFlux::Core::SerialPortConfig::port_name> { "port_name" },
             Member<&::MayaFlux::Core::SerialPortConfig::line> { "line" },
+            Member<&::MayaFlux::Core::SerialPortConfig::protocol> { "protocol" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Core::SerialProtocolSettings> {
+    static constexpr std::string_view name = "MayaFlux::Core::SerialProtocolSettings";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Core::SerialProtocolSettings::framing> { "framing" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::terminator> { "terminator" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::gap_ms> { "gap_ms" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::message_limit> { "message_limit" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::parse> { "parse" },
         };
     }
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SerialLink.hpp"
+#include "MayaFlux/Core/Input/SerialLink.hpp"
 
 namespace MayaFlux::Registry::Service {
 struct NetworkService;

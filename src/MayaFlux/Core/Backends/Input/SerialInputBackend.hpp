@@ -1,7 +1,7 @@
 #pragma once
 
 #include "InputBackend.hpp"
-#include "SerialDevice.hpp"
+#include "MayaFlux/Core/Input/SerialDevice.hpp"
 
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
@@ -37,6 +37,7 @@ public:
         std::vector<SerialPortConfig> ports; ///< Ports to list, with the line setup of each
         bool enumerate_ports { false }; ///< Also list the ports the system exposes
         SerialLineSettings detected_line; ///< Line setup of enumerated ports
+        SerialProtocolSettings detected_protocol; ///< Framing and parsing of enumerated ports
         Registry::Service::NetworkService* network { nullptr }; ///< Not owned, must outlive the backend
     };
 
@@ -74,6 +75,15 @@ public:
     [[nodiscard]] std::string get_version() const override { return "1.0"; }
 
     /**
+     * @brief List a port that was not configured, or update one that was while it is closed.
+     * @return The device id, or 0 before initialize().
+     *
+     * A port already listed under the same path keeps its id and takes the new line setup
+     * and protocol unless it is open.
+     */
+    uint32_t add_port(const SerialPortConfig& port);
+
+    /**
      * @brief Give a device its spec, before it is opened.
      * @return false for an unknown device or one that is open.
      */
@@ -100,7 +110,7 @@ private:
 
     static uint32_t id_for(Roster& roster, const std::string& key);
     static Entry make_entry(uint32_t id, const std::string& path, const std::string& name,
-        const SerialLineSettings& line, bool configured);
+        const SerialLineSettings& line, const SerialProtocolSettings& protocol, bool configured);
 
     void on_link_state(uint32_t device_id, EndpointState previous, EndpointState current);
     void notify_input(const InputValue& value) const;

@@ -395,6 +395,7 @@ void InputSubsystem::initialize_serial_backend()
     serial_config.ports = m_config.serial.ports;
     serial_config.enumerate_ports = m_config.serial.enumerate_ports;
     serial_config.detected_line = m_config.serial.detected_line;
+    serial_config.detected_protocol = m_config.serial.detected_protocol;
     serial_config.network = network;
 
     if (!add_backend(std::make_unique<SerialInputBackend>(std::move(serial_config)))) {

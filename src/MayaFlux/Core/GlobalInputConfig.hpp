@@ -178,11 +178,64 @@ MF_DESCRIBE(OSCConfigInfo)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * @brief One serial port and the line setup it opens with
+ * @enum SerialFraming
+ * @brief How the bytes of a port are cut into messages.
+ *
+ * RAW: each read is one message. LINES: LF terminated, with one trailing CR dropped.
+ * DELIMITED: ended by SerialProtocolSettings::terminator. COBS and SLIP: binary frames.
+ * IDLE_GAP: a message ends after SerialProtocolSettings::gap_ms of silence.
+ */
+enum class SerialFraming : uint8_t {
+    RAW,
+    LINES,
+    DELIMITED,
+    COBS,
+    SLIP,
+    IDLE_GAP
+};
+
+/**
+ * @enum SerialParse
+ * @brief What a message becomes.
+ *
+ * BYTES: an InputValue::BYTES. NUMBERS: an InputValue::VECTOR from numbers separated
+ * by whitespace, commas or semicolons, and a message that is not all numbers is not
+ * delivered. MIDI: the port is a MIDI byte stream, read with running status into
+ * InputValue::MIDI, and framing is ignored. CUSTOM: a parser given in code through
+ * SerialSpec::parse_with, and a port configured with CUSTOM and no parser delivers nothing.
+ */
+enum class SerialParse : uint8_t {
+    BYTES,
+    NUMBERS,
+    MIDI,
+    CUSTOM
+};
+
+/**
+ * @struct SerialProtocolSettings
+ * @brief How a port is read, as plain data a config can hold.
+ *
+ * terminator is the text of the DELIMITED terminator, LF when empty. gap_ms is rounded
+ * up to whole milliseconds by the link's timer. message_limit is the longest message in
+ * bytes, and a longer one is dropped and counted.
+ */
+struct MAYAFLUX_API SerialProtocolSettings {
+    SerialFraming framing { SerialFraming::LINES };
+    std::string terminator;
+    uint32_t gap_ms { 2 };
+    size_t message_limit { 4096 };
+    SerialParse parse { SerialParse::NUMBERS };
+};
+
+MF_DESCRIBE(SerialProtocolSettings)
+
+/**
+ * @brief One serial port, the line setup it opens with and how it is read
  */
 struct MAYAFLUX_API SerialPortConfig {
     std::string port_name; ///< e.g., "/dev/ttyUSB0" or "COM3"
     SerialLineSettings line; ///< Baud, framing bits, flow control, control lines at open
+    SerialProtocolSettings protocol; ///< Framing and parsing of what the port sends
 
 };
 
@@ -196,6 +249,7 @@ struct MAYAFLUX_API SerialBackendInfo {
     std::vector<SerialPortConfig> ports; ///< Ports to open
     bool enumerate_ports { false }; ///< Also list the serial ports the system exposes as devices
     SerialLineSettings detected_line; ///< Line setup for enumerated ports
+    SerialProtocolSettings detected_protocol; ///< Framing and parsing for enumerated ports
 
 };
 

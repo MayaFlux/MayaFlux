@@ -6,39 +6,6 @@
 namespace MayaFlux::Core {
 
 /**
- * @enum SerialFraming
- * @brief How the bytes of a port are cut into messages.
- *
- * RAW: each read is one message. LINES: LF terminated, with one trailing CR dropped.
- * DELIMITED: ended by SerialSpec::terminator. COBS and SLIP: binary frames. IDLE_GAP:
- * a message ends after SerialSpec::gap of silence.
- */
-enum class SerialFraming : uint8_t {
-    RAW,
-    LINES,
-    DELIMITED,
-    COBS,
-    SLIP,
-    IDLE_GAP
-};
-
-/**
- * @enum SerialParse
- * @brief What a message becomes.
- *
- * BYTES: an InputValue::BYTES. NUMBERS: an InputValue::VECTOR from numbers separated
- * by whitespace, commas or semicolons, and a message that is not all numbers is not
- * delivered. MIDI: the port is a MIDI byte stream, read with running status into
- * InputValue::MIDI, and framing is ignored. CUSTOM: SerialSpec::parser.
- */
-enum class SerialParse : uint8_t {
-    BYTES,
-    NUMBERS,
-    MIDI,
-    CUSTOM
-};
-
-/**
  * @brief A user parser: one message to a value, or nothing to drop it.
  *
  * The device id and source type of the result are set by the device. It runs on the
@@ -212,6 +179,19 @@ struct MAYAFLUX_API SerialSpec {
         copy.parse = SerialParse::CUSTOM;
         copy.parser = std::move(parser_function);
         return copy;
+    }
+
+    /** @brief The spec a configured port describes. */
+    [[nodiscard]] static SerialSpec from(const SerialLineSettings& line, const SerialProtocolSettings& protocol)
+    {
+        SerialSpec spec;
+        spec.line = line;
+        spec.framing = protocol.framing;
+        spec.terminator.assign(protocol.terminator.begin(), protocol.terminator.end());
+        spec.gap = std::chrono::milliseconds(protocol.gap_ms);
+        spec.message_limit = protocol.message_limit;
+        spec.parse = protocol.parse;
+        return spec;
     }
 
     /** @brief The terminator of DELIMITED framing, LF when none was given. */
