@@ -1,6 +1,6 @@
 #include "Timers.hpp"
 
-#include "MayaFlux/Kriya/RoutineDomain.hpp"
+#include "MayaFlux/Kriya/RoutineTraits.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
@@ -11,12 +11,12 @@ namespace MayaFlux::Kriya {
 
 namespace {
 
-    template <typename Domain, typename Pending>
-    typename Domain::Routine timer_routine(std::shared_ptr<Pending> pending, uint64_t units)
+    template <typename Traits, typename Pending>
+    typename Traits::Routine timer_routine(std::shared_ptr<Pending> pending, uint64_t units)
     {
-        static_cast<void>(co_await typename Domain::GetPromise {});
+        static_cast<void>(co_await typename Traits::GetPromise {});
 
-        co_await Domain::delay(units);
+        co_await Traits::delay(units);
 
         if (pending->active) {
             const auto callback = std::move(pending->callback);
@@ -48,11 +48,11 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
     if (m_token == Vruta::ProcessingToken::FRAME_ACCURATE) {
         const auto units = m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::FRAME_ACCURATE);
         m_routine = std::make_shared<Vruta::GraphicsRoutine>(
-            timer_routine<RoutineDomain<Vruta::ProcessingToken::FRAME_ACCURATE>>(m_pending, units));
+            timer_routine<RoutineTraits<Vruta::ProcessingToken::FRAME_ACCURATE>>(m_pending, units));
     } else {
         const auto units = m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::SAMPLE_ACCURATE);
         m_routine = std::make_shared<Vruta::SoundRoutine>(
-            timer_routine<RoutineDomain<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(m_pending, units));
+            timer_routine<RoutineTraits<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(m_pending, units));
     }
 
     uint64_t current_time = m_Scheduler.current_units(m_token);

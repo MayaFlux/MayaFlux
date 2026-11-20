@@ -30,18 +30,17 @@ struct DelayFor<Vruta::cross_promise> {
 };
 
 /**
- * @struct RoutineDomain
- * @brief A clocked token as a coroutine sees it: routine, promise accessor, delays and unit conversion
+ * @struct RoutineTraits
+ * @brief What a clocked token means for a coroutine: routine, promise accessor, delays and unit conversion
  *
  * Built from Vruta::TokenTraits, so it adds only what Vruta cannot know: the
- * awaiter per promise. A coroutine written once over a Domain runs on any
+ * awaiter per promise. A coroutine written once over RoutineTraits runs on any
  * clocked token. Seconds convert at the registered rate; a caller holding a
  * scheduler converts with its seconds_to_units instead.
  */
 template <Vruta::ProcessingToken Token>
-struct RoutineDomain {
-    using Traits = Vruta::TokenTraits<Token>;
-    using Routine = typename Traits::routine_type;
+struct RoutineTraits {
+    using Routine = typename Vruta::TokenTraits<Token>::routine_type;
     using Promise = typename Routine::promise_type;
     using GetPromise = GetPromiseBase<Promise>;
 
@@ -50,7 +49,7 @@ struct RoutineDomain {
 
     static uint64_t units(double seconds)
     {
-        if constexpr (std::same_as<typename Traits::clock_type, Vruta::FrameClock>) {
+        if constexpr (std::same_as<typename Vruta::TokenTraits<Token>::clock_type, Vruta::FrameClock>) {
             return Vruta::seconds_to_frames(seconds);
         } else {
             return Vruta::seconds_to_samples(seconds);

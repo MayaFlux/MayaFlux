@@ -4,7 +4,7 @@
 
 #include "Awaiters/ConditionAwaiter.hpp"
 #include "Awaiters/DelayAwaiters.hpp"
-#include "RoutineDomain.hpp"
+#include "RoutineTraits.hpp"
 #include "MayaFlux/Vruta/ChronUtils.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
 
@@ -84,29 +84,29 @@ namespace Detail {
         return after_one_pass([] { return true; });
     }
 
-    template <typename Domain>
+    template <typename Traits>
     uint64_t step_units(double seconds)
     {
-        return std::max<uint64_t>(1, Domain::units(seconds));
+        return std::max<uint64_t>(1, Traits::units(seconds));
     }
 
-    template <typename Domain, typename Index, typename Generator, typename Callback, typename Condition>
-    typename Domain::Routine checked_pattern(Generator generator, Callback callback, Condition ready)
+    template <typename Traits, typename Index, typename Generator, typename Callback, typename Condition>
+    typename Traits::Routine checked_pattern(Generator generator, Callback callback, Condition ready)
     {
-        auto& promise = co_await typename Domain::GetPromise {};
+        auto& promise = co_await typename Traits::GetPromise {};
         bool failed = false;
         Index index {};
 
         for (; !promise.should_terminate; ++index) {
             while (!promise.should_terminate && !satisfied(ready, index, failed)) {
-                co_await Domain::pause();
+                co_await Traits::pause();
             }
 
             if (promise.should_terminate || failed || !evaluate(generator, callback, index)) {
                 co_return;
             }
 
-            co_await Domain::pause();
+            co_await Traits::pause();
         }
     }
 
@@ -332,10 +332,10 @@ namespace Detail {
         using type = CyclingValues<Range>;
     };
 
-    template <typename Domain, typename Index, typename Values, typename Callback, typename Cursor>
-    typename Domain::Routine timed_pattern(Values values, Callback callback, Cursor durations)
+    template <typename Traits, typename Index, typename Values, typename Callback, typename Cursor>
+    typename Traits::Routine timed_pattern(Values values, Callback callback, Cursor durations)
     {
-        auto& promise = co_await typename Domain::GetPromise {};
+        auto& promise = co_await typename Traits::GetPromise {};
         typename CursorFor<Values, Index>::type steps(std::move(values));
 
         while (!promise.should_terminate) {
@@ -348,7 +348,7 @@ namespace Detail {
                 co_return;
             }
 
-            co_await Domain::delay(step_units<Domain>(*seconds));
+            co_await Traits::delay(step_units<Traits>(*seconds));
         }
     }
 
@@ -387,15 +387,15 @@ namespace Detail {
         switch (token) {
         case ProcessingToken::SAMPLE_ACCURATE:
             return std::make_shared<Vruta::SoundRoutine>(
-                timed_pattern<RoutineDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
+                timed_pattern<RoutineTraits<ProcessingToken::SAMPLE_ACCURATE>, Index>(
                     std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::FRAME_ACCURATE:
             return std::make_shared<Vruta::GraphicsRoutine>(
-                timed_pattern<RoutineDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
+                timed_pattern<RoutineTraits<ProcessingToken::FRAME_ACCURATE>, Index>(
                     std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::MULTI_RATE:
             return std::make_shared<Vruta::CrossRoutine>(
-                timed_pattern<RoutineDomain<ProcessingToken::MULTI_RATE>, Index>(
+                timed_pattern<RoutineTraits<ProcessingToken::MULTI_RATE>, Index>(
                     std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::CONDITIONAL:
             return std::make_shared<Vruta::FreeRoutine>(
@@ -426,15 +426,15 @@ std::shared_ptr<Vruta::Routine> pattern(Generator generator, Callback callback, 
     switch (token) {
     case ProcessingToken::SAMPLE_ACCURATE:
         return std::make_shared<Vruta::SoundRoutine>(
-            Detail::checked_pattern<RoutineDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
+            Detail::checked_pattern<RoutineTraits<ProcessingToken::SAMPLE_ACCURATE>, Index>(
                 std::move(generator), std::move(callback), std::move(ready)));
     case ProcessingToken::FRAME_ACCURATE:
         return std::make_shared<Vruta::GraphicsRoutine>(
-            Detail::checked_pattern<RoutineDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
+            Detail::checked_pattern<RoutineTraits<ProcessingToken::FRAME_ACCURATE>, Index>(
                 std::move(generator), std::move(callback), std::move(ready)));
     case ProcessingToken::MULTI_RATE:
         return std::make_shared<Vruta::CrossRoutine>(
-            Detail::checked_pattern<RoutineDomain<ProcessingToken::MULTI_RATE>, Index>(
+            Detail::checked_pattern<RoutineTraits<ProcessingToken::MULTI_RATE>, Index>(
                 std::move(generator), std::move(callback), std::move(ready)));
     case ProcessingToken::CONDITIONAL:
         return std::make_shared<Vruta::FreeRoutine>(
