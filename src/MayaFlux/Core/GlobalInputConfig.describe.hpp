@@ -100,10 +100,8 @@ struct Description<::MayaFlux::Core::SerialBackendInfo> {
         return std::tuple {
             Member<&::MayaFlux::Core::SerialBackendInfo::enabled> { "enabled" },
             Member<&::MayaFlux::Core::SerialBackendInfo::ports> { "ports" },
-            Member<&::MayaFlux::Core::SerialBackendInfo::auto_detect_arduino> { "auto_detect_arduino" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::enumerate_ports> { "enumerate_ports" },
             Member<&::MayaFlux::Core::SerialBackendInfo::detected_line> { "detected_line" },
-            Member<&::MayaFlux::Core::SerialBackendInfo::auto_reconnect> { "auto_reconnect" },
-            Member<&::MayaFlux::Core::SerialBackendInfo::reconnect_interval_ms> { "reconnect_interval_ms" },
         };
     }
 };

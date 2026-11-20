@@ -45,6 +45,12 @@ MAYAFLUX_API void unregister_input_node(const std::shared_ptr<Nodes::Input::Inpu
 MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_hid_devices();
 
 /**
+ * @brief Get a list of serial devices
+ * @return Vector of InputDeviceInfo, one per configured or enumerated serial port
+ */
+MAYAFLUX_API std::vector<Core::InputDeviceInfo> get_serial_devices();
+
+/**
  * @brief Get a list of connected tablet tools
  * @return Vector of InputDeviceInfo, one per pen or eraser
  */

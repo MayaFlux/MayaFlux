@@ -2,9 +2,11 @@
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/InputService.hpp"
+#include "MayaFlux/Registry/Service/NetworkService.hpp"
 
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/MIDIBackend.hpp"
+#include "MayaFlux/Core/Backends/Input/SerialInputBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/TabletBackend.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -380,8 +382,34 @@ void InputSubsystem::initialize_midi_backend()
 }
 void InputSubsystem::initialize_serial_backend()
 {
-    MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,
-        "Serial backend not yet implemented");
+    auto* network = Registry::BackendRegistry::instance()
+                        .get_service<Registry::Service::NetworkService>();
+
+    if (!network) {
+        MF_WARN(Journal::Component::Core, Journal::Context::InputSubsystem,
+            "Serial input requested but NetworkService not available");
+        return;
+    }
+
+    SerialInputBackend::Config serial_config;
+    serial_config.ports = m_config.serial.ports;
+    serial_config.enumerate_ports = m_config.serial.enumerate_ports;
+    serial_config.detected_line = m_config.serial.detected_line;
+    serial_config.network = network;
+
+    if (!add_backend(std::make_unique<SerialInputBackend>(std::move(serial_config)))) {
+        return;
+    }
+
+    auto* backend = dynamic_cast<SerialInputBackend*>(get_backend(InputType::SERIAL));
+    const auto devices = backend->get_devices();
+    for (const auto& port : m_config.serial.ports) {
+        for (const auto& device : devices) {
+            if (device.port_name == port.port_name) {
+                backend->open_device(device.id);
+            }
+        }
+    }
 }
 
 void InputSubsystem::initialize_tablet_backend()
@@ -405,6 +433,13 @@ void InputSubsystem::initialize_tablet_backend()
 {
     std::shared_lock lock(m_backends_mutex);
     auto it = m_backends.find(InputType::MIDI);
+    return (it != m_backends.end()) ? it->second->get_devices() : std::vector<InputDeviceInfo> {};
+}
+
+[[nodiscard]] std::vector<InputDeviceInfo> InputSubsystem::get_serial_devices() const
+{
+    std::shared_lock lock(m_backends_mutex);
+    auto it = m_backends.find(InputType::SERIAL);
     return (it != m_backends.end()) ? it->second->get_devices() : std::vector<InputDeviceInfo> {};
 }
 

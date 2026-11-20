@@ -128,6 +128,11 @@ public:
     [[nodiscard]] std::vector<InputDeviceInfo> get_midi_devices() const;
 
     /**
+     * @brief Get all serial devices
+     */
+    [[nodiscard]] std::vector<InputDeviceInfo> get_serial_devices() const;
+
+    /**
      * @brief Get all tablet devices
      */
     [[nodiscard]] std::vector<InputDeviceInfo> get_tablet_devices() const;

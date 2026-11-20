@@ -194,10 +194,8 @@ MF_DESCRIBE(SerialPortConfig)
 struct MAYAFLUX_API SerialBackendInfo {
     bool enabled { false }; ///< Enable Serial backend
     std::vector<SerialPortConfig> ports; ///< Ports to open
-    bool auto_detect_arduino { false }; ///< Auto-detect Arduino devices
-    SerialLineSettings detected_line; ///< Line setup for auto-detected devices
-    bool auto_reconnect { true }; ///< Reopen a port after it is unplugged and returns
-    uint32_t reconnect_interval_ms { 2000 }; ///< Delay between reopen attempts
+    bool enumerate_ports { false }; ///< Also list the serial ports the system exposes as devices
+    SerialLineSettings detected_line; ///< Line setup for enumerated ports
 
 };
 

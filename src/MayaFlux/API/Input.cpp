@@ -55,6 +55,11 @@ std::vector<Core::InputDeviceInfo> get_midi_devices()
     return get_input_subsystem().get_midi_devices();
 }
 
+std::vector<Core::InputDeviceInfo> get_serial_devices()
+{
+    return get_input_subsystem().get_serial_devices();
+}
+
 std::vector<Core::InputDeviceInfo> get_tablet_devices()
 {
     return get_input_subsystem().get_tablet_devices();
