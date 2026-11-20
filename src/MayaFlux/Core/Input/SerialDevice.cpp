@@ -165,11 +165,20 @@ bool SerialDevice::request(std::span<const uint8_t> command, ReplyMatcher matche
         }
     }));
 
+    if (!is_pending(request)) {
+        if (const auto token = request->timer.exchange(0); token != 0) {
+            m_link->cancel_post(token);
+        }
+    }
+
     if (!m_link->write(command)) {
         if (const auto failed = take_pending(request)) {
-            m_link->cancel_post(failed->timer.exchange(0));
+            if (const auto token = failed->timer.exchange(0); token != 0) {
+                m_link->cancel_post(token);
+            }
+            return false;
         }
-        return false;
+        return true;
     }
 
     return true;
@@ -355,6 +364,12 @@ bool SerialDevice::complete_request(P::Message frame)
     }
     end_request(request, SerialReply::REPLIED, frame);
     return true;
+}
+
+bool SerialDevice::is_pending(const std::shared_ptr<Pending>& request) const
+{
+    const auto held = m_pending.read();
+    return held && *held == request;
 }
 
 std::shared_ptr<SerialDevice::Pending> SerialDevice::take_pending(const std::shared_ptr<Pending>& only)

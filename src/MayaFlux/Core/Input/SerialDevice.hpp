@@ -85,6 +85,15 @@ public:
     SerialDevice& operator=(SerialDevice&&) = delete;
 
     void set_value_callback(ValueCallback callback);
+
+    /**
+     * @brief Take the raw chunks of the port, and nothing else.
+     *
+     * An exclusive mode, not a tap. While a chunk callback is set every chunk goes to it as
+     * it arrives and the framing, the parser, the value callback and request matching are
+     * all skipped, so a request sent in this mode can only time out. Set an empty callback
+     * to return to framed delivery.
+     */
     void set_chunk_callback(ChunkCallback callback);
     void set_state_callback(StateCallback callback);
 
@@ -111,8 +120,11 @@ public:
      * @param command Sent as it is.
      * @param matcher True for the message that answers the command.
      * @param timeout How long to wait.
-     * @param done Called once, on the link's thread, with the reply when there is one.
-     * @return false when a request is already pending, the port is not open or the send failed.
+     * @param done Called exactly once for a request that returns true, on the link's thread,
+     *             with the reply when there is one. Never called for a request that returns false.
+     * @return false when a request is already pending, the port is not open or the send
+     *         failed. A request whose reply or timeout beat a failed send is already complete,
+     *         its callback has run, and this returns true.
      */
     bool request(std::span<const uint8_t> command, ReplyMatcher matcher,
         std::chrono::milliseconds timeout, ReplyCallback done);
@@ -163,6 +175,7 @@ private:
     void reset_stream();
     bool complete_request(Transitive::Protocol::Message frame);
     std::shared_ptr<Pending> take_pending(const std::shared_ptr<Pending>& only = {});
+    [[nodiscard]] bool is_pending(const std::shared_ptr<Pending>& request) const;
     void end_request(const std::shared_ptr<Pending>& request, SerialReply how, Transitive::Protocol::Message reply);
 
     uint32_t m_device_id;

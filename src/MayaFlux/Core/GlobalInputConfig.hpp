@@ -200,8 +200,9 @@ enum class SerialFraming : uint8_t {
  *
  * BYTES: an InputValue::BYTES. NUMBERS: an InputValue::VECTOR from numbers separated
  * by whitespace, commas or semicolons, and a message that is not all numbers is not
- * delivered. MIDI: the port is a MIDI byte stream, read with running status into
- * InputValue::MIDI, and framing is ignored. CUSTOM: a parser given in code through
+ * delivered. MIDI: the port is a MIDI byte stream, read into InputValue::MIDI as channel
+ * voice messages with running status, plus the real-time bytes. SysEx and the system
+ * common messages are skipped, and framing is ignored. CUSTOM: a parser given in code through
  * SerialSpec::parse_with, and a port configured with CUSTOM and no parser delivers nothing.
  */
 enum class SerialParse : uint8_t {

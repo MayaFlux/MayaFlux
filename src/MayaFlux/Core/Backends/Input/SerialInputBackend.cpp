@@ -146,7 +146,7 @@ size_t SerialInputBackend::refresh_devices()
         return get_devices().size();
     }
 
-    const auto found = Platform::list_serial_ports();
+    const auto found = m_config.enumerator ? m_config.enumerator() : Platform::list_serial_ports();
     std::vector<DeviceEvent> events;
     size_t count = 0;
 
@@ -164,7 +164,7 @@ size_t SerialInputBackend::refresh_devices()
                 continue;
             }
 
-            const uint32_t id = id_for(roster, "e:" + port.name);
+            const uint32_t id = id_for(roster, "e:" + path);
             seen.insert(id);
             if (roster.entries.find(id) == roster.entries.end()) {
                 Entry entry = make_entry(id, path, port.name, m_config.detected_line,
@@ -234,22 +234,33 @@ bool SerialInputBackend::open_device(uint32_t device_id)
         return false;
     }
 
-    bool kept = false;
+    enum class Outcome : uint8_t { Registered, AlreadyOpen, Gone };
+    Outcome outcome = Outcome::Gone;
     m_roster.update([&](Roster& roster) {
-        kept = false;
         const auto it = roster.entries.find(device_id);
-        if (it == roster.entries.end() || it->second.device) {
+        if (it == roster.entries.end()) {
+            outcome = Outcome::Gone;
+            return false;
+        }
+        if (it->second.device) {
+            outcome = Outcome::AlreadyOpen;
             return false;
         }
         Entry changed = it->second;
         changed.device = device;
         roster.entries.insert_or_assign(device_id, std::move(changed));
-        kept = true;
+        outcome = Outcome::Registered;
         return true;
     });
 
-    if (!kept) {
+    if (outcome != Outcome::Registered) {
         device->close();
+    }
+
+    if (outcome == Outcome::Gone) {
+        MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
+            "Serial device {} left the list while it was opening", device_id);
+        return false;
     }
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,

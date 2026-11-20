@@ -84,7 +84,7 @@ struct MAYAFLUX_API SerialSpec {
         return spec;
     }
 
-    /** @brief A MIDI byte stream at 31250 baud. */
+    /** @brief A MIDI byte stream at 31250 baud: channel voice messages and real-time bytes. SysEx and system common messages are skipped. */
     [[nodiscard]] static SerialSpec midi()
     {
         SerialSpec spec;

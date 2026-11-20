@@ -2,6 +2,7 @@
 
 #include "InputBackend.hpp"
 #include "MayaFlux/Core/Input/SerialDevice.hpp"
+#include "MayaFlux/Transitive/Platform/SerialPorts.hpp"
 
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
@@ -18,8 +19,8 @@ namespace MayaFlux::Core {
  *
  * Devices come from the configured ports and, with enumerate_ports, from the ports the
  * system exposes. A device keeps its id for as long as the backend lives, found again by
- * the path it was configured with or by the stable name the system gives it, so a replug
- * does not change it. Every value a device parses is delivered to the input callback, from
+ * the path it was configured with or the path the enumerator gave it, which is the stable
+ * /dev/serial/by-id link where the system has one, so a replug does not change it. Every value a device parses is delivered to the input callback, from
  * the network io thread, once the backend is started.
  *
  * Ports are opened through the NetworkService, which must have the serial transport
@@ -39,6 +40,7 @@ public:
         SerialLineSettings detected_line; ///< Line setup of enumerated ports
         SerialProtocolSettings detected_protocol; ///< Framing and parsing of enumerated ports
         Registry::Service::NetworkService* network { nullptr }; ///< Not owned, must outlive the backend
+        std::function<std::vector<Platform::SerialPortEntry>()> enumerator; ///< Lists the system's ports, Platform::list_serial_ports when empty
     };
 
     explicit SerialInputBackend(Config config);
