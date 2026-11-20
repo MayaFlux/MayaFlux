@@ -24,7 +24,7 @@ namespace MayaFlux::Kriya {
  * Example usage:
  * ```cpp
  * // Create an event chain
- * EventChain chain(*scheduler);
+ * EventChain chain(scheduler);
  *
  * // Add events with specific delays
  * chain.then([]() { process_initial_state(); })      // Immediate
@@ -51,8 +51,18 @@ public:
      * Creates a new EventChain that will use the provided scheduler for timing
      * operations. This allows for more control over which scheduler is used,
      * which is useful in contexts where multiple processing engines might exist.
+     * The chain keeps the scheduler alive for as long as it exists.
      */
-    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+    EventChain(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The chain does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+        : EventChain(
+              std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+              std::move(name), token)
+    {
+    }
 
     /**
      * @brief Adds an event to the chain with a specified delay
@@ -181,12 +191,12 @@ private:
     std::vector<TimedEvent> m_events;
 
     /**
-     * @brief Reference to the scheduler that manages timing
+     * @brief The scheduler that manages timing
      *
      * The scheduler provides the timing infrastructure needed for
      * precise execution of events in the chain.
      */
-    Vruta::TaskScheduler& m_Scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_Scheduler;
 
     /**
      * @brief Processing token to determine which scheduler rate to use

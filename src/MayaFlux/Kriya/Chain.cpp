@@ -8,11 +8,11 @@
 
 namespace MayaFlux::Kriya {
 
-EventChain::EventChain(Vruta::TaskScheduler& scheduler, std::string name, Vruta::ProcessingToken token)
+EventChain::EventChain(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, std::string name, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
     , m_name(std::move(name))
     , m_token(token)
-    , m_default_rate(scheduler.get_rate(token))
+    , m_default_rate(m_Scheduler ? m_Scheduler->get_rate(token) : 48000)
 {
 }
 
@@ -54,7 +54,7 @@ EventChain& EventChain::every(double interval_seconds, std::function<void()> act
 
 void EventChain::start()
 {
-    if (m_events.empty())
+    if (m_events.empty() || !m_Scheduler)
         return;
 
     auto s_coro_func = [](std::vector<TimedEvent> events,
@@ -127,7 +127,7 @@ void EventChain::start()
         }
     };
 
-    std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler.get_next_task_id()) : m_name;
+    std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler->get_next_task_id()) : m_name;
 
     if (m_token == Vruta::ProcessingToken::SAMPLE_ACCURATE) {
         m_routine = std::make_shared<Vruta::SoundRoutine>(
@@ -141,7 +141,7 @@ void EventChain::start()
         m_routine->on_complete(m_on_complete);
     }
 
-    m_Scheduler.add_task(m_routine, task_name, true);
+    m_Scheduler->add_task(m_routine, task_name, true);
 }
 
 void EventChain::cancel()
@@ -152,7 +152,7 @@ void EventChain::cancel()
 
     auto routine = std::exchange(m_routine, nullptr);
     routine->set_should_terminate(true);
-    m_Scheduler.cancel_task(routine);
+    m_Scheduler->cancel_task(routine);
 }
 
 bool EventChain::is_active() const

@@ -10,12 +10,12 @@
 namespace MayaFlux::Kriya {
 
 BufferPipeline::BufferPipeline(
-    Vruta::TaskScheduler& scheduler,
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
     std::shared_ptr<Buffers::BufferManager> buffer_manager,
     std::shared_ptr<IO::IOManager> io_manager)
     : m_buffer_manager(std::move(buffer_manager))
     , m_io_manager(std::move(io_manager))
-    , m_scheduler(&scheduler)
+    , m_scheduler(scheduler)
 {
 }
 
@@ -305,7 +305,7 @@ namespace {
         std::optional<uint32_t> monitor,
         uint32_t stream_channel)
     {
-        auto pipeline = BufferPipeline::create(*scheduler, buffer_manager);
+        auto pipeline = BufferPipeline::create(scheduler, buffer_manager);
         pipeline >> BufferOperation::capture_from(listener).for_cycles(1)
             >> BufferOperation::route_to_container(stream, stream_channel);
         pipeline->on_complete([buffer_manager, listener, input_channel, monitor] {

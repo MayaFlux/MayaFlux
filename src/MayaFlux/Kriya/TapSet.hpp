@@ -127,8 +127,22 @@ public:
     TapSetBuilder(
         std::shared_ptr<Kakshya::DynamicSoundStream> stream,
         Buffers::BufferManager& mgr,
-        Vruta::TaskScheduler& scheduler,
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
         uint32_t buf_size);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The builder does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    TapSetBuilder(
+        std::shared_ptr<Kakshya::DynamicSoundStream> stream,
+        Buffers::BufferManager& mgr,
+        Vruta::TaskScheduler& scheduler,
+        uint32_t buf_size)
+        : TapSetBuilder(
+              std::move(stream), mgr,
+              std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+              buf_size)
+    {
+    }
 
     /**
      * @brief Begin a new tap.
@@ -241,7 +255,7 @@ private:
 
     std::shared_ptr<Kakshya::DynamicSoundStream> m_stream;
     Buffers::BufferManager& m_mgr;
-    Vruta::TaskScheduler& m_scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     uint32_t m_buf_size;
 
     std::vector<Spec> m_specs;

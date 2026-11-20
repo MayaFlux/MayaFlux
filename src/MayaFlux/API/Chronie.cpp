@@ -135,12 +135,12 @@ bool restart_task(const std::string& name)
 
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline()
 {
-    return Kriya::BufferPipeline::create(*get_scheduler(), get_context().get_buffer_manager());
+    return Kriya::BufferPipeline::create(get_scheduler(), get_context().get_buffer_manager());
 }
 
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline(std::shared_ptr<IO::IOManager> io_manager)
 {
-    return Kriya::BufferPipeline::create(*get_scheduler(), get_context().get_buffer_manager(), std::move(io_manager));
+    return Kriya::BufferPipeline::create(get_scheduler(), get_context().get_buffer_manager(), std::move(io_manager));
 }
 
 void on_key_pressed(

@@ -49,7 +49,7 @@ void TapSet::stop()
 TapSetBuilder::TapSetBuilder(
     std::shared_ptr<Kakshya::DynamicSoundStream> stream,
     Buffers::BufferManager& mgr,
-    Vruta::TaskScheduler& scheduler,
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
     uint32_t buf_size)
     : m_stream(std::move(stream))
     , m_mgr(mgr)
