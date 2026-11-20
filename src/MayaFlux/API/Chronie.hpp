@@ -583,44 +583,4 @@ MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_message_received(
  */
 MAYAFLUX_API std::optional<Core::EndpointInfo> choose_endpoint();
 
-/** @brief Replaced by on_message_received(source, callback, name). */
-[[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
-/** @brief Replaced by on_message_received(info, callback, name). */
-[[deprecated("use on_message_received")]] MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message(
-    const Core::EndpointInfo& info,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
-/** @brief Replaced by on_message_received(source, sender_address, callback, name). */
-[[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message_from(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::string sender_address,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
-/** @brief Replaced by on_message_received(info, sender_address, callback, name). */
-[[deprecated("use on_message_received")]] MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message_from(
-    const Core::EndpointInfo& info,
-    std::string sender_address,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
-/** @brief Replaced by on_message_received(source, predicate, callback, name). */
-[[deprecated("use on_message_received")]] MAYAFLUX_API void on_network_message_matching(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<bool(const Core::NetworkMessage&)> predicate,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
-/** @brief Replaced by on_message_received(info, predicate, callback, name). */
-[[deprecated("use on_message_received")]] MAYAFLUX_API std::shared_ptr<Vruta::NetworkSource> on_network_message_matching(
-    const Core::EndpointInfo& info,
-    std::function<bool(const Core::NetworkMessage&)> predicate,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name = "");
-
 }

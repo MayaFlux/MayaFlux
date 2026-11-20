@@ -75,27 +75,4 @@ Vruta::Event message_received(
         std::move(callback));
 }
 
-Vruta::Event on_message(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<void(const Core::NetworkMessage&)> callback)
-{
-    return message_received(std::move(source), std::move(callback));
-}
-
-Vruta::Event on_message_from(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::string sender_address,
-    std::function<void(const Core::NetworkMessage&)> callback)
-{
-    return message_received(std::move(source), std::move(sender_address), std::move(callback));
-}
-
-Vruta::Event on_message_matching(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<bool(const Core::NetworkMessage&)> predicate,
-    std::function<void(const Core::NetworkMessage&)> callback)
-{
-    return message_received(std::move(source), std::move(predicate), std::move(callback));
-}
-
 } // namespace MayaFlux::Kriya

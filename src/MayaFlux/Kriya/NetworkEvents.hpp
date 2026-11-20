@@ -85,21 +85,4 @@ MAYAFLUX_API Vruta::Event message_received(
     std::function<bool(const Core::NetworkMessage&)> predicate,
     std::function<void(const Core::NetworkMessage&)> callback);
 
-/** @brief Replaced by message_received(source, callback). */
-[[deprecated("use message_received")]] MAYAFLUX_API Vruta::Event on_message(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<void(const Core::NetworkMessage&)> callback);
-
-/** @brief Replaced by message_received(source, sender_address, callback). */
-[[deprecated("use message_received")]] MAYAFLUX_API Vruta::Event on_message_from(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::string sender_address,
-    std::function<void(const Core::NetworkMessage&)> callback);
-
-/** @brief Replaced by message_received(source, predicate, callback). */
-[[deprecated("use message_received")]] MAYAFLUX_API Vruta::Event on_message_matching(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<bool(const Core::NetworkMessage&)> predicate,
-    std::function<void(const Core::NetworkMessage&)> callback);
-
 } // namespace MayaFlux::Kriya
