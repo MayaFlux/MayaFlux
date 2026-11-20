@@ -21,12 +21,15 @@ namespace MayaFlux::Core {
  */
 struct UdsTransport {
     using Protocol = asio::local::stream_protocol;
+    using Stream = Protocol::socket;
     using Config = UDSBackendInfo;
 
     struct Bound {
         std::filesystem::path path;
     };
 
+    static constexpr bool listens = true;
+    static constexpr FramingPolicy automatic_framing = FramingPolicy::LENGTH_PREFIX;
     static constexpr NetworkTransport id = NetworkTransport::UDS;
     static constexpr std::string_view label = "UDS";
     static constexpr std::string_view name = "UDS (Asio)";

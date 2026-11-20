@@ -309,11 +309,8 @@ namespace internal {
 /**
  * @brief Constructs a T in-place inside the live arena and registers it under @p key.
  *
- * The returned shared_ptr is stable for the process lifetime and participates
- * in normal shared_ptr ref-counting. The arena owns the underlying storage;
- * the shared_ptr uses a no-op deleter so the arena remains the sole allocator.
- *
- * Reachable from JIT'd code immediately via live_cast<T>(key).
+ * The arena owns the storage, and the returned shared_ptr is valid for the
+ * process lifetime. Reachable from JIT'd code via live_cast<T>(key).
  *
  * @tparam T    Type to construct.
  * @param  key  Null-terminated string used to locate the object from the JIT.
@@ -416,10 +413,8 @@ MAYAFLUX_API void* live_cast_impl(const char* key) noexcept;
 /**
  * @brief Retrieves a live-arena object by key as a shared_ptr<T>.
  *
- * Delegates the directory walk to live_cast_impl so the call resolves
- * through the DLL export table on all platforms. The returned shared_ptr
- * uses a no-op deleter; lifetime is managed by the arena or the original
- * expose_live caller.
+ * The returned shared_ptr does not own the object. The arena, or the original
+ * expose_live caller, manages its lifetime.
  *
  * @tparam T   Expected type of the registered object.
  * @param  key Null-terminated string used at make_live or expose_live time.

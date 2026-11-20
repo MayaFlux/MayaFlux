@@ -44,6 +44,11 @@ namespace {
 
 }
 
+WindowRenderContext::WindowRenderContext() = default;
+WindowRenderContext::~WindowRenderContext() = default;
+WindowRenderContext::WindowRenderContext(WindowRenderContext&&) noexcept = default;
+WindowRenderContext& WindowRenderContext::operator=(WindowRenderContext&&) noexcept = default;
+
 void WindowRenderContext::cleanup(VKContext& context)
 {
     vk::Device device = context.get_device();

@@ -15,9 +15,7 @@
 #include "MayaFlux/Kriya/NetworkEvents.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 
-#include "MayaFlux/Portal/Forma/Primitives/Picker.hpp"
-#include "MayaFlux/Portal/Forma/Primitives/Prompt.hpp"
-#include "MayaFlux/Transitive/Parallel/Dispatch.hpp"
+#include "Prompt.hpp"
 #include "MayaFlux/Transitive/Platform/UnixSocket.hpp"
 #include "MayaFlux/Transitive/Protocol/HostPort.hpp"
 
@@ -479,30 +477,8 @@ namespace {
         std::string label;
     };
 
-    template <typename T>
-    std::optional<T> pick_one(std::string title, std::vector<T> items,
-        std::function<std::string(const T&)> label)
-    {
-        auto promise = std::make_shared<std::promise<std::optional<T>>>();
-        auto future = promise->get_future();
-
-        Portal::Forma::pick<T>(std::move(title), std::move(items), std::move(label),
-            [promise](std::optional<T> chosen) { promise->set_value(std::move(chosen)); });
-
-        return Parallel::await_future(std::move(future));
-    }
-
-    std::optional<std::string> ask_one(std::string title, std::string initial,
-        Portal::Forma::AskValidator validator)
-    {
-        auto promise = std::make_shared<std::promise<std::optional<std::string>>>();
-        auto future = promise->get_future();
-
-        Portal::Forma::ask(std::move(title), std::move(initial), std::move(validator),
-            [promise](std::optional<std::string> text) { promise->set_value(std::move(text)); });
-
-        return Parallel::await_future(std::move(future));
-    }
+    using detail::ask_one;
+    using detail::pick_one;
 
     bool is_socket_name(std::string_view text)
     {
@@ -541,6 +517,8 @@ namespace {
             return listens
                 ? std::format("udp receive {}", info.local_port)
                 : std::format("udp send {}:{}", info.remote_address, info.remote_port);
+        case Core::NetworkTransport::SERIAL:
+            return std::format("serial {}", info.remote_path);
         case Core::NetworkTransport::SHARED_MEMORY:
             break;
         }

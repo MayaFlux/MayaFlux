@@ -27,6 +27,14 @@ struct NetworkService;
 namespace MayaFlux::Core {
 
 /**
+ * @brief Callback signature for a per-endpoint state observer
+ */
+using EndpointObserver = std::function<void(
+    uint64_t endpoint_id,
+    EndpointState previous,
+    EndpointState current)>;
+
+/**
  * @class NetworkSubsystem
  * @brief General-purpose network transport subsystem
  *
@@ -170,6 +178,40 @@ public:
      */
     [[nodiscard]] std::vector<EndpointInfo> get_all_endpoints() const;
 
+    /**
+     * @brief Register a per-endpoint state callback
+     *
+     * Called on the io thread at every transition. A connection without
+     * a callback of its own reports through its listener's.
+     */
+    void set_endpoint_state_callback(uint64_t endpoint_id, EndpointObserver callback);
+
+    /**
+     * @brief Bytes accepted by send and not yet written, 0 for an unknown endpoint
+     */
+    [[nodiscard]] size_t get_write_backlog(uint64_t endpoint_id) const;
+
+    /**
+     * @brief Set the DTR and RTS lines of an open serial endpoint
+     */
+    bool set_control_lines(uint64_t endpoint_id, std::optional<bool> dtr, std::optional<bool> rts);
+
+    /**
+     * @brief Hold the transmit line of an open serial endpoint in break
+     */
+    bool send_break(uint64_t endpoint_id);
+
+    /**
+     * @brief Run a callable once after a delay on the io thread
+     * @return A token for cancel_post, never 0.
+     */
+    uint64_t post_after(std::chrono::milliseconds delay, std::function<void()> callback);
+
+    /**
+     * @brief Cancel a timer from post_after. No-op when it already ran.
+     */
+    void cancel_post(uint64_t token);
+
 private:
     GlobalNetworkConfig m_config;
     SubsystemProcessingHandle* m_handle { nullptr };
@@ -206,12 +248,14 @@ private:
      * scanning them. parent_id is the listener that accepted a connection, 0
      * otherwise: a connection without a receive callback of its own delivers to
      * its listener's callback, and closing the listener closes its connections.
-     * callback is the receiver set through set_endpoint_receive_callback.
+     * callback is the receiver set through set_endpoint_receive_callback and
+     * observer the one set through set_endpoint_state_callback.
      */
     struct Route {
         NetworkTransport transport {};
         uint64_t parent_id {};
         std::shared_ptr<const NetworkReceiveCallback> callback;
+        std::shared_ptr<const EndpointObserver> observer;
     };
 
     using RouteTable = Memory::FlatMap<uint64_t, Route>;
@@ -232,9 +276,19 @@ private:
      */
     std::atomic<uint64_t> m_next_endpoint_id { 1 };
 
+    struct Timer;
+    using TimerTable = Memory::FlatMap<uint64_t, std::shared_ptr<Timer>>;
+
+    /**
+     * @brief Pending post_after timers. A timer leaves the table when it runs or is cancelled.
+     */
+    Memory::SnapshotCell<TimerTable> m_timers;
+    std::atomic<uint64_t> m_next_timer_id { 1 };
+
     void initialize_udp_backend();
     void initialize_tcp_backend();
     void initialize_uds_backend();
+    void initialize_serial_backend();
     void initialize_shm_backend();
 
     void register_backend_service();

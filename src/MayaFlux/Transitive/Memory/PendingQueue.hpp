@@ -6,19 +6,16 @@ namespace MayaFlux::Memory {
  * @class PendingQueue
  * @brief Bounded multi-producer, multi-consumer queue of deferred operations.
  *
- * Producers on any thread push an operation; any thread may drain the queue at
- * a point where mutation is safe, and each operation is applied exactly once,
- * in the order it was claimed. Each cell carries its own sequence
- * number, so a producer only claims a cell that is free and a consumer only
- * reads a cell whose payload has been published. A full queue rejects the push
- * without disturbing any other claim.
+ * Producers on any thread push an operation. Any thread may drain the queue at a
+ * point where mutation is safe, and each operation is applied exactly once, in
+ * the order it was claimed. A full queue rejects the push.
  *
  * Capacity must be a power of two. T must be default constructible and move
- * assignable; the drained cell is reset so the queue never retains a payload
- * (for example a shared_ptr) past its application.
+ * assignable. A drained cell is reset, so the queue never holds a payload (for
+ * example a shared_ptr) past its application.
  *
- * Overlapping drains never hand out the same operation twice, but they do not
- * serialise the apply step; the caller guards whatever @p apply mutates.
+ * Overlapping drains never apply the same operation twice, but they do not
+ * serialise the apply step, so the caller guards whatever @p apply mutates.
  *
  * @code
  * PendingQueue<Op, 1024> queue;

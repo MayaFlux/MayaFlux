@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
+#include "MayaFlux/Core/GlobalNetworkConfig.hpp"
 #include "MayaFlux/Core/Input/InputBinding.hpp"
 
 namespace MayaFlux::Core {
@@ -173,19 +174,69 @@ struct MAYAFLUX_API OSCConfigInfo {
 MF_DESCRIBE(OSCConfigInfo)
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Serial Configuration (Future)
+// Serial Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * @brief Serial port configuration
+ * @enum SerialFraming
+ * @brief How the bytes of a port are cut into messages.
+ *
+ * RAW: each read is one message. LINES: LF terminated, with one trailing CR dropped.
+ * DELIMITED: ended by SerialProtocolSettings::terminator. COBS and SLIP: binary frames.
+ * IDLE_GAP: a message ends after SerialProtocolSettings::gap_ms of silence.
+ */
+enum class SerialFraming : uint8_t {
+    RAW,
+    LINES,
+    DELIMITED,
+    COBS,
+    SLIP,
+    IDLE_GAP
+};
+
+/**
+ * @enum SerialParse
+ * @brief What a message becomes.
+ *
+ * BYTES: an InputValue::BYTES. NUMBERS: an InputValue::VECTOR from numbers separated
+ * by whitespace, commas or semicolons, and a message that is not all numbers is not
+ * delivered. MIDI: the port is a MIDI byte stream, read into InputValue::MIDI as channel
+ * voice messages with running status, plus the real-time bytes. SysEx and the system
+ * common messages are skipped, and framing is ignored. CUSTOM: a parser given in code through
+ * SerialSpec::parse_with, and a port configured with CUSTOM and no parser delivers nothing.
+ */
+enum class SerialParse : uint8_t {
+    BYTES,
+    NUMBERS,
+    MIDI,
+    CUSTOM
+};
+
+/**
+ * @struct SerialProtocolSettings
+ * @brief How a port is read, as plain data a config can hold.
+ *
+ * terminator is the text of the DELIMITED terminator, LF when empty. gap_ms is rounded
+ * up to whole milliseconds by the link's timer. message_limit is the longest message in
+ * bytes, and a longer one is dropped and counted.
+ */
+struct MAYAFLUX_API SerialProtocolSettings {
+    SerialFraming framing { SerialFraming::LINES };
+    std::string terminator;
+    uint32_t gap_ms { 2 };
+    size_t message_limit { 4096 };
+    SerialParse parse { SerialParse::NUMBERS };
+};
+
+MF_DESCRIBE(SerialProtocolSettings)
+
+/**
+ * @brief One serial port, the line setup it opens with and how it is read
  */
 struct MAYAFLUX_API SerialPortConfig {
     std::string port_name; ///< e.g., "/dev/ttyUSB0" or "COM3"
-    uint32_t baud_rate { 9600 }; ///< Baud rate
-    uint8_t data_bits { 8 }; ///< Data bits (5, 6, 7, or 8)
-    uint8_t stop_bits { 1 }; ///< Stop bits (1 or 2)
-    char parity { 'N' }; ///< Parity: 'N'one, 'E'ven, 'O'dd
-    bool flow_control { false }; ///< Hardware flow control
+    SerialLineSettings line; ///< Baud, framing bits, flow control, control lines at open
+    SerialProtocolSettings protocol; ///< Framing and parsing of what the port sends
 
 };
 
@@ -197,8 +248,9 @@ MF_DESCRIBE(SerialPortConfig)
 struct MAYAFLUX_API SerialBackendInfo {
     bool enabled { false }; ///< Enable Serial backend
     std::vector<SerialPortConfig> ports; ///< Ports to open
-    bool auto_detect_arduino { false }; ///< Auto-detect Arduino devices
-    uint32_t default_baud_rate { 115200 }; ///< Default baud for auto-detected devices
+    bool enumerate_ports { false }; ///< Also list the serial ports the system exposes as devices
+    SerialLineSettings detected_line; ///< Line setup for enumerated ports
+    SerialProtocolSettings detected_protocol; ///< Framing and parsing for enumerated ports
 
 };
 

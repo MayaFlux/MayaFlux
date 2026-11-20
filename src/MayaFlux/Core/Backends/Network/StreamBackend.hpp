@@ -25,26 +25,8 @@ namespace MayaFlux::Core {
 
 namespace detail {
 
-    /**
-     * @brief The framer for raw streams: every read is one message, with nothing to reassemble.
-     */
-    struct RawChunkFramer {
-        template <Transitive::Protocol::MessageSink Sink>
-        Transitive::Protocol::FrameReport push(Transitive::Protocol::Message bytes, Sink&& sink)
-        {
-            Transitive::Protocol::FrameReport report;
-            if (!bytes.empty()) {
-                sink(bytes);
-                report.messages = 1;
-            }
-            return report;
-        }
-
-        void reset() noexcept { }
-    };
-
     using StreamFramer = std::variant<Transitive::Protocol::LengthPrefixFramer,
-        Transitive::Protocol::LineFramer, RawChunkFramer>;
+        Transitive::Protocol::LineFramer, Transitive::Protocol::RawChunkFramer>;
 
     inline StreamFramer make_stream_framer(FramingPolicy framing, size_t max_message_size)
     {
@@ -53,11 +35,66 @@ namespace detail {
                 max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_line };
         }
         if (framing == FramingPolicy::NONE) {
-            return StreamFramer { std::in_place_type<RawChunkFramer> };
+            return StreamFramer { std::in_place_type<Transitive::Protocol::RawChunkFramer> };
         }
         return StreamFramer { std::in_place_type<Transitive::Protocol::LengthPrefixFramer>,
             max_message_size != 0 ? max_message_size : Transitive::Protocol::default_max_frame, true };
     }
+
+    /**
+     * @brief A transport whose stream opens in one synchronous call instead of async_connect
+     */
+    template <typename Transport>
+    concept SynchronousOpen = requires(typename Transport::Stream& stream, const EndpointInfo& info) {
+        { Transport::open(stream, info) } -> std::same_as<asio::error_code>;
+    };
+
+    /**
+     * @brief A synchronous-open transport that holds the endpoint in OPENING for a while after the open
+     */
+    template <typename Transport>
+    concept HasSettle = requires(const EndpointInfo& info) {
+        { Transport::settle_time(info) } -> std::convertible_to<std::chrono::milliseconds>;
+    };
+
+    /**
+     * @brief A transport that prepares the stream just before the endpoint reports OPEN
+     */
+    template <typename Transport>
+    concept HasReady = requires(typename Transport::Stream& stream, const EndpointInfo& info) {
+        Transport::ready(stream, info);
+    };
+
+    template <typename Transport>
+    concept HasControlLines = requires(typename Transport::Stream& stream, std::optional<bool> level) {
+        { Transport::set_control_lines(stream, level, level) } -> std::same_as<bool>;
+    };
+
+    template <typename Transport>
+    concept HasBreak = requires(typename Transport::Stream& stream) {
+        { Transport::send_break(stream) } -> std::same_as<bool>;
+    };
+
+    /**
+     * @brief What a listener holds, which a transport without listeners does not have
+     */
+    template <typename Transport, bool = Transport::listens>
+    struct AcceptSide {
+        typename Transport::Protocol::acceptor acceptor;
+        typename Transport::Protocol::socket pending_socket;
+        typename Transport::Bound bound;
+
+        explicit AcceptSide(asio::io_context& ctx)
+            : acceptor(ctx)
+            , pending_socket(ctx)
+        {
+        }
+    };
+
+    template <typename Transport>
+    struct AcceptSide<Transport, false> {
+        explicit AcceptSide(asio::io_context&) { }
+    };
 
 }
 
@@ -65,19 +102,35 @@ namespace detail {
  * @class StreamBackend
  * @brief Connection-oriented reliable message transport over an Asio stream protocol
  *
- * Everything that does not depend on the socket type lives here: listener and
+ * Everything that does not depend on the stream type lives here: listener and
  * connection bookkeeping, async accept, connect and reconnect, the framed receive
  * chain and the framed send. A Transport policy supplies what differs, so TCP and
  * Unix domain sockets are two instances of one backend.
  *
  * A Transport provides:
- *   - Protocol: an Asio stream protocol (asio::ip::tcp, asio::local::stream_protocol).
+ *   - Stream: the connection's Asio stream, with async_read_some, close and
+ *     asio::async_write (a protocol's socket, or asio::serial_port).
  *   - Config: a struct with auto_reconnect and reconnect_interval_ms.
- *   - Bound: what a listener holds while it is bound, default constructible.
  *   - id, label, name: the NetworkTransport, a log label and the backend name.
- *   - is_listener(info), bind(acceptor, info), release(bound).
- *   - connect_target(info), describe_accepted(socket, listener, accepted).
+ *   - automatic_framing: what FramingPolicy::AUTO means.
  *   - describe(info) for logs and peer_label(info) for the sender string of a receive.
+ *   - listens: whether the transport has listeners. If so, also Protocol (an Asio stream
+ *     protocol), Bound (what a listener holds while bound, default constructible),
+ *     is_listener(info), bind(acceptor, info), release(bound) and
+ *     describe_accepted(socket, listener, accepted).
+ *   - Either connect_target(info), which names where async_connect goes, or
+ *     open(stream, info), a synchronous open returning an asio::error_code.
+ *
+ * With a synchronous open, open_endpoint returns 0 when the first open fails and
+ * auto_reconnect is off. With it on, the endpoint enters RECONNECTING and retries.
+ *
+ * A transport may also provide, each optional:
+ *   - settle_time(info): how long the endpoint stays OPENING after the open, before
+ *     reads begin, for boards that restart on open.
+ *   - ready(stream, info): called as the endpoint becomes OPEN, after any settle time.
+ *   - set_control_lines(stream, dtr, rts) and send_break(stream), each returning bool,
+ *     behind INetworkBackend::set_control_lines and send_break. They run on the
+ *     caller's thread against an OPEN endpoint and return false otherwise.
  *
  * Endpoints are listeners or connections. A listener announces each accepted
  * connection through the state callback as a new endpoint whose parent_id is the
@@ -104,7 +157,6 @@ namespace detail {
 template <typename Transport>
 class StreamBackend : public INetworkBackend {
 public:
-    using Protocol = typename Transport::Protocol;
     using Config = typename Transport::Config;
 
     /**
@@ -141,6 +193,11 @@ public:
     bool send_to(uint64_t endpoint_id, const uint8_t* data, size_t size,
         const std::string& address, uint16_t port) override;
 
+    [[nodiscard]] size_t get_write_backlog(uint64_t endpoint_id) const override;
+
+    bool set_control_lines(uint64_t endpoint_id, std::optional<bool> dtr, std::optional<bool> rts) override;
+    bool send_break(uint64_t endpoint_id) override;
+
     void set_receive_callback(NetworkReceiveCallback callback) override;
     void set_state_callback(EndpointStateCallback callback) override;
 
@@ -156,9 +213,9 @@ public:
     }
 
 private:
-    static constexpr size_t k_read_chunk = size_t { 64 } * 1024;
+    static constexpr size_t k_default_read_size = size_t { 64 } * 1024;
 
-    using Bound = typename Transport::Bound;
+    using Stream = typename Transport::Stream;
 
     /**
      * One connection. info is fixed once the connection is published, and state, which the
@@ -173,18 +230,19 @@ private:
         std::atomic<EndpointState> state { EndpointState::CLOSED };
         std::atomic<bool> closed { false };
         std::atomic<size_t> pending_bytes { 0 };
-        typename Protocol::socket socket;
+        Stream socket;
         std::vector<uint8_t> read_buffer;
         detail::StreamFramer framer;
         std::unique_ptr<asio::steady_timer> reconnect_timer;
+        std::unique_ptr<asio::steady_timer> settle_timer;
         std::vector<Frame> outbox;
         size_t outbox_head {};
         bool writing {};
         bool is_outbound {};
 
-        ConnectionState(asio::io_context& ctx, FramingPolicy framing, size_t max_message_size)
+        ConnectionState(asio::io_context& ctx, FramingPolicy framing, size_t max_message_size, size_t read_size)
             : socket(ctx)
-            , read_buffer(k_read_chunk)
+            , read_buffer(read_size != 0 ? read_size : k_default_read_size)
             , framer(detail::make_stream_framer(framing, max_message_size))
         {
         }
@@ -223,13 +281,10 @@ private:
     struct ListenerState {
         EndpointInfo info;
         std::atomic<bool> closed { false };
-        typename Protocol::acceptor acceptor;
-        typename Protocol::socket pending_socket;
-        Bound bound;
+        detail::AcceptSide<Transport> accept;
 
         explicit ListenerState(asio::io_context& ctx)
-            : acceptor(ctx)
-            , pending_socket(ctx)
+            : accept(ctx)
         {
         }
     };
@@ -252,6 +307,11 @@ private:
     EndpointStateCallback m_state_callback;
     std::function<uint64_t()> m_allocate_endpoint_id;
 
+    [[nodiscard]] static constexpr FramingPolicy resolve_framing(FramingPolicy framing)
+    {
+        return framing == FramingPolicy::AUTO ? Transport::automatic_framing : framing;
+    }
+
     [[nodiscard]] ConnectionPtr find_connection(uint64_t endpoint_id) const;
     [[nodiscard]] ListenerPtr find_listener(uint64_t endpoint_id) const;
 
@@ -260,6 +320,9 @@ private:
     void start_write(const ConnectionPtr& conn);
     void drop_queued_writes(ConnectionState& conn);
     void start_connect(const ConnectionPtr& conn);
+    void on_connect_complete(const ConnectionPtr& conn, const asio::error_code& ec);
+    void finish_open(const ConnectionPtr& conn);
+    void cancel_timers(ConnectionState& conn);
     void start_accept(const ListenerPtr& listener);
     void start_receive_chain(const ConnectionPtr& conn);
     void on_bytes_received(const ConnectionPtr& conn, const asio::error_code& ec, size_t bytes);

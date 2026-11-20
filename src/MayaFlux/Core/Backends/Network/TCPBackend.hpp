@@ -15,10 +15,13 @@ namespace MayaFlux::Core {
  */
 struct TcpTransport {
     using Protocol = asio::ip::tcp;
+    using Stream = Protocol::socket;
     using Config = TCPBackendInfo;
 
     struct Bound { };
 
+    static constexpr bool listens = true;
+    static constexpr FramingPolicy automatic_framing = FramingPolicy::LENGTH_PREFIX;
     static constexpr NetworkTransport id = NetworkTransport::TCP;
     static constexpr std::string_view label = "TCP";
     static constexpr std::string_view name = "TCP (Asio)";

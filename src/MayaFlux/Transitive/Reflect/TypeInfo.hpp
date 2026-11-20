@@ -20,7 +20,7 @@ namespace detail {
  * @brief Returns the fully qualified compile-time type name of @p T.
  *
  * Zero allocation. Returns a string_view into static storage valid for the
- * process lifetime. Replaces the local live_type_name<T>() in LiveArena.hpp.
+ * process lifetime.
  *
  * @tparam T Any type.
  */
@@ -50,8 +50,7 @@ template <typename T>
 /**
  * @brief Returns the unqualified compile-time type name of @p T.
  *
- * Strips all namespace prefixes. Equivalent to the old live_type_name<T>()
- * in LiveArena.hpp, which can now delegate here.
+ * Strips all namespace prefixes.
  *
  * @tparam T Any type.
  * @return e.g. "Phasor" for "MayaFlux::Nodes::Phasor".

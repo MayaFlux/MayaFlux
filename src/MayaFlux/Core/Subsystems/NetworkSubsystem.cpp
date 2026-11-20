@@ -1,5 +1,6 @@
 #include "NetworkSubsystem.hpp"
 
+#include "MayaFlux/Core/Backends/Network/SerialBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/TCPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDPBackend.hpp"
 #include "MayaFlux/Core/Backends/Network/UDSBackend.hpp"
@@ -10,7 +11,20 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <asio/post.hpp>
+#include <asio/steady_timer.hpp>
+
 namespace MayaFlux::Core {
+
+struct NetworkSubsystem::Timer {
+    explicit Timer(asio::io_context& context)
+        : timer(context)
+    {
+    }
+
+    asio::steady_timer timer;
+    std::atomic<bool> cancelled { false };
+};
 
 NetworkSubsystem::NetworkSubsystem(const GlobalNetworkConfig& config)
     : m_config(config)
@@ -54,6 +68,9 @@ void NetworkSubsystem::initialize(SubsystemProcessingHandle& handle)
     }
     if (m_config.uds.enabled) {
         initialize_uds_backend();
+    }
+    if (m_config.serial.enabled) {
+        initialize_serial_backend();
     }
 
     register_backend_service();
@@ -157,6 +174,7 @@ void NetworkSubsystem::shutdown()
     stop();
 
     m_routes.reset();
+    m_timers.reset();
 
     {
         std::unique_lock lock(m_backends_mutex);
@@ -354,6 +372,86 @@ void NetworkSubsystem::set_endpoint_receive_callback(uint64_t endpoint_id,
     });
 }
 
+void NetworkSubsystem::set_endpoint_state_callback(uint64_t endpoint_id, EndpointObserver callback)
+{
+    const auto held = callback
+        ? std::make_shared<const EndpointObserver>(std::move(callback))
+        : std::shared_ptr<const EndpointObserver> {};
+
+    m_routes.update([&](RouteTable& routes) {
+        const auto it = routes.find(endpoint_id);
+        if (it == routes.end()) {
+            return false;
+        }
+        Route route = it->second;
+        route.observer = held;
+        routes.insert_or_assign(endpoint_id, std::move(route));
+        return true;
+    });
+}
+
+size_t NetworkSubsystem::get_write_backlog(uint64_t endpoint_id) const
+{
+    auto* backend = resolve_backend(endpoint_id);
+    return backend ? backend->get_write_backlog(endpoint_id) : 0;
+}
+
+bool NetworkSubsystem::set_control_lines(uint64_t endpoint_id,
+    std::optional<bool> dtr, std::optional<bool> rts)
+{
+    auto* backend = resolve_backend(endpoint_id);
+    return backend && backend->set_control_lines(endpoint_id, dtr, rts);
+}
+
+bool NetworkSubsystem::send_break(uint64_t endpoint_id)
+{
+    auto* backend = resolve_backend(endpoint_id);
+    return backend && backend->send_break(endpoint_id);
+}
+
+uint64_t NetworkSubsystem::post_after(std::chrono::milliseconds delay, std::function<void()> callback)
+{
+    const uint64_t token = m_next_timer_id.fetch_add(1);
+    auto timer = std::make_shared<Timer>(*m_io_context);
+
+    m_timers.update([&](TimerTable& table) {
+        table.insert_or_assign(token, timer);
+    });
+
+    timer->timer.expires_after(delay);
+    timer->timer.async_wait(
+        [this, token, timer, callback = std::move(callback)](const asio::error_code& ec) {
+            m_timers.update([token](TimerTable& table) { return table.erase(token); });
+            if (ec || timer->cancelled.load()) {
+                return;
+            }
+            callback();
+        });
+
+    return token;
+}
+
+void NetworkSubsystem::cancel_post(uint64_t token)
+{
+    std::shared_ptr<Timer> timer;
+    m_timers.update([&](TimerTable& table) {
+        const auto it = table.find(token);
+        if (it == table.end()) {
+            return false;
+        }
+        timer = it->second;
+        table.erase(token);
+        return true;
+    });
+
+    if (!timer) {
+        return;
+    }
+
+    timer->cancelled.store(true);
+    asio::post(*m_io_context, [timer] { timer->timer.cancel(); });
+}
+
 std::vector<EndpointInfo> NetworkSubsystem::get_all_endpoints() const
 {
     std::shared_lock lock(m_backends_mutex);
@@ -385,6 +483,12 @@ void NetworkSubsystem::initialize_uds_backend()
 {
     auto uds = std::make_unique<UDSBackend>(m_config.uds, *m_io_context);
     add_backend(std::move(uds));
+}
+
+void NetworkSubsystem::initialize_serial_backend()
+{
+    auto serial = std::make_unique<SerialBackend>(m_config.serial, *m_io_context);
+    add_backend(std::move(serial));
 }
 
 void NetworkSubsystem::initialize_shm_backend()
@@ -426,6 +530,30 @@ void NetworkSubsystem::register_backend_service()
 
     service->get_all_endpoints = [this]() {
         return get_all_endpoints();
+    };
+
+    service->set_endpoint_state_callback = [this](uint64_t id, EndpointObserver cb) {
+        set_endpoint_state_callback(id, std::move(cb));
+    };
+
+    service->get_write_backlog = [this](uint64_t id) {
+        return get_write_backlog(id);
+    };
+
+    service->set_control_lines = [this](uint64_t id, std::optional<bool> dtr, std::optional<bool> rts) {
+        return set_control_lines(id, dtr, rts);
+    };
+
+    service->send_break = [this](uint64_t id) {
+        return send_break(id);
+    };
+
+    service->post_after = [this](std::chrono::milliseconds delay, std::function<void()> cb) {
+        return post_after(delay, std::move(cb));
+    };
+
+    service->cancel_post = [this](uint64_t token) {
+        cancel_post(token);
     };
 
     m_network_service = service;
@@ -488,6 +616,30 @@ void NetworkSubsystem::on_backend_state_change(const EndpointInfo& info,
     MF_DEBUG(Journal::Component::Core, Journal::Context::NetworkSubsystem,
         "Endpoint {} state: {} -> {}",
         info.id, static_cast<int>(previous), static_cast<int>(current));
+
+    std::shared_ptr<const EndpointObserver> observer;
+
+    {
+        const auto routes = m_routes.read();
+        if (!routes) {
+            return;
+        }
+
+        const auto it = routes->find(info.id);
+        if (it != routes->end()) {
+            observer = it->second.observer;
+            if (!observer && it->second.parent_id != 0) {
+                const auto parent = routes->find(it->second.parent_id);
+                if (parent != routes->end()) {
+                    observer = parent->second.observer;
+                }
+            }
+        }
+    }
+
+    if (observer && *observer) {
+        (*observer)(info.id, previous, current);
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

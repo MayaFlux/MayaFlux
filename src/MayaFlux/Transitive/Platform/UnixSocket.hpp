@@ -213,27 +213,16 @@ namespace detail {
 }
 
 /**
- * @brief Decide whether a Unix socket path can be bound, and clear a stale one.
+ * @brief Check that a Unix socket path can be bound, removing a stale socket file.
  *
- * The path is resolved, then refused if it contains a control character (NUL
- * included, since the filesystem would see it cut short), if it is longer than
- * unix_socket_path_limit bytes, if its directory is missing, is not a directory, or is writable by others
- * without the sticky bit (group write is accepted, since group membership is not
- * inspected, and ownership is not checked), or if something other than a socket
- * already sits there. A symbolic link is never followed and never removed. A
- * socket file is probed: if is_alive reports an answer the path is in use and
- * nothing is touched, otherwise the stale file is removed. Nothing is created.
- *
- * The result is advisory. Two processes can pass together, and bind is what
- * refuses the second, so a failed bind must still be handled.
- *
- * On Windows the directory check is skipped, and an entry that is not a
- * directory and whose type is unknown is treated as a socket. Both are unverified.
+ * Refuses a path that is too long, whose directory is missing or writable by others,
+ * or that holds something other than a socket. A socket file that is_alive says
+ * answers is refused as in use. One that does not is removed. Nothing is created,
+ * and bind can still fail, since another process may take the path first.
  *
  * @param source The request.
- * @param is_alive Called with the path of an existing socket file. Return true if a
- *        server answers on it. It may throw, and then nothing is removed.
- * @return The socket path, or the reason it was refused with the paths checked.
+ * @param is_alive Called with an existing socket's path, returns true if a server answers on it.
+ * @return The socket path, or the reason it was refused and the paths checked.
  */
 template <std::predicate<const std::filesystem::path&> Probe>
 [[nodiscard]] Acquired<UnixSocket> acquire_unix_socket(const UnixSocketSource& source, Probe&& is_alive)

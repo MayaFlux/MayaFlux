@@ -6,40 +6,34 @@ namespace MayaFlux::Memory {
  * @class Seqlock
  * @brief Sequence lock for fixed-size data regions.
  *
- * Protects a data region that is written infrequently and read frequently.
- * Readers never block writers; a reader that observes a write in progress
- * simply retries. begin_write() requires externally serialized writers;
- * begin_serialized_write() claims the writer sequence when callers may overlap.
+ * For data written rarely and read often. Readers never block writers: a reader
+ * that sees a write in progress retries. begin_write() needs writers serialised
+ * externally, and begin_serialized_write() claims the writer sequence when
+ * callers may overlap. The counter is even when the data is stable and odd while
+ * a write is in progress. Aligned to a cache line so adjacent instances do not
+ * share one.
  *
- * Sequence counter convention:
- *   even  — data is stable, safe to read
- *   odd   — write in progress, readers must retry
- *
- * Usage — writer side:
  * @code
  * SeqlockWriteGuard guard(lock);
  * std::memcpy(dest, src, bytes);
  * @endcode
  *
- * Usage — reader side (unbounded):
+ * Reader, unbounded:
  * @code
  * uint32_t snap;
  * do {
  *     snap = lock.read_begin();
- *     // copy or sample the guarded data
+ *     // copy the guarded data
  * } while (lock.read_retry(snap));
  * @endcode
  *
- * Usage — reader side (bounded, preferred in frame loops):
+ * Reader, bounded:
  * @code
  * auto result = seqlock_read(lock, max_attempts, [&]{ return read_data(); });
  * if (!result) {
- // stale read accepted or skip frame
- }
+ *     // no clean read within max_attempts
+ * }
  * @endcode
- *
- * Alignment to a cache line prevents false sharing when multiple Seqlock
- * instances are stored in a contiguous array (e.g. one per texture layer).
  */
 class alignas(64) Seqlock {
 public:

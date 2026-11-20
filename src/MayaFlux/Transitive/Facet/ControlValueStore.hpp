@@ -42,22 +42,17 @@ concept NumericControlSlot = ControlSlot<S> && requires(S slot, double number) {
  * @brief Owns one described struct of Slot members for a host such as a network, an operator or an input node.
  *
  * A host holds one as a member and forwards to it. It is not a base class.
- * declare() creates the struct and keeps it alive for the host's lifetime,
- * merge() applies the members an incoming struct holds, snapshot() copies the
- * struct for get(), and refresh() reads sources once per block. A member
- * named `scale` is mirrored to a value the host passes in, so a network can map
- * it to its output scale and an operator, which has none, passes nothing.
- * Every member of the struct is a Slot or a described struct of the same
- * (nested to any depth), so a family of related tunables can be grouped.
+ * declare() creates the struct and keeps it for the host's lifetime, merge()
+ * applies the members an incoming struct holds, snapshot() copies the struct for
+ * get(), and refresh() reads sources once per block. A member named `scale` is
+ * mirrored to a value the host passes in, and a host with no scale passes nothing.
+ * Every member is a Slot or a described struct of the same, nested to any depth.
  *
- * A member is also reachable by its name, the one the struct declares, through
- * set_named() and read_named(). A member of a nested struct is named by the
- * path of names joined with dots, such as `left.deadzone`. That is what the
- * string based set_parameter and query_state of an operator use, so a name
- * resolves through the controls and not through a table of its own, and a
- * string set and a typed set meet in the same Slot. Only a top level member
- * named `scale` is mirrored. Named number access and the scale mirror need a
- * NumericControlSlot and are absent for any other slot kind.
+ * A member is also reachable by name through set_named() and read_named(), which
+ * back an operator's string based set_parameter and query_state. A member of a
+ * nested struct is named by its path joined with dots, such as `left.deadzone`.
+ * Only a top level member named `scale` is mirrored. Named number access and the
+ * scale mirror need a NumericControlSlot.
  *
  * @tparam Slot A ControlSlot, the one slot type of every member.
  */

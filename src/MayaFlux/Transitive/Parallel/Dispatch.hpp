@@ -130,7 +130,6 @@ T await_future(std::future<T> future)
     return future.get();
 }
 #else
-// On linux platforms, these just execute directly
 template <typename Func, typename... Args>
 void dispatch_main_async(Func&& func, Args&&... args)
 {

@@ -100,8 +100,9 @@ struct Description<::MayaFlux::Core::SerialBackendInfo> {
         return std::tuple {
             Member<&::MayaFlux::Core::SerialBackendInfo::enabled> { "enabled" },
             Member<&::MayaFlux::Core::SerialBackendInfo::ports> { "ports" },
-            Member<&::MayaFlux::Core::SerialBackendInfo::auto_detect_arduino> { "auto_detect_arduino" },
-            Member<&::MayaFlux::Core::SerialBackendInfo::default_baud_rate> { "default_baud_rate" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::enumerate_ports> { "enumerate_ports" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::detected_line> { "detected_line" },
+            Member<&::MayaFlux::Core::SerialBackendInfo::detected_protocol> { "detected_protocol" },
         };
     }
 };
@@ -114,11 +115,24 @@ struct Description<::MayaFlux::Core::SerialPortConfig> {
     {
         return std::tuple {
             Member<&::MayaFlux::Core::SerialPortConfig::port_name> { "port_name" },
-            Member<&::MayaFlux::Core::SerialPortConfig::baud_rate> { "baud_rate" },
-            Member<&::MayaFlux::Core::SerialPortConfig::data_bits> { "data_bits" },
-            Member<&::MayaFlux::Core::SerialPortConfig::stop_bits> { "stop_bits" },
-            Member<&::MayaFlux::Core::SerialPortConfig::parity> { "parity" },
-            Member<&::MayaFlux::Core::SerialPortConfig::flow_control> { "flow_control" },
+            Member<&::MayaFlux::Core::SerialPortConfig::line> { "line" },
+            Member<&::MayaFlux::Core::SerialPortConfig::protocol> { "protocol" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Core::SerialProtocolSettings> {
+    static constexpr std::string_view name = "MayaFlux::Core::SerialProtocolSettings";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Core::SerialProtocolSettings::framing> { "framing" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::terminator> { "terminator" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::gap_ms> { "gap_ms" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::message_limit> { "message_limit" },
+            Member<&::MayaFlux::Core::SerialProtocolSettings::parse> { "parse" },
         };
     }
 };

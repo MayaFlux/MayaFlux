@@ -30,6 +30,7 @@ target_sources(Transitive_Free INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/Platform/Acquisition.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/HostEnvironment.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/Process.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Platform/SerialPorts.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/Toolchain.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/UnixSocket.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Protocol/BinaryBuffer.hpp

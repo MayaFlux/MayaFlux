@@ -25,7 +25,7 @@ inline constexpr size_t default_max_frame = size_t { 64 } << 20;
  * @brief Why input was refused.
  *
  * Oversized: a line, block or declared length exceeded its limit.
- * Invalid: a zero length where empty messages are not allowed.
+ * Invalid: a zero length where empty messages are not allowed, or a malformed encoding.
  */
 enum class FrameFault : uint8_t {
     None,
@@ -345,5 +345,503 @@ private:
     out.insert(out.end(), payload.begin(), payload.end());
     return true;
 }
+
+/**
+ * @struct RawChunkFramer
+ * @brief The framer for raw streams: every push is one message, with nothing to reassemble.
+ *
+ * An empty push delivers nothing.
+ */
+struct RawChunkFramer {
+    template <MessageSink Sink>
+    FrameReport push(Message bytes, Sink&& sink)
+    {
+        FrameReport report;
+        if (!bytes.empty()) {
+            sink(bytes);
+            report.messages = 1;
+        }
+        return report;
+    }
+
+    void reset() noexcept { }
+};
+
+/**
+ * @class DelimiterFramer
+ * @brief Splits a byte stream at a terminator of one or more bytes, whatever the chunking.
+ *
+ * A message is the bytes before each terminator, such as "\r" for a modem, ">" for an
+ * ELM327 or "\r\n". Empty messages are delivered. A message longer than max_message is
+ * dropped and the framer resumes after the next terminator. An empty terminator is
+ * taken as LF.
+ *
+ * Not thread safe: one thread at a time per framer.
+ */
+class DelimiterFramer {
+public:
+    explicit DelimiterFramer(std::span<const uint8_t> terminator, size_t max_message = default_max_line)
+        : m_terminator(terminator.begin(), terminator.end())
+        , m_max_message(max_message)
+    {
+        if (m_terminator.empty()) {
+            m_terminator.push_back(static_cast<uint8_t>('\n'));
+        }
+    }
+
+    explicit DelimiterFramer(std::string_view terminator, size_t max_message = default_max_line)
+        : DelimiterFramer(std::span<const uint8_t> { reinterpret_cast<const uint8_t*>(terminator.data()), terminator.size() }, max_message)
+    {
+    }
+
+    template <MessageSink Sink>
+    FrameReport push(Message bytes, Sink&& sink)
+    {
+        FrameReport report;
+        const size_t width = m_terminator.size();
+
+        for (const uint8_t byte : bytes) {
+            m_pending.push_back(byte);
+            if (m_discarding && m_pending.size() > width) {
+                m_pending.erase(m_pending.begin());
+            }
+
+            if (!ends_with_terminator()) {
+                if (!m_discarding && m_pending.size() >= width && m_pending.size() - width >= m_max_message) {
+                    m_discarding = true;
+                    ++report.discarded;
+                    report.fault = FrameFault::Oversized;
+                    if (m_pending.size() > width) {
+                        m_pending.erase(m_pending.begin(), m_pending.end() - static_cast<std::ptrdiff_t>(width));
+                    }
+                }
+                continue;
+            }
+
+            if (m_discarding) {
+                m_pending.clear();
+                m_discarding = false;
+                continue;
+            }
+
+            const Message message = Message { m_pending }.first(m_pending.size() - width);
+            const detail::ClearOnExit guard { m_pending };
+            sink(message);
+            ++report.messages;
+        }
+
+        return report;
+    }
+
+    /** @brief Drop any partial message and any discard in progress. */
+    void reset() noexcept
+    {
+        m_pending.clear();
+        m_discarding = false;
+    }
+
+    /** @brief Bytes held for a message that has not ended. */
+    [[nodiscard]] size_t buffered() const noexcept { return m_pending.size(); }
+
+private:
+    [[nodiscard]] bool ends_with_terminator() const
+    {
+        return m_pending.size() >= m_terminator.size()
+            && std::equal(m_terminator.begin(), m_terminator.end(),
+                m_pending.end() - static_cast<std::ptrdiff_t>(m_terminator.size()));
+    }
+
+    std::vector<uint8_t> m_terminator;
+    std::vector<uint8_t> m_pending;
+    size_t m_max_message;
+    bool m_discarding { false };
+};
+
+/**
+ * @brief Append a payload and a terminator to out, in the form DelimiterFramer reads back.
+ *
+ * Refused, with out unchanged, when the terminator is empty or when the terminator
+ * would end the message before the payload does.
+ */
+[[nodiscard]] inline bool encode_delimited(Message payload, Message terminator, std::vector<uint8_t>& out)
+{
+    if (terminator.empty()) {
+        return false;
+    }
+
+    std::vector<uint8_t> joined(payload.begin(), payload.end());
+    joined.insert(joined.end(), terminator.begin(), terminator.end());
+    const auto hit = std::ranges::search(joined, terminator);
+    if (static_cast<size_t>(hit.begin() - joined.begin()) != payload.size()) {
+        return false;
+    }
+
+    out.insert(out.end(), joined.begin(), joined.end());
+    return true;
+}
+
+namespace detail {
+
+    /**
+     * @brief Decode one COBS frame, without its zero delimiter.
+     * @return false when the frame is malformed. out may then hold a partial result.
+     */
+    [[nodiscard]] inline bool cobs_decode(Message frame, std::vector<uint8_t>& out)
+    {
+        size_t index = 0;
+        while (index < frame.size()) {
+            const size_t code = frame[index++];
+            if (code == 0) {
+                return false;
+            }
+            const size_t run = code - 1;
+            if (index + run > frame.size()) {
+                return false;
+            }
+            for (size_t i = 0; i < run; ++i) {
+                if (frame[index + i] == 0) {
+                    return false;
+                }
+            }
+            out.insert(out.end(), frame.begin() + static_cast<std::ptrdiff_t>(index),
+                frame.begin() + static_cast<std::ptrdiff_t>(index + run));
+            index += run;
+            if (code != 0xFF && index < frame.size()) {
+                out.push_back(0);
+            }
+        }
+        return true;
+    }
+
+}
+
+/**
+ * @class CobsFramer
+ * @brief Messages in Consistent Overhead Byte Stuffing, each ended by a zero byte.
+ *
+ * The payload may hold any bytes, since COBS removes every zero from the encoded
+ * frame. Frames that are only a delimiter are skipped. A frame that does not decode
+ * is dropped and counted as discarded with FrameFault::Invalid, and one whose
+ * encoded length exceeds max_frame is dropped with FrameFault::Oversized. Either way
+ * the framer resumes after the next zero.
+ *
+ * Not thread safe: one thread at a time per framer.
+ */
+class CobsFramer {
+public:
+    explicit CobsFramer(size_t max_frame = default_max_line) noexcept
+        : m_max_frame(max_frame)
+    {
+    }
+
+    template <MessageSink Sink>
+    FrameReport push(Message bytes, Sink&& sink)
+    {
+        FrameReport report;
+
+        for (const uint8_t byte : bytes) {
+            if (byte != 0) {
+                if (m_discarding) {
+                    continue;
+                }
+                if (m_pending.size() >= m_max_frame) {
+                    m_pending.clear();
+                    m_discarding = true;
+                    ++report.discarded;
+                    report.fault = FrameFault::Oversized;
+                    continue;
+                }
+                m_pending.push_back(byte);
+                continue;
+            }
+
+            if (m_discarding) {
+                m_discarding = false;
+                continue;
+            }
+            if (m_pending.empty()) {
+                continue;
+            }
+
+            m_decoded.clear();
+            const bool decoded = detail::cobs_decode(Message { m_pending }, m_decoded);
+            m_pending.clear();
+            if (!decoded) {
+                ++report.discarded;
+                report.fault = FrameFault::Invalid;
+                continue;
+            }
+            sink(Message { m_decoded });
+            ++report.messages;
+        }
+
+        return report;
+    }
+
+    /** @brief Drop any partial frame and any discard in progress. */
+    void reset() noexcept
+    {
+        m_pending.clear();
+        m_decoded.clear();
+        m_discarding = false;
+    }
+
+    /** @brief Encoded bytes held for a frame that has not ended. */
+    [[nodiscard]] size_t buffered() const noexcept { return m_pending.size(); }
+
+private:
+    std::vector<uint8_t> m_pending;
+    std::vector<uint8_t> m_decoded;
+    size_t m_max_frame;
+    bool m_discarding { false };
+};
+
+/**
+ * @brief Append a payload in COBS, followed by its zero delimiter, to out.
+ *
+ * Any payload is accepted, an empty one included.
+ */
+inline void encode_cobs(Message payload, std::vector<uint8_t>& out)
+{
+    size_t block = 0;
+    uint8_t code = 0;
+    bool open = false;
+
+    const auto begin = [&] {
+        block = out.size();
+        out.push_back(0);
+        code = 1;
+        open = true;
+    };
+    const auto close = [&] {
+        out[block] = code;
+        open = false;
+    };
+
+    begin();
+    for (const uint8_t byte : payload) {
+        if (!open) {
+            begin();
+        }
+        if (byte == 0) {
+            close();
+            begin();
+            continue;
+        }
+        out.push_back(byte);
+        if (++code == 0xFF) {
+            close();
+        }
+    }
+    if (open) {
+        close();
+    }
+    out.push_back(0);
+}
+
+/**
+ * @class SlipFramer
+ * @brief Messages in SLIP (RFC 1055), each ended by 0xC0.
+ *
+ * The payload may hold any bytes, with 0xC0 and 0xDB escaped. Empty frames are
+ * skipped, so a leading 0xC0 is harmless. An escape followed by anything but the two
+ * defined codes, or by 0xC0, drops the frame and counts it as discarded with
+ * FrameFault::Invalid. A decoded message longer than max_message is dropped with
+ * FrameFault::Oversized. Either way the framer resumes after the next 0xC0.
+ *
+ * Not thread safe: one thread at a time per framer.
+ */
+class SlipFramer {
+public:
+    explicit SlipFramer(size_t max_message = default_max_line) noexcept
+        : m_max_message(max_message)
+    {
+    }
+
+    template <MessageSink Sink>
+    FrameReport push(Message bytes, Sink&& sink)
+    {
+        FrameReport report;
+
+        const auto discard = [&](FrameFault fault) {
+            m_pending.clear();
+            m_escaped = false;
+            m_discarding = true;
+            ++report.discarded;
+            report.fault = fault;
+        };
+
+        for (const uint8_t byte : bytes) {
+            if (byte == end) {
+                const bool broken = m_escaped && !m_discarding;
+                const bool was_discarding = m_discarding;
+                const bool has_message = !m_pending.empty();
+                m_escaped = false;
+                m_discarding = false;
+                if (broken) {
+                    m_pending.clear();
+                    ++report.discarded;
+                    report.fault = FrameFault::Invalid;
+                } else if (!was_discarding && has_message) {
+                    const detail::ClearOnExit guard { m_pending };
+                    sink(Message { m_pending });
+                    ++report.messages;
+                } else {
+                    m_pending.clear();
+                }
+                continue;
+            }
+
+            if (m_discarding) {
+                continue;
+            }
+
+            uint8_t value = byte;
+            if (m_escaped) {
+                m_escaped = false;
+                if (byte == escaped_end) {
+                    value = end;
+                } else if (byte == escaped_escape) {
+                    value = escape;
+                } else {
+                    discard(FrameFault::Invalid);
+                    continue;
+                }
+            } else if (byte == escape) {
+                m_escaped = true;
+                continue;
+            }
+
+            if (m_pending.size() >= m_max_message) {
+                discard(FrameFault::Oversized);
+                continue;
+            }
+            m_pending.push_back(value);
+        }
+
+        return report;
+    }
+
+    /** @brief Drop any partial frame and any discard in progress. */
+    void reset() noexcept
+    {
+        m_pending.clear();
+        m_escaped = false;
+        m_discarding = false;
+    }
+
+    /** @brief Decoded bytes held for a frame that has not ended. */
+    [[nodiscard]] size_t buffered() const noexcept { return m_pending.size(); }
+
+    static constexpr uint8_t end = 0xC0;
+    static constexpr uint8_t escape = 0xDB;
+    static constexpr uint8_t escaped_end = 0xDC;
+    static constexpr uint8_t escaped_escape = 0xDD;
+
+private:
+    std::vector<uint8_t> m_pending;
+    size_t m_max_message;
+    bool m_escaped { false };
+    bool m_discarding { false };
+};
+
+/**
+ * @brief Append a payload in SLIP, followed by 0xC0, to out.
+ *
+ * Any payload is accepted, an empty one included.
+ */
+inline void encode_slip(Message payload, std::vector<uint8_t>& out)
+{
+    for (const uint8_t byte : payload) {
+        if (byte == SlipFramer::end) {
+            out.push_back(SlipFramer::escape);
+            out.push_back(SlipFramer::escaped_end);
+        } else if (byte == SlipFramer::escape) {
+            out.push_back(SlipFramer::escape);
+            out.push_back(SlipFramer::escaped_escape);
+        } else {
+            out.push_back(byte);
+        }
+    }
+    out.push_back(SlipFramer::end);
+}
+
+/**
+ * @class IdleGapFramer
+ * @brief Messages ended by a quiet period on the line, as in Modbus RTU.
+ *
+ * The framer reads no clock. push() only gathers bytes, and the caller ends the
+ * message by calling flush() once gap() has passed with no further push(), for
+ * example from a timer re-armed on every chunk. A message longer than max_message is
+ * dropped with FrameFault::Oversized, and the rest of that burst is ignored until
+ * flush().
+ *
+ * Not thread safe: one thread at a time per framer, and flush() must not run
+ * concurrently with push().
+ */
+class IdleGapFramer {
+public:
+    explicit IdleGapFramer(std::chrono::microseconds gap, size_t max_message = default_max_line) noexcept
+        : m_gap(gap)
+        , m_max_message(max_message)
+    {
+    }
+
+    /** @brief How long the line must stay quiet before the caller calls flush(). */
+    [[nodiscard]] std::chrono::microseconds gap() const noexcept { return m_gap; }
+
+    template <MessageSink Sink>
+    FrameReport push(Message bytes, Sink&&)
+    {
+        FrameReport report;
+        if (m_discarding) {
+            return report;
+        }
+
+        if (m_pending.size() + bytes.size() > m_max_message) {
+            m_pending.clear();
+            m_discarding = true;
+            ++report.discarded;
+            report.fault = FrameFault::Oversized;
+            return report;
+        }
+
+        m_pending.insert(m_pending.end(), bytes.begin(), bytes.end());
+        return report;
+    }
+
+    /** @brief End the message in progress, delivering it, or ending a discard. */
+    template <MessageSink Sink>
+    FrameReport flush(Sink&& sink)
+    {
+        FrameReport report;
+        const bool was_discarding = m_discarding;
+        m_discarding = false;
+        if (was_discarding || m_pending.empty()) {
+            return report;
+        }
+
+        const detail::ClearOnExit guard { m_pending };
+        sink(Message { m_pending });
+        ++report.messages;
+        return report;
+    }
+
+    /** @brief Drop any partial message and any discard in progress. */
+    void reset() noexcept
+    {
+        m_pending.clear();
+        m_discarding = false;
+    }
+
+    /** @brief Bytes held for a message that has not ended. */
+    [[nodiscard]] size_t buffered() const noexcept { return m_pending.size(); }
+
+private:
+    std::vector<uint8_t> m_pending;
+    std::chrono::microseconds m_gap;
+    size_t m_max_message;
+    bool m_discarding { false };
+};
 
 } // namespace MayaFlux::Transitive::Protocol
