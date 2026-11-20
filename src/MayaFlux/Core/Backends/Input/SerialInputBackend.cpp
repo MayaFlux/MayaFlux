@@ -120,6 +120,10 @@ void SerialInputBackend::shutdown()
         }
     }
     m_roster.reset();
+    {
+        std::lock_guard lock(m_reader_mutex);
+        m_records.clear();
+    }
 
     for (const auto& device : open) {
         device->close();
@@ -158,7 +162,7 @@ size_t SerialInputBackend::refresh_devices()
         for (const auto& port : found) {
             const std::string path = port.path.string();
             const bool configured_port = std::ranges::any_of(roster.entries, [&](const auto& item) {
-                return item.second.configured && same_port(item.second.info.port_name, path);
+                return item.second.configured && item.second.parent == 0 && same_port(item.second.info.port_name, path);
             });
             if (configured_port) {
                 continue;
@@ -177,11 +181,23 @@ size_t SerialInputBackend::refresh_devices()
 
         std::vector<uint32_t> gone;
         for (const auto& [id, entry] : roster.entries) {
-            if (!entry.configured && !entry.device && !seen.contains(id)) {
+            if (!entry.configured && entry.parent == 0 && !entry.device && !seen.contains(id)) {
                 gone.push_back(id);
             }
         }
         for (const uint32_t id : gone) {
+            events.emplace_back(roster.entries.find(id)->second.info, false);
+            roster.entries.erase(id);
+            changed = true;
+        }
+
+        std::vector<uint32_t> orphans;
+        for (const auto& [id, entry] : roster.entries) {
+            if (entry.parent != 0 && roster.entries.find(entry.parent) == roster.entries.end()) {
+                orphans.push_back(id);
+            }
+        }
+        for (const uint32_t id : orphans) {
             events.emplace_back(roster.entries.find(id)->second.info, false);
             roster.entries.erase(id);
             changed = true;
@@ -211,6 +227,33 @@ bool SerialInputBackend::open_device(uint32_t device_id)
         entry = it->second;
     } else {
         return false;
+    }
+
+    if (entry.parent != 0) {
+        if (!open_device(entry.parent)) {
+            return false;
+        }
+        if (entry.view_reader != 0) {
+            return true;
+        }
+        const uint64_t token = add_record(entry.parent, device_id, entry.spec,
+            [this](const InputValue& value) {
+                if (m_running.load()) {
+                    notify_input(value);
+                }
+            });
+        m_roster.update([&](Roster& roster) {
+            const auto it = roster.entries.find(device_id);
+            if (it == roster.entries.end()) {
+                return false;
+            }
+            Entry changed = it->second;
+            changed.view_reader = token;
+            roster.entries.insert_or_assign(device_id, std::move(changed));
+            return true;
+        });
+        attach_readers(entry.parent, get_device(entry.parent));
+        return true;
     }
 
     if (entry.device) {
@@ -263,14 +306,47 @@ bool SerialInputBackend::open_device(uint32_t device_id)
         return false;
     }
 
+    if (outcome == Outcome::Registered) {
+        attach_readers(device_id, device);
+    }
+
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
         "Opened serial device {}: {}", device_id, entry.info.port_name);
 
     return true;
 }
 
+void SerialInputBackend::detach_view(uint32_t view_id)
+{
+    uint64_t token = 0;
+    m_roster.update([&](Roster& roster) {
+        token = 0;
+        const auto it = roster.entries.find(view_id);
+        if (it == roster.entries.end() || it->second.view_reader == 0) {
+            return false;
+        }
+        Entry changed = it->second;
+        token = std::exchange(changed.view_reader, 0);
+        roster.entries.insert_or_assign(view_id, std::move(changed));
+        return true;
+    });
+    if (token != 0) {
+        remove_reader(token);
+    }
+}
+
 void SerialInputBackend::close_device(uint32_t device_id)
 {
+    bool is_view = false;
+    if (const auto roster = m_roster.read()) {
+        const auto it = roster->entries.find(device_id);
+        is_view = it != roster->entries.end() && it->second.parent != 0;
+    }
+    if (is_view) {
+        detach_view(device_id);
+        return;
+    }
+
     std::shared_ptr<SerialDevice> device;
     m_roster.update([&](Roster& roster) {
         device.reset();
@@ -292,6 +368,12 @@ void SerialInputBackend::close_device(uint32_t device_id)
 
 bool SerialInputBackend::is_device_open(uint32_t device_id) const
 {
+    if (const auto roster = m_roster.read()) {
+        const auto it = roster->entries.find(device_id);
+        if (it != roster->entries.end() && it->second.parent != 0) {
+            return it->second.view_reader != 0 && get_device(it->second.parent) != nullptr;
+        }
+    }
     return get_device(device_id) != nullptr;
 }
 
@@ -372,10 +454,105 @@ std::shared_ptr<SerialDevice> SerialInputBackend::get_device(uint32_t device_id)
     if (const auto roster = m_roster.read()) {
         const auto it = roster->entries.find(device_id);
         if (it != roster->entries.end()) {
+            if (it->second.parent != 0) {
+                const auto parent = roster->entries.find(it->second.parent);
+                return parent != roster->entries.end() ? parent->second.device : nullptr;
+            }
             return it->second.device;
         }
     }
     return nullptr;
+}
+
+uint32_t SerialInputBackend::add_view(uint32_t device_id, SerialSpec spec)
+{
+    if (!m_initialized.load()) {
+        return 0;
+    }
+
+    uint32_t id = 0;
+    InputDeviceInfo info {};
+    m_roster.update([&](Roster& roster) {
+        id = 0;
+        const auto parent = roster.entries.find(device_id);
+        if (parent == roster.entries.end() || parent->second.parent != 0) {
+            return false;
+        }
+        id = id_for(roster, "v:" + std::to_string(roster.next_id));
+        Entry entry = parent->second;
+        entry.device.reset();
+        entry.parent = device_id;
+        entry.view_reader = 0;
+        entry.configured = false;
+        entry.spec = spec;
+        entry.info.id = id;
+        entry.info.name = parent->second.info.name + " (reading " + std::to_string(id) + ")";
+        info = entry.info;
+        roster.entries.insert_or_assign(id, std::move(entry));
+        return true;
+    });
+
+    if (id != 0) {
+        notify_device(info, info.is_connected);
+    }
+    return id;
+}
+
+uint64_t SerialInputBackend::add_record(uint32_t device_id, uint32_t stamp, SerialSpec spec, ReaderCallback callback)
+{
+    const uint64_t token = m_next_reader.fetch_add(1);
+    std::lock_guard lock(m_reader_mutex);
+    m_records.push_back({ .token = token, .device_id = device_id, .stamp = stamp,
+        .spec = std::move(spec), .callback = std::move(callback), .attached_to = {}, .device_token = 0 });
+    return token;
+}
+
+void SerialInputBackend::attach_readers(uint32_t device_id, const std::shared_ptr<SerialDevice>& device)
+{
+    if (!device) {
+        return;
+    }
+    std::lock_guard lock(m_reader_mutex);
+    for (auto& record : m_records) {
+        if (record.device_id != device_id || record.attached_to.lock() == device) {
+            continue;
+        }
+        record.device_token = device->add_reader(record.spec, record.stamp, record.callback);
+        record.attached_to = device;
+    }
+}
+
+uint64_t SerialInputBackend::add_reader(uint32_t device_id, SerialSpec spec, ReaderCallback callback)
+{
+    if (!m_initialized.load() || !callback) {
+        return 0;
+    }
+
+    bool known = false;
+    if (const auto roster = m_roster.read()) {
+        const auto it = roster->entries.find(device_id);
+        known = it != roster->entries.end() && it->second.parent == 0;
+    }
+    if (!known) {
+        return 0;
+    }
+
+    const uint64_t token = add_record(device_id, device_id, std::move(spec), std::move(callback));
+    attach_readers(device_id, get_device(device_id));
+    return token;
+}
+
+void SerialInputBackend::remove_reader(uint64_t token)
+{
+    std::lock_guard lock(m_reader_mutex);
+    const auto it = std::ranges::find(m_records, token, &ReaderRecord::token);
+    if (it == m_records.end()) {
+        return;
+    }
+    if (const auto device = it->attached_to.lock()) {
+        device->remove_reader(it->device_token);
+    }
+    m_records.erase(it);
 }
 
 void SerialInputBackend::on_link_state(uint32_t device_id, EndpointState previous, EndpointState current)

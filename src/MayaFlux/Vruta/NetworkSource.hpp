@@ -53,6 +53,13 @@ public:
     explicit NetworkSource(const Core::EndpointInfo& info);
 
     /**
+     * @brief A source that opens no endpoint and receives only what signal() is given.
+     *
+     * For a producer that frames its own messages, such as a reader of a serial device.
+     */
+    NetworkSource() = default;
+
+    /**
      * @brief Close the endpoint and release all resources
      */
     ~NetworkSource();

@@ -109,7 +109,7 @@
 
 #include "Vruta/Event.hpp"
 #include "Vruta/EventManager.hpp"
-#include "Vruta/EventSource.hpp"
+#include "Vruta/NetworkSource.hpp"
 
 #include "Kakshya/Source/CameraContainer.hpp"
 #include "Kakshya/Source/DynamicSoundStream.hpp"
@@ -141,6 +141,7 @@
 #include "Portal/Network/MessageUtils.hpp"
 #include "Portal/Network/Network.hpp"
 #include "Portal/Network/NetworkSink.hpp"
+#include "Portal/Network/SerialSource.hpp"
 
 #include "Portal/Text/InkPress.hpp"
 #include "Portal/Text/Text.hpp"

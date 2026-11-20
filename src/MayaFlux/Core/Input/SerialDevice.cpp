@@ -1,33 +1,16 @@
 #include "SerialDevice.hpp"
 
-#include "MayaFlux/Transitive/Reflect/TextCodec.hpp"
-
 namespace MayaFlux::Core {
 
 namespace P = Transitive::Protocol;
-
-namespace {
-
-    std::optional<InputValue> parse_numbers_of(P::Message frame, uint32_t device_id)
-    {
-        std::string text(P::as_text(frame));
-        std::ranges::replace_if(text, [](char c) { return c == ',' || c == ';'; }, ' ');
-
-        auto numbers = Reflect::parse_numbers<double>(text);
-        if (!numbers || numbers->empty()) {
-            return std::nullopt;
-        }
-        return InputValue::make_vector(std::move(*numbers), device_id, InputType::SERIAL);
-    }
-
-}
 
 SerialDevice::SerialDevice(uint32_t device_id, SerialSpec spec, std::unique_ptr<ISerialLink> link)
     : m_device_id(device_id)
     , m_spec(std::move(spec))
     , m_link(std::move(link))
-    , m_framer(make_framer(m_spec))
+    , m_reader(std::make_unique<SerialReader>(device_id, m_spec, *m_link))
 {
+    m_reader->set_frame_filter([this](P::Message frame) { return complete_request(frame); });
     m_link->set_chunk_callback([this](std::span<const uint8_t> chunk) { handle_chunk(chunk); });
     m_link->set_state_callback([this](EndpointState previous, EndpointState current) {
         handle_state(previous, current);
@@ -37,7 +20,6 @@ SerialDevice::SerialDevice(uint32_t device_id, SerialSpec spec, std::unique_ptr<
 SerialDevice::~SerialDevice()
 {
     m_link->close();
-    cancel_gap();
     if (const auto dropped = take_pending()) {
         if (const auto token = dropped->timer.exchange(0); token != 0) {
             m_link->cancel_post(token);
@@ -45,37 +27,36 @@ SerialDevice::~SerialDevice()
     }
 }
 
-auto SerialDevice::make_framer(const SerialSpec& spec) -> Framer
-{
-    const size_t limit = spec.message_limit;
-
-    switch (spec.framing) {
-    case SerialFraming::LINES:
-        return Framer { std::in_place_type<P::LineFramer>, limit };
-    case SerialFraming::DELIMITED: {
-        const auto terminator = spec.delimiter();
-        return Framer { std::in_place_type<P::DelimiterFramer>, std::span<const uint8_t> { terminator }, limit };
-    }
-    case SerialFraming::COBS:
-        return Framer { std::in_place_type<P::CobsFramer>, limit };
-    case SerialFraming::SLIP:
-        return Framer { std::in_place_type<P::SlipFramer>, limit };
-    case SerialFraming::IDLE_GAP:
-        return Framer { std::in_place_type<P::IdleGapFramer>, std::chrono::duration_cast<std::chrono::microseconds>(spec.gap), limit };
-    case SerialFraming::RAW:
-        break;
-    }
-    return Framer { std::in_place_type<P::RawChunkFramer> };
-}
-
 void SerialDevice::set_value_callback(ValueCallback callback)
 {
-    m_on_value = std::move(callback);
+    m_reader->set_value_callback(std::move(callback));
 }
 
-void SerialDevice::set_chunk_callback(ChunkCallback callback)
+SerialDevice::ReaderToken SerialDevice::add_reader(SerialSpec spec, uint32_t id, ValueCallback callback)
 {
-    m_on_chunk = std::move(callback);
+    auto reader = std::make_shared<SerialReader>(id, std::move(spec), *m_link);
+    reader->set_value_callback(std::move(callback));
+    const ReaderToken token = m_next_token.fetch_add(1);
+    m_readers.update([&](ReaderList& list) {
+        list.emplace_back(token, std::move(reader));
+        return true;
+    });
+    return token;
+}
+
+void SerialDevice::remove_reader(ReaderToken token)
+{
+    std::shared_ptr<SerialReader> removed;
+    m_readers.update([&](ReaderList& list) {
+        removed.reset();
+        const auto it = std::ranges::find(list, token, &ReaderList::value_type::first);
+        if (it == list.end()) {
+            return false;
+        }
+        removed = std::move(it->second);
+        list.erase(it);
+        return true;
+    });
 }
 
 void SerialDevice::set_state_callback(StateCallback callback)
@@ -85,14 +66,13 @@ void SerialDevice::set_state_callback(StateCallback callback)
 
 bool SerialDevice::open(const std::string& path)
 {
-    reset_stream();
+    m_reader->reset();
     return m_link->open(path, m_spec.line);
 }
 
 void SerialDevice::close()
 {
     m_link->close();
-    cancel_gap();
     end_request(take_pending(), SerialReply::LINK_LOST, {});
 }
 
@@ -201,137 +181,27 @@ size_t SerialDevice::write_backlog() const
 
 SerialDeviceStats SerialDevice::stats() const
 {
-    return { .frames = m_frames.load(), .dropped = m_dropped.load(), .unparsed = m_unparsed.load() };
+    return m_reader->stats();
 }
 
 void SerialDevice::handle_chunk(std::span<const uint8_t> chunk)
 {
-    if (m_on_chunk) {
-        m_on_chunk(chunk);
-        return;
-    }
-
-    if (m_spec.parse == SerialParse::MIDI) {
-        parse_midi(chunk);
-        return;
-    }
-
-    const auto on_frame = [this](P::Message frame) { handle_frame(frame); };
-    std::visit(
-        [&](auto& framer) {
-            const auto report = framer.push(chunk, on_frame);
-            m_dropped.fetch_add(report.discarded);
-            if constexpr (std::is_same_v<std::decay_t<decltype(framer)>, P::IdleGapFramer>) {
-                arm_gap();
-            }
-        },
-        m_framer);
-}
-
-void SerialDevice::handle_frame(P::Message frame)
-{
-    m_frames.fetch_add(1);
-
-    if (complete_request(frame)) {
-        return;
-    }
-
-    switch (m_spec.parse) {
-    case SerialParse::BYTES:
-        deliver(InputValue::make_bytes(std::vector<uint8_t>(frame.begin(), frame.end()), m_device_id, InputType::SERIAL));
-        break;
-    case SerialParse::NUMBERS:
-        deliver(parse_numbers_of(frame, m_device_id));
-        break;
-    case SerialParse::CUSTOM:
-        deliver(m_spec.parser ? m_spec.parser(frame) : std::nullopt);
-        break;
-    case SerialParse::MIDI:
-        break;
-    }
-}
-
-void SerialDevice::deliver(std::optional<InputValue> value)
-{
-    if (!value) {
-        m_unparsed.fetch_add(1);
-        return;
-    }
-
-    value->device_id = m_device_id;
-    value->source_type = InputType::SERIAL;
-    if (m_on_value) {
-        m_on_value(*value);
-    }
-}
-
-void SerialDevice::parse_midi(std::span<const uint8_t> chunk)
-{
-    const auto emit = [this](uint8_t status, uint8_t first, uint8_t second) {
-        m_frames.fetch_add(1);
-        deliver(InputValue::make_midi(status, first, second, m_device_id));
-    };
-
-    for (const uint8_t byte : chunk) {
-        if (byte >= 0xF8) {
-            emit(byte, 0, 0);
-            continue;
+    m_reader->push(chunk);
+    if (const auto readers = m_readers.read()) {
+        for (const auto& entry : *readers) {
+            entry.second->push(chunk);
         }
-
-        if ((byte & 0x80) != 0) {
-            m_midi.have = 0;
-            if (byte >= 0xF0) {
-                m_midi.status = 0;
-                m_midi.need = 0;
-                m_midi.in_sysex = byte == 0xF0;
-                continue;
-            }
-            m_midi.in_sysex = false;
-            m_midi.status = byte;
-            const uint8_t kind = byte & 0xF0;
-            m_midi.need = (kind == 0xC0 || kind == 0xD0) ? 1 : 2;
-            continue;
-        }
-
-        if (m_midi.in_sysex || m_midi.status == 0) {
-            continue;
-        }
-
-        m_midi.data[m_midi.have++] = byte;
-        if (m_midi.have == m_midi.need) {
-            emit(m_midi.status, m_midi.data[0], m_midi.need == 2 ? m_midi.data[1] : uint8_t { 0 });
-            m_midi.have = 0;
-        }
-    }
-}
-
-void SerialDevice::arm_gap()
-{
-    cancel_gap();
-    const auto delay = std::max(m_spec.gap, std::chrono::milliseconds(1));
-    m_gap_timer.store(m_link->post_after(delay, [this] { handle_gap(); }));
-}
-
-void SerialDevice::cancel_gap()
-{
-    if (const auto token = m_gap_timer.exchange(0); token != 0) {
-        m_link->cancel_post(token);
-    }
-}
-
-void SerialDevice::handle_gap()
-{
-    m_gap_timer.store(0);
-    const auto on_frame = [this](P::Message frame) { handle_frame(frame); };
-    if (auto* framer = std::get_if<P::IdleGapFramer>(&m_framer)) {
-        const auto report = framer->flush(on_frame);
-        m_dropped.fetch_add(report.discarded);
     }
 }
 
 void SerialDevice::handle_state(EndpointState previous, EndpointState current)
 {
-    reset_stream();
+    m_reader->reset();
+    if (const auto readers = m_readers.read()) {
+        for (const auto& entry : *readers) {
+            entry.second->reset();
+        }
+    }
 
     if (current != EndpointState::OPEN) {
         end_request(take_pending(), SerialReply::LINK_LOST, {});
@@ -340,13 +210,6 @@ void SerialDevice::handle_state(EndpointState previous, EndpointState current)
     if (m_on_state) {
         m_on_state(previous, current);
     }
-}
-
-void SerialDevice::reset_stream()
-{
-    cancel_gap();
-    std::visit([](auto& framer) { framer.reset(); }, m_framer);
-    m_midi = {};
 }
 
 bool SerialDevice::complete_request(P::Message frame)

@@ -122,6 +122,22 @@ MAYAFLUX_API std::optional<Core::InputDeviceInfo> open_serial_port(const Core::S
 MAYAFLUX_API std::optional<Core::SerialPortConfig> choose_serial_port();
 
 /**
+ * @brief Read an open serial device a second way, as a device of its own.
+ * @param device_id Id of a serial device from open_serial_port(), never a reading.
+ * @param spec Framing and parsing of this reading. Its line setup is not used.
+ *
+ * The same bytes are cut and parsed again under @p spec, independently of the device's own
+ * reading and of every other reading. Bind nodes to the returned id with bind_serial(), so
+ * one port can feed a node that reads lines of numbers and another that reads raw bytes.
+ * Its values carry its own id. Needs GlobalInputConfig::serial and GlobalNetworkConfig::serial
+ * enabled.
+ *
+ * @return The reading, listed with the other serial devices, or nothing when serial input is
+ *         not enabled or the device cannot be opened.
+ */
+MAYAFLUX_API std::optional<Core::InputDeviceInfo> open_serial_reading(uint32_t device_id, const Core::SerialSpec& spec);
+
+/**
  * @brief Send bytes to a serial device as they are.
  * @param device_id Id of an open serial device.
  * @return false when the device is not open or the bytes were refused.

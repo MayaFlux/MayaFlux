@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SerialLink.hpp"
+#include "SerialReader.hpp"
 #include "SerialSpec.hpp"
 
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
@@ -17,18 +18,7 @@ enum class SerialReply : uint8_t {
     LINK_LOST ///< The port left OPEN, or the device was closed, before a reply
 };
 
-/**
- * @struct SerialDeviceStats
- * @brief What a device has seen since it was made.
- *
- * dropped counts messages the framer refused for size or encoding, and unparsed counts
- * messages the parser did not turn into a value.
- */
-struct SerialDeviceStats {
-    uint64_t frames {};
-    uint64_t dropped {};
-    uint64_t unparsed {};
-};
+using SerialDeviceStats = SerialReaderStats;
 
 /**
  * @class SerialDevice
@@ -37,9 +27,9 @@ struct SerialDeviceStats {
  * The device knows only an ISerialLink and a SerialSpec. Chunks from the link are cut
  * into messages by the spec's framing and each message becomes an InputValue through
  * its parser, delivered to the value callback with the device id and InputType::SERIAL.
- * With a chunk callback set, chunks go there as they arrive and the framing and parser
- * are skipped, for continuous streams. A message over the spec's limit is dropped and
- * counted, never queued.
+ * Any number of further readers can be added, each with a spec of its own, and every
+ * reader sees the same bytes and reads them independently. A message over a spec's limit
+ * is dropped and counted, never queued.
  *
  * A request sends a command and waits for a message its matcher accepts. One request
  * is outstanding at a time, a matched message goes to the request and not to the value
@@ -48,8 +38,9 @@ struct SerialDeviceStats {
  * with LINK_LOST, so the stream resynchronises when the port returns. Destroying the
  * device drops a pending request without calling it.
  *
- * The three callbacks run on the link's thread and must be set before open(). send()
- * and request() may be called from any thread.
+ * The device's own callbacks run on the link's thread and must be set before open(). A
+ * reader's callback runs there too. send(), request(), add_reader() and remove_reader()
+ * may be called from any thread.
  *
  * @code
  * SerialDevice device(1, SerialSpec::lines().baud(115200).settle_ms(1500),
@@ -66,7 +57,7 @@ struct SerialDeviceStats {
 class MAYAFLUX_API SerialDevice {
 public:
     using ValueCallback = std::function<void(const InputValue&)>;
-    using ChunkCallback = ISerialLink::ChunkCallback;
+    using ReaderToken = uint64_t;
     using StateCallback = ISerialLink::StateCallback;
     using ReplyMatcher = std::function<bool(Transitive::Protocol::Message message)>;
     using ReplyCallback = std::function<void(SerialReply how, Transitive::Protocol::Message reply)>;
@@ -87,14 +78,19 @@ public:
     void set_value_callback(ValueCallback callback);
 
     /**
-     * @brief Take the raw chunks of the port, and nothing else.
+     * @brief Read the same bytes a second way.
+     * @param spec Framing and parsing of this reader. Its line setup is not used.
+     * @param id Id stamped on the values it produces.
+     * @param callback Receives each value, on the link's thread.
+     * @return A token for remove_reader(), never 0.
      *
-     * An exclusive mode, not a tap. While a chunk callback is set every chunk goes to it as
-     * it arrives and the framing, the parser, the value callback and request matching are
-     * all skipped, so a request sent in this mode can only time out. Set an empty callback
-     * to return to framed delivery.
+     * The reader does not take part in requests, and it starts from a clean stream.
      */
-    void set_chunk_callback(ChunkCallback callback);
+    ReaderToken add_reader(SerialSpec spec, uint32_t id, ValueCallback callback);
+
+    /** @brief Stop a reader. No-op for an unknown token. */
+    void remove_reader(ReaderToken token);
+
     void set_state_callback(StateCallback callback);
 
     /** @brief Open the port at @p path with the spec's line setup. */
@@ -140,39 +136,16 @@ public:
     [[nodiscard]] const SerialSpec& spec() const { return m_spec; }
 
 private:
-    using Framer = std::variant<
-        Transitive::Protocol::RawChunkFramer,
-        Transitive::Protocol::LineFramer,
-        Transitive::Protocol::DelimiterFramer,
-        Transitive::Protocol::CobsFramer,
-        Transitive::Protocol::SlipFramer,
-        Transitive::Protocol::IdleGapFramer>;
-
-    struct MidiStream {
-        uint8_t status {};
-        uint8_t data[2] {};
-        uint8_t need {};
-        uint8_t have {};
-        bool in_sysex {};
-    };
-
     struct Pending {
         ReplyMatcher matcher;
         ReplyCallback done;
         std::atomic<ISerialLink::TimerToken> timer { 0 };
     };
 
-    static Framer make_framer(const SerialSpec& spec);
+    using ReaderList = std::vector<std::pair<ReaderToken, std::shared_ptr<SerialReader>>>;
 
     void handle_chunk(std::span<const uint8_t> chunk);
-    void handle_frame(Transitive::Protocol::Message frame);
     void handle_state(EndpointState previous, EndpointState current);
-    void handle_gap();
-    void parse_midi(std::span<const uint8_t> chunk);
-    void deliver(std::optional<InputValue> value);
-    void arm_gap();
-    void cancel_gap();
-    void reset_stream();
     bool complete_request(Transitive::Protocol::Message frame);
     std::shared_ptr<Pending> take_pending(const std::shared_ptr<Pending>& only = {});
     [[nodiscard]] bool is_pending(const std::shared_ptr<Pending>& request) const;
@@ -182,19 +155,12 @@ private:
     SerialSpec m_spec;
     std::unique_ptr<ISerialLink> m_link;
 
-    ValueCallback m_on_value;
-    ChunkCallback m_on_chunk;
+    std::unique_ptr<SerialReader> m_reader;
+    Memory::SnapshotCell<ReaderList> m_readers;
+    std::atomic<ReaderToken> m_next_token { 1 };
     StateCallback m_on_state;
 
-    Framer m_framer;
-    MidiStream m_midi;
-    std::atomic<ISerialLink::TimerToken> m_gap_timer { 0 };
-
     Memory::SnapshotCell<std::shared_ptr<Pending>> m_pending;
-
-    std::atomic<uint64_t> m_frames { 0 };
-    std::atomic<uint64_t> m_dropped { 0 };
-    std::atomic<uint64_t> m_unparsed { 0 };
 };
 
 } // namespace MayaFlux::Core

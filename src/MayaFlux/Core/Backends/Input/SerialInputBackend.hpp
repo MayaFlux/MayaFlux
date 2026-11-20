@@ -91,7 +91,35 @@ public:
      */
     bool set_device_spec(uint32_t device_id, SerialSpec spec);
 
-    /** @brief The open device, or null. For requests and replies. */
+    /**
+     * @brief List a second way of reading a device, as a device of its own.
+     * @param device_id The device to read, never a reading itself.
+     * @param spec Framing and parsing of this reading. Its line setup is not used.
+     * @return The id of the reading, or 0 for an unknown device or a reading. Bind nodes to it.
+     *
+     * The reading sees the bytes of the device it reads and cuts and parses them on its own,
+     * so one port can be read as lines by one node and as raw bytes by another. Opening it
+     * opens the device, closing it only stops this reading, and its values carry its own
+     * id. Writes to its id go to the device.
+     */
+    uint32_t add_view(uint32_t device_id, SerialSpec spec);
+
+    using ReaderCallback = std::function<void(const InputValue&)>;
+
+    /**
+     * @brief Read a device's bytes a second way and hand the values to @p callback.
+     * @return A token for remove_reader(), or 0 for an unknown device or a reading.
+     *
+     * Unlike a view, it is not listed as a device and does not go to the input callback. It
+     * stays attached when the device is closed and opened again, and runs on the link's
+     * thread. Values carry the id of the device.
+     */
+    uint64_t add_reader(uint32_t device_id, SerialSpec spec, ReaderCallback callback);
+
+    /** @brief Stop a reader. No-op for an unknown token. */
+    void remove_reader(uint64_t token);
+
+    /** @brief The open device, or null. A reading resolves to the device it reads. For requests and replies. */
     [[nodiscard]] std::shared_ptr<SerialDevice> get_device(uint32_t device_id) const;
 
 private:
@@ -100,6 +128,18 @@ private:
         SerialSpec spec;
         std::shared_ptr<SerialDevice> device;
         bool configured {};
+        uint32_t parent {};
+        uint64_t view_reader {};
+    };
+
+    struct ReaderRecord {
+        uint64_t token {};
+        uint32_t device_id {};
+        uint32_t stamp {};
+        SerialSpec spec;
+        ReaderCallback callback;
+        std::weak_ptr<SerialDevice> attached_to;
+        SerialDevice::ReaderToken device_token {};
     };
 
     struct Roster {
@@ -114,6 +154,10 @@ private:
     static Entry make_entry(uint32_t id, const std::string& path, const std::string& name,
         const SerialLineSettings& line, const SerialProtocolSettings& protocol, bool configured);
 
+    uint64_t add_record(uint32_t device_id, uint32_t stamp, SerialSpec spec, ReaderCallback callback);
+    void attach_readers(uint32_t device_id, const std::shared_ptr<SerialDevice>& device);
+    void detach_view(uint32_t view_id);
+
     void on_link_state(uint32_t device_id, EndpointState previous, EndpointState current);
     void notify_input(const InputValue& value) const;
     void notify_device(const InputDeviceInfo& info, bool connected) const;
@@ -123,6 +167,9 @@ private:
     std::atomic<bool> m_running { false };
 
     Memory::SnapshotCell<Roster> m_roster;
+    std::mutex m_reader_mutex;
+    std::vector<ReaderRecord> m_records;
+    std::atomic<uint64_t> m_next_reader { 1 };
     Memory::SnapshotCell<InputCallback> m_input_callback;
     Memory::SnapshotCell<DeviceCallback> m_device_callback;
 };

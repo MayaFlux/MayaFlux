@@ -92,6 +92,22 @@ void InputSubsystem::register_backend_service()
         return send_feature_report(type, id, data);
     };
 
+    input_service->add_serial_reader = [this](uint32_t id, const SerialSpec& spec,
+                                           std::function<void(const InputValue&)> callback) -> uint64_t {
+        std::shared_lock lock(m_backends_mutex);
+        const auto it = m_backends.find(InputType::SERIAL);
+        auto* serial = it != m_backends.end() ? dynamic_cast<SerialInputBackend*>(it->second.get()) : nullptr;
+        return serial ? serial->add_reader(id, spec, std::move(callback)) : 0;
+    };
+
+    input_service->remove_serial_reader = [this](uint64_t token) {
+        std::shared_lock lock(m_backends_mutex);
+        const auto it = m_backends.find(InputType::SERIAL);
+        if (auto* serial = it != m_backends.end() ? dynamic_cast<SerialInputBackend*>(it->second.get()) : nullptr) {
+            serial->remove_reader(token);
+        }
+    };
+
     m_input_service = input_service;
 
     registry.register_service<Registry::Service::InputService>(

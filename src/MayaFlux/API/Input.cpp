@@ -378,6 +378,26 @@ std::optional<Core::SerialPortConfig> choose_serial_port()
     return config;
 }
 
+std::optional<Core::InputDeviceInfo> open_serial_reading(uint32_t device_id, const Core::SerialSpec& spec)
+{
+    auto* backend = require_serial_backend("open_serial_reading");
+    if (!backend) {
+        return std::nullopt;
+    }
+
+    const uint32_t id = backend->add_view(device_id, spec);
+    if (id == 0 || !backend->open_device(id)) {
+        return std::nullopt;
+    }
+
+    for (auto& device : backend->get_devices()) {
+        if (device.id == id) {
+            return device;
+        }
+    }
+    return std::nullopt;
+}
+
 bool write_serial(uint32_t device_id, std::span<const uint8_t> bytes)
 {
     auto* backend = serial_backend();
