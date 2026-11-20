@@ -6,6 +6,11 @@ extern MAYAFLUX_API uint32_t s_registered_sample_rate;
 extern MAYAFLUX_API uint32_t s_registered_frame_rate;
 
 /**
+ * @brief Longest duration a seconds conversion returns, low enough that a clock position plus it cannot wrap
+ */
+inline constexpr uint64_t max_duration_units = std::numeric_limits<uint64_t>::max() / 2;
+
+/**
  * @brief Convert frames to seconds at a given frame rate
  * @param frames Number of frames
  * @param frame_rate Frame rate in Hz
@@ -93,6 +98,24 @@ inline uint64_t samples_to_frames(uint64_t samples, uint32_t sample_rate = s_reg
 }
 
 /**
+ * @brief Convert seconds to processing units for any rate
+ * @param seconds Time duration in seconds
+ * @param rate Processing rate (samples/sec, frames/sec, etc.)
+ * @return Number of processing units; 0 for zero, negative and NaN durations, max_duration_units for longer ones
+ */
+inline uint64_t seconds_to_units(double seconds, uint32_t rate)
+{
+    const double scaled = seconds * static_cast<double>(rate);
+    if (!(scaled > 0.0)) {
+        return 0;
+    }
+    if (scaled >= static_cast<double>(max_duration_units)) {
+        return max_duration_units;
+    }
+    return static_cast<uint64_t>(scaled);
+}
+
+/**
  * @brief Convert seconds to samples at a given sample rate
  * @param seconds Time duration in seconds
  * @param sample_rate Sample rate in Hz
@@ -100,7 +123,7 @@ inline uint64_t samples_to_frames(uint64_t samples, uint32_t sample_rate = s_reg
  */
 inline uint64_t seconds_to_samples(double seconds, uint32_t sample_rate = s_registered_sample_rate)
 {
-    return static_cast<uint64_t>(seconds * sample_rate);
+    return seconds_to_units(seconds, sample_rate);
 }
 
 /**
@@ -111,18 +134,7 @@ inline uint64_t seconds_to_samples(double seconds, uint32_t sample_rate = s_regi
  */
 inline uint64_t seconds_to_frames(double seconds, uint32_t frame_rate = s_registered_frame_rate)
 {
-    return static_cast<uint64_t>(seconds * frame_rate);
-}
-
-/**
- * @brief Convert seconds to processing units for any rate
- * @param seconds Time duration in seconds
- * @param rate Processing rate (samples/sec, frames/sec, etc.)
- * @return Number of processing units
- */
-inline uint64_t seconds_to_units(double seconds, uint32_t rate)
-{
-    return static_cast<uint64_t>(seconds * rate);
+    return seconds_to_units(seconds, frame_rate);
 }
 
 /**

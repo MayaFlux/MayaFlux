@@ -4,6 +4,7 @@
 
 #include "Awaiters/ConditionAwaiter.hpp"
 #include "Awaiters/DelayAwaiters.hpp"
+#include "RoutineDomain.hpp"
 #include "MayaFlux/Vruta/ChronUtils.hpp"
 #include "MayaFlux/Vruta/Routine.hpp"
 
@@ -83,53 +84,11 @@ namespace Detail {
         return after_one_pass([] { return true; });
     }
 
-    template <Vruta::ProcessingToken Token>
-    struct PatternDomain;
-
-    template <>
-    struct PatternDomain<Vruta::ProcessingToken::SAMPLE_ACCURATE> {
-        using Routine = Vruta::SoundRoutine;
-        using GetPromise = GetAudioPromise;
-
-        static SampleDelay pause() { return SampleDelay { 1 }; }
-
-        static uint64_t units(double seconds)
-        {
-            return seconds > 0.0 ? std::max<uint64_t>(1, Vruta::seconds_to_samples(seconds)) : 1;
-        }
-
-        static SampleDelay delay(uint64_t count) { return SampleDelay { count }; }
-    };
-
-    template <>
-    struct PatternDomain<Vruta::ProcessingToken::FRAME_ACCURATE> {
-        using Routine = Vruta::GraphicsRoutine;
-        using GetPromise = GetGraphicsPromise;
-
-        static FrameDelay pause() { return FrameDelay { .frames_to_wait = 1 }; }
-
-        static uint64_t units(double seconds)
-        {
-            return seconds > 0.0 ? std::max<uint64_t>(1, Vruta::seconds_to_frames(seconds)) : 1;
-        }
-
-        static FrameDelay delay(uint64_t count) { return FrameDelay { .frames_to_wait = count }; }
-    };
-
-    template <>
-    struct PatternDomain<Vruta::ProcessingToken::MULTI_RATE> {
-        using Routine = Vruta::CrossRoutine;
-        using GetPromise = GetCrossPromise;
-
-        static MultiRateDelay pause() { return MultiRateDelay { .samples_to_wait = 1, .frames_to_wait = 0 }; }
-
-        static uint64_t units(double seconds)
-        {
-            return seconds > 0.0 ? std::max<uint64_t>(1, Vruta::seconds_to_samples(seconds)) : 1;
-        }
-
-        static MultiRateDelay delay(uint64_t count) { return MultiRateDelay { .samples_to_wait = count, .frames_to_wait = 0 }; }
-    };
+    template <typename Domain>
+    uint64_t step_units(double seconds)
+    {
+        return std::max<uint64_t>(1, Domain::units(seconds));
+    }
 
     template <typename Domain, typename Index, typename Generator, typename Callback, typename Condition>
     typename Domain::Routine checked_pattern(Generator generator, Callback callback, Condition ready)
@@ -389,7 +348,7 @@ namespace Detail {
                 co_return;
             }
 
-            co_await Domain::delay(Domain::units(*seconds));
+            co_await Domain::delay(step_units<Domain>(*seconds));
         }
     }
 
@@ -428,15 +387,15 @@ namespace Detail {
         switch (token) {
         case ProcessingToken::SAMPLE_ACCURATE:
             return std::make_shared<Vruta::SoundRoutine>(
-                timed_pattern<PatternDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
+                timed_pattern<RoutineDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
                     std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::FRAME_ACCURATE:
             return std::make_shared<Vruta::GraphicsRoutine>(
-                timed_pattern<PatternDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
+                timed_pattern<RoutineDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
                     std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::MULTI_RATE:
             return std::make_shared<Vruta::CrossRoutine>(
-                timed_pattern<PatternDomain<ProcessingToken::MULTI_RATE>, Index>(
+                timed_pattern<RoutineDomain<ProcessingToken::MULTI_RATE>, Index>(
                     std::move(values), std::move(callback), std::move(durations)));
         case ProcessingToken::CONDITIONAL:
             return std::make_shared<Vruta::FreeRoutine>(
@@ -467,15 +426,15 @@ std::shared_ptr<Vruta::Routine> pattern(Generator generator, Callback callback, 
     switch (token) {
     case ProcessingToken::SAMPLE_ACCURATE:
         return std::make_shared<Vruta::SoundRoutine>(
-            Detail::checked_pattern<Detail::PatternDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
+            Detail::checked_pattern<RoutineDomain<ProcessingToken::SAMPLE_ACCURATE>, Index>(
                 std::move(generator), std::move(callback), std::move(ready)));
     case ProcessingToken::FRAME_ACCURATE:
         return std::make_shared<Vruta::GraphicsRoutine>(
-            Detail::checked_pattern<Detail::PatternDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
+            Detail::checked_pattern<RoutineDomain<ProcessingToken::FRAME_ACCURATE>, Index>(
                 std::move(generator), std::move(callback), std::move(ready)));
     case ProcessingToken::MULTI_RATE:
         return std::make_shared<Vruta::CrossRoutine>(
-            Detail::checked_pattern<Detail::PatternDomain<ProcessingToken::MULTI_RATE>, Index>(
+            Detail::checked_pattern<RoutineDomain<ProcessingToken::MULTI_RATE>, Index>(
                 std::move(generator), std::move(callback), std::move(ready)));
     case ProcessingToken::CONDITIONAL:
         return std::make_shared<Vruta::FreeRoutine>(

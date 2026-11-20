@@ -1,6 +1,7 @@
 #include "Scheduler.hpp"
 
 #include "ChronUtils.hpp"
+#include "TokenTraits.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -340,13 +341,12 @@ const IClock& TaskScheduler::get_clock(ProcessingToken token) const
 
 uint64_t TaskScheduler::seconds_to_units(double seconds, ProcessingToken token) const
 {
-    unsigned int rate = get_rate(token);
-    return static_cast<uint64_t>(seconds * rate);
+    return Vruta::seconds_to_units(seconds, get_rate(token));
 }
 
 uint64_t TaskScheduler::seconds_to_samples(double seconds) const
 {
-    return static_cast<uint64_t>(seconds * get_rate(ProcessingToken::SAMPLE_ACCURATE));
+    return Vruta::seconds_to_units(seconds, get_rate(ProcessingToken::SAMPLE_ACCURATE));
 }
 
 uint64_t TaskScheduler::current_units(ProcessingToken token) const
@@ -430,16 +430,14 @@ void TaskScheduler::ensure_domain(ProcessingToken token, unsigned int rate)
     if (clock_it == m_token_clocks.end()) {
         unsigned int domain_rate = (rate > 0) ? rate : get_default_rate(token);
 
-        switch (token) {
-        case ProcessingToken::FRAME_ACCURATE:
-            m_token_clocks[token] = std::make_shared<FrameClock>(domain_rate);
-            break;
-        case ProcessingToken::SAMPLE_ACCURATE:
-        case ProcessingToken::ON_DEMAND:
-        default:
-            m_token_clocks[token] = std::make_shared<SampleClock>(domain_rate);
-            break;
-        }
+        m_token_clocks[token] = visit_token(token, [domain_rate](auto tag) -> std::shared_ptr<IClock> {
+            using Clock = typename TokenTraits<decltype(tag)::value>::clock_type;
+            if constexpr (std::is_void_v<Clock>) {
+                return nullptr;
+            } else {
+                return std::make_shared<Clock>(domain_rate);
+            }
+        });
     }
 }
 

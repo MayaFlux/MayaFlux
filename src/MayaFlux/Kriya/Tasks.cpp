@@ -1,7 +1,6 @@
 #include "Tasks.hpp"
 #include "Awaiters/DelayAwaiters.hpp"
-#include "MayaFlux/Nodes/Generators/Logic.hpp"
-#include "MayaFlux/Vruta/Scheduler.hpp"
+#include "RoutineDomain.hpp"
 
 #include "MayaFlux/Vruta/ChronUtils.hpp"
 
@@ -9,58 +8,53 @@
 
 namespace MayaFlux::Kriya {
 
+namespace {
+
+    template <typename Domain>
+    typename Domain::Routine metro_routine(double interval, std::function<void()> cb)
+    {
+        uint64_t units = Domain::units(interval);
+        if (units < 1) {
+            MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                "metro interval {}s is shorter than one clock unit, clamping to 1 unit", interval);
+        }
+        units = std::max<uint64_t>(1, units);
+        auto& p = co_await typename Domain::GetPromise {};
+        while (!p.should_terminate) {
+            cb();
+            co_await Domain::delay(units);
+        }
+    }
+
+    template <typename Domain>
+    typename Domain::Routine sequence_routine(std::vector<std::pair<double, std::function<void()>>> seq)
+    {
+        for (const auto& [time, cb] : seq) {
+            co_await Domain::delay(Domain::units(time));
+            cb();
+        }
+    }
+
+}
+
 std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<void()> callback, Vruta::ProcessingToken token)
 {
     if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
-        auto coro = [](double interval, std::function<void()> cb) -> Vruta::GraphicsRoutine {
-            uint64_t units = Vruta::seconds_to_frames(interval);
-            if (units < 1) {
-                MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-                    "metro interval {}s is shorter than one frame, clamping to 1 frame", interval);
-            }
-            units = std::max<uint64_t>(1, units);
-            auto& p = co_await GetGraphicsPromise {};
-            while (!p.should_terminate) {
-                cb();
-                co_await FrameDelay { .frames_to_wait = units };
-            }
-        };
-        return std::make_shared<Vruta::GraphicsRoutine>(coro(interval_seconds, std::move(callback)));
+        return std::make_shared<Vruta::GraphicsRoutine>(
+            metro_routine<RoutineDomain<Vruta::ProcessingToken::FRAME_ACCURATE>>(interval_seconds, std::move(callback)));
     }
-    auto coro = [](double interval, std::function<void()> cb) -> Vruta::SoundRoutine {
-        uint64_t units = Vruta::seconds_to_samples(interval);
-        if (units < 1) {
-            MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-                "metro interval {}s is shorter than one sample, clamping to 1 sample", interval);
-        }
-        units = std::max<uint64_t>(1, units);
-        auto& p = co_await GetAudioPromise {};
-        while (!p.should_terminate) {
-            cb();
-            co_await SampleDelay { units };
-        }
-    };
-    return std::make_shared<Vruta::SoundRoutine>(coro(interval_seconds, std::move(callback)));
+    return std::make_shared<Vruta::SoundRoutine>(
+        metro_routine<RoutineDomain<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(interval_seconds, std::move(callback)));
 }
 
 std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token)
 {
     if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
-        auto coro = [](std::vector<std::pair<double, std::function<void()>>> seq) -> Vruta::GraphicsRoutine {
-            for (const auto& [time, cb] : seq) {
-                co_await FrameDelay { .frames_to_wait = Vruta::seconds_to_frames(time) };
-                cb();
-            }
-        };
-        return std::make_shared<Vruta::GraphicsRoutine>(coro(std::move(sequence)));
+        return std::make_shared<Vruta::GraphicsRoutine>(
+            sequence_routine<RoutineDomain<Vruta::ProcessingToken::FRAME_ACCURATE>>(std::move(sequence)));
     }
-    auto coro = [](std::vector<std::pair<double, std::function<void()>>> seq) -> Vruta::SoundRoutine {
-        for (const auto& [time, cb] : seq) {
-            co_await SampleDelay { Vruta::seconds_to_samples(time) };
-            cb();
-        }
-    };
-    return std::make_shared<Vruta::SoundRoutine>(coro(std::move(sequence)));
+    return std::make_shared<Vruta::SoundRoutine>(
+        sequence_routine<RoutineDomain<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(std::move(sequence)));
 }
 
 Vruta::SoundRoutine line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)

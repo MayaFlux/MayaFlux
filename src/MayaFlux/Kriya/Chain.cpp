@@ -1,12 +1,51 @@
 #include "Chain.hpp"
 
-#include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
+#include "MayaFlux/Kriya/RoutineDomain.hpp"
 #include "MayaFlux/Vruta/ChronUtils.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Kriya {
+
+namespace {
+
+    template <typename Domain, typename Events>
+    typename Domain::Routine run_chain(Events events, uint32_t rate, size_t repeat_count)
+    {
+        auto& promise = co_await typename Domain::GetPromise {};
+
+        for (size_t iteration = 0; iteration < repeat_count; ++iteration) {
+            for (const auto& event : events) {
+                if (promise.should_terminate) {
+                    break;
+                }
+
+                co_await Domain::delay(Vruta::seconds_to_units(event.delay_seconds, rate));
+                try {
+                    if (event.action) {
+                        event.action();
+                    }
+                } catch (const std::exception& e) {
+                    MF_RT_ERROR(
+                        Journal::Component::Kriya,
+                        Journal::Context::CoroutineScheduling,
+                        "Exception in EventChain action: {}", e.what());
+                } catch (...) {
+                    MF_RT_ERROR(
+                        Journal::Component::Kriya,
+                        Journal::Context::CoroutineScheduling,
+                        "Unknown exception in EventChain action");
+                }
+            }
+
+            if (promise.should_terminate) {
+                break;
+            }
+        }
+    }
+
+}
 
 EventChain::EventChain(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, std::string name, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
@@ -57,84 +96,16 @@ void EventChain::start()
     if (m_events.empty() || !m_Scheduler)
         return;
 
-    auto s_coro_func = [](std::vector<TimedEvent> events,
-                           uint64_t rate,
-                           size_t repeat_count) -> MayaFlux::Vruta::SoundRoutine {
-        auto& promise = co_await Kriya::GetAudioPromise {};
-
-        for (size_t iteration = 0; iteration < repeat_count; ++iteration) {
-            for (const auto& event : events) {
-                if (promise.should_terminate) {
-                    break;
-                }
-
-                co_await SampleDelay { Vruta::seconds_to_samples(event.delay_seconds, rate) };
-                try {
-                    if (event.action) {
-                        event.action();
-                    }
-                } catch (const std::exception& e) {
-                    MF_RT_ERROR(
-                        Journal::Component::Kriya,
-                        Journal::Context::CoroutineScheduling,
-                        "Exception in EventChain action: {}", e.what());
-                } catch (...) {
-                    MF_RT_ERROR(
-                        Journal::Component::Kriya,
-                        Journal::Context::CoroutineScheduling,
-                        "Unknown exception in EventChain action");
-                }
-            }
-
-            if (promise.should_terminate) {
-                break;
-            }
-        }
-    };
-
-    auto g_coro_func = [](std::vector<TimedEvent> events,
-                           uint64_t rate,
-                           size_t repeat_count) -> MayaFlux::Vruta::GraphicsRoutine {
-        auto& promise = co_await Kriya::GetGraphicsPromise {};
-
-        for (size_t iteration = 0; iteration < repeat_count; ++iteration) {
-            for (const auto& event : events) {
-                if (promise.should_terminate) {
-                    break;
-                }
-
-                co_await FrameDelay { Vruta::seconds_to_frames(event.delay_seconds, rate) };
-                try {
-                    if (event.action) {
-                        event.action();
-                    }
-                } catch (const std::exception& e) {
-                    MF_RT_ERROR(
-                        Journal::Component::Kriya,
-                        Journal::Context::CoroutineScheduling,
-                        "Exception in EventChain action: {}", e.what());
-                } catch (...) {
-                    MF_RT_ERROR(
-                        Journal::Component::Kriya,
-                        Journal::Context::CoroutineScheduling,
-                        "Unknown exception in EventChain action");
-                }
-            }
-
-            if (promise.should_terminate) {
-                break;
-            }
-        }
-    };
-
     std::string task_name = m_name.empty() ? "EventChain_" + std::to_string(m_Scheduler->get_next_task_id()) : m_name;
+
+    const auto rate = static_cast<uint32_t>(m_default_rate);
 
     if (m_token == Vruta::ProcessingToken::SAMPLE_ACCURATE) {
         m_routine = std::make_shared<Vruta::SoundRoutine>(
-            s_coro_func(m_events, m_default_rate, m_repeat_count));
+            run_chain<RoutineDomain<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(m_events, rate, m_repeat_count));
     } else {
         m_routine = std::make_shared<Vruta::GraphicsRoutine>(
-            g_coro_func(m_events, m_default_rate, m_repeat_count));
+            run_chain<RoutineDomain<Vruta::ProcessingToken::FRAME_ACCURATE>>(m_events, rate, m_repeat_count));
     }
 
     if (m_on_complete) {
