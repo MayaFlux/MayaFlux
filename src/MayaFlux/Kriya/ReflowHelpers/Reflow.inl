@@ -226,6 +226,20 @@ ReflowBuilder<Frame>& ReflowBuilder<Frame>::course(const CourseSetting& setting,
 }
 
 template <typename Frame>
+ReflowBuilder<Frame>& ReflowBuilder<Frame>::configure(const ReflowConfig<Frame>& config)
+{
+    for (const auto& setting : config.courses) {
+        course(setting, config.paused);
+    }
+    for (const auto& operation : config.operations) {
+        m_operations.push_back(operation);
+    }
+    m_selection = config.selection;
+    m_rewrite = config.rewrite;
+    return *this;
+}
+
+template <typename Frame>
 ReflowBuilder<Frame>& ReflowBuilder<Frame>::operation(FrameOperation<Frame> operation)
 {
     m_operations.push_back(std::move(operation));

@@ -1,5 +1,6 @@
 #include "Evolve.hpp"
 
+#include "MayaFlux/API/Chronie.hpp"
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
 
@@ -127,9 +128,12 @@ namespace {
 
 /**
  * @struct Evolve::Impl
- * @brief Wiring sequences behind Evolve. Holds no state.
+ * @brief Wiring sequences behind Evolve. Holds only the reflows it has started.
  */
 struct Evolve::Impl {
+    /** @brief Reflows started here, kept so they play until stopped. */
+    std::vector<std::shared_ptr<Kriya::VolumeReflow>> playing;
+
     /**
      * @brief Fill unresolved refs of a flow config from the volume.
      * @param volume Volume being wired.
@@ -214,6 +218,38 @@ struct Evolve::Impl {
         return true;
     }
 
+    [[nodiscard]] std::shared_ptr<Kriya::VolumeReflow> build_reflow(
+        const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::VolumeData>& config,
+        const RenderConfig& render)
+    {
+        if (!volume || !frames) {
+            MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                "evolve: null VolumeGridBuffer or frames");
+            return nullptr;
+        }
+
+        if (!has_target(render)) {
+            return nullptr;
+        }
+
+        Kriya::VolumeReflowBuilder builder(frames, Kriya::volume_sink(volume), config.rate, get_scheduler());
+        builder.configure(config);
+        if (!builder.build()) {
+            return nullptr;
+        }
+
+        register_graphics_buffer(volume);
+        volume->setup_rendering(render);
+
+        auto reflow = builder.start();
+        if (reflow) {
+            playing.push_back(reflow);
+        }
+        return reflow;
+    }
+
     [[nodiscard]] bool build_field(
         const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
         const Nodes::Network::SpatialFieldConfig& spatial,
@@ -292,6 +328,15 @@ bool Evolve::build_flow(
     const RenderConfig& render)
 {
     return m_impl->build_flow(volume, flow, render);
+}
+
+std::shared_ptr<Kriya::VolumeReflow> Evolve::build_reflow(
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+    const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& frames,
+    const Kriya::ReflowConfig<Kakshya::VolumeData>& reflow,
+    const RenderConfig& render)
+{
+    return m_impl->build_reflow(volume, frames, reflow, render);
 }
 
 bool Evolve::build_field(

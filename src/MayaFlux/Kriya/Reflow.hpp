@@ -134,6 +134,23 @@ private:
 };
 
 /**
+ * @struct ReflowConfig
+ * @brief Everything about a reflow that is not its source, its sink and its scheduler.
+ *
+ * A description to hand over whole, as ReflowBuilder::configure takes it and as the
+ * evolve entry of the API does.
+ */
+template <typename Frame>
+struct ReflowConfig {
+    std::vector<CourseSetting> courses; ///< Empty means one course over the whole source.
+    std::vector<FrameOperation<Frame>> operations; ///< Run in order. At most one mix.
+    FrameSelection selection { FrameSelection::Floor };
+    Rewrite rewrite { Rewrite::OnChange };
+    double rate {}; ///< Cycles per second. Zero takes the registered frame rate.
+    bool paused {}; ///< Whether the courses start without running.
+};
+
+/**
  * @class ReflowBuilder
  * @brief Describes a reflow, then builds it or starts it on a scheduler.
  *
@@ -165,6 +182,14 @@ public:
 
     /** @brief Add a course. */
     ReflowBuilder& course(const CourseSetting& setting, bool paused = false);
+
+    /**
+     * @brief Add the courses and operations of a config and take its selection and rewrite.
+     *
+     * The rate of a config is for whoever makes the builder, since the builder's is
+     * fixed by then.
+     */
+    ReflowBuilder& configure(const ReflowConfig<Frame>& config);
 
     /** @brief Add an operation, run after the earlier ones. At most one mix. */
     ReflowBuilder& operation(FrameOperation<Frame> operation);
