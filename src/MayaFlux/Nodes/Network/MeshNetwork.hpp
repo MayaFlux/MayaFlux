@@ -53,7 +53,8 @@ public:
     /**
      * @brief Add a slot to the network.
      * @param name    Logical name for lookup and logging.
-     * @param node    MeshWriterNode carrying the slot's geometry.
+     * @param node    MeshWriterNode carrying the slot's geometry, or null for a
+     *                joint: a slot that only carries a transform for its children.
      * @param parent  Index of the parent slot, or nullopt for a root slot.
      * @return        Stable index of the new slot. Never changes after insertion.
      */

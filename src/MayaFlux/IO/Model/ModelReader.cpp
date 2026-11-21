@@ -27,6 +27,28 @@ namespace {
             return {};
         return sub->diffuse_path;
     }
+
+    glm::mat4 to_glm(const aiMatrix4x4& m)
+    {
+        return { m.a1, m.b1, m.c1, m.d1,
+            m.a2, m.b2, m.c2, m.d2,
+            m.a3, m.b3, m.c3, m.d3,
+            m.a4, m.b4, m.c4, m.d4 };
+    }
+
+    bool is_identity(const glm::mat4& m)
+    {
+        constexpr float epsilon = 1e-6F;
+        for (int column = 0; column < 4; ++column) {
+            for (int row = 0; row < 4; ++row) {
+                const float expected = column == row ? 1.0F : 0.0F;
+                if (std::abs(m[column][row] - expected) > epsilon) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }
 
 // =============================================================================
@@ -158,55 +180,141 @@ ModelReader::create_mesh_network(const TextureResolver& resolver) const
     auto net = std::make_shared<Nodes::Network::MeshNetwork>();
     const aiScene* s = m_impl->scene;
 
-    for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
-        const aiMesh* ai_mesh = s->mMeshes[i];
+    struct Extracted {
+        std::string name;
+        Kakshya::MeshData data;
+        bool ok { false };
+    };
+    std::vector<std::optional<Extracted>> cache(s->mNumMeshes);
+    std::vector<bool> placed(s->mNumMeshes, false);
 
-        std::string mesh_name(ai_mesh->mName.C_Str());
-        if (mesh_name.empty())
-            mesh_name = "mesh_" + std::to_string(i);
+    auto extracted = [&](unsigned int i) -> const Extracted* {
+        auto& entry = cache[i];
+        if (!entry) {
+            const aiMesh* ai_mesh = s->mMeshes[i];
+            Extracted e;
+            e.name = ai_mesh->mName.C_Str();
+            if (e.name.empty()) {
+                e.name = "mesh_" + std::to_string(i);
+            }
 
-        std::string mat_name;
-        if (s->mNumMaterials > 0 && ai_mesh->mMaterialIndex < s->mNumMaterials) {
-            aiString ai_mat;
-            s->mMaterials[ai_mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, ai_mat);
-            mat_name = ai_mat.C_Str();
+            std::string mat_name;
+            if (s->mNumMaterials > 0 && ai_mesh->mMaterialIndex < s->mNumMaterials) {
+                aiString ai_mat;
+                s->mMaterials[ai_mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, ai_mat);
+                mat_name = ai_mat.C_Str();
+            }
+
+            e.data = extract_single_mesh(ai_mesh, s, e.name, mat_name);
+            e.ok = e.data.is_valid()
+                && std::get_if<std::vector<uint8_t>>(&e.data.vertex_variant)
+                && std::get_if<std::vector<uint32_t>>(&e.data.index_variant);
+            if (!e.ok) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_network: skipping invalid mesh '{}'", e.name);
+            }
+            entry = std::move(e);
         }
+        return entry->ok ? &*entry : nullptr;
+    };
 
-        auto mesh_data = extract_single_mesh(ai_mesh, s, mesh_name, mat_name);
-        if (!mesh_data.is_valid()) {
-            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "ModelReader::create_mesh_network: skipping invalid mesh '{}'", mesh_name);
-            continue;
-        }
+    auto add_geometry_slot = [&](std::string slot_name, const Extracted& e,
+                                 std::optional<uint32_t> parent,
+                                 const glm::mat4& local, const glm::mat4& parent_world) {
+        const auto& vb = std::get<std::vector<uint8_t>>(e.data.vertex_variant);
+        const auto& ib = std::get<std::vector<uint32_t>>(e.data.index_variant);
 
-        const auto* vb = std::get_if<std::vector<uint8_t>>(&mesh_data.vertex_variant);
-        const auto* ib = std::get_if<std::vector<uint32_t>>(&mesh_data.index_variant);
-
-        if (!vb || !ib)
-            continue;
-
-        const size_t vertex_count = vb->size() / sizeof(Kakshya::MeshVertex);
+        const size_t vertex_count = vb.size() / sizeof(Kakshya::MeshVertex);
         auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>(vertex_count);
         node->set_mesh(
             std::span<const Kakshya::MeshVertex>(
-                reinterpret_cast<const Kakshya::MeshVertex*>(vb->data()),
+                reinterpret_cast<const Kakshya::MeshVertex*>(vb.data()),
                 vertex_count),
-            std::span<const uint32_t>(ib->data(), ib->size()));
+            std::span<const uint32_t>(ib.data(), ib.size()));
 
-        auto slot_idx = net->add_slot(mesh_name, node);
+        const auto slot_idx = net->add_slot(std::move(slot_name), node, parent);
+        auto& slot = net->get_slot(slot_idx);
+        slot.local_transform = local;
+        slot.world_transform = parent_world * local;
 
         if (resolver) {
-            const auto raw = get_diffuse_path(mesh_data);
+            const auto raw = get_diffuse_path(e.data);
             if (!raw.empty()) {
                 auto image = resolver(raw);
                 if (image) {
-                    net->get_slot(slot_idx).diffuse_texture = std::move(image);
+                    slot.diffuse_texture = std::move(image);
                 } else {
                     MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                         "ModelReader::create_mesh_network: resolver returned null for '{}' (slot '{}')",
-                        raw, mesh_name);
+                        raw, slot.name);
                 }
             }
+        }
+        return slot_idx;
+    };
+
+    std::function<void(const aiNode*, std::optional<uint32_t>, const glm::mat4&, bool)> visit;
+    visit = [&](const aiNode* ai_node, std::optional<uint32_t> parent,
+                const glm::mat4& parent_world, bool is_scene_root) {
+        const glm::mat4 local = to_glm(ai_node->mTransformation);
+
+        std::vector<std::pair<unsigned int, const Extracted*>> meshes;
+        for (unsigned int m = 0; m < ai_node->mNumMeshes; ++m) {
+            const unsigned int mesh_index = ai_node->mMeshes[m];
+            if (mesh_index >= s->mNumMeshes) {
+                continue;
+            }
+            placed[mesh_index] = true;
+            if (const auto* e = extracted(mesh_index)) {
+                meshes.emplace_back(mesh_index, e);
+            }
+        }
+
+        if (is_scene_root && is_identity(local)) {
+            for (const auto& [mesh_index, e] : meshes) {
+                add_geometry_slot(e->name, *e, std::nullopt, glm::mat4(1.0F), glm::mat4(1.0F));
+            }
+            for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
+                visit(ai_node->mChildren[c], std::nullopt, glm::mat4(1.0F), false);
+            }
+            return;
+        }
+
+        std::string node_name = ai_node->mName.C_Str();
+        const glm::mat4 world = parent_world * local;
+
+        uint32_t own_index {};
+        if (meshes.empty()) {
+            if (node_name.empty()) {
+                node_name = "node_" + std::to_string(net->slot_count());
+            }
+            own_index = net->add_slot(std::move(node_name), nullptr, parent);
+            auto& joint = net->get_slot(own_index);
+            joint.local_transform = local;
+            joint.world_transform = world;
+        } else {
+            own_index = add_geometry_slot(
+                node_name.empty() ? meshes.front().second->name : node_name,
+                *meshes.front().second, parent, local, parent_world);
+            for (size_t m = 1; m < meshes.size(); ++m) {
+                add_geometry_slot(meshes[m].second->name, *meshes[m].second,
+                    own_index, glm::mat4(1.0F), world);
+            }
+        }
+
+        for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
+            visit(ai_node->mChildren[c], own_index, world, false);
+        }
+    };
+
+    visit(s->mRootNode, std::nullopt, glm::mat4(1.0F), true);
+
+    for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
+        if (placed[i]) {
+            continue;
+        }
+        if (const auto* e = extracted(i)) {
+            add_geometry_slot(e->name, *e, std::nullopt, glm::mat4(1.0F), glm::mat4(1.0F));
         }
     }
 

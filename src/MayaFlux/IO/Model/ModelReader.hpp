@@ -117,9 +117,19 @@ public:
     create_mesh_buffers(const TextureResolver& resolver = nullptr) const;
 
     /**
-     * @brief Construct a MeshNetwork from all meshes in the currently loaded scene.
+     * @brief Construct a MeshNetwork from the scene's node tree.
      *
-     * One MeshSlot per aiMesh, named from aiMesh::mName (or "mesh_N" if unnamed).
+     * One slot per node, named from the node, parented as the tree is, with the
+     * node's transform as local_transform and the composed world_transform
+     * already resolved. A node with no mesh becomes a joint slot with no node.
+     * The first mesh of a node lives on the node's own slot; each further mesh
+     * becomes a child slot named from the mesh. A mesh referenced by several
+     * nodes gets its own copy of the geometry in each slot.
+     *
+     * An identity scene root gets no slot: its meshes and children become root
+     * slots, so a single-node file loads as one root slot per mesh. A scene
+     * root with a transform is kept as a joint. Meshes no node references are
+     * added as root slots, named from aiMesh::mName (or "mesh_N" if unnamed).
      * Each slot's MeshWriterNode holds the extracted vertex and index data.
      *
      * If resolver is provided, it is called with the raw diffuse path from each

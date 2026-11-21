@@ -25,13 +25,6 @@ uint32_t MeshNetwork::add_slot(
     std::shared_ptr<GpuSync::MeshWriterNode> node,
     std::optional<uint32_t> parent)
 {
-    if (!node) {
-        error<std::invalid_argument>(
-            Journal::Component::Nodes, Journal::Context::Init,
-            std::source_location::current(),
-            "MeshNetwork::add_slot: null MeshWriterNode for slot '{}'", name);
-    }
-
     if (parent.has_value() && parent.value() >= m_slots.size()) {
         error<std::out_of_range>(
             Journal::Component::Nodes, Journal::Context::Init,
