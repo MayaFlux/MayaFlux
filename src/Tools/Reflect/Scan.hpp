@@ -31,6 +31,30 @@ using AttachMatchers = std::function<void(clang::ast_matchers::MatchFinder&)>;
 [[nodiscard]] bool scan(const ScanInput& input, const AttachMatchers& attach, std::string& error);
 
 /**
+ * @struct BuildScanInput
+ * @brief What a build scan needs: a ScanInput, plus optional explicit compile arguments.
+ *
+ * With compile_args empty the command is borrowed from the compile database as
+ * scan() does. Otherwise compile_args are the whole command line, and neither
+ * a database nor a translation unit is read.
+ */
+struct BuildScanInput {
+    ScanInput scan;
+    std::vector<std::string> compile_args;
+};
+
+/**
+ * @brief scan() for a build step: also reports the files the scan read.
+ *
+ * @p dependencies receives every non-system file the preprocessor opened, as
+ * absolute paths, without the scan's own temporary files.
+ *
+ * @return false with @p error set when the database, the command or Clang fails.
+ */
+[[nodiscard]] bool scan_for_build(const BuildScanInput& input, const AttachMatchers& attach,
+    std::vector<std::filesystem::path>& dependencies, std::string& error);
+
+/**
  * @brief Parses every header of @p input in one translation unit and fills @p collector.
  *
  * The translation unit borrows the compile command of input.translation_unit,

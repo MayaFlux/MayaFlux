@@ -4,6 +4,7 @@
 #include "Routine.hpp"
 
 #include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
+#include "MayaFlux/Transitive/Parallel/Notifier.hpp"
 
 namespace MayaFlux::Vruta {
 
@@ -330,6 +331,43 @@ public:
     void resume_all_tasks();
 
     /**
+     * @brief Ask the conditional thread to look at its tasks now
+     *
+     * For a ConditionAwaiter built with wake_only: call it after
+     * changing what the condition reads. Lock-free and safe from any thread.
+     */
+    void wake_conditional() noexcept;
+
+    /** @brief Wake one worker only. */
+    void wake_conditional(WorkerId worker) noexcept;
+
+    /**
+     * @brief Add a worker thread for FreeRoutines
+     * @param name Name of the worker, for diagnostics
+     * @return Handle to pass to OnWorker; the default worker when the limit of workers is reached
+     *
+     * The thread starts when the first routine is added to the worker, and sleeps
+     * while it has nothing to run. Workers do not share tasks, so a routine that
+     * works for a long time delays only the others on its own worker. Not for
+     * real-time threads: it takes a lock.
+     */
+    [[nodiscard]] WorkerId add_worker(const std::string& name);
+
+    /** @brief Most workers a scheduler holds, the default one included. */
+    static constexpr uint32_t max_workers = 16;
+
+    /**
+     * @brief How often the conditional thread looks at a ConditionAwaiter that polls
+     * @param interval Time between looks, at least one microsecond; the default is one millisecond
+     *
+     * Applies while a polling condition is waiting. With nothing waiting the
+     * thread sleeps until woken, and a SteadyDelay sleeps until its deadline.
+     */
+    void set_conditional_poll_interval(std::chrono::microseconds interval) noexcept;
+
+    [[nodiscard]] std::chrono::microseconds conditional_poll_interval() const noexcept;
+
+    /**
      * @brief Terminate and clear all tasks
      *
      * Submissions made while this runs, including from completion callbacks,
@@ -443,13 +481,15 @@ private:
      */
     void drain_pending_tasks();
 
+    struct ConditionalWorker;
+
     /**
      * @brief Drain pending conditional task operations before processing
      *
      * Similar to drain_pending_tasks, but specifically for conditional tasks that may
      * have been added or removed while the conditional processing thread is running.
      */
-    void drain_conditional_pending();
+    void drain_conditional_pending(ConditionalWorker& worker);
 
     /**
      * @brief Initialize a routine's state for a specific domain
@@ -465,7 +505,7 @@ private:
      * is started when the first conditional task is added. It checks if the thread is
      * already running to avoid starting multiple threads.
      */
-    void start_conditional_thread();
+    void start_conditional_thread(ConditionalWorker& worker);
 
     /**
      * @brief Pump the MULTI_RATE list from one clock's context.
@@ -483,13 +523,22 @@ private:
     void pump_cross(DelayContext context, ProcessingToken clock_token, uint64_t processing_units);
 
     /**
-     * @brief Pump the conditional task list in a separate thread
-     *
-     * This method runs in a dedicated thread and continuously checks for conditional tasks
-     * that are ready to execute. It processes these tasks based on their conditions and
-     * ensures they are executed as soon as their conditions are met.
+     * @brief What one pass over the conditional tasks found
      */
-    void pump_conditional();
+    struct ConditionalPass {
+        bool idle {}; ///< No conditional task is listed
+        bool progressed {}; ///< A task was resumed, so another pass may find more
+        bool polled {}; ///< A task waits on a condition that has to be polled
+        std::optional<std::chrono::steady_clock::time_point> deadline; ///< Earliest SteadyDelay deadline
+    };
+
+    /**
+     * @brief Look at the conditional task list once, on the conditional thread
+     *
+     * Resumes every task whose condition or deadline is met and reports what the
+     * thread should wait for next.
+     */
+    ConditionalPass pump_conditional(ConditionalWorker& worker);
 
     /**
      * @brief Clock instances for each processing domain
@@ -521,8 +570,6 @@ private:
     mutable std::atomic<uint64_t> m_next_task_id { 1 };
 
     std::vector<TaskEntry> m_tasks;
-
-    std::vector<TaskEntry> m_conditional_tasks;
 
     /**
      * @brief The master sample clock for the processing engine
@@ -557,9 +604,37 @@ private:
 
     static constexpr size_t MAX_PENDING_CONDITIONAL = 64;
 
-    Memory::PendingQueue<PendingTaskOp, MAX_PENDING_CONDITIONAL> m_conditional_pending_ops;
+    /**
+     * @brief A thread that runs FreeRoutines, with its task list and its wake
+     */
+    struct ConditionalWorker {
+        explicit ConditionalWorker(std::string worker_name)
+            : name(std::move(worker_name))
+        {
+        }
 
-    std::jthread m_conditional_thread;
+        std::string name;
+        std::vector<TaskEntry> tasks;
+        Memory::PendingQueue<PendingTaskOp, MAX_PENDING_CONDITIONAL> pending;
+        std::jthread thread;
+        Parallel::Notifier wake;
+    };
+
+    [[nodiscard]] ConditionalWorker* worker_at(uint32_t index) const noexcept;
+
+    template <typename Visitor>
+    void for_each_worker(Visitor&& visit) const
+    {
+        const uint32_t count = m_worker_count.load(std::memory_order_acquire);
+        for (uint32_t i = 0; i < count; ++i) {
+            visit(*m_workers[i]);
+        }
+    }
+
+    std::array<std::unique_ptr<ConditionalWorker>, max_workers> m_workers;
+    std::atomic<uint32_t> m_worker_count { 1 };
+    std::mutex m_worker_creation;
+    std::atomic<int64_t> m_conditional_poll_us { 1000 };
     std::atomic<bool> m_terminating { false };
     std::atomic<uint32_t> m_inflight_submissions { 0 };
 };

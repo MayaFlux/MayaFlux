@@ -30,7 +30,7 @@ std::shared_ptr<Kriya::SamplingPipeline> create_sampler(
     }
 
     auto& mgr = *get_buffer_manager();
-    auto& sched = *get_scheduler();
+    auto sched = get_scheduler();
     const uint32_t buf_size = Config::get_buffer_size();
 
     auto sampler = std::make_shared<Kriya::SamplingPipeline>(
@@ -53,7 +53,7 @@ std::shared_ptr<Kriya::SamplingPipeline> create_sampler_from_stream(
         return nullptr;
 
     auto& mgr = *get_buffer_manager();
-    auto& sched = *get_scheduler();
+    auto sched = get_scheduler();
     const uint32_t buf_size = Config::get_buffer_size();
 
     auto sampler = std::make_shared<Kriya::SamplingPipeline>(
@@ -161,7 +161,7 @@ Kriya::TapSetBuilder create_tap_set_from_stream(
     std::shared_ptr<Kakshya::DynamicSoundStream> stream)
 {
     return Kriya::TapSetBuilder(
-        std::move(stream), *get_buffer_manager(), *get_scheduler(), Config::get_buffer_size());
+        std::move(stream), *get_buffer_manager(), get_scheduler(), Config::get_buffer_size());
 }
 
 Kriya::ChimeraBuilder create_chimera(std::shared_ptr<Buffers::TextureArrayBuffer> buffer)

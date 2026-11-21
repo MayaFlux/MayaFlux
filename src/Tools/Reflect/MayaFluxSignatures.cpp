@@ -1,4 +1,6 @@
+#include "CreatorBuild.hpp"
 #include "Discovery.hpp"
+#include "FunctionBuild.hpp"
 #include "FunctionCollector.hpp"
 #include "FunctionSidecar.hpp"
 #include "Scan.hpp"
@@ -263,6 +265,20 @@ int main(int argc, const char** argv)
     llvm::cl::opt<bool> no_insert_include("no-insert-include",
         llvm::cl::desc("With --functions, report a missing sidecar include instead of inserting it"),
         llvm::cl::cat(category));
+    llvm::cl::opt<bool> build("build",
+        llvm::cl::desc("Build step: write the Creator files and mark them modified, or with --functions the "
+                       "sidecar of the one header given, inserting its include when missing. Needs "
+                       "--translation-unit (defaulted) with a compile database, or --compile-arg"),
+        llvm::cl::cat(category));
+    llvm::cl::list<std::string> compile_args("compile-arg",
+        llvm::cl::desc("With --build: one argument of the whole compile command, used instead of the database"),
+        llvm::cl::value_desc("argument"), llvm::cl::cat(category));
+    llvm::cl::opt<std::string> depfile("depfile",
+        llvm::cl::desc("With --build: write a depfile of the registry and the headers the scan read"),
+        llvm::cl::value_desc("file"), llvm::cl::cat(category));
+    llvm::cl::opt<std::string> depfile_target("depfile-target",
+        llvm::cl::desc("With --build: the target named in the depfile (default: CreatorIncludes.hpp in the output)"),
+        llvm::cl::value_desc("path"), llvm::cl::cat(category));
     llvm::cl::list<std::string> paths(llvm::cl::Positional,
         llvm::cl::desc("<path>... (with --functions: headers or directories searched, default src/MayaFlux)"),
         llvm::cl::cat(category));
@@ -285,5 +301,41 @@ int main(int argc, const char** argv)
     config.functions = functions;
     config.insert_includes = !no_insert_include;
     config.paths.assign(paths.begin(), paths.end());
+
+    if (build && config.functions) {
+        if (config.check || config.paths.size() != 1) {
+            return fail("--functions --build takes exactly one header, and no --check");
+        }
+        FunctionBuildOptions options;
+        options.header = config.paths.front();
+        options.build_path = config.build_path;
+        options.translation_unit = config.translation_unit;
+        options.resource_dir = config.resource_dir;
+        options.extra_args = config.extra_args;
+        options.compile_args.assign(compile_args.begin(), compile_args.end());
+        options.depfile = depfile.getValue();
+        options.depfile_target = depfile_target.getValue();
+        options.insert_includes = config.insert_includes;
+        return run_function_build(options);
+    }
+
+    if (build) {
+        if (config.check || !config.paths.empty()) {
+            return fail("--build writes the Creator files; it takes no --check or paths");
+        }
+        CreatorBuildOptions options;
+        options.root = config.root;
+        options.registry = config.registry;
+        options.output = config.output;
+        options.build_path = config.build_path;
+        options.translation_unit = config.translation_unit;
+        options.resource_dir = config.resource_dir;
+        options.extra_args = config.extra_args;
+        options.compile_args.assign(compile_args.begin(), compile_args.end());
+        options.depfile = depfile.getValue();
+        options.depfile_target = depfile_target.getValue();
+        return run_creator_build(options);
+    }
+
     return config.functions ? generate_functions(config) : generate(config);
 }

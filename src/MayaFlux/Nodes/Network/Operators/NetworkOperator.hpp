@@ -135,6 +135,26 @@ protected:
     }
 
     /**
+     * @brief Apply the members of @p incoming that hold a value, for an operator whose controls type is not fixed.
+     * @tparam C The struct the operator declared with declare_controls().
+     */
+    template <typename C>
+    void merge_controls(const C& incoming)
+    {
+        m_controls_store.merge(incoming);
+    }
+
+    /**
+     * @brief A copy of the declared struct, for an operator whose controls type is not fixed.
+     * @tparam C The struct the operator declared with declare_controls().
+     */
+    template <typename C>
+    [[nodiscard]] C snapshot_controls() const
+    {
+        return m_controls_store.snapshot<C>();
+    }
+
+    /**
      * @brief Read node sources into their controls.
      *
      * Call once per block from process() before reading the controls struct.

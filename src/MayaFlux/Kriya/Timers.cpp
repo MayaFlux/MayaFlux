@@ -1,6 +1,6 @@
 #include "Timers.hpp"
 
-#include "MayaFlux/Kriya/Awaiters/DelayAwaiters.hpp"
+#include "MayaFlux/Kriya/RoutineTraits.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
@@ -9,45 +9,50 @@
 
 namespace MayaFlux::Kriya {
 
+namespace {
+
+    template <typename Traits, typename Pending>
+    typename Traits::Routine timer_routine(std::shared_ptr<Pending> pending, uint64_t units)
+    {
+        static_cast<void>(co_await typename Traits::GetPromise {});
+
+        co_await Traits::delay(units);
+
+        if (pending->active) {
+            const auto callback = std::move(pending->callback);
+            callback();
+            pending->active = false;
+        }
+    }
+
+}
+
 Timer::Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
-    , m_active(false)
     , m_token(token)
 {
+}
+
+Timer::~Timer()
+{
+    if (m_pending) {
+        m_pending->active = false;
+    }
 }
 
 void Timer::schedule(double delay_seconds, std::function<void()> callback)
 {
     cancel();
-    m_callback = std::move(callback);
-    m_active = true;
+    m_pending = std::make_shared<Pending>(Pending { .callback = std::move(callback), .active = true });
 
     if (m_token == Vruta::ProcessingToken::FRAME_ACCURATE) {
-        auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_frames, Timer* timer_ptr) -> Vruta::GraphicsRoutine {
-            auto& promise = co_await Kriya::GetGraphicsPromise {};
-
-            co_await FrameDelay { .frames_to_wait = delay_frames };
-
-            if (timer_ptr && timer_ptr->is_active()) {
-                timer_ptr->m_callback();
-                timer_ptr->m_active = false;
-            }
-        };
+        const auto units = m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::FRAME_ACCURATE);
         m_routine = std::make_shared<Vruta::GraphicsRoutine>(
-            routine_func(m_Scheduler, m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::FRAME_ACCURATE), this));
+            timer_routine<RoutineTraits<Vruta::ProcessingToken::FRAME_ACCURATE>>(m_pending, units));
     } else {
-        auto routine_func = [](Vruta::TaskScheduler& scheduler, uint64_t delay_samples, Timer* timer_ptr) -> Vruta::SoundRoutine {
-            auto& promise = co_await Kriya::GetAudioPromise {};
-
-            co_await SampleDelay { delay_samples };
-
-            if (timer_ptr && timer_ptr->is_active()) {
-                timer_ptr->m_callback();
-                timer_ptr->m_active = false;
-            }
-        };
+        const auto units = m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::SAMPLE_ACCURATE);
         m_routine = std::make_shared<Vruta::SoundRoutine>(
-            routine_func(m_Scheduler, m_Scheduler.seconds_to_samples(delay_seconds), this));
+            timer_routine<RoutineTraits<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(m_pending, units));
     }
 
     uint64_t current_time = m_Scheduler.current_units(m_token);
@@ -58,10 +63,10 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
 
 void Timer::cancel()
 {
-    if (m_active && m_routine) {
+    if (m_pending && m_pending->active && m_routine) {
         m_Scheduler.cancel_task(m_routine);
         m_routine = nullptr;
-        m_active = false;
+        m_pending->active = false;
     }
 }
 

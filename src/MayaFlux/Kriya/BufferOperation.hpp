@@ -132,7 +132,7 @@ namespace Kriya {
      *
      * **Example:**
      * ```cpp
-     * auto pipeline = BufferPipeline::create(*scheduler);
+     * auto pipeline = BufferPipeline::create(scheduler);
      * pipeline >> BufferOperation::capture_from(buffer)
      *     .for_cycles(10)  // Capture 10 times per pipeline invocation
      *     .on_data_ready([](const auto& data, uint32_t cycle) {

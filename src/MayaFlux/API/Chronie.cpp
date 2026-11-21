@@ -135,12 +135,12 @@ bool restart_task(const std::string& name)
 
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline()
 {
-    return Kriya::BufferPipeline::create(*get_scheduler(), get_context().get_buffer_manager());
+    return Kriya::BufferPipeline::create(get_scheduler(), get_context().get_buffer_manager());
 }
 
 std::shared_ptr<Kriya::BufferPipeline> create_buffer_pipeline(std::shared_ptr<IO::IOManager> io_manager)
 {
-    return Kriya::BufferPipeline::create(*get_scheduler(), get_context().get_buffer_manager(), std::move(io_manager));
+    return Kriya::BufferPipeline::create(get_scheduler(), get_context().get_buffer_manager(), std::move(io_manager));
 }
 
 void on_key_pressed(
@@ -410,58 +410,6 @@ std::shared_ptr<Vruta::NetworkSource> on_message_received(
     auto source = std::make_shared<Vruta::NetworkSource>(info);
     on_message_received(source, std::move(predicate), std::move(callback), std::move(name));
     return source;
-}
-
-void on_network_message(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name)
-{
-    on_message_received(std::move(source), std::move(callback), std::move(name));
-}
-
-std::shared_ptr<Vruta::NetworkSource> on_network_message(
-    const Core::EndpointInfo& info,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name)
-{
-    return on_message_received(info, std::move(callback), std::move(name));
-}
-
-void on_network_message_from(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::string sender_address,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name)
-{
-    on_message_received(std::move(source), std::move(sender_address), std::move(callback), std::move(name));
-}
-
-std::shared_ptr<Vruta::NetworkSource> on_network_message_from(
-    const Core::EndpointInfo& info,
-    std::string sender_address,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name)
-{
-    return on_message_received(info, std::move(sender_address), std::move(callback), std::move(name));
-}
-
-void on_network_message_matching(
-    std::shared_ptr<Vruta::NetworkSource> source,
-    std::function<bool(const Core::NetworkMessage&)> predicate,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name)
-{
-    on_message_received(std::move(source), std::move(predicate), std::move(callback), std::move(name));
-}
-
-std::shared_ptr<Vruta::NetworkSource> on_network_message_matching(
-    const Core::EndpointInfo& info,
-    std::function<bool(const Core::NetworkMessage&)> predicate,
-    std::function<void(const Core::NetworkMessage&)> callback,
-    std::string name)
-{
-    return on_message_received(info, std::move(predicate), std::move(callback), std::move(name));
 }
 
 namespace {

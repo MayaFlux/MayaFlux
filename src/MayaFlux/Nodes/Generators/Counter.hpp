@@ -105,7 +105,7 @@ public:
     bool remove_hook(const NodeHook& callback) override;
 
     void set_frequency(float) override { }
-    [[nodiscard]] float get_frequency() const { return 0.F; }
+    [[nodiscard]] float get_frequency() const override { return 0.F; }
 
     void save_state() override;
     void restore_state() override;

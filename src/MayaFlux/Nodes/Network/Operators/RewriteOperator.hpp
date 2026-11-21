@@ -54,12 +54,32 @@ public:
         uint64_t generation {};
     };
 
-    /** @brief What a replacement sees: the coefficients, the caller's inputs, and the word with the symbol's position in it. */
+    /** @brief A tag that is the same for every use of one type C in a module, and differs between types. */
+    template <typename C>
+    [[nodiscard]] static const void* controls_tag() noexcept
+    {
+        static const char tag {};
+        return &tag;
+    }
+
+    /** @brief What a replacement sees: the caller's inputs, the word with the symbol's position in it, and the grammar's controls. */
     struct Environment {
-        std::span<const double> coefficients;
         std::span<const double> inputs;
         std::span<const Symbol> word;
         size_t position {};
+        const void* held {};
+        const void* held_tag {};
+
+        /**
+         * @brief The grammar's controls as they were when this rewrite began.
+         * @tparam C The struct given to declare(). Any other type returns a default one.
+         */
+        template <typename C>
+        [[nodiscard]] const C& controls() const noexcept
+        {
+            static const C none {};
+            return held_tag == controls_tag<C>() && held != nullptr ? *static_cast<const C*>(held) : none;
+        }
     };
 
     /** @brief Append a symbol; false on a bound violation. Valid only during the replacement call. */
@@ -89,7 +109,6 @@ public:
         std::vector<Symbol> axiom;
         size_t max_word_length {};
         uint64_t max_generations {};
-        size_t coefficient_count {};
         std::vector<SymbolId> ignore;
     };
 
@@ -105,6 +124,17 @@ public:
         SUBMITTED,
         INVALID_CONFIG,
         BUSY,
+        SUBMISSION_LIMIT
+    };
+
+    /** @brief What grow() did; the first failure of its rewrite or its submit. */
+    enum class GrowResult : uint8_t {
+        GROWN,
+        BUSY,
+        INVALID_CONFIG,
+        GENERATION_LIMIT,
+        WORD_LIMIT,
+        REPLACEMENT_FAILED,
         SUBMISSION_LIMIT
     };
 
@@ -132,15 +162,77 @@ public:
      */
     [[nodiscard]] Kinesis::Stochastic::Stochastic& generator() noexcept { return m_generator; }
 
-    /** @brief Set one coefficient. map() addresses it as "c0", "c1", ... */
-    bool set_coefficient(size_t index, double value);
-    [[nodiscard]] std::optional<double> coefficient(size_t index) const noexcept;
+    /**
+     * @brief Declare the struct of controls the grammar's rules read, and return it.
+     * @tparam C A described struct whose members are all Control.
+     *
+     * Call once, before the first rewrite() and before any thread sets or reads the
+     * controls. A rule reads them through Environment::controls<C>().
+     *
+     * @code
+     * struct Bloom { Control rate; Control angle; };
+     * MF_DESCRIBE(Bloom)
+     *
+     * rewrite->declare<Bloom>();
+     * rewrite->replace('F', [](const Symbol& s, Environment env, const EmitSymbol& emit) {
+     *     emit({ 'F', s.parameters[0] * env.controls<Bloom>().rate.value() });
+     * });
+     * rewrite->set<Bloom>({ .rate = 0.3, .angle = lfo });
+     * @endcode
+     */
+    template <typename C>
+    C& declare()
+    {
+        m_hold = [this] {
+            return std::shared_ptr<const void>(std::make_shared<const C>(snapshot_controls<C>()));
+        };
+        m_read = [this](std::string_view name) {
+            return ControlStore::read_named(snapshot_controls<C>(), name);
+        };
+        m_held_tag = controls_tag<C>();
+        return declare_controls<C>();
+    }
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value; empty members are left alone.
+     *
+     * A number may be set from any thread. A node source is attached outside rewrite().
+     */
+    template <typename C>
+    void set(const C& incoming)
+    {
+        merge_controls(incoming);
+    }
+
+    /** @brief The controls with the values the operator holds now. */
+    template <typename C>
+    [[nodiscard]] C get() const
+    {
+        return snapshot_controls<C>();
+    }
 
     /** @brief Rewrite the draft word on the producer lane, without submitting it. */
     [[nodiscard]] RewriteResult rewrite(uint64_t steps = 1, std::span<const double> inputs = {});
 
     /** @brief Submit the draft word; it becomes the active word at the next RelationNetwork block. */
     [[nodiscard]] SubmitResult submit();
+
+    /**
+     * @brief Rewrite the draft word and submit it, on the producer lane
+     * @param steps Generations to build, as for rewrite()
+     * @param inputs Numeric inputs, as for rewrite()
+     *
+     * Does nothing and returns BUSY while a submission is still pending, so the draft
+     * never moves ahead of what can be published. To keep rewriting while a
+     * submission is pending, call rewrite() and submit() yourself.
+     */
+    [[nodiscard]] GrowResult grow(uint64_t steps = 1, std::span<const double> inputs = {});
+
+    /**
+     * @brief True once the word last submitted is the draft and is the active word
+     * @note Producer lane only. A restore_axiom() or a later rewrite() makes it false again.
+     */
+    [[nodiscard]] bool published() const noexcept;
 
     /** @brief Restore the axiom as the draft word on the producer lane, without submitting it. */
     [[nodiscard]] bool restore_axiom();
@@ -172,16 +264,12 @@ public:
 
     void process(float frames) override;
 
-    /** @brief Set "c0", "c1", ...; unknown names are logged and ignored. */
+    /** @brief Set the control called @p name; unknown names are logged and ignored. map() reaches it the same way. */
     void set_parameter(std::string_view name, double value) override;
 
-    /** @brief Return a named coefficient, or nullopt for an unknown name. */
+    /** @brief The number held by the control called @p name, or nullopt for an unknown name. */
     [[nodiscard]] std::optional<double> query_state(std::string_view name) const override;
     [[nodiscard]] std::string_view get_type_name() const override { return "Rewrite"; }
-
-protected:
-    [[nodiscard]] std::optional<size_t> mapped_parameter_index(std::string_view name) const override;
-    void set_indexed_parameter(size_t index, double value) override;
 
 private:
     struct Submission {
@@ -200,7 +288,6 @@ private:
     };
 
     void drain_retired();
-    [[nodiscard]] std::optional<size_t> coefficient_index(std::string_view name) const noexcept;
     [[nodiscard]] bool matches_context(const Replacement& replacement, const Environment& environment) const;
     [[nodiscard]] const Replacement* select_replacement(const Symbol& symbol, const Environment& environment);
 
@@ -208,7 +295,9 @@ private:
     size_t m_max_word_length;
     uint64_t m_max_generations;
     bool m_valid;
-    std::vector<std::atomic<double>> m_coefficients;
+    std::function<std::shared_ptr<const void>()> m_hold;
+    std::function<std::optional<double>(std::string_view)> m_read;
+    const void* m_held_tag {};
     std::vector<SymbolId> m_ignore;
     std::vector<Replacement> m_replacements;
     Kinesis::Stochastic::Stochastic m_generator;

@@ -56,9 +56,24 @@ public:
     SamplingPipeline(
         std::shared_ptr<Kakshya::DynamicSoundStream> stream,
         Buffers::BufferManager& mgr,
-        Vruta::TaskScheduler& scheduler,
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
         uint32_t channel,
         uint32_t buf_size);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The pipeline does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    SamplingPipeline(
+        std::shared_ptr<Kakshya::DynamicSoundStream> stream,
+        Buffers::BufferManager& mgr,
+        Vruta::TaskScheduler& scheduler,
+        uint32_t channel,
+        uint32_t buf_size)
+        : SamplingPipeline(
+              std::move(stream), mgr,
+              std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+              channel, buf_size)
+    {
+    }
 
     ~SamplingPipeline();
 
@@ -275,7 +290,7 @@ private:
     std::shared_ptr<Buffers::AudioBuffer> m_buffer;
     std::shared_ptr<Buffers::StreamSliceProcessor> m_processor;
     Buffers::BufferManager& m_mgr;
-    Vruta::TaskScheduler& m_scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     uint32_t m_channel;
     uint32_t m_buf_size;
 

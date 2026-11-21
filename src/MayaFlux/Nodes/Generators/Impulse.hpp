@@ -116,7 +116,7 @@ public:
      * @brief Gets the current base frequency
      * @return Current frequency in Hz
      */
-    inline float get_frequency() const { return m_frequency; }
+    inline float get_frequency() const override { return m_frequency; }
 
     /**
      * @brief Sets all basic parameters at once

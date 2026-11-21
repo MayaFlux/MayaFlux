@@ -631,13 +631,34 @@ bool FreeRoutine::try_resume_with_context(uint64_t /*current_value*/, DelayConte
     if (!p.armed.load(std::memory_order_acquire))
         return false;
 
-    if (!p.condition || !p.condition())
+    const bool met = p.deadline
+        ? std::chrono::steady_clock::now() >= *p.deadline
+        : (p.condition && p.condition());
+    if (!met)
         return false;
 
     p.armed.store(false, std::memory_order_release);
     p.condition = nullptr;
+    p.deadline.reset();
     m_handle.resume();
     return true;
+}
+
+WorkerId FreeRoutine::worker() const
+{
+    return m_handle ? m_handle.promise().worker : WorkerId {};
+}
+
+WaitHint FreeRoutine::wait_hint() const
+{
+    if (!is_active())
+        return {};
+
+    const auto& p = m_handle.promise();
+    if (!p.armed.load(std::memory_order_acquire))
+        return {};
+
+    return { .armed = true, .wake_only = p.wake_only, .deadline = p.deadline };
 }
 
 bool FreeRoutine::force_resume()

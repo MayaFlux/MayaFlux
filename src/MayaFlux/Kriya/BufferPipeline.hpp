@@ -30,7 +30,7 @@ namespace MayaFlux::Kriya {
  *
  * **Simple Capture & Route:**
  * ```cpp
- * auto pipeline = BufferPipeline::create(*scheduler, buffer_manager);
+ * auto pipeline = BufferPipeline::create(scheduler, buffer_manager);
  * *pipeline
  *     >> BufferOperation::capture_from(input_buffer)
  *         .for_cycles(1)
@@ -41,7 +41,7 @@ namespace MayaFlux::Kriya {
  *
  * **Accumulation & Batch Processing (PHASED strategy):**
  * ```cpp
- * auto pipeline = BufferPipeline::create(*scheduler, buffer_manager)
+ * auto pipeline = BufferPipeline::create(scheduler, buffer_manager)
  *     ->with_strategy(ExecutionStrategy::PHASED)
  *     ->capture_timing(Vruta::DelayContext::BUFFER_BASED);
  *
@@ -60,7 +60,7 @@ namespace MayaFlux::Kriya {
  *
  * **Real-Time Streaming Modification (STREAMING strategy):**
  * ```cpp
- * auto pipeline = BufferPipeline::create(*scheduler, buffer_manager)
+ * auto pipeline = BufferPipeline::create(scheduler, buffer_manager)
  *     ->with_strategy(ExecutionStrategy::STREAMING);
  *
  * *pipeline
@@ -171,18 +171,42 @@ namespace MayaFlux::Kriya {
 class MAYAFLUX_API BufferPipeline : public std::enable_shared_from_this<BufferPipeline> {
 public:
     static std::shared_ptr<BufferPipeline> create(
-        Vruta::TaskScheduler& scheduler,
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
         std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr,
         std::shared_ptr<IO::IOManager> io_manager = nullptr)
     {
         return std::make_shared<BufferPipeline>(scheduler, std::move(buffer_manager), std::move(io_manager));
     }
 
+    /** @deprecated Pass the scheduler as a shared_ptr. The pipeline does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    static std::shared_ptr<BufferPipeline> create(
+        Vruta::TaskScheduler& scheduler,
+        std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr,
+        std::shared_ptr<IO::IOManager> io_manager = nullptr)
+    {
+        return create(
+            std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+            std::move(buffer_manager), std::move(io_manager));
+    }
+
     BufferPipeline() = default;
+    explicit BufferPipeline(
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr,
+        std::shared_ptr<IO::IOManager> io_manager = nullptr);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The pipeline does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
     explicit BufferPipeline(
         Vruta::TaskScheduler& scheduler,
         std::shared_ptr<Buffers::BufferManager> buffer_manager = nullptr,
-        std::shared_ptr<IO::IOManager> io_manager = nullptr);
+        std::shared_ptr<IO::IOManager> io_manager = nullptr)
+        : BufferPipeline(
+              std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+              std::move(buffer_manager), std::move(io_manager))
+    {
+    }
 
     ~BufferPipeline();
 
@@ -485,7 +509,7 @@ private:
     std::shared_ptr<Vruta::Routine> m_routine;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
     std::shared_ptr<IO::IOManager> m_io_manager;
-    Vruta::TaskScheduler* m_scheduler = nullptr;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
 
     std::vector<BufferOperation> m_operations;
     std::vector<DataState> m_data_states;

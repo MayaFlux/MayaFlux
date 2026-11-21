@@ -1,6 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
+#include "MayaFlux/Vruta/Promise.hpp"
+
+#include "Awaiters/BroadcastAwaiter.hpp"
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
@@ -24,7 +27,7 @@ namespace MayaFlux::Kriya {
  * Example usage:
  * ```cpp
  * // Create an event chain
- * EventChain chain(*scheduler);
+ * EventChain chain(scheduler);
  *
  * // Add events with specific delays
  * chain.then([]() { process_initial_state(); })      // Immediate
@@ -46,13 +49,24 @@ public:
      * @brief Constructs an EventChain with an explicit scheduler
      * @param scheduler The TaskScheduler to use for timing
      * @param name Optional name for the event chain (useful for debugging)
-     * @param token Processing token to determine which scheduler rate to use
+     * @param token SAMPLE_ACCURATE runs the chain on the sample clock and CONDITIONAL on a worker thread; any other token runs it on the frame clock
      *
-     * Creates a new EventChain that will use the provided scheduler for timing
-     * operations. This allows for more control over which scheduler is used,
-     * which is useful in contexts where multiple processing engines might exist.
+     * Creates a new EventChain that adds its routine to the provided scheduler.
+     * Delays convert at the registered sample or frame rate. On a CONDITIONAL chain
+     * they are wall-clock seconds, and a step that waits on a source or a condition
+     * checks it once per poll interval of the scheduler.
+     * The chain keeps the scheduler alive for as long as it exists.
      */
-    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+    EventChain(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The chain does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    EventChain(Vruta::TaskScheduler& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+        : EventChain(
+              std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+              std::move(name), token)
+    {
+    }
 
     /**
      * @brief Adds an event to the chain with a specified delay
@@ -60,14 +74,42 @@ public:
      * @param delay_seconds Time to wait before executing this event (in seconds)
      * @return Reference to this EventChain for method chaining
      *
-     * This method adds an event to the chain, to be executed after the specified
-     * delay from the previous event. The first event's delay is measured from
-     * when start() is called.
-     *
-     * The method returns a reference to the EventChain itself, allowing for a
-     * fluent, declarative API style.
+     * The delay is measured from the previous event; the first event's delay is
+     * measured from when start() is called.
      */
     EventChain& then(std::function<void()> action, double delay_seconds = 0.F);
+
+    /**
+     * @brief Adds an event that runs when a BroadcastSource next signals
+     * @param source Source to watch; the chain keeps it alive
+     * @param action Function that takes the signalled value
+     * @return Reference to this EventChain for method chaining
+     *
+     * The chain checks the source on its own clock, so the action runs where the
+     * chain runs, not on the thread that signals. A source holds one pending
+     * value, so signals that arrive between two checks collapse into the last.
+     */
+    template <typename T>
+    EventChain& on(std::shared_ptr<Vruta::BroadcastSource<T>> source, std::function<void(const T&)> action)
+    {
+        return poll(
+            [source = std::move(source), action = std::move(action)]() {
+                auto awaiter = source->next();
+                if (!awaiter.await_ready()) {
+                    return false;
+                }
+                action(awaiter.await_resume());
+                return true;
+            });
+    }
+
+    /**
+     * @brief Adds an event that runs once a condition holds
+     * @param condition Checked once per unit of the clock until it returns true
+     * @param action Function to execute when it does
+     * @return Reference to this EventChain for method chaining
+     */
+    EventChain& when(std::function<bool()> condition, std::function<void()> action);
 
     /**
      * @brief Repeat the last event N times
@@ -99,6 +141,62 @@ public:
     EventChain& every(double interval_seconds, std::function<void()> action);
 
     /**
+     * @brief Adds a step that runs several lanes side by side and waits for all of them
+     * @param lanes One builder per lane; each fills a chain that shares this chain's scheduler and clock
+     * @return Reference to this EventChain for method chaining
+     *
+     * The lanes start together when the chain reaches the step, each with its
+     * own steps and timing, and the chain continues once every lane has
+     * finished. Cancelling the chain cancels its lanes. A lane may add lanes
+     * of its own. The step counts as two in event_count(): the start and the wait.
+     *
+     * ```cpp
+     * chain.then(open)
+     *      .parallel({
+     *          [](EventChain& lane) { lane.then(a, 0.2).wait(0.1); },
+     *          [](EventChain& lane) { lane.every(0.05, b).times(4); } })
+     *      .then(close);
+     * ```
+     */
+    EventChain& parallel(std::vector<std::function<void(EventChain&)>> lanes);
+
+    /**
+     * @brief Adds a step that starts several lanes and continues at once
+     * @param lanes One builder per lane, as for parallel()
+     * @return Reference to this EventChain for method chaining
+     *
+     * The lanes run on their own while the chain moves on to its next step. They
+     * keep running after the chain ends; cancel() cancels them with it.
+     */
+    EventChain& fork(std::vector<std::function<void(EventChain&)>> lanes);
+
+    /**
+     * @brief Chooses the worker thread a CONDITIONAL chain runs on
+     * @param worker Worker returned by TaskScheduler::add_worker(); the default worker when never set
+     * @return Reference to this EventChain for method chaining
+     *
+     * Lanes added by parallel() and fork() start on the same worker unless their own
+     * builder sets another. Has no effect on a chain with another token.
+     */
+    EventChain& on_worker(Vruta::WorkerId worker);
+
+    /**
+     * @brief Repeat the whole chain without end
+     * @return Reference to this EventChain for method chaining
+     *
+     * The chain waits one unit between passes, so a pass of zero delays does not
+     * hold the scheduler. Replaces any count set by times().
+     */
+    EventChain& forever();
+
+    /**
+     * @brief Repeat the whole chain until a condition holds
+     * @param condition Checked after every pass; the chain stops when it returns true
+     * @return Reference to this EventChain for method chaining
+     */
+    EventChain& until(std::function<bool()> condition);
+
+    /**
      * @brief Starts executing the event chain
      *
      * This method begins the execution of the event chain, scheduling each event
@@ -107,6 +205,9 @@ public:
      *
      * The timing is sample-accurate, ensuring that each event occurs at precisely
      * the right moment in the computational timeline.
+     *
+     * The steps are copied when the chain starts. Steps added to a running chain
+     * take effect at the next start().
      */
     void start();
 
@@ -162,15 +263,20 @@ public:
 
 private:
     /**
-     * @brief Structure representing a timed event in the chain
+     * @brief One step of the chain
      *
-     * This structure encapsulates an action to perform and the delay before
-     * performing it, relative to the previous event in the chain.
+     * A step with a poll waits for it to return true and runs nothing else;
+     * any other step waits its delay and then runs its action.
      */
     struct TimedEvent {
         std::function<void()> action; ///< Function to execute
         double delay_seconds; ///< Delay before execution
+        std::function<bool()> poll; ///< Checked each unit until it returns true
     };
+
+    EventChain& poll(std::function<bool()> ready);
+
+    std::shared_ptr<std::vector<std::shared_ptr<EventChain>>> start_lanes(std::vector<std::function<void(EventChain&)>> lanes);
 
     /**
      * @brief Collection of events in this chain
@@ -181,19 +287,15 @@ private:
     std::vector<TimedEvent> m_events;
 
     /**
-     * @brief Reference to the scheduler that manages timing
+     * @brief The scheduler that manages timing
      *
      * The scheduler provides the timing infrastructure needed for
      * precise execution of events in the chain.
      */
-    Vruta::TaskScheduler& m_Scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_Scheduler;
 
     /**
-     * @brief Processing token to determine which scheduler rate to use
-     *
-     * This token indicates which processing engine's timing should be used
-     * for the events in this chain. It allows the EventChain to be flexible
-     * and work with different types of processing timelines.
+     * @brief Selects the clock the chain runs on, sample or frame
      */
     Vruta::ProcessingToken m_token;
 
@@ -224,7 +326,13 @@ private:
 
     size_t m_repeat_count { 1 }; ///< Number of times to repeat the entire chain
 
-    uint64_t m_default_rate { 48000 };
+    bool m_endless { false }; ///< Repeat the entire chain without a count
+
+    Vruta::WorkerId m_worker; ///< Worker a CONDITIONAL chain runs on
+
+    std::function<bool()> m_stop_when; ///< Stops the chain after a pass when it returns true
+
+    std::vector<std::shared_ptr<EventChain>> m_lanes; ///< Lanes added by parallel(), cancelled with the chain
 };
 
 }

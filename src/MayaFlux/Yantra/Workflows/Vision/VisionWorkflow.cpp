@@ -507,7 +507,7 @@ Kriya::ChimeraBuilder VisionWorkflow::process_to_stream(const WorkflowStreamConf
 
     auto array = buffers->create_graphics_buffer<Buffers::TextureArrayBuffer>(
         Buffers::ProcessingToken::GRAPHICS_BACKEND, config.layers, config.fit);
-    auto pipeline = Kriya::BufferPipeline::create(*m_scheduler.lock(), buffers, m_io_manager.lock());
+    auto pipeline = Kriya::BufferPipeline::create(m_scheduler.lock(), buffers, m_io_manager.lock());
 
     const auto name = run_name("stream");
     start(config.source, frames, config.live.value_or(LiveConfig {}), config.matrix, name,

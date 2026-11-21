@@ -16,6 +16,18 @@ class NetworkSource;
 MAYAFLUX_API void invoke_routine_completion(std::function<void()> callback) noexcept;
 
 /**
+ * @struct WorkerId
+ * @brief Names one of the threads a FreeRoutine can run on
+ *
+ * Index 0 is the default worker. TaskScheduler::add_worker() returns the others.
+ */
+struct WorkerId {
+    uint32_t index {};
+
+    friend bool operator==(const WorkerId&, const WorkerId&) = default;
+};
+
+/**
  * @struct routine_promise
  * @brief Base coroutine promise type for audio processing tasks
  *
@@ -494,6 +506,25 @@ struct MAYAFLUX_API conditional_promise : public routine_promise<FreeRoutine> {
      * Null when the coroutine is not suspended on a condition.
      */
     std::function<bool()> condition;
+
+    /**
+     * @brief Wall-clock time the coroutine waits for, instead of a condition.
+     *
+     * Set by SteadyDelay. The scheduler thread sleeps until the earliest one.
+     */
+    std::optional<std::chrono::steady_clock::time_point> deadline;
+
+    /**
+     * @brief The worker thread this coroutine runs on, set by OnWorker.
+     */
+    WorkerId worker;
+
+    /**
+     * @brief Look at the condition only after TaskScheduler::wake_conditional().
+     *
+     * False polls it every poll interval of the scheduler.
+     */
+    bool wake_only { false };
 
     /**
      * @brief True while the coroutine is suspended on a ConditionAwaiter.

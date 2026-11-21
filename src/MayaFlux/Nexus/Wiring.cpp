@@ -406,7 +406,8 @@ void Wiring::finalise()
         auto name = make_name("nexus_chain");
         reg.chain_name = name;
 
-        Kriya::EventChain chain(scheduler, name);
+        Kriya::EventChain chain(
+            std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }), name);
         auto& fab = m_fabric;
         for (auto& step : m_move_steps) {
             glm::vec3 pos = step.position;

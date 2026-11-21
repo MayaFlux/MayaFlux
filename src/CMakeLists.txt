@@ -4,6 +4,8 @@ add_subdirectory(Lila)
 
 add_subdirectory(Tools/Reflect)
 
+include(${CMAKE_SOURCE_DIR}/cmake/reflect.cmake)
+
 add_subdirectory(Host)
 
 add_executable(lila_server lila_server.cpp)
@@ -74,6 +76,10 @@ if(WIN32)
 endif()
 
 target_link_libraries(project_launcher PRIVATE MayaFluxLib MayaFluxHost)
+target_compile_options(project_launcher PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-subobject-linkage>)
+
+mayaflux_reflect_sources(project_launcher "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp" ${EXAMPLES} ${USER_SOURCES})
 target_precompile_headers(project_launcher
     PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 

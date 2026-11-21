@@ -56,7 +56,7 @@ public:
      * task management infrastructure needed for precise timing.
      */
     Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
-    ~Timer() = default;
+    ~Timer();
 
     /**
      * @brief Schedules a callback to execute after a delay
@@ -87,7 +87,7 @@ public:
      * This method returns true if the timer has an active callback scheduled
      * to execute in the future, and false otherwise.
      */
-    [[nodiscard]] inline bool is_active() const { return m_active; }
+    [[nodiscard]] inline bool is_active() const { return m_pending && m_pending->active; }
 
 private:
     /**
@@ -108,20 +108,17 @@ private:
     std::shared_ptr<Vruta::Routine> m_routine;
 
     /**
-     * @brief Flag indicating whether a callback is currently scheduled
+     * @brief The scheduled callback and whether it is still pending
      *
-     * This flag is set to true when schedule() is called and reset to
-     * false when the callback executes or cancel() is called.
+     * Shared with the routine, which holds it instead of the Timer, so a Timer
+     * destroyed before the routine fires deactivates it and nothing dangles.
      */
-    bool m_active;
+    struct Pending {
+        std::function<void()> callback;
+        bool active { true };
+    };
 
-    /**
-     * @brief The callback function to execute when the timer fires
-     *
-     * This function is stored when schedule() is called and executed
-     * when the timer fires. It's cleared when cancel() is called.
-     */
-    std::function<void()> m_callback;
+    std::shared_ptr<Pending> m_pending;
 
     /**
      * @brief The processing token that determines the timing context and thread evaluator for this timer
