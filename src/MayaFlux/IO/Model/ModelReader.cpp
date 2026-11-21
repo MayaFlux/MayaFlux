@@ -373,7 +373,11 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
     if (!m_impl->scene
         || (m_impl->scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
         || !m_impl->scene->mRootNode) {
-        set_error(m_impl->importer.GetErrorString());
+        std::string error = m_impl->importer.GetErrorString();
+        if (error.empty()) {
+            error = "scene is incomplete or has no root node";
+        }
+        set_error(std::move(error));
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "ModelReader: Assimp import failed — {}", m_last_error);
         m_impl->scene = nullptr;
