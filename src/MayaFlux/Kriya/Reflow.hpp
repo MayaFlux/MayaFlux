@@ -145,7 +145,7 @@ private:
  *                  .course(setting)
  *                  .operation(FrameOperation<VolumeData>::derive(note_peak))
  *                  .selection(FrameSelection::Blend)
- *                  .start(scheduler);
+ *                  .start();
  * smoke->courses().front()->rate(0.5);
  * @endcode
  */
@@ -158,8 +158,10 @@ public:
      * @param source The frames to read. Null makes build() return nullptr.
      * @param sink Receives each frame written. Empty makes build() return nullptr.
      * @param rate Cycles per second. Zero takes the registered frame rate.
+     * @param scheduler The scheduler start() runs the reflow on. Not needed to build().
      */
-    ReflowBuilder(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double rate = 0.0);
+    ReflowBuilder(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double rate = 0.0,
+        std::shared_ptr<Vruta::TaskScheduler> scheduler = nullptr);
 
     /** @brief Add a course. */
     ReflowBuilder& course(const CourseSetting& setting, bool paused = false);
@@ -180,9 +182,9 @@ public:
 
     /**
      * @brief Build and run once per frame on the scheduler's frame clock.
-     * @return As build().
+     * @return As build(), and nullptr when no scheduler was given.
      */
-    [[nodiscard]] std::shared_ptr<Reflow<Frame>> start(const std::shared_ptr<Vruta::TaskScheduler>& scheduler);
+    [[nodiscard]] std::shared_ptr<Reflow<Frame>> start();
 
 private:
     struct Planned {
@@ -193,6 +195,7 @@ private:
     std::shared_ptr<const Kakshya::FrameSource<Frame>> m_source;
     Sink m_sink;
     double m_rate;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::vector<Planned> m_courses;
     std::vector<FrameOperation<Frame>> m_operations;
     FrameSelection m_selection { FrameSelection::Floor };

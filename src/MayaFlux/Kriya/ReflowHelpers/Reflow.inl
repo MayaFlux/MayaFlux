@@ -97,10 +97,10 @@ bool Reflow<Frame>::operate(const FrameContext& context, std::shared_ptr<const F
             }
             break;
         case FrameOperation<Frame>::Kind::Derive:
-            operation.derive_fn()(context, *frame);
+            operation.derive_fn()(context, frame);
             break;
         case FrameOperation<Frame>::Kind::Condition:
-            if (!operation.condition_fn()(context, *frame)) {
+            if (!operation.condition_fn()(context, frame)) {
                 return false;
             }
             break;
@@ -209,10 +209,12 @@ void Reflow<Frame>::stop()
 
 template <typename Frame>
 ReflowBuilder<Frame>::ReflowBuilder(
-    std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double rate)
+    std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double rate,
+    std::shared_ptr<Vruta::TaskScheduler> scheduler)
     : m_source(std::move(source))
     , m_sink(std::move(sink))
     , m_rate(rate > 0.0 ? rate : static_cast<double>(Vruta::s_registered_frame_rate))
+    , m_scheduler(std::move(scheduler))
 {
 }
 
@@ -299,11 +301,11 @@ std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::build()
 }
 
 template <typename Frame>
-std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::start(const std::shared_ptr<Vruta::TaskScheduler>& scheduler)
+std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::start()
 {
-    if (!scheduler) {
+    if (!m_scheduler) {
         MF_ERROR(Journal::Component::Kriya, Journal::Context::Configuration,
-            "ReflowBuilder: start needs a scheduler");
+            "ReflowBuilder: start needs a scheduler, given to the builder");
         return nullptr;
     }
 
@@ -322,8 +324,8 @@ std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::start(const std::shared_ptr
         },
         Vruta::ProcessingToken::FRAME_ACCURATE);
 
-    scheduler->add_task(routine);
-    reflow->m_scheduler = scheduler;
+    m_scheduler->add_task(routine);
+    reflow->m_scheduler = m_scheduler;
     reflow->m_routine = std::move(routine);
     return reflow;
 }

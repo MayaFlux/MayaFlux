@@ -51,8 +51,10 @@ struct FrameContext {
  * @class FrameOperation
  * @brief A typed hook on the frame of a reflow between its selection and its sink.
  *
- * Frames are immutable and shared, so a transform returns a new shared frame and never
- * edits the one it was given. Operations run in the order they were added.
+ * Frames are immutable and shared, and every hook is handed the shared frame, so one that
+ * wants to keep a frame (to record it, to compare with the next) holds the pointer and
+ * never copies the frame. A transform returns a new shared frame and never edits the one
+ * it was given. Operations run in the order they were added.
  *
  * - transform: frame to frame. Null means nothing is written this cycle.
  * - derive: reads the frame and returns nothing. Publishes what it finds, such as a
@@ -72,8 +74,8 @@ public:
     };
 
     using TransformFn = std::function<std::shared_ptr<const Frame>(const FrameContext&, std::shared_ptr<const Frame>)>;
-    using DeriveFn = std::function<void(const FrameContext&, const Frame&)>;
-    using ConditionFn = std::function<bool(const FrameContext&, const Frame&)>;
+    using DeriveFn = std::function<void(const FrameContext&, const std::shared_ptr<const Frame>&)>;
+    using ConditionFn = std::function<bool(const FrameContext&, const std::shared_ptr<const Frame>&)>;
     using MixFn = std::function<std::shared_ptr<const Frame>(const FrameContext&, std::span<const WeightedFrame<Frame>>)>;
 
     static FrameOperation transform(TransformFn fn)
