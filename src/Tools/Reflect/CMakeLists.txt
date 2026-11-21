@@ -112,6 +112,7 @@ add_executable(mayaflux_signatures
     Collector.cpp
     CreatorBuild.cpp
     Discovery.cpp
+    FunctionBuild.cpp
     FunctionCollector.cpp
     FunctionSidecar.cpp
     Scan.cpp

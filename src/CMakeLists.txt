@@ -76,6 +76,8 @@ if(WIN32)
 endif()
 
 target_link_libraries(project_launcher PRIVATE MayaFluxLib MayaFluxHost)
+target_compile_options(project_launcher PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-subobject-linkage>)
 target_precompile_headers(project_launcher
     PUBLIC ${CMAKE_SOURCE_DIR}/cmake/pch.h)
 
