@@ -5,6 +5,8 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <stop_token>
+
 namespace MayaFlux::Vruta {
 
 namespace {
