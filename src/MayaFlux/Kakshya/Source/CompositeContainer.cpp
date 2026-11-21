@@ -25,17 +25,24 @@ namespace {
         return copy;
     }
 
+    ContainerDataStructure composite_structure()
+    {
+        return { DataModality::TENSOR_ND, OrganizationStrategy::INTERLEAVED };
+    }
+
 }
 
 CompositeContainer::CompositeContainer(CompositeLayout layout, size_t batch_size)
-    : m_data(std::move(layout))
+    : SemanticContainer<CompositeArray>(composite_structure())
+    , m_data(std::move(layout))
     , m_materialized_data(m_data.layout())
     , m_batch_size(batch_size == 0 ? 1 : batch_size)
 {
 }
 
 CompositeContainer::CompositeContainer(CompositeArray data, size_t batch_size)
-    : m_data(std::move(data))
+    : SemanticContainer<CompositeArray>(composite_structure())
+    , m_data(std::move(data))
     , m_materialized_data(m_data.layout())
     , m_batch_size(batch_size == 0 ? 1 : batch_size)
 {
@@ -91,19 +98,6 @@ std::vector<CompositeArray> CompositeContainer::get_region_data(const Region& re
 
     std::vector<CompositeArray> result;
     result.push_back(std::move(*copy));
-    return result;
-}
-
-std::vector<CompositeArray> CompositeContainer::get_region_group_data(const RegionGroup& group) const
-{
-    std::vector<CompositeArray> result;
-    result.reserve(group.regions.size());
-
-    for (const auto& region : group.regions) {
-        auto copied = get_region_data(region);
-        if (!copied.empty())
-            result.push_back(std::move(copied.front()));
-    }
     return result;
 }
 
@@ -176,22 +170,6 @@ void CompositeContainer::set_region_data(const Region& region, const std::vector
     m_data = std::move(replacement);
 }
 
-void CompositeContainer::add_region_group(const RegionGroup& group)
-{
-    m_region_groups[group.name] = group;
-}
-
-RegionGroup CompositeContainer::get_region_group(const std::string& name) const
-{
-    const auto it = m_region_groups.find(name);
-    return it == m_region_groups.end() ? RegionGroup {} : it->second;
-}
-
-void CompositeContainer::remove_region_group(const std::string& name)
-{
-    m_region_groups.erase(name);
-}
-
 bool CompositeContainer::is_region_loaded(const Region& region) const
 {
     return m_data.slice(region).has_value();
@@ -211,7 +189,7 @@ void CompositeContainer::clear()
 {
     m_data = CompositeArray(m_data.layout());
     m_materialized_data = CompositeArray(m_data.layout());
-    m_region_groups.clear();
+    clear_region_groups();
     m_next_element = 0;
 }
 

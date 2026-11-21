@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/TensorInsertion.hpp"
-#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
+#include "MayaFlux/Kakshya/Source/SemanticContainer.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -25,8 +25,9 @@ inline const Facet<TensorData>& tensor_cache()
  * independent dense tensors; set_region_data writes a tensor of the box's
  * shape back in place.
  *
- * Specializes NDDataContainer<TensorData> directly, not SignalSourceContainer,
- * so it carries no ProcessingState and no DataProcessor lifecycle. Frames are
+ * Specializes SemanticContainer<TensorData> (NDDataContainer<TensorData> directly, not
+ * SignalSourceContainer), so it carries no ProcessingState and no DataProcessor
+ * lifecycle. Frames are
  * slices along the leading axis.
  *
  * Usage:
@@ -40,7 +41,7 @@ inline const Facet<TensorData>& tensor_cache()
  * @note Views borrow the container's storage. Replacing the tensor through
  * insert() or clear() invalidates them.
  */
-class MAYAFLUX_API TensorContainer : public NDDataContainer<TensorData> {
+class MAYAFLUX_API TensorContainer : public SemanticContainer<TensorData> {
 public:
     ~TensorContainer() override;
 
@@ -101,13 +102,6 @@ public:
     [[nodiscard]] std::vector<TensorData> get_region_data(const Region& region) const override;
 
     /**
-     * @brief Copy the boxes of a group into separate tensors.
-     * @return One tensor per valid region; shorter than group.regions when a
-     * region is invalid.
-     */
-    [[nodiscard]] std::vector<TensorData> get_region_group_data(const RegionGroup& group) const override;
-
-    /**
      * @brief Copy segments into separate tensors.
      *
      * A segment is the box that starts at offset_in_region inside its source
@@ -124,21 +118,6 @@ public:
      * @note Anything else leaves the tensor unchanged.
      */
     void set_region_data(const Region& region, const std::vector<TensorData>& data) override;
-
-    /** @brief Store or replace a named region group. */
-    void add_region_group(const RegionGroup& group) override;
-
-    /** @brief Return a named region group, or an empty group if absent. */
-    [[nodiscard]] RegionGroup get_region_group(const std::string& name) const override;
-
-    /** @brief Copy all named region groups. */
-    [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override
-    {
-        return m_region_groups;
-    }
-
-    /** @brief Remove a named region group if present. */
-    void remove_region_group(const std::string& name) override;
 
     /** @brief Whether the region selects a valid box. */
     [[nodiscard]] bool is_region_loaded(const Region& region) const override;
@@ -170,19 +149,8 @@ public:
     /** @brief Whether the tensor contains any elements. */
     [[nodiscard]] bool has_data() const override { return get_total_elements() > 0; }
 
-    /** @brief Mutable structure metadata. */
-    [[nodiscard]] ContainerDataStructure& get_structure() override { return m_structure; }
-
-    /** @brief Structure metadata. */
-    [[nodiscard]] const ContainerDataStructure& get_structure() const override { return m_structure; }
-
-    /** @brief Replace structure metadata. */
-    void set_structure(ContainerDataStructure structure) override { m_structure = std::move(structure); }
-
 private:
     TensorData m_data;
-    ContainerDataStructure m_structure { DataModality::TENSOR_ND, OrganizationStrategy::INTERLEAVED };
-    std::unordered_map<std::string, RegionGroup> m_region_groups;
 };
 
 }

@@ -18,10 +18,16 @@ namespace {
         return result;
     }
 
+    ContainerDataStructure tensor_structure()
+    {
+        return { DataModality::TENSOR_ND, OrganizationStrategy::INTERLEAVED };
+    }
+
 }
 
 TensorContainer::TensorContainer(TensorData data)
-    : m_data(std::move(data))
+    : SemanticContainer<TensorData>(tensor_structure())
+    , m_data(std::move(data))
 {
     if (!m_data.is_valid() || !m_data.spec().is_valid()) {
         error<std::invalid_argument>(
@@ -32,6 +38,7 @@ TensorContainer::TensorContainer(TensorData data)
 }
 
 TensorContainer::TensorContainer(TensorSpec spec)
+    : SemanticContainer<TensorData>(tensor_structure())
 {
     auto allocated = TensorData::allocate(std::move(spec));
     if (!allocated) {
@@ -101,19 +108,6 @@ std::vector<TensorData> TensorContainer::get_region_data(const Region& region) c
     return result;
 }
 
-std::vector<TensorData> TensorContainer::get_region_group_data(const RegionGroup& group) const
-{
-    std::vector<TensorData> result;
-    result.reserve(group.regions.size());
-
-    for (const auto& region : group.regions) {
-        auto copied = get_region_data(region);
-        if (!copied.empty())
-            result.push_back(std::move(copied.front()));
-    }
-    return result;
-}
-
 std::vector<TensorData> TensorContainer::get_segments_data(const std::vector<RegionSegment>& segments) const
 {
     std::vector<TensorData> result;
@@ -173,22 +167,6 @@ void TensorContainer::set_region_data(const Region& region, const std::vector<Te
     TensorInsertion(m_data).assign_window(region, *source);
 }
 
-void TensorContainer::add_region_group(const RegionGroup& group)
-{
-    m_region_groups[group.name] = group;
-}
-
-RegionGroup TensorContainer::get_region_group(const std::string& name) const
-{
-    const auto it = m_region_groups.find(name);
-    return it == m_region_groups.end() ? RegionGroup {} : it->second;
-}
-
-void TensorContainer::remove_region_group(const std::string& name)
-{
-    m_region_groups.erase(name);
-}
-
 bool TensorContainer::is_region_loaded(const Region& region) const
 {
     return view(region).has_value();
@@ -229,7 +207,7 @@ void TensorContainer::clear()
         TensorSpec::contiguous(m_data.spec().dtype, { 0 }, m_data.spec().name));
     if (emptied)
         m_data = std::move(*emptied);
-    m_region_groups.clear();
+    clear_region_groups();
 }
 
 const void* TensorContainer::get_raw_data() const
