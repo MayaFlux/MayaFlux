@@ -108,6 +108,17 @@ public:
         SUBMISSION_LIMIT
     };
 
+    /** @brief What grow() did; the first failure of its rewrite or its submit. */
+    enum class GrowResult : uint8_t {
+        GROWN,
+        BUSY,
+        INVALID_CONFIG,
+        GENERATION_LIMIT,
+        WORD_LIMIT,
+        REPLACEMENT_FAILED,
+        SUBMISSION_LIMIT
+    };
+
     explicit RewriteOperator(Config config);
 
     [[nodiscard]] bool valid() const noexcept { return m_valid; }
@@ -141,6 +152,23 @@ public:
 
     /** @brief Submit the draft word; it becomes the active word at the next RelationNetwork block. */
     [[nodiscard]] SubmitResult submit();
+
+    /**
+     * @brief Rewrite the draft word and submit it, on the producer lane
+     * @param steps Generations to build, as for rewrite()
+     * @param inputs Numeric inputs, as for rewrite()
+     *
+     * Does nothing and returns BUSY while a submission is still pending, so the draft
+     * never moves ahead of what can be published. To keep rewriting while a
+     * submission is pending, call rewrite() and submit() yourself.
+     */
+    [[nodiscard]] GrowResult grow(uint64_t steps = 1, std::span<const double> inputs = {});
+
+    /**
+     * @brief True once the word last submitted is the draft and is the active word
+     * @note Producer lane only. A restore_axiom() or a later rewrite() makes it false again.
+     */
+    [[nodiscard]] bool published() const noexcept;
 
     /** @brief Restore the axiom as the draft word on the producer lane, without submitting it. */
     [[nodiscard]] bool restore_axiom();

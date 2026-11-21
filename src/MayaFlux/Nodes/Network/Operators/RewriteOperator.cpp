@@ -396,6 +396,49 @@ RewriteOperator::SubmitResult RewriteOperator::submit()
     return SubmitResult::SUBMITTED;
 }
 
+RewriteOperator::GrowResult RewriteOperator::grow(uint64_t steps, std::span<const double> inputs)
+{
+    if (!m_valid) {
+        return GrowResult::INVALID_CONFIG;
+    }
+
+    drain_retired();
+    if (m_pending) {
+        return GrowResult::BUSY;
+    }
+
+    switch (rewrite(steps, inputs)) {
+    case RewriteResult::REWRITTEN:
+        break;
+    case RewriteResult::INVALID_CONFIG:
+        return GrowResult::INVALID_CONFIG;
+    case RewriteResult::GENERATION_LIMIT:
+        return GrowResult::GENERATION_LIMIT;
+    case RewriteResult::WORD_LIMIT:
+        return GrowResult::WORD_LIMIT;
+    case RewriteResult::REPLACEMENT_FAILED:
+        return GrowResult::REPLACEMENT_FAILED;
+    }
+
+    switch (submit()) {
+    case SubmitResult::SUBMITTED:
+        return GrowResult::GROWN;
+    case SubmitResult::BUSY:
+        return GrowResult::BUSY;
+    case SubmitResult::SUBMISSION_LIMIT:
+        return GrowResult::SUBMISSION_LIMIT;
+    case SubmitResult::INVALID_CONFIG:
+        break;
+    }
+    return GrowResult::INVALID_CONFIG;
+}
+
+bool RewriteOperator::published() const noexcept
+{
+    return m_draft == m_submitted.word
+        && m_active_submission_id.load(std::memory_order_acquire) == m_submitted.id;
+}
+
 bool RewriteOperator::restore_axiom()
 {
     if (!m_valid) {
