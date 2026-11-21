@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Kriya/VolumeReflow.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 /**
@@ -34,6 +35,7 @@ namespace Kakshya {
 namespace Buffers {
     class AudioBuffer;
     class TextureArrayBuffer;
+    class VolumeGridBuffer;
 }
 
 namespace Yantra::Vision {
@@ -364,6 +366,49 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
     const std::shared_ptr<Kakshya::DynamicSoundStream>& stream,
     const std::shared_ptr<Buffers::AudioBuffer>& listener,
     uint32_t input_channel, double seconds, std::optional<uint32_t> monitor = std::nullopt, uint32_t channel = 0);
+
+/**
+ * @brief Make a volume buffer that can hold the frames of a volume sequence.
+ *
+ * The buffer is made over the lattice of the first frame, with the fields it carries
+ * (IO::volume_field_decls), and is in the graphics buffers. It draws nothing and
+ * simulates nothing until it is given a renderer or processors, such as a RaymarchBuffer
+ * that reads one of its fields. Every frame of a sequence made by IO::open_volume_sequence
+ * has that lattice and those fields.
+ *
+ * @param source The sequence, such as a SequenceContainer<VolumeData>. Its first frame is
+ * read here, on the calling thread.
+ * @return The buffer, or nullptr for a null source or when the first frame cannot be read.
+ */
+MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
+    const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& source);
+
+/**
+ * @brief Begin a reflow that plays a volume sequence into a volume buffer.
+ *
+ * Every field of each frame replaces the buffer's field (volume_sink), on the engine's
+ * frame clock once start() runs. The builder takes the rest of its description from
+ * ReflowBuilder: courses, selection, frame operations. Keep the Reflow start() returns
+ * alive for as long as it should play, and steer it through its courses.
+ *
+ * @code{.cpp}
+ * auto sequence = IO::open_volume_sequence(
+ *     { .pattern = "smoke.{:04}.vdb", .count = 96 }, *Kinesis::TimeSampling::uniform(1.0 / 24.0),
+ *     IO::UnionLattice {});
+ * auto volume = MayaFlux::create_volume_buffer(sequence);
+ * auto reflow = MayaFlux::create_volume_reflow(sequence, volume)
+ *                   .course({ .in = 0.0, .out = 4.0, .edge = Kriya::CourseEdge::Loop })
+ *                   .start();
+ * reflow->courses().front()->rate(0.5);
+ * @endcode
+ *
+ * @param source The frames to play, such as a SequenceContainer<VolumeData>.
+ * @param volume The buffer to write, made for those frames (create_volume_buffer).
+ * @return Builder. A null source or buffer makes build() and start() return nullptr.
+ */
+MAYAFLUX_API Kriya::VolumeReflowBuilder create_volume_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>> source,
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume);
 
 /**
  * @brief A vision workflow running on the engine's managers.

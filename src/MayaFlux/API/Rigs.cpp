@@ -6,8 +6,10 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
+#include "MayaFlux/IO/Volume/VolumeTransfer.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
@@ -284,6 +286,28 @@ std::shared_ptr<Kriya::BufferPipeline> record_into(
     const double blocks = seconds * Config::get_sample_rate() / Config::get_buffer_size();
     return Kriya::record_into(get_scheduler(), get_buffer_manager(), stream, listener, input_channel,
         std::max<uint64_t>(1, static_cast<uint64_t>(std::ceil(blocks))), monitor, channel);
+}
+
+std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
+    const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& source)
+{
+    const auto first = source ? source->read(0) : nullptr;
+    if (!first) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_volume_buffer: the first frame could not be read");
+        return nullptr;
+    }
+
+    return get_buffer_manager()->create_graphics_buffer<Buffers::VolumeGridBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, first->lattice, IO::volume_field_decls(*first));
+}
+
+Kriya::VolumeReflowBuilder create_volume_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>> source,
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume)
+{
+    return Kriya::VolumeReflowBuilder(
+        std::move(source), volume ? Kriya::volume_sink(volume) : Kriya::VolumeReflow::Sink {}, 0.0, get_scheduler());
 }
 
 std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()
