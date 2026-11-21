@@ -1,8 +1,8 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/Composite.hpp"
-#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
-#include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/TensorContainer.hpp"
 #include "MayaFlux/Kakshya/Utils/DataUtils.hpp"
 #include "StructureIntrospection.hpp"
 

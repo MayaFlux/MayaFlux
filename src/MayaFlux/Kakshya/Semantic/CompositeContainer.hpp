@@ -4,7 +4,7 @@
 #include "MayaFlux/Kakshya/NDData/CompositeForest.hpp"
 #include "MayaFlux/Kakshya/NDData/CompositeInsertion.hpp"
 #include "MayaFlux/Kakshya/DataFieldTraversal.hpp"
-#include "MayaFlux/Kakshya/Source/SemanticContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/SemanticContainer.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 namespace MayaFlux::Kakshya {

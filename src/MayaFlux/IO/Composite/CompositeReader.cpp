@@ -1,6 +1,6 @@
 #include "CompositeReader.hpp"
 
-#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/CompositeContainer.hpp"
 
 namespace MayaFlux::IO {
 

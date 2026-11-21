@@ -7,7 +7,7 @@
 #include "Analyzer.hpp"
 #include <Eigen/Dense>
 
-#include "MayaFlux/Kakshya/Source/TensorContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/TensorContainer.hpp"
 #include "MayaFlux/Yantra/Executors/Audio/HubertPhonemeModel.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"

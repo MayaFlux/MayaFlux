@@ -6,7 +6,7 @@
 #include "Registry.hpp"
 
 #include "MayaFlux/API/Depot.hpp"
-#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/CompositeContainer.hpp"
 #include "Generated/CreatorIncludes.hpp"
 
 namespace MayaFlux {

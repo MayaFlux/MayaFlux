@@ -11,7 +11,7 @@
 
 #include "MayaFlux/Kakshya/Source/AudioOutputContainer.hpp"
 #include "MayaFlux/Kakshya/Source/CameraContainer.hpp"
-#include "MayaFlux/Kakshya/Source/CompositeContainer.hpp"
+#include "MayaFlux/Kakshya/Semantic/CompositeContainer.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/Source/SoundFileContainer.hpp"
 #include "MayaFlux/Kakshya/Source/VideoFileContainer.hpp"
