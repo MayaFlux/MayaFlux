@@ -5,7 +5,13 @@ extern "C" {
 #endif
 
 #include "tinyvdb_mesh.h"
+#include "tinyvdb_io.h"
 
+// Dense outputs must be allocated with matching dimensions. Stencils and
+// advection require positive finite input spacing; invalid input leaves outputs
+// unchanged. Same-handle in-place stencils/advection use scratch storage and
+// preserve the output on scratch allocation failure. Pointwise CSG/composites
+// support exact in-place buffers without allocation.
 // Dense vector grid (3-component)
 typedef struct {
   int nx, ny, nz;
@@ -90,6 +96,8 @@ void tvdb_advect_semi_lagrangian(const tvdb_dense_grid* field,
 // `clamp` (0/1) limits the MacCormack/BFECC correction to the trilinear-stencil
 // value range at the backtrace point, suppressing overshoot (recommended; the
 // RK schemes ignore it). `result` is pre-allocated, same shape as `field`.
+// `result` may alias `field` or `velocity`; if any scratch allocation fails,
+// `result` is left unchanged.
 typedef enum {
   TVDB_ADVECT_RK1 = 0,
   TVDB_ADVECT_RK2 = 1,
@@ -117,6 +125,25 @@ int tvdb_solve_poisson_d(const tvdb_dense_grid* rhs,
                          tvdb_dense_grid* x,
                          int max_iters,
                          double tolerance);
+
+// Legacy Poisson entry points delegate to these checked solves and return zero
+// on failure; use _ex to distinguish failure from an already-solved input.
+// Checked Poisson solves use edge-clamped boundaries, preserve the initial
+// solution mean, and reject an incompatible RHS (nonzero mean beyond rounding).
+// Invalid input, OOM, and numerical breakdown leave x unchanged. Budget
+// exhaustion returns TVDB_OK with converged=false and the best finite iterate.
+// _ex tolerance is relative for fp32 / fp64-internal, absolute for fp64 storage.
+// Reports refer to the projected RHS and the actual returned storage precision.
+typedef struct {
+  int iterations;
+  bool converged;
+  double initial_residual_norm;
+  double final_residual_norm;
+} tvdb_poisson_result_t;
+tvdb_status_t tvdb_solve_poisson_ex(const tvdb_dense_grid* rhs, tvdb_dense_grid* x,
+  int max_iters, float tolerance, tvdb_poisson_result_t* result, tvdb_error_t* err);
+tvdb_status_t tvdb_solve_poisson_d_ex(const tvdb_dense_grid* rhs, tvdb_dense_grid* x,
+  int max_iters, double tolerance, tvdb_poisson_result_t* result, tvdb_error_t* err);
 
 // Fast Sweeping: solve the Eikonal equation |∇φ|=1 on a dense grid to
 // redistance an SDF away from its zero-crossing band. Voxels with
@@ -171,7 +198,9 @@ void tvdb_csg_union_d(const tvdb_dense_grid_d* a, const tvdb_dense_grid_d* b, tv
 void tvdb_csg_intersection_d(const tvdb_dense_grid_d* a, const tvdb_dense_grid_d* b, tvdb_dense_grid_d* result);
 void tvdb_csg_difference_d(const tvdb_dense_grid_d* a, const tvdb_dense_grid_d* b, tvdb_dense_grid_d* result);
 
-// Measurement (zero-crossing 6-edge area; volume of `value < 0` half-space)
+// Measurement (zero-crossing 6-edge area; volume of `value < 0` half-space).
+// Like the fp32 versions, return 0 for an invalid grid, including a
+// non-positive or non-finite voxel_size.
 double tvdb_surface_area_d(const tvdb_dense_grid_d* grid);
 double tvdb_volume_d(const tvdb_dense_grid_d* grid);
 
@@ -186,6 +215,9 @@ int tvdb_solve_poisson_dd(const tvdb_dense_grid_d* rhs,
                           tvdb_dense_grid_d* x,
                           int max_iters,
                           double tolerance);
+
+tvdb_status_t tvdb_solve_poisson_dd_ex(const tvdb_dense_grid_d* rhs, tvdb_dense_grid_d* x,
+  int max_iters, double tolerance, tvdb_poisson_result_t* result, tvdb_error_t* err);
 
 #ifdef __cplusplus
 }

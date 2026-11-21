@@ -109,7 +109,7 @@ file(GLOB TINYVDB_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.c
     ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.cc
 )
-list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_gpu\\.c$")
+list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_gpu(_compute)?\\.c$")
 list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_io\\.cc$")
 
 add_library(tinyvdb STATIC ${TINYVDB_SOURCES})

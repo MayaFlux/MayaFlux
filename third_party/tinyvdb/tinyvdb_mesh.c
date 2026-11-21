@@ -1,5 +1,9 @@
 #include "tinyvdb_mesh.h"
 #include "tvdb_memory.h"
+#include "tinyvdb_mesh_conversion.h"
+#include "tinyvdb_checked.h"
+#include <float.h>
+#include <stdatomic.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -97,116 +101,6 @@ static uint64_t voxel_idx_c(int nx, int ny, int ix, int iy, int iz) {
     return (uint64_t)ix + (uint64_t)iy * nx + (uint64_t)iz * nx * ny;
 }
 
-static uint64_t edge_key_c(uint64_t v0, uint64_t v1) {
-    if (v0 > v1) { uint64_t temp = v0; v0 = v1; v1 = temp; }
-    return (v0 << 32) | v1;
-}
-
-// Edge Cache — open-addressing hash map keyed on the 64-bit edge key, mapping
-// each shared cube edge to its (deduplicated) output-vertex index. Replaces a
-// former linear scan that made meshing O(n^2); lookups are now O(1) amortized.
-//
-// edge_key_c packs two *distinct* voxel indices as (min << 32) | max with the
-// larger in the low word, so a valid edge key is always >= 1 — we can use
-// key == 0 as the empty-slot sentinel.
-typedef struct {
-    uint64_t key;
-    uint32_t value;
-} edge_cache_entry_t;
-
-typedef struct {
-    edge_cache_entry_t* entries;
-    size_t count;
-    size_t capacity;   // power of two
-    size_t mask;       // capacity - 1
-} edge_cache_t;
-
-static inline uint64_t edge_hash_u64(uint64_t x) {
-    x ^= x >> 33; x *= 0xff51afd7ed558ccdULL;
-    x ^= x >> 33; x *= 0xc4ceb9fe1a85ec53ULL;
-    x ^= x >> 33;
-    return x;
-}
-
-static void edge_cache_init(edge_cache_t* cache, tvdb_arena_allocator_t* arena) {
-    cache->count = 0;
-    cache->capacity = 1024;
-    cache->mask = cache->capacity - 1;
-    cache->entries = (edge_cache_entry_t*)arena_alloc_wrapper(arena, cache->capacity * sizeof(edge_cache_entry_t));
-    if (cache->entries) memset(cache->entries, 0, cache->capacity * sizeof(edge_cache_entry_t));
-}
-
-// Double the table and rehash all live entries. Returns 0 on alloc failure.
-static int edge_cache_grow(edge_cache_t* cache, tvdb_arena_allocator_t* arena) {
-    size_t new_cap = cache->capacity ? cache->capacity * 2 : 1024;
-    size_t new_mask = new_cap - 1;
-    edge_cache_entry_t* ne = (edge_cache_entry_t*)arena_alloc_wrapper(arena, new_cap * sizeof(edge_cache_entry_t));
-    if (!ne) return 0;
-    memset(ne, 0, new_cap * sizeof(edge_cache_entry_t));
-    for (size_t k = 0; k < cache->capacity; ++k) {
-        uint64_t key = cache->entries[k].key;
-        if (key == 0) continue;
-        size_t i = edge_hash_u64(key) & new_mask;
-        while (ne[i].key != 0) i = (i + 1) & new_mask;
-        ne[i] = cache->entries[k];
-    }
-    if (!arena && cache->entries) free(cache->entries);
-    cache->entries = ne;
-    cache->capacity = new_cap;
-    cache->mask = new_mask;
-    return 1;
-}
-
-// Vertex Interpolation
-static tvdb_vec3f vertex_interp_c(float iso, tvdb_vec3f p1, tvdb_vec3f p2, float v1, float v2) {
-  if (fabsf(v1 - v2) < 1e-10f) return p1;
-  float mu = (iso - v1) / (v2 - v1);
-  return (tvdb_vec3f){p1.x + mu * (p2.x - p1.x), p1.y + mu * (p2.y - p1.y), p1.z + mu * (p2.z - p1.z)};
-}
-
-// C-compatible Edge Vertex Creation
-static uint32_t get_or_create_edge_vertex_c(edge_cache_t* cache, tvdb_arena_allocator_t* arena,
-                                            const tvdb_dense_grid* grid, float isovalue,
-                                            tvdb_triangle_mesh* mesh,
-                                            int x0, int y0, int z0, int x1, int y1, int z1) {
-    uint64_t v0_flat = voxel_idx_c(grid->nx, grid->ny, x0, y0, z0);
-    uint64_t v1_flat = voxel_idx_c(grid->nx, grid->ny, x1, y1, z1);
-    uint64_t edge_key = edge_key_c(v0_flat, v1_flat);
-
-    // Keep the load factor under ~0.7. Grow before probing so the slot we
-    // settle on below stays valid.
-    if ((cache->count + 1) * 10 >= cache->capacity * 7)
-        if (!edge_cache_grow(cache, arena)) return 0;
-
-    size_t i = edge_hash_u64(edge_key) & cache->mask;
-    while (cache->entries[i].key != 0) {
-        if (cache->entries[i].key == edge_key) return cache->entries[i].value;
-        i = (i + 1) & cache->mask;
-    }
-
-    // Not cached: interpolate the new vertex, append it, and record the slot.
-    tvdb_vec3f p0 = voxel_pos_c(grid, x0, y0, z0);
-    tvdb_vec3f p1 = voxel_pos_c(grid, x1, y1, z1);
-    tvdb_vec3f p = vertex_interp_c(isovalue, p0, p1, grid->data[v0_flat], grid->data[v1_flat]);
-
-    uint32_t idx = (uint32_t)mesh->vertex_count;
-    if (mesh->vertex_count == mesh->vertex_capacity) {
-        size_t new_cap = mesh->vertex_capacity ? mesh->vertex_capacity * 2 : 64;
-        tvdb_vec3f* new_verts = (tvdb_vec3f*)arena_alloc_wrapper(arena, new_cap * sizeof(tvdb_vec3f));
-        if (!new_verts) return 0;
-        if (mesh->vertices) memcpy(new_verts, mesh->vertices, mesh->vertex_count * sizeof(tvdb_vec3f));
-        if (!arena && mesh->vertices) free(mesh->vertices);
-        mesh->vertices = new_verts;
-        mesh->vertex_capacity = new_cap;
-    }
-    mesh->vertices[mesh->vertex_count++] = p;
-
-    cache->entries[i].key = edge_key;
-    cache->entries[i].value = idx;
-    cache->count++;
-    return idx;
-}
-
 // -------------------------------------------------------------------------
 // SDF -> mesh (marching cubes)
 // -------------------------------------------------------------------------
@@ -224,107 +118,10 @@ static const int MC_EDGE_VERTS[12][2] = {
     {0,4},{1,5},{2,6},{3,7}
 };
 
-static bool ensure_mesh_capacity(tvdb_triangle_mesh* mesh,
-                                 tvdb_arena_allocator_t* arena,
-                                 size_t need_verts, size_t need_faces) {
-    if (mesh->vertex_capacity < need_verts) {
-        size_t cap = mesh->vertex_capacity ? mesh->vertex_capacity : 64;
-        while (cap < need_verts) cap *= 2;
-        tvdb_vec3f* nv = (tvdb_vec3f*)arena_alloc_wrapper(arena, cap * sizeof(tvdb_vec3f));
-        if (!nv) return false;
-        if (mesh->vertices) memcpy(nv, mesh->vertices, mesh->vertex_count * sizeof(tvdb_vec3f));
-        // arena-backed memory is not freed; for malloc fall back, leak the
-        // old buffer if arena==NULL (callers using malloc should size up-front).
-        if (!arena && mesh->vertices) free(mesh->vertices);
-        mesh->vertices = nv;
-        mesh->vertex_capacity = cap;
-    }
-    if (mesh->face_capacity < need_faces) {
-        size_t cap = mesh->face_capacity ? mesh->face_capacity : 64;
-        while (cap < need_faces) cap *= 2;
-        tvdb_triangle* nf = (tvdb_triangle*)arena_alloc_wrapper(arena, cap * sizeof(tvdb_triangle));
-        if (!nf) return false;
-        if (mesh->faces) memcpy(nf, mesh->faces, mesh->face_count * sizeof(tvdb_triangle));
-        if (!arena && mesh->faces) free(mesh->faces);
-        mesh->faces = nf;
-        mesh->face_capacity = cap;
-    }
-    return true;
-}
-
 const int* tvdb_mc_edge_table(void) { return MC_EDGE_TABLE; }
 const int* tvdb_mc_tri_table_flat(void) { return (const int*)MC_TRI_TABLE; }
 
-bool tvdb_sdf_to_mesh(const tvdb_dense_grid* grid, float isovalue,
-                      tvdb_triangle_mesh* mesh, tvdb_arena_allocator_t* arena) {
-    if (!grid || !grid->data || !mesh) return false;
-    if (grid->nx < 2 || grid->ny < 2 || grid->nz < 2) return false;
-
-    // The cache is keyed by edge-key (sorted pair of voxel flat indices); it
-    // dedupes vertices that lie on shared cube edges.
-    edge_cache_t cache;
-    edge_cache_init(&cache, arena);
-
-    // Pre-size the mesh buffers conservatively to avoid many reallocs.
-    size_t init_verts = (size_t)grid->nx * grid->ny;
-    size_t init_faces = init_verts * 2;
-    if (mesh->vertex_capacity == 0) {
-        if (!ensure_mesh_capacity(mesh, arena, init_verts, init_faces)) return false;
-    }
-
-    const int nx = grid->nx, ny = grid->ny, nz = grid->nz;
-    for (int z = 0; z < nz - 1; ++z) {
-      for (int y = 0; y < ny - 1; ++y) {
-        for (int x = 0; x < nx - 1; ++x) {
-            float vals[8];
-            int corner_xyz[8][3];
-            int cube_idx = 0;
-            for (int i = 0; i < 8; ++i) {
-                int cx = x + MC_CORNER_OFFSETS[i][0];
-                int cy = y + MC_CORNER_OFFSETS[i][1];
-                int cz = z + MC_CORNER_OFFSETS[i][2];
-                corner_xyz[i][0] = cx;
-                corner_xyz[i][1] = cy;
-                corner_xyz[i][2] = cz;
-                vals[i] = grid->data[voxel_idx_c(nx, ny, cx, cy, cz)];
-                if (vals[i] < isovalue) cube_idx |= (1 << i);
-            }
-            int edges = MC_EDGE_TABLE[cube_idx];
-            if (edges == 0) continue;
-
-            // Compute (or fetch from cache) one vertex per active edge.
-            uint32_t edge_vert_idx[12] = {0};
-            for (int e = 0; e < 12; ++e) {
-                if (!(edges & (1 << e))) continue;
-                int a = MC_EDGE_VERTS[e][0];
-                int b = MC_EDGE_VERTS[e][1];
-                edge_vert_idx[e] = get_or_create_edge_vertex_c(
-                    &cache, arena, grid, isovalue, mesh,
-                    corner_xyz[a][0], corner_xyz[a][1], corner_xyz[a][2],
-                    corner_xyz[b][0], corner_xyz[b][1], corner_xyz[b][2]);
-            }
-
-            // Emit triangles for this cube.
-            const int* tri = MC_TRI_TABLE[cube_idx];
-            for (int i = 0; i < 16 && tri[i] != -1; i += 3) {
-                if (tri[i+1] == -1 || tri[i+2] == -1) break;
-                if (mesh->face_count == mesh->face_capacity) {
-                    if (!ensure_mesh_capacity(mesh, arena,
-                            mesh->vertex_capacity,
-                            mesh->face_capacity ? mesh->face_capacity * 2 : 64))
-                        return false;
-                }
-                tvdb_triangle t;
-                t.v0 = edge_vert_idx[tri[i]];
-                t.v1 = edge_vert_idx[tri[i+1]];
-                t.v2 = edge_vert_idx[tri[i+2]];
-                mesh->faces[mesh->face_count++] = t;
-            }
-        }
-      }
-    }
-    return true;
-}
+static tvdb_status_t mesh_validate(const tvdb_triangle_mesh *, tvdb_error_t *);
 
 // -------------------------------------------------------------------------
 // Mesh -> SDF (closest-triangle, signed via face normal)
@@ -337,40 +134,129 @@ bool tvdb_sdf_to_mesh(const tvdb_dense_grid* grid, float isovalue,
 //
 // Distance is clamped to ±band_width.
 
+/* Double fallback for degenerate edges and overflow in float predicates. */
+static double mesh_dot3d(const double *a, const double *b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+static tvdb_vec3f mesh_triangle_double(tvdb_vec3f p, tvdb_vec3f a, tvdb_vec3f b, tvdb_vec3f c) {
+    double pa[3] = {(double)p.x - a.x, (double)p.y - a.y, (double)p.z - a.z};
+    double ab[3] = {(double)b.x - a.x, (double)b.y - a.y, (double)b.z - a.z},
+           ac[3] = {(double)c.x - a.x, (double)c.y - a.y, (double)c.z - a.z};
+    double normal[3] = {ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2],
+                        ab[0] * ac[1] - ab[1] * ac[0]};
+    if (!mesh_dot3d(normal, normal)) {
+        const tvdb_vec3f v[3] = {a, b, c};
+        double best = INFINITY;
+        tvdb_vec3f result = a;
+        for (int e = 0; e < 3; ++e) {
+            tvdb_vec3f x = v[e], y = v[(e + 1) % 3];
+            double d[3] = {(double)y.x - x.x, (double)y.y - x.y, (double)y.z - x.z};
+            double q[3] = {(double)p.x - x.x, (double)p.y - x.y, (double)p.z - x.z},
+                   length = mesh_dot3d(d, d);
+            double t = length ? mesh_dot3d(q, d) / length : 0;
+            if (t < 0)
+                t = 0;
+            if (t > 1)
+                t = 1;
+            double r[3] = {x.x + t * d[0], x.y + t * d[1], x.z + t * d[2]};
+            double delta[3] = {(double)p.x - r[0], (double)p.y - r[1], (double)p.z - r[2]},
+                   distance = mesh_dot3d(delta, delta);
+            if (distance < best) {
+                best = distance;
+                result = (tvdb_vec3f){(float)r[0], (float)r[1], (float)r[2]};
+            }
+        }
+        return result;
+    }
+    double d1 = mesh_dot3d(ab, pa), d2 = mesh_dot3d(ac, pa);
+    if (d1 <= 0 && d2 <= 0)
+        return a;
+    double pb[3] = {(double)p.x - b.x, (double)p.y - b.y, (double)p.z - b.z};
+    double d3 = mesh_dot3d(ab, pb), d4 = mesh_dot3d(ac, pb);
+    if (d3 >= 0 && d4 <= d3)
+        return b;
+    double vc = d1 * d4 - d3 * d2;
+    if (vc <= 0 && d1 >= 0 && d3 <= 0) {
+        double t = d1 / (d1 - d3);
+        return (tvdb_vec3f){(float)(a.x + t * ab[0]), (float)(a.y + t * ab[1]),
+                            (float)(a.z + t * ab[2])};
+    }
+    double pc[3] = {(double)p.x - c.x, (double)p.y - c.y, (double)p.z - c.z};
+    double d5 = mesh_dot3d(ab, pc), d6 = mesh_dot3d(ac, pc);
+    if (d6 >= 0 && d5 <= d6)
+        return c;
+    double vb = d5 * d2 - d1 * d6;
+    if (vb <= 0 && d2 >= 0 && d6 <= 0) {
+        double t = d2 / (d2 - d6);
+        return (tvdb_vec3f){(float)(a.x + t * ac[0]), (float)(a.y + t * ac[1]),
+                            (float)(a.z + t * ac[2])};
+    }
+    double va = d3 * d6 - d5 * d4;
+    if (va <= 0 && d4 - d3 >= 0 && d5 - d6 >= 0) {
+        double t = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+        return (tvdb_vec3f){(float)(b.x + t * ((double)c.x - b.x)),
+                            (float)(b.y + t * ((double)c.y - b.y)),
+                            (float)(b.z + t * ((double)c.z - b.z))};
+    }
+    double v = vb / (va + vb + vc), w = vc / (va + vb + vc);
+    return (tvdb_vec3f){(float)(a.x + v * ab[0] + w * ac[0]), (float)(a.y + v * ab[1] + w * ac[1]),
+                        (float)(a.z + v * ab[2] + w * ac[2])};
+}
 static tvdb_vec3f tri_closest_point_c(tvdb_vec3f p, tvdb_vec3f a, tvdb_vec3f b, tvdb_vec3f c) {
     // Same case analysis as point_triangle_dist_sq_c, but returning the point.
     tvdb_vec3f ab = sub_c(b, a), ac = sub_c(c, a), ap = sub_c(p, a);
     float d1 = dot_c(ab, ap), d2 = dot_c(ac, ap);
-    if (d1 <= 0.0f && d2 <= 0.0f) return a;
+    if (!isfinite(d1) || !isfinite(d2))
+        return mesh_triangle_double(p, a, b, c);
+    if (d1 <= 0.0f && d2 <= 0.0f)
+        return a;
     tvdb_vec3f bp = sub_c(p, b);
     float d3 = dot_c(ab, bp), d4 = dot_c(ac, bp);
-    if (d3 >= 0.0f && d4 <= d3) return b;
+    if (!isfinite(d3) || !isfinite(d4))
+        return mesh_triangle_double(p, a, b, c);
+    if (d3 >= 0.0f && d4 <= d3)
+        return b;
     float vc = d1 * d4 - d3 * d2;
+    if (!isfinite(vc))
+        return mesh_triangle_double(p, a, b, c);
     if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+        if (d1 == d3)
+            return mesh_triangle_double(p, a, b, c);
         float v = d1 / (d1 - d3);
         return add_c(a, mul_c(ab, v));
     }
     tvdb_vec3f cp = sub_c(p, c);
     float d5 = dot_c(ab, cp), d6 = dot_c(ac, cp);
-    if (d6 >= 0.0f && d5 <= d6) return c;
+    if (!isfinite(d5) || !isfinite(d6))
+        return mesh_triangle_double(p, a, b, c);
+    if (d6 >= 0.0f && d5 <= d6)
+        return c;
     float vb = d5 * d2 - d1 * d6;
+    if (!isfinite(vb))
+        return mesh_triangle_double(p, a, b, c);
     if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+        if (d2 == d6)
+            return mesh_triangle_double(p, a, b, c);
         float w = d2 / (d2 - d6);
         return add_c(a, mul_c(ac, w));
     }
     float va = d3 * d6 - d5 * d4;
+    if (!isfinite(va))
+        return mesh_triangle_double(p, a, b, c);
     if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+        if ((d4 - d3) + (d5 - d6) == 0)
+            return mesh_triangle_double(p, a, b, c);
         float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
         return add_c(b, mul_c(sub_c(c, b), w));
     }
+    if (!isfinite(va + vb + vc) || va + vb + vc <= 0)
+        return mesh_triangle_double(p, a, b, c);
     float denom = 1.0f / (va + vb + vc);
     return add_c(add_c(a, mul_c(ab, vb * denom)), mul_c(ac, vc * denom));
 }
 
 static tvdb_vec3f cross_c(tvdb_vec3f a, tvdb_vec3f b) {
-    return (tvdb_vec3f){a.y * b.z - a.z * b.y,
-                        a.z * b.x - a.x * b.z,
-                        a.x * b.y - a.y * b.x};
+    return (tvdb_vec3f){a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
 }
 
 static tvdb_vec3f normalize_c(tvdb_vec3f v) {
@@ -379,79 +265,410 @@ static tvdb_vec3f normalize_c(tvdb_vec3f v) {
     return mul_c(v, 1.0f / L);
 }
 
-bool tvdb_mesh_to_sdf(const tvdb_triangle_mesh* mesh, float voxel_size,
-                      float band_width, tvdb_dense_grid* grid,
-                      tvdb_arena_allocator_t* arena) {
-    if (!mesh || !grid || mesh->vertex_count == 0 || mesh->face_count == 0) return false;
-    if (voxel_size <= 0.0f || band_width <= 0.0f) return false;
+// -------------------------------------------------------------------------
+// BVH over mesh triangles
+// -------------------------------------------------------------------------
+//
+// tvdb_mesh_to_sdf evaluates every voxel against every triangle, which is
+// O(voxels * faces): a 64^3 grid over a marching-cubes sphere took 63
+// seconds. A bounding volume hierarchy over the triangle set makes the query
+// near-O(log n) on average and is the single largest win available here.
+//
+// Two properties are preserved exactly so results stay bit-identical:
+//
+//  * The brute-force loop accepts a triangle only on a *strictly* smaller
+//    squared distance (`dsq < best_dsq`), so when two faces are exactly
+//    equidistant the lower face index wins. The traversal below uses the same
+//    strict test plus an explicit tie-break on the lower face index, so the
+//    chosen triangle -- and hence both the distance and the sign -- matches
+//    the brute-force result exactly.
+//  * Node bounds are only ever used to *prune*. A node is skipped solely when
+//    its lower bound already exceeds the current best, so a loose bound can
+//    cost time but can never change the answer.
 
-    // World-space bounding box of the mesh, padded by band_width.
-    tvdb_vec3f bb_min = mesh->vertices[0], bb_max = mesh->vertices[0];
-    for (size_t i = 1; i < mesh->vertex_count; ++i) {
-        tvdb_vec3f v = mesh->vertices[i];
-        if (v.x < bb_min.x) bb_min.x = v.x; if (v.x > bb_max.x) bb_max.x = v.x;
-        if (v.y < bb_min.y) bb_min.y = v.y; if (v.y > bb_max.y) bb_max.y = v.y;
-        if (v.z < bb_min.z) bb_min.z = v.z; if (v.z > bb_max.z) bb_max.z = v.z;
+/* The node type is public (tinyvdb_mesh.h) because the GPU backend uploads these
+ * verbatim and walks them in a shader. One definition, so the two cannot drift. */
+_Static_assert(sizeof(tvdb_mesh_bvh_node_t) == 40,
+               "BVH node must stay 40 bytes: it is uploaded as a std430 struct");
+typedef tvdb_mesh_bvh_node_t tvdb_bvh_node_t;
+
+typedef struct {
+    int32_t *prim;              /* face indices, partitioned by the build */
+    int32_t prim_count;
+    tvdb_bvh_node_t *nodes;
+    int32_t node_count;
+    int32_t node_capacity;
+    int32_t max_depth;
+    /* Six floats per face, interleaved as {bmin.x,bmin.y,bmin.z,bmax.x,bmax.y,
+       bmax.z}. Kept in one array rather than two so a face's box is 24 contiguous
+       bytes and normally one cache line: the traversal reads it for every leaf
+       triangle it tests, and the split layout cost two lines per face. */
+    float *tri_box;
+} tvdb_bvh_t;
+
+struct tvdb_mesh_bvh { tvdb_bvh_t b; };
+
+static void tvdb_bvh_free(tvdb_bvh_t *b) {
+    if (!b) return;
+    free(b->prim);
+    free(b->nodes);
+    free(b->tri_box);
+    memset(b, 0, sizeof(*b));
+}
+
+static int32_t tvdb_bvh_new_node(tvdb_bvh_t *b) {
+    if (b->node_count >= b->node_capacity) {
+        if (b->node_capacity == INT32_MAX) return -1;
+        int32_t new_cap = !b->node_capacity ? 256 : b->node_capacity > INT32_MAX/2 ? INT32_MAX : b->node_capacity*2;
+        if ((size_t)new_cap > SIZE_MAX/sizeof(tvdb_bvh_node_t)) return -1;
+        tvdb_bvh_node_t *n = (tvdb_bvh_node_t *)realloc(
+            b->nodes, (size_t)new_cap * sizeof(*n));
+        if (!n) return -1;
+        b->nodes = n;
+        b->node_capacity = new_cap;
     }
-    bb_min.x -= band_width; bb_min.y -= band_width; bb_min.z -= band_width;
-    bb_max.x += band_width; bb_max.y += band_width; bb_max.z += band_width;
+    int32_t idx = b->node_count++;
+    tvdb_bvh_node_t *nd = &b->nodes[idx];
+    nd->left = -1; nd->right = -1; nd->start = 0; nd->count = 0;
+    return idx;
+}
 
-    int nx = (int)ceilf((bb_max.x - bb_min.x) / voxel_size);
-    int ny = (int)ceilf((bb_max.y - bb_min.y) / voxel_size);
-    int nz = (int)ceilf((bb_max.z - bb_min.z) / voxel_size);
-    if (nx < 1) nx = 1; if (ny < 1) ny = 1; if (nz < 1) nz = 1;
-    if (nx > TVDB_MAX_GRID_DIM || ny > TVDB_MAX_GRID_DIM || nz > TVDB_MAX_GRID_DIM)
-        return false;
+static inline float tvdb_aabb_dist_sq(const float *bmin, const float *bmax,
+                                     const tvdb_vec3f *p) {
+    const float v[3] = { p->x, p->y, p->z };
+    float d2 = 0.0f;
+    for (int a = 0; a < 3; ++a) {
+        if (v[a] < bmin[a]) { float t = bmin[a] - v[a]; d2 += t * t; }
+        else if (v[a] > bmax[a]) { float t = v[a] - bmax[a]; d2 += t * t; }
+    }
+    return d2;
+}
 
-    grid->nx = nx; grid->ny = ny; grid->nz = nz;
-    grid->voxel_size = voxel_size;
-    grid->ox = bb_min.x; grid->oy = bb_min.y; grid->oz = bb_min.z;
-    size_t total = (size_t)nx * ny * nz;
-    grid->data = (float*)arena_alloc_wrapper(arena, total * sizeof(float));
-    if (!grid->data) return false;
+/* Split [lo,hi) of b->prim at the median centroid on the widest axis.
+ *
+ * A binned surface-area heuristic and a Morton-ordered midpoint split were
+ * both implemented and measured; neither beat this. SAH scored planes against
+ * triangle AABB centroids, and for a level-set shell every centroid sits on the
+ * same thin surface, so the bins carry no information. Morton ordering groups
+ * space well but its balanced midpoint split produces long, thin boxes across
+ * the shell. The median split wins because the resulting node boxes stay
+ * compact even though the ordering ignores that structure.
+ *
+ * Returns a split point strictly inside the range. */
+static int32_t tvdb_bvh_split(tvdb_bvh_t *b, int32_t lo, int32_t hi) {
+    float cmin[3] = { INFINITY, INFINITY, INFINITY };
+    float cmax[3] = { -INFINITY, -INFINITY, -INFINITY };
+    for (int32_t i = lo; i < hi; ++i) {
+        int32_t f = b->prim[i];
+        for (int a = 0; a < 3; ++a) {
+            float c = 0.5f * (b->tri_box[(size_t)f * 6 + a] +
+                              b->tri_box[(size_t)f * 6 + 3 + a]);
+            if (c < cmin[a]) cmin[a] = c;
+            if (c > cmax[a]) cmax[a] = c;
+        }
+    }
+    int axis = 0;
+    float widest = cmax[0] - cmin[0];
+    for (int a = 1; a < 3; ++a) {
+        float e = cmax[a] - cmin[a];
+        if (e > widest) { widest = e; axis = a; }
+    }
+    if (!(widest > 0.0f)) return lo + 1;   /* all centroids coincide */
 
-    // Pre-compute triangle data for speed.
-    size_t nf = mesh->face_count;
-    tvdb_vec3f* tri_n = (tvdb_vec3f*)arena_alloc_wrapper(arena, nf * sizeof(tvdb_vec3f));
-    if (!tri_n) return false;
+    int32_t mid = lo + (hi - lo) / 2;
+    int32_t mf = b->prim[mid];
+    float pivot = 0.5f * (b->tri_box[(size_t)mf * 6 + axis] +
+                          b->tri_box[(size_t)mf * 6 + 3 + axis]);
+    int32_t i = lo, j = hi - 1;
+    for (;;) {
+        while (i < hi) {
+            int32_t f = b->prim[i];
+            float c = 0.5f * (b->tri_box[(size_t)f * 6 + axis] +
+                              b->tri_box[(size_t)f * 6 + 3 + axis]);
+            if (!(c < pivot)) break;
+            i++;
+        }
+        while (j > lo) {
+            int32_t f = b->prim[j];
+            float c = 0.5f * (b->tri_box[(size_t)f * 6 + axis] +
+                              b->tri_box[(size_t)f * 6 + 3 + axis]);
+            if (!(c > pivot)) break;
+            j--;
+        }
+        if (i >= j) break;
+        int32_t t = b->prim[i]; b->prim[i] = b->prim[j]; b->prim[j] = t;
+        i++; j--;
+    }
+    int32_t split = i;
+    if (split <= lo) split = lo + 1;
+    if (split >= hi) split = hi - 1;
+    return split;
+}
+
+/* Recursively build a node covering [lo,hi). Returns its index, or -1 on OOM.
+ * Node indices are stable because the array only grows and existing entries
+ * are never moved. */
+static int32_t tvdb_bvh_build(tvdb_bvh_t *b, int32_t lo, int32_t hi, int depth) {
+    int32_t self = tvdb_bvh_new_node(b);
+    if (self < 0) return -1;
+
+    float nmin[3] = { INFINITY, INFINITY, INFINITY };
+    float nmax[3] = { -INFINITY, -INFINITY, -INFINITY };
+    for (int32_t i = lo; i < hi; ++i) {
+        int32_t f = b->prim[i];
+        for (int a = 0; a < 3; ++a) {
+            float l0 = b->tri_box[(size_t)f * 6 + a];
+            float h0 = b->tri_box[(size_t)f * 6 + 3 + a];
+            if (l0 < nmin[a]) nmin[a] = l0;
+            if (h0 > nmax[a]) nmax[a] = h0;
+        }
+    }
+    for (int a = 0; a < 3; ++a) {
+        b->nodes[self].bmin[a] = nmin[a];
+        b->nodes[self].bmax[a] = nmax[a];
+    }
+
+    int32_t n = hi - lo;
+    /* Small leaves, or exhausted depth, become leaves. The depth cap also
+     * bounds the traversal stack in tvdb_bvh_closest to 64+1 entries. */
+    if (n <= 4 || depth >= 64) {
+        b->nodes[self].start = lo;
+        b->nodes[self].count = n;
+        if (depth > b->max_depth) b->max_depth = depth;
+        return self;
+    }
+
+    int32_t split = tvdb_bvh_split(b, lo, hi);
+    int32_t l = tvdb_bvh_build(b, lo, split, depth + 1);
+    if (l < 0) return -1;
+    int32_t r = tvdb_bvh_build(b, split, hi, depth + 1);
+    if (r < 0) return -1;
+    b->nodes[self].left = l;
+    b->nodes[self].right = r;
+    return self;
+}
+
+/* Build the hierarchy over all `nf` faces of `mesh`. Returns 0 on success. */
+static int tvdb_bvh_init(tvdb_bvh_t *b, const tvdb_triangle_mesh *mesh, size_t nf) {
+    memset(b, 0, sizeof(*b));
+    if (nf == 0) return -1;
+    if (nf > (size_t)INT32_MAX || nf > SIZE_MAX/(6*sizeof(float))) return -1;
+    b->prim_count = (int32_t)nf;
+
+    b->prim = (int32_t *)malloc(nf * sizeof(int32_t));
+    b->tri_box = (float *)malloc(nf * 6 * sizeof(float));
+    if (!b->prim || !b->tri_box) { tvdb_bvh_free(b); return -1; }
+
     for (size_t f = 0; f < nf; ++f) {
-        tvdb_vec3f a = mesh->vertices[mesh->faces[f].v0];
-        tvdb_vec3f b = mesh->vertices[mesh->faces[f].v1];
-        tvdb_vec3f c = mesh->vertices[mesh->faces[f].v2];
-        tri_n[f] = normalize_c(cross_c(sub_c(b, a), sub_c(c, a)));
+        b->prim[f] = (int32_t)f;
+        const tvdb_triangle *face = &mesh->faces[f];
+        float lo[3], hi[3];
+        /* Derive the bounds from the three corners the distance routine will
+         * actually use, so a degenerate face (repeated index, NaN-free) still
+         * produces a well-defined box. */
+        const uint32_t vi[3] = { face->v0, face->v1, face->v2 };
+        for (int a = 0; a < 3; ++a) { lo[a] = INFINITY; hi[a] = -INFINITY; }
+        for (int c = 0; c < 3; ++c) {
+            const tvdb_vec3f *v = &mesh->vertices[vi[c]];
+            float xyz[3] = { v->x, v->y, v->z };
+            for (int a = 0; a < 3; ++a) {
+                if (xyz[a] < lo[a]) lo[a] = xyz[a];
+                if (xyz[a] > hi[a]) hi[a] = xyz[a];
+            }
+        }
+        for (int a = 0; a < 3; ++a) {
+            b->tri_box[f * 6 + a]     = lo[a];
+            b->tri_box[f * 6 + 3 + a] = hi[a];
+        }
     }
 
-    for (int z = 0; z < nz; ++z) {
-      for (int y = 0; y < ny; ++y) {
-        for (int x = 0; x < nx; ++x) {
-            tvdb_vec3f p = voxel_pos_c(grid, x, y, z);
-            float best_dsq = INFINITY;
-            tvdb_vec3f best_cp = {0, 0, 0};
-            tvdb_vec3f best_n  = {0, 0, 0};
-            for (size_t f = 0; f < nf; ++f) {
-                tvdb_vec3f a = mesh->vertices[mesh->faces[f].v0];
-                tvdb_vec3f b = mesh->vertices[mesh->faces[f].v1];
-                tvdb_vec3f c = mesh->vertices[mesh->faces[f].v2];
-                tvdb_vec3f cp = tri_closest_point_c(p, a, b, c);
+    int32_t root = tvdb_bvh_build(b, 0, (int32_t)nf, 0);
+    if (root < 0) { tvdb_bvh_free(b); return -1; }
+    return 0;
+}
+
+/* ---- public BVH accessors -------------------------------------------------
+ *
+ * Heap-wrapped so a caller can hold one for the lifetime of a GPU job and free
+ * it deterministically. CPU voxelization can retain the same acceleration
+ * in a tvdb_mesh_sdf_t workspace across repeated lattice generations. */
+bool tvdb_mesh_bvh_build(const tvdb_triangle_mesh* mesh, tvdb_mesh_bvh_t** out) {
+    if (!out) return false;
+    *out = NULL;
+    if (mesh_validate(mesh, NULL) != TVDB_OK) return false;
+    tvdb_mesh_bvh_t* h = (tvdb_mesh_bvh_t*)calloc(1, sizeof(*h));
+    if (!h) return false;
+    if (tvdb_bvh_init(&h->b, mesh, mesh->face_count) != 0) { free(h); return false; }
+    *out = h;
+    return true;
+}
+
+void tvdb_mesh_bvh_destroy(tvdb_mesh_bvh_t* h) {
+    if (!h) return;
+    tvdb_bvh_free(&h->b);
+    free(h);
+}
+
+int32_t     tvdb_mesh_bvh_node_count(const tvdb_mesh_bvh_t* h) { return h ? h->b.node_count : 0; }
+int32_t     tvdb_mesh_bvh_prim_count(const tvdb_mesh_bvh_t* h) { return h ? h->b.prim_count : 0; }
+int32_t     tvdb_mesh_bvh_max_depth(const tvdb_mesh_bvh_t* h) { return h ? h->b.max_depth : 0; }
+const tvdb_mesh_bvh_node_t* tvdb_mesh_bvh_nodes(const tvdb_mesh_bvh_t* h) { return h ? h->b.nodes : NULL; }
+const int32_t* tvdb_mesh_bvh_prims(const tvdb_mesh_bvh_t* h) { return h ? h->b.prim : NULL; }
+
+/* Closest face to `p`, by squared distance. On return `*out_cp` is the
+ * closest point and `*out_n` that face's normal, mirroring the brute-force
+ * loop's initialization exactly: if no face is ever accepted (which happens
+ * when every candidate distance is NaN, e.g. a mesh of zero-area triangles),
+ * both stay {0,0,0} and the caller produces the same signed value it always
+ * did. Recomputing the closest point from `best_face` would instead yield NaN
+ * and flip the sign at those voxels.
+ *
+ * `seed_dsq`/`seed_face` start the search from an already-known candidate; pass
+ * INFINITY / -1 for a cold search. `*out_face` receives the winning face so the
+ * caller can seed the next query with it.
+ *
+ * Seeding is exact, not a heuristic, and it is the *pair* that matters:
+ *   - Both pruning tests are strict `>`, so a candidate is dropped only when
+ *     something is provably farther than the current best. A tighter bound can
+ *     only prune more, never wrongly.
+ *   - The acceptance test is `dsq < best_dsq || (dsq == best_dsq && f < best_face)`,
+ *     i.e. the lowest face index wins an exact tie -- which is the rule the
+ *     brute-force loop applies. It is applied per candidate, not once at the end,
+ *     so starting from a different candidate yields the same winner.
+ * The one thing that must stay consistent is best_dsq, best_face and
+ * (best_cp, best_n): the caller derives the signed distance from best_n and the
+ * distance from best_dsq, so reusing the previous voxel's best_dsq with this
+ * voxel's geometry yields a wrong magnitude. The seed is therefore fully
+ * re-measured at this voxel's position and becomes a genuine candidate, exactly
+ * as if it had been examined first; a later face that beats it overwrites all four
+ * together. Since the acceptance rule is order-independent, examining the seed
+ * first changes nothing about the winner. */
+static float tvdb_bvh_closest(const tvdb_bvh_t *b,
+                              const tvdb_triangle_mesh *mesh,
+                              const tvdb_vec3f *tri_n,
+                              tvdb_vec3f p,
+                              float seed_dsq, int32_t seed_face,
+                              tvdb_vec3f *out_cp, tvdb_vec3f *out_n,
+                              int32_t *out_face) {
+    float best_dsq = seed_dsq;
+    int32_t best_face = seed_face;
+    tvdb_vec3f best_cp = { 0, 0, 0 };
+    tvdb_vec3f best_n  = { 0, 0, 0 };
+    /* Materialize the seed as a real candidate at *this* voxel's position, not
+     * just as a pruning bound. When the seed is in fact the winner -- the common
+     * case once a row has converged on one face -- nothing is ever accepted, so
+     * without this best_cp/best_n would stay {0,0,0} and the caller's sign (which
+     * comes from best_n) would flip. If a later face wins, the acceptance test
+     * overwrites all three. */
+    if (seed_face >= 0 && seed_face < (int32_t)b->prim_count) {
+        const tvdb_triangle *sf = &mesh->faces[seed_face];
+        best_cp = tri_closest_point_c(p, mesh->vertices[sf->v0],
+                                      mesh->vertices[sf->v1], mesh->vertices[sf->v2]);
+        best_n = tri_n[seed_face];
+        /* Re-measure the seed at *this* position. seed_dsq is the previous voxel's
+         * distance to this face, which is not an answer for this voxel: if the
+         * seed goes on to win -- the common case once a row has settled -- nothing
+         * else is ever accepted and a stale best_dsq would be returned as the
+         * voxel's distance. Recomputing is also the better pruning bound, since
+         * it is this voxel's true distance rather than a neighbour's. */
+        tvdb_vec3f sd = sub_c(p, best_cp);
+        best_dsq = dot_c(sd, sd);
+    }
+
+    /* Explicit stack of (node index, lower-bound distance).
+     *
+     * A binary DFS pops one node and pushes at most two, so the stack can
+     * never hold more than tree_depth + 1 entries. The builder caps depth at
+     * 64, so 128 is a comfortable margin and the `sp < 126` guards below are
+     * unreachable in practice -- but they are written to leave the traversal
+     * safe (never out of bounds) rather than to silently corrupt results. */
+    int32_t stack_node[128];
+    float  stack_d[128];
+    int sp = 0;
+
+    stack_node[sp] = 0;
+    stack_d[sp] = 0.0f;
+    sp++;
+
+    while (sp > 0) {
+        sp--;
+        int32_t ni = stack_node[sp];
+        float nd = stack_d[sp];
+        /* Prune only when the subtree provably cannot match the current best.
+         *
+         * The test must be strict `>`, not `>=`. The brute-force original keeps
+         * the *lowest* face index among exact ties, so a triangle sitting at
+         * exactly best_dsq can still improve the result by having a smaller
+         * index. Pruning on equality would silently drop those. (The bound is
+         * inclusive of the node's own surface, so equality is reachable.) */
+        if (nd > best_dsq) continue;
+        const tvdb_bvh_node_t *node = &b->nodes[ni];
+
+        if (node->left < 0) {
+            for (int32_t k = 0; k < node->count; ++k) {
+                int32_t f = b->prim[node->start + k];
+                /* Reject on the triangle's own box before touching the mesh.
+                 *
+                 * The closest point on a triangle is always inside the triangle's
+                 * AABB, so a box strictly farther than the current best cannot
+                 * improve the result. That replaces a ~50-flop closest-point
+                 * case analysis (plus three scattered vertex loads) with a 6-flop
+                 * squared-distance test, and the leaf triangles are the ones the
+                 * node-level pruning cannot help with -- a node box is the union
+                 * of its children, so a node the query is near often holds
+                 * triangles that are nowhere near it.
+                 *
+                 * Strict `>` for the same reason as the node test above: a
+                 * triangle at exactly best_dsq can still win the index tie-break. */
+                const float* tb = &b->tri_box[(size_t)f * 6];
+                if (tvdb_aabb_dist_sq(tb, tb + 3, &p) > best_dsq) continue;
+                const tvdb_triangle *face = &mesh->faces[f];
+                tvdb_vec3f a = mesh->vertices[face->v0];
+                tvdb_vec3f bv = mesh->vertices[face->v1];
+                tvdb_vec3f c = mesh->vertices[face->v2];
+                tvdb_vec3f cp = tri_closest_point_c(p, a, bv, c);
                 tvdb_vec3f d = sub_c(p, cp);
                 float dsq = dot_c(d, d);
-                if (dsq < best_dsq) {
+                /* Strict `<` mirrors the original loop; the index tie-break
+                 * reproduces "lowest face index wins" for exact ties. */
+                if (dsq < best_dsq || (dsq == best_dsq && f < best_face)) {
                     best_dsq = dsq;
+                    best_face = f;
                     best_cp = cp;
                     best_n = tri_n[f];
                 }
             }
-            float dist = sqrtf(best_dsq);
-            float s = dot_c(sub_c(p, best_cp), best_n) >= 0.0f ? 1.0f : -1.0f;
-            float v = s * dist;
-            if (v >  band_width) v =  band_width;
-            if (v < -band_width) v = -band_width;
-            grid->data[voxel_idx_c(nx, ny, x, y, z)] = v;
+        } else {
+            int32_t l = node->left, r = node->right;
+            float dl = tvdb_aabb_dist_sq(b->nodes[l].bmin, b->nodes[l].bmax, &p);
+            float dr = tvdb_aabb_dist_sq(b->nodes[r].bmin, b->nodes[r].bmax, &p);
+            /* Same inclusive test as the pop: an equidistant subtree may hold
+             * a lower-indexed triangle. Push the farther child first so the
+             * nearer one is examined next. */
+            if (dl <= dr) {
+                if (dr <= best_dsq && sp < 126) {
+                    stack_node[sp] = r; stack_d[sp] = dr; sp++;
+                }
+                if (dl <= best_dsq && sp < 126) {
+                    stack_node[sp] = l; stack_d[sp] = dl; sp++;
+                }
+            } else {
+                if (dl <= best_dsq && sp < 126) {
+                    stack_node[sp] = l; stack_d[sp] = dl; sp++;
+                }
+                if (dr <= best_dsq && sp < 126) {
+                    stack_node[sp] = r; stack_d[sp] = dr; sp++;
+                }
+            }
         }
-      }
     }
-    return true;
+    *out_cp = best_cp;
+    *out_n = best_n;
+    if (out_face) *out_face = best_face;
+    return best_dsq;
 }
+
+#include "tinyvdb_mesh_conversion.inl"
 
 // -------------------------------------------------------------------------
 // Mesh -> SDF -> Mesh (remeshing for manifold-ness)
@@ -460,14 +677,17 @@ bool tvdb_mesh_to_sdf(const tvdb_triangle_mesh* mesh, float voxel_size,
 bool tvdb_make_manifold(const tvdb_triangle_mesh* input, double resolution,
                         double isovalue, tvdb_triangle_mesh* output,
                         tvdb_arena_allocator_t* arena) {
-    if (!input || !output || resolution <= 0.0) return false;
+    if (!input || !output || !isfinite(resolution) || resolution <= 0.0 ||
+        resolution > FLT_MAX / 4.0 || (float)resolution <= 0 ||
+        !isfinite(isovalue) || fabs(isovalue) > FLT_MAX) return false;
 
     tvdb_dense_grid grid;
     grid.data = NULL;
     float band = (float)(resolution * 4.0);
-    if (!tvdb_mesh_to_sdf(input, (float)resolution, band, &grid, arena)) return false;
-    bool ok = tvdb_sdf_to_mesh(&grid, (float)isovalue, output, arena);
-    if (!arena) tvdb_dense_grid_free(&grid);
+    /* The intermediate lattice is temporary, including for arena outputs. */
+    if (!tvdb_mesh_to_sdf(input, (float)resolution, band, &grid, NULL)) return false;
+    bool ok = tvdb_sdf_to_mesh_ex(&grid, (float)isovalue, TVDB_MESH_WINDING_OUTWARD, NULL, output, arena, NULL) == TVDB_OK;
+    tvdb_dense_grid_free(&grid);
     return ok;
 }
 

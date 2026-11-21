@@ -8,15 +8,19 @@
 // intersects the AABB [0,nx)x[0,ny)x[0,nz), and if so writes the entry/exit
 // t values clamped to [tmin, tmax].
 static bool tvdb_ray_voxel_aabb(const tvdb_ray* ray, const tvdb_dense_grid* g,
-                                float* t_enter, float* t_exit) {
+                                float* t_enter, float* t_exit,
+                                float vox_origin[3], float vox_dir[3]) {
   // Convert ray origin and dir to voxel-index space.
   float vs = g->voxel_size;
-  float ox = (ray->origin.x - g->ox) / vs;
-  float oy = (ray->origin.y - g->oy) / vs;
-  float oz = (ray->origin.z - g->oz) / vs;
-  float dx = ray->dir.x / vs;
-  float dy = ray->dir.y / vs;
-  float dz = ray->dir.z / vs;
+  float inv_vs = 1.0f / vs;
+  float ox = (ray->origin.x - g->ox) * inv_vs;
+  float oy = (ray->origin.y - g->oy) * inv_vs;
+  float oz = (ray->origin.z - g->oz) * inv_vs;
+  float dx = ray->dir.x * inv_vs;
+  float dy = ray->dir.y * inv_vs;
+  float dz = ray->dir.z * inv_vs;
+  if (vox_origin) { vox_origin[0] = ox; vox_origin[1] = oy; vox_origin[2] = oz; }
+  if (vox_dir) { vox_dir[0] = dx; vox_dir[1] = dy; vox_dir[2] = dz; }
 
   float t0 = ray->tmin, t1 = ray->tmax;
   for (int axis = 0; axis < 3; ++axis) {
@@ -44,29 +48,33 @@ size_t tvdb_voxels_along_ray_dense(const tvdb_dense_grid* g,
                                    const tvdb_ray* ray,
                                    tvdb_vec3i* out_voxels,
                                    size_t cap) {
-  if (!g || !g->data || !ray) return 0;
+  if (!g || !g->data || !ray || g->nx <= 0 || g->ny <= 0 || g->nz <= 0 ||
+      !(g->voxel_size > 0.0f) || !isfinite(g->voxel_size) ||
+      !isfinite(ray->origin.x) || !isfinite(ray->origin.y) || !isfinite(ray->origin.z) ||
+      !isfinite(ray->dir.x) || !isfinite(ray->dir.y) || !isfinite(ray->dir.z) ||
+      isnan(ray->tmin) || isnan(ray->tmax)) return 0;
   float t_enter, t_exit;
-  if (!tvdb_ray_voxel_aabb(ray, g, &t_enter, &t_exit)) return 0;
+  float vox_o[3], vox_d[3];
+  if (!tvdb_ray_voxel_aabb(ray, g, &t_enter, &t_exit, vox_o, vox_d)) return 0;
 
   // Amanatides-Woo DDA in voxel-index space.
-  float vs = g->voxel_size;
-  float ox = (ray->origin.x - g->ox) / vs;
-  float oy = (ray->origin.y - g->oy) / vs;
-  float oz = (ray->origin.z - g->oz) / vs;
-  float dx = ray->dir.x / vs;
-  float dy = ray->dir.y / vs;
-  float dz = ray->dir.z / vs;
+  float ox = vox_o[0], oy = vox_o[1], oz = vox_o[2];
+  float dx = vox_d[0], dy = vox_d[1], dz = vox_d[2];
 
   float ex = ox + t_enter * dx;
   float ey = oy + t_enter * dy;
   float ez = oz + t_enter * dz;
+  if (!isfinite(ex) || !isfinite(ey) || !isfinite(ez)) return 0;
 
-  int ix = (int)floorf(ex);
-  int iy = (int)floorf(ey);
-  int iz = (int)floorf(ez);
-  if (ix == g->nx) ix = g->nx - 1;
-  if (iy == g->ny) iy = g->ny - 1;
-  if (iz == g->nz) iz = g->nz - 1;
+  // The slab entry point lies on the grid boundary up to rounding, so its
+  // floor may be -1 or n; clamp it into the grid before converting to int.
+  float fx = floorf(ex), fy = floorf(ey), fz = floorf(ez);
+  if (fx < 0.0f) fx = 0.0f; else if (fx > (float)(g->nx - 1)) fx = (float)(g->nx - 1);
+  if (fy < 0.0f) fy = 0.0f; else if (fy > (float)(g->ny - 1)) fy = (float)(g->ny - 1);
+  if (fz < 0.0f) fz = 0.0f; else if (fz > (float)(g->nz - 1)) fz = (float)(g->nz - 1);
+  int ix = (int)fx;
+  int iy = (int)fy;
+  int iz = (int)fz;
 
   int sx = (dx > 0) ? 1 : (dx < 0 ? -1 : 0);
   int sy = (dy > 0) ? 1 : (dy < 0 ? -1 : 0);
@@ -90,15 +98,18 @@ size_t tvdb_voxels_along_ray_dense(const tvdb_dense_grid* g,
     }
     ++total;
 
+    // Stop when the ray segment ends before it crosses into the next voxel.
+    // The test uses the crossing time of the current voxel, not the exit
+    // time of the voxel being stepped into, so the last voxel is kept.
     if (t_max_x < t_max_y && t_max_x < t_max_z) {
+      if (!(t_max_x < t_exit)) break;
       ix += sx; t_max_x += t_delta_x;
-      if (t_max_x > t_exit && t_max_y > t_exit && t_max_z > t_exit) break;
     } else if (t_max_y < t_max_z) {
+      if (!(t_max_y < t_exit)) break;
       iy += sy; t_max_y += t_delta_y;
-      if (t_max_x > t_exit && t_max_y > t_exit && t_max_z > t_exit) break;
     } else {
+      if (!(t_max_z < t_exit)) break;
       iz += sz; t_max_z += t_delta_z;
-      if (t_max_x > t_exit && t_max_y > t_exit && t_max_z > t_exit) break;
     }
   }
   return out_voxels ? written : total;
@@ -110,8 +121,9 @@ void tvdb_uniform_ray_samples(const tvdb_ray* ray,
                               float* out_t) {
   if (!ray || n_samples == 0) return;
   float lo = ray->tmin, hi = ray->tmax;
+  float inv_nm1 = (n_samples == 1) ? 0.0f : 1.0f / (float)(n_samples - 1);
   for (size_t i = 0; i < n_samples; ++i) {
-    float a = (n_samples == 1) ? 0.0f : (float)i / (float)(n_samples - 1);
+    float a = (float)i * inv_nm1;
     float t = lo + (hi - lo) * a;
     if (out_t) out_t[i] = t;
     if (out_points) {
@@ -133,7 +145,9 @@ size_t tvdb_segments_along_ray(const tvdb_dense_grid* g,
   bool inside = false;
   float t_enter = 0.0f;
   float t_prev = ray->tmin;
-  float v_prev = tvdb_sample_trilinear_dense(g,
+  tvdb_sampler sampler;
+  if (!tvdb_sampler_init(&sampler, g)) return 0;
+  float v_prev = tvdb_sampler_trilinear(&sampler,
       ray->origin.x + t_prev * ray->dir.x,
       ray->origin.y + t_prev * ray->dir.y,
       ray->origin.z + t_prev * ray->dir.z) - isovalue;
@@ -142,26 +156,36 @@ size_t tvdb_segments_along_ray(const tvdb_dense_grid* g,
   for (size_t i = 1; i < step_count; ++i) {
     float a = (float)i / (float)(step_count - 1);
     float t = ray->tmin + (ray->tmax - ray->tmin) * a;
-    float v = tvdb_sample_trilinear_dense(g,
+    float v = tvdb_sampler_trilinear(&sampler,
         ray->origin.x + t * ray->dir.x,
         ray->origin.y + t * ray->dir.y,
         ray->origin.z + t * ray->dir.z) - isovalue;
 
-    if (v_prev * v < 0.0f) {
-      // Linear-interp the crossing
-      float frac = v_prev / (v_prev - v);
-      float t_cross = t_prev + frac * (t - t_prev);
-      if (!inside) {
+    // Classify each sample (inside means v < 0; NaN counts as outside) and
+    // emit on a state change. Comparing signs instead of testing
+    // v_prev * v < 0 keeps exact-isovalue samples and products that
+    // underflow to zero from hiding a crossing.
+    const bool now_inside = v < 0.0f;
+    if (now_inside != inside) {
+      float t_cross;
+      if ((v_prev < 0.0f && v > 0.0f) || (v_prev > 0.0f && v < 0.0f)) {
+        float frac = v_prev / (v_prev - v);
+        t_cross = t_prev + frac * (t - t_prev);
+      } else {
+        // One endpoint is exactly on the isovalue (or not a number): the
+        // crossing is at the sample that sits on the surface.
+        t_cross = (v_prev == 0.0f) ? t_prev : t;
+      }
+      if (now_inside) {
         t_enter = t_cross;
-        inside = true;
       } else {
         if (out_t_pairs && pairs < cap) {
           out_t_pairs[2 * pairs + 0] = t_enter;
           out_t_pairs[2 * pairs + 1] = t_cross;
         }
         ++pairs;
-        inside = false;
       }
+      inside = now_inside;
     }
     v_prev = v; t_prev = t;
   }
@@ -182,14 +206,24 @@ bool tvdb_marching_cubes_batch(const tvdb_dense_grid* grids,
                                tvdb_arena_allocator_t* arena) {
   if (!grids || !meshes) return false;
   bool all_ok = true;
-  for (size_t i = 0; i < n_grids; ++i) {
-    if (arena) {
+  if (arena) {
+    /* Arena is a bump allocator: not thread-safe, keep serial. */
+    for (size_t i = 0; i < n_grids; ++i) {
       tvdb_triangle_mesh_init_arena(&meshes[i], arena);
-    } else {
-      tvdb_triangle_mesh_init(&meshes[i]);
+      bool ok = tvdb_sdf_to_mesh(&grids[i], isovalue, &meshes[i], arena);
+      if (!ok) all_ok = false;
     }
-    bool ok = tvdb_sdf_to_mesh(&grids[i], isovalue, &meshes[i], arena);
-    if (!ok) all_ok = false;
+    return all_ok;
+  }
+  /* No arena: each mesh owns its buffers, so the conversions are independent. */
+  #pragma omp parallel for schedule(static)
+  for (long long i = 0; i < (long long)n_grids; ++i) {
+    tvdb_triangle_mesh_init(&meshes[i]);
+    bool ok = tvdb_sdf_to_mesh(&grids[i], isovalue, &meshes[i], NULL);
+    if (!ok) {
+      #pragma omp atomic write
+      all_ok = false;
+    }
   }
   return all_ok;
 }

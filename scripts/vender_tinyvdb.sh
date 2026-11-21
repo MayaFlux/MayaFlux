@@ -2,8 +2,16 @@
 set -euo pipefail
 
 REPO="https://github.com/syoyo/tinyvdb.git"
-REF="main"
+REF="${TINYVDB_REF:-}"
 DEST="$(cd "$(dirname "$0")/.." && pwd)/third_party/tinyvdb"
+
+if [ -z "$REF" ]; then
+    REF=$(git ls-remote --tags --refs --sort='-v:refname' "$REPO" 'v[0-9]*' | head -n 1 | sed 's|.*refs/tags/||')
+    if [ -z "$REF" ]; then
+        echo "no release tag found on $REPO; set TINYVDB_REF to a tag, branch or commit" >&2
+        exit 1
+    fi
+fi
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
@@ -52,26 +60,6 @@ fixup_file() {
     *) PATCHED="$PATCHED $file" ;;
     esac
 }
-
-# tinyvdb_sparse_tree.c declares a function pointer named get_data purely to
-# silence an unused warning, then never assigns it. GCC and Clang fold the
-# dead reference away; MSVC keeps it and fails the DLL link with an
-# unresolved external.
-drop_dead_get_data() {
-    local f="$DEST/tinyvdb_sparse_tree.c"
-
-    if ! grep -q 'const float \*(get_data)(const leaf_collect_t' "$f"; then
-        echo "fixup no longer applies: dead get_data declaration not found" >&2
-        echo "  upstream may have fixed it; drop drop_dead_get_data from this script" >&2
-        return 1
-    fi
-
-    grep -v -e 'const float \*(get_data)(const leaf_collect_t' \
-        -e '(void)get_data;' "$f" >"$f.tmp"
-    mv "$f.tmp" "$f"
-}
-
-fixup_file tinyvdb_sparse_tree.c "dead get_data declaration" drop_dead_get_data
 
 for f in $PATCHED; do
     stamp="/* Modified by the MayaFlux project, $(date -u +%Y-%m-%d). Upstream baseline: $SHA. See scripts/vender_tinyvdb.sh. */"
