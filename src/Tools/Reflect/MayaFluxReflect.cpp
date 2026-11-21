@@ -1,5 +1,6 @@
 #include "Check.hpp"
 #include "Discovery.hpp"
+#include "ReflectBuild.hpp"
 #include "Scan.hpp"
 #include "Sidecar.hpp"
 
@@ -159,6 +160,20 @@ int main(int argc, const char** argv)
         llvm::cl::desc("Write nothing; exit 1 when a sidecar, its include or a marker is out of date"),
         llvm::cl::cat(category));
 
+    llvm::cl::opt<bool> build("build",
+        llvm::cl::desc("Build step: describe the one header given, inserting its sidecar include when missing, "
+                       "and write nothing else in the source tree. Needs --translation-unit or --compile-arg"),
+        llvm::cl::cat(category));
+    llvm::cl::list<std::string> compile_args("compile-arg",
+        llvm::cl::desc("With --build: one argument of the whole compile command, used instead of the database"),
+        llvm::cl::value_desc("argument"), llvm::cl::cat(category));
+    llvm::cl::opt<std::string> depfile("depfile",
+        llvm::cl::desc("With --build: write a depfile of the files the scan read"),
+        llvm::cl::value_desc("file"), llvm::cl::cat(category));
+    llvm::cl::opt<std::string> depfile_target("depfile-target",
+        llvm::cl::desc("With --build: the target named in the depfile (default: the sidecar path)"),
+        llvm::cl::value_desc("path"), llvm::cl::cat(category));
+
     llvm::cl::HideUnrelatedOptions(category);
     llvm::cl::ParseCommandLineOptions(argc, argv,
         "Writes a Name.describe.hpp sidecar beside each header that holds MF_DESCRIBE requests.\n");
@@ -172,6 +187,23 @@ int main(int argc, const char** argv)
     config.extra_args.assign(extra_args.begin(), extra_args.end());
     config.insert_includes = !no_insert_include;
     config.check = check;
+
+    if (build) {
+        if (config.headers.size() != 1 || !config.roots.empty() || config.check) {
+            return fail("--build takes exactly one header, and neither --root nor --check");
+        }
+        ReflectBuildOptions options;
+        options.header = config.headers.front();
+        options.build_path = config.build_path;
+        options.translation_unit = config.translation_unit;
+        options.resource_dir = config.resource_dir;
+        options.extra_args = config.extra_args;
+        options.compile_args.assign(compile_args.begin(), compile_args.end());
+        options.depfile = depfile.getValue();
+        options.depfile_target = depfile_target.getValue();
+        options.insert_includes = config.insert_includes;
+        return run_reflect_build(options);
+    }
 
     if (config.roots.empty() && config.headers.empty()) {
         config.roots.emplace_back(std::filesystem::is_directory("src/MayaFlux") ? "src/MayaFlux" : "src");

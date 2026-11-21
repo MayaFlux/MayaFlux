@@ -1,5 +1,10 @@
 #include "Scan.hpp"
 
+#include <clang/AST/ASTConsumer.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/FrontendAction.h>
+#include <clang/Frontend/Utils.h>
+
 namespace MayaFlux::Reflect::Tool {
 
 namespace {
@@ -244,6 +249,162 @@ bool scan(const ScanInput& input, const AttachMatchers& attach, std::string& err
         error = "Clang could not scan the selected headers (translation unit " + unit.string() + ")";
         return false;
     }
+    return true;
+}
+
+namespace {
+
+    class RecordingAction : public clang::ASTFrontendAction {
+    public:
+        RecordingAction(clang::ast_matchers::MatchFinder& finder, clang::DependencyCollector& collector)
+            : m_finder(finder)
+            , m_collector(collector)
+        {
+        }
+
+    protected:
+        std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
+            clang::CompilerInstance& instance, llvm::StringRef) override
+        {
+            m_collector.attachToPreprocessor(instance.getPreprocessor());
+            return m_finder.newASTConsumer();
+        }
+
+    private:
+        clang::ast_matchers::MatchFinder& m_finder;
+        clang::DependencyCollector& m_collector;
+    };
+
+    class RecordingFactory : public clang::tooling::FrontendActionFactory {
+    public:
+        RecordingFactory(clang::ast_matchers::MatchFinder& finder, clang::DependencyCollector& collector)
+            : m_finder(finder)
+            , m_collector(collector)
+        {
+        }
+
+        std::unique_ptr<clang::FrontendAction> create() override
+        {
+            return std::make_unique<RecordingAction>(m_finder, m_collector);
+        }
+
+    private:
+        clang::ast_matchers::MatchFinder& m_finder;
+        clang::DependencyCollector& m_collector;
+    };
+
+    bool borrowed_command(const ScanInput& input, const std::filesystem::path& scan_file,
+        clang::tooling::CompileCommand& command, std::string& error)
+    {
+        if (input.build_path.empty()) {
+            error = "a compile database directory is required (-p) when no --compile-arg is given";
+            return false;
+        }
+
+        std::string load_error;
+        const auto database = clang::tooling::CompilationDatabase::loadFromDirectory(input.build_path.string(), load_error);
+        if (!database) {
+            error = "cannot load compile_commands.json from " + input.build_path.string() + ": " + load_error;
+            return false;
+        }
+
+        const std::filesystem::path unit = select_translation_unit(*database, input);
+        const auto commands = unit.empty() ? std::vector<clang::tooling::CompileCommand> {}
+                                           : database->getCompileCommands(unit.string());
+        if (commands.empty()) {
+            error = "no compile command found for translation unit " + unit.string();
+            return false;
+        }
+
+        command = commands.front();
+        if (!retarget(command, unit, scan_file)) {
+            error = "the compile command of " + unit.string() + " does not name its source file";
+            return false;
+        }
+        std::cerr << "Scanning " << input.headers.size() << " header(s) with the compile command of " << unit.string() << '\n';
+        return true;
+    }
+
+}
+
+bool scan_for_build(const BuildScanInput& input, const AttachMatchers& attach,
+    std::vector<std::filesystem::path>& dependencies, std::string& error)
+{
+    llvm::SmallString<128> temporary;
+    if (llvm::sys::fs::createUniqueDirectory("mayaflux-reflect", temporary)) {
+        error = "cannot create a temporary directory for the scan source";
+        return false;
+    }
+    const TemporaryDirectory cleanup(std::filesystem::path(temporary.str().str()));
+
+    const std::filesystem::path scan_file = cleanup.path / "mf_reflect_scan.cpp";
+    {
+        std::ofstream source(scan_file, std::ios::binary | std::ios::trunc);
+        source << scan_source(input.scan.headers);
+        if (!source) {
+            error = "cannot write " + scan_file.string();
+            return false;
+        }
+    }
+
+    ScanInput effective = input.scan;
+    for (const std::string& stub : input.scan.stubs) {
+        std::ofstream file(cleanup.path / stub, std::ios::binary | std::ios::trunc);
+        file << "#pragma once\n";
+        if (!file) {
+            error = "cannot write " + (cleanup.path / stub).string();
+            return false;
+        }
+    }
+    if (!input.scan.stubs.empty()) {
+        effective.extra_args.push_back("-I" + cleanup.path.generic_string());
+    }
+
+    clang::tooling::CompileCommand command;
+    if (input.compile_args.empty()) {
+        if (!borrowed_command(input.scan, scan_file, command, error)) {
+            return false;
+        }
+    } else {
+        std::error_code code;
+        command.Directory = std::filesystem::current_path(code).string();
+        command.Filename = scan_file.string();
+        command.CommandLine.emplace_back("clang++");
+        command.CommandLine.insert(command.CommandLine.end(), input.compile_args.begin(), input.compile_args.end());
+        command.CommandLine.push_back(scan_file.string());
+        std::cerr << "Scanning " << input.scan.headers.size() << " header(s) with explicit compile arguments\n";
+    }
+
+    const std::filesystem::path directory(command.Directory);
+    const ScanDatabase scan_database(std::move(command));
+    clang::tooling::ClangTool tool(scan_database, { scan_file.string() });
+    tool.appendArgumentsAdjuster(make_adjuster(effective));
+
+    clang::ast_matchers::MatchFinder finder;
+    attach(finder);
+
+    clang::DependencyCollector collector;
+    RecordingFactory factory(finder, collector);
+    if (tool.run(&factory) != 0) {
+        error = "Clang could not scan the selected headers";
+        return false;
+    }
+
+    const std::filesystem::path temporary_root = absolute_of(cleanup.path.string());
+    for (const std::string& file : collector.getDependencies()) {
+        std::filesystem::path path(file);
+        if (path.is_relative()) {
+            path = directory / path;
+        }
+        path = absolute_of(path.string());
+        const auto relative = path.lexically_relative(temporary_root);
+        if (!relative.empty() && *relative.begin() != "..") {
+            continue;
+        }
+        dependencies.push_back(std::move(path));
+    }
+    std::ranges::sort(dependencies);
+    dependencies.erase(std::ranges::unique(dependencies).begin(), dependencies.end());
     return true;
 }
 

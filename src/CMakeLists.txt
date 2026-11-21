@@ -4,6 +4,8 @@ add_subdirectory(Lila)
 
 add_subdirectory(Tools/Reflect)
 
+include(${CMAKE_SOURCE_DIR}/cmake/reflect.cmake)
+
 add_subdirectory(Host)
 
 add_executable(lila_server lila_server.cpp)
