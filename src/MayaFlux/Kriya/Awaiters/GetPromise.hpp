@@ -106,6 +106,77 @@ struct MAYAFLUX_API GetPromiseBase<Vruta::cross_promise> {
 using GetCrossPromise = GetPromiseBase<Vruta::cross_promise>;
 
 /**
+ * @brief Promise accessor specialization for conditional_promise.
+ *
+ * A FreeRoutine has no clock to start from, so this is a hand-off only: the
+ * coroutine parks at the co_await and the first worker pass after
+ * TaskScheduler::add_task() resumes it. Everything after the co_await runs on
+ * the worker thread, not on the thread that created the routine.
+ */
+template <>
+struct MAYAFLUX_API GetPromiseBase<Vruta::conditional_promise> {
+    using promise_handle = Vruta::conditional_promise;
+
+    promise_handle* promise_ptr = nullptr;
+
+    GetPromiseBase() = default;
+
+    [[nodiscard]] inline bool await_ready() const noexcept { return false; }
+
+    void await_suspend(std::coroutine_handle<promise_handle> h) noexcept
+    {
+        promise_ptr = &h.promise();
+        auto& p = h.promise();
+        p.condition = nullptr;
+        p.deadline = std::chrono::steady_clock::time_point::min();
+        p.wake_only = false;
+        p.armed.store(true, std::memory_order_release);
+    }
+
+    [[nodiscard]] promise_handle& await_resume() const noexcept
+    {
+        return *promise_ptr;
+    }
+};
+
+using GetFreePromise = GetPromiseBase<Vruta::conditional_promise>;
+
+/**
+ * @struct OnWorker
+ * @brief Moves a FreeRoutine onto a worker thread
+ *
+ * Use as the first co_await of a FreeRoutine. The coroutine parks, the scheduler
+ * adds it to the worker's list when the routine is added, and the worker's first
+ * pass resumes it, so the rest of the body runs on that worker. Code before the
+ * co_await runs on the thread that created the routine.
+ *
+ * @code
+ * auto heavy = [worker]() -> Vruta::FreeRoutine {
+ *     auto& promise = co_await OnWorker { worker };
+ *     while (!promise.should_terminate) {
+ *         rebuild();
+ *         co_await SteadyDelay { 0.5 };
+ *     }
+ * };
+ * @endcode
+ */
+struct MAYAFLUX_API OnWorker : GetPromiseBase<Vruta::conditional_promise> {
+    explicit OnWorker(Vruta::WorkerId worker)
+        : m_worker(worker)
+    {
+    }
+
+    void await_suspend(std::coroutine_handle<Vruta::conditional_promise> h) noexcept
+    {
+        h.promise().worker = m_worker;
+        GetPromiseBase<Vruta::conditional_promise>::await_suspend(h);
+    }
+
+private:
+    Vruta::WorkerId m_worker;
+};
+
+/**
  * @struct GetEventPromise
  * @brief Event-domain promise accessor with optional NetworkSource ownership transfer.
  *

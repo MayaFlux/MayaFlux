@@ -816,6 +816,9 @@ public:
     /** @brief What the routine is waiting for; read on the conditional thread. */
     [[nodiscard]] WaitHint wait_hint() const;
 
+    /** @brief The worker the routine asked for with OnWorker; the default worker when it did not. */
+    [[nodiscard]] WorkerId worker() const;
+
     [[nodiscard]] bool get_auto_resume() const override
     {
         return m_handle ? m_handle.promise().auto_resume : false;

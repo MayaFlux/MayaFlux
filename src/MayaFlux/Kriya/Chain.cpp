@@ -1,5 +1,6 @@
 #include "Chain.hpp"
 
+#include "MayaFlux/Kriya/Awaiters/ConditionAwaiter.hpp"
 #include "MayaFlux/Kriya/RoutineTraits.hpp"
 #include "MayaFlux/Vruta/ChronUtils.hpp"
 #include "MayaFlux/Vruta/Scheduler.hpp"
@@ -48,6 +49,46 @@ namespace {
         bool stop = true;
         guarded([&] { stop = stop_when(); }, "until condition");
         return stop;
+    }
+
+    template <typename Events>
+    Vruta::FreeRoutine run_chain_worker(Events events, ChainLoop loop, Vruta::WorkerId worker, double gap_seconds)
+    {
+        auto& promise = co_await OnWorker { worker };
+
+        for (size_t iteration = 0; loop.endless || iteration < loop.count; ++iteration) {
+            for (const auto& event : events) {
+                if (promise.should_terminate) {
+                    break;
+                }
+
+                if (event.poll) {
+                    co_await ConditionAwaiter { [&event, &promise]() {
+                        return promise.should_terminate || poll_done(event.poll);
+                    } };
+                    continue;
+                }
+
+                if (event.delay_seconds > 0.0) {
+                    co_await SteadyDelay { event.delay_seconds };
+                }
+                if (event.action) {
+                    guarded(event.action, "action");
+                }
+            }
+
+            if (promise.should_terminate) {
+                break;
+            }
+
+            if (loop.stop_when && stop_requested(loop.stop_when)) {
+                break;
+            }
+
+            if (loop.endless) {
+                co_await SteadyDelay { gap_seconds };
+            }
+        }
     }
 
     template <typename Traits, typename Events>
@@ -140,6 +181,7 @@ std::shared_ptr<std::vector<std::shared_ptr<EventChain>>> EventChain::start_lane
             continue;
         }
         auto lane = std::make_shared<EventChain>(m_Scheduler, "", m_token);
+        lane->on_worker(m_worker);
         build(*lane);
         group->push_back(std::move(lane));
     }
@@ -198,6 +240,12 @@ EventChain& EventChain::times(size_t count)
     return *this;
 }
 
+EventChain& EventChain::on_worker(Vruta::WorkerId worker)
+{
+    m_worker = worker;
+    return *this;
+}
+
 EventChain& EventChain::forever()
 {
     m_endless = true;
@@ -234,6 +282,10 @@ void EventChain::start()
     if (m_token == Vruta::ProcessingToken::SAMPLE_ACCURATE) {
         m_routine = std::make_shared<Vruta::SoundRoutine>(
             run_chain<RoutineTraits<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(m_events, loop));
+    } else if (m_token == Vruta::ProcessingToken::CONDITIONAL) {
+        const double gap = std::chrono::duration<double>(m_Scheduler->conditional_poll_interval()).count();
+        m_routine = std::make_shared<Vruta::FreeRoutine>(
+            run_chain_worker(m_events, loop, m_worker, gap));
     } else {
         m_routine = std::make_shared<Vruta::GraphicsRoutine>(
             run_chain<RoutineTraits<Vruta::ProcessingToken::FRAME_ACCURATE>>(m_events, loop));

@@ -644,6 +644,11 @@ bool FreeRoutine::try_resume_with_context(uint64_t /*current_value*/, DelayConte
     return true;
 }
 
+WorkerId FreeRoutine::worker() const
+{
+    return m_handle ? m_handle.promise().worker : WorkerId {};
+}
+
 WaitHint FreeRoutine::wait_hint() const
 {
     if (!is_active())

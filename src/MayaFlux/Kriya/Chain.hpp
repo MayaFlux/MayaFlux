@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Core/ProcessingTokens.hpp"
+#include "MayaFlux/Vruta/Promise.hpp"
 
 #include "Awaiters/BroadcastAwaiter.hpp"
 
@@ -48,10 +49,12 @@ public:
      * @brief Constructs an EventChain with an explicit scheduler
      * @param scheduler The TaskScheduler to use for timing
      * @param name Optional name for the event chain (useful for debugging)
-     * @param token SAMPLE_ACCURATE runs the chain on the sample clock; any other token runs it on the frame clock
+     * @param token SAMPLE_ACCURATE runs the chain on the sample clock and CONDITIONAL on a worker thread; any other token runs it on the frame clock
      *
      * Creates a new EventChain that adds its routine to the provided scheduler.
-     * Delays convert at the registered sample or frame rate.
+     * Delays convert at the registered sample or frame rate. On a CONDITIONAL chain
+     * they are wall-clock seconds, and a step that waits on a source or a condition
+     * checks it once per poll interval of the scheduler.
      * The chain keeps the scheduler alive for as long as it exists.
      */
     EventChain(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, std::string name = "", Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
@@ -166,6 +169,16 @@ public:
      * keep running after the chain ends; cancel() cancels them with it.
      */
     EventChain& fork(std::vector<std::function<void(EventChain&)>> lanes);
+
+    /**
+     * @brief Chooses the worker thread a CONDITIONAL chain runs on
+     * @param worker Worker returned by TaskScheduler::add_worker(); the default worker when never set
+     * @return Reference to this EventChain for method chaining
+     *
+     * Lanes added by parallel() and fork() start on the same worker unless their own
+     * builder sets another. Has no effect on a chain with another token.
+     */
+    EventChain& on_worker(Vruta::WorkerId worker);
 
     /**
      * @brief Repeat the whole chain without end
@@ -314,6 +327,8 @@ private:
     size_t m_repeat_count { 1 }; ///< Number of times to repeat the entire chain
 
     bool m_endless { false }; ///< Repeat the entire chain without a count
+
+    Vruta::WorkerId m_worker; ///< Worker a CONDITIONAL chain runs on
 
     std::function<bool()> m_stop_when; ///< Stops the chain after a pass when it returns true
 

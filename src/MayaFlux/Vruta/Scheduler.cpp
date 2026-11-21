@@ -90,6 +90,7 @@ TaskScheduler::TaskScheduler(uint32_t default_sample_rate, uint32_t default_fram
     ensure_domain(ProcessingToken::FRAME_ACCURATE, default_frame_rate);
     ensure_domain(ProcessingToken::MULTI_RATE, default_sample_rate);
     ensure_domain(ProcessingToken::ON_DEMAND, 1);
+    m_workers[0] = std::make_unique<ConditionalWorker>("default");
 }
 
 void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std::string& name, bool initialize)
@@ -116,9 +117,23 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
 
     if (token == ProcessingToken::CONDITIONAL) {
         routine->set_auto_resume(true);
-        if (m_conditional_pending_ops.push({ TaskEntry { routine, task_name }, true })) {
-            start_conditional_thread();
-            m_conditional_wake.notify();
+
+        WorkerId requested;
+        if (const auto* free_routine = dynamic_cast<const FreeRoutine*>(routine.get())) {
+            requested = free_routine->worker();
+        }
+
+        auto* worker = worker_at(requested.index);
+        if (!worker) {
+            MF_WARN(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+                "Task '{}' asked for worker {} which does not exist; using the default worker",
+                task_name, requested.index);
+            worker = worker_at(0);
+        }
+
+        if (worker->pending.push({ TaskEntry { routine, task_name }, true })) {
+            start_conditional_thread(*worker);
+            worker->wake.notify();
             return;
         }
         MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
@@ -142,11 +157,12 @@ bool TaskScheduler::cancel_task(const std::string& name)
 
     bool queued = false;
 
-    if (m_conditional_thread.joinable()
-        && m_conditional_pending_ops.push({ TaskEntry { nullptr, name }, false })) {
-        m_conditional_wake.notify();
-        queued = true;
-    }
+    for_each_worker([&](ConditionalWorker& worker) {
+        if (worker.thread.joinable() && worker.pending.push({ TaskEntry { nullptr, name }, false })) {
+            worker.wake.notify();
+            queued = true;
+        }
+    });
 
     if (m_pending_ops.push({ TaskEntry { nullptr, name }, false })) {
         queued = true;
@@ -170,9 +186,14 @@ bool TaskScheduler::cancel_task(const std::shared_ptr<Routine>& routine)
         return false;
 
     if (routine->get_processing_token() == ProcessingToken::CONDITIONAL) {
-        auto it = std::ranges::find_if(m_conditional_tasks,
-            [&routine](const TaskEntry& e) { return e.routine == routine; });
-        const std::string name = (it != m_conditional_tasks.end()) ? it->name : "";
+        std::string name;
+        for_each_worker([&](ConditionalWorker& worker) {
+            const auto it = std::ranges::find_if(worker.tasks,
+                [&routine](const TaskEntry& e) { return e.routine == routine; });
+            if (it != worker.tasks.end()) {
+                name = it->name;
+            }
+        });
         return cancel_task(name);
     }
 
@@ -194,11 +215,17 @@ bool TaskScheduler::restart_task(const std::string& name)
     if (!guard.accepted)
         return false;
 
-    auto cit = std::ranges::find_if(m_conditional_tasks,
-        [&name](const TaskEntry& e) { return e.name == name; });
-    if (cit != m_conditional_tasks.end()) {
-        if (cit->routine && cit->routine->is_active())
-            cit->routine->restart();
+    bool restarted = false;
+    for_each_worker([&](ConditionalWorker& worker) {
+        const auto cit = std::ranges::find_if(worker.tasks,
+            [&name](const TaskEntry& e) { return e.name == name; });
+        if (cit != worker.tasks.end()) {
+            if (cit->routine && cit->routine->is_active())
+                cit->routine->restart();
+            restarted = true;
+        }
+    });
+    if (restarted) {
         return true;
     }
 
@@ -213,10 +240,15 @@ bool TaskScheduler::restart_task(const std::string& name)
 
 std::shared_ptr<Routine> TaskScheduler::get_task(const std::string& name) const
 {
-    auto cit = std::ranges::find_if(m_conditional_tasks,
-        [&name](const TaskEntry& e) { return e.name == name; });
-    if (cit != m_conditional_tasks.end())
-        return cit->routine;
+    std::shared_ptr<Routine> found;
+    for_each_worker([&](ConditionalWorker& worker) {
+        const auto cit = std::ranges::find_if(worker.tasks,
+            [&name](const TaskEntry& e) { return e.name == name; });
+        if (cit != worker.tasks.end() && !found)
+            found = cit->routine;
+    });
+    if (found)
+        return found;
 
     auto it = find_task_by_name(name);
     return (it != m_tasks.end()) ? it->routine : nullptr;
@@ -226,10 +258,12 @@ std::vector<std::shared_ptr<Routine>> TaskScheduler::get_tasks_for_token(Process
 {
     if (token == ProcessingToken::CONDITIONAL) {
         std::vector<std::shared_ptr<Routine>> result;
-        for (const auto& e : m_conditional_tasks) {
-            if (e.routine)
-                result.push_back(e.routine);
-        }
+        for_each_worker([&](ConditionalWorker& worker) {
+            for (const auto& e : worker.tasks) {
+                if (e.routine)
+                    result.push_back(e.routine);
+            }
+        });
         return result;
     }
 
@@ -256,10 +290,12 @@ std::vector<std::string> TaskScheduler::get_task_names(ProcessingToken token) co
 {
     if (token == ProcessingToken::CONDITIONAL) {
         std::vector<std::string> names;
-        for (const auto& e : m_conditional_tasks) {
-            if (e.routine)
-                names.push_back(e.name);
-        }
+        for_each_worker([&](ConditionalWorker& worker) {
+            for (const auto& e : worker.tasks) {
+                if (e.routine)
+                    names.push_back(e.name);
+            }
+        });
         return names;
     }
 
@@ -500,16 +536,16 @@ bool TaskScheduler::initialize_routine_state(const std::shared_ptr<Routine>& rou
     return routine->initialize_state(current_context);
 }
 
-void TaskScheduler::start_conditional_thread()
+void TaskScheduler::start_conditional_thread(ConditionalWorker& worker)
 {
-    if (m_conditional_thread.joinable())
+    if (worker.thread.joinable())
         return;
 
-    m_conditional_thread = std::jthread([this](const std::stop_token& st) {
-        const std::stop_callback on_stop(st, [this] { m_conditional_wake.notify(); });
+    worker.thread = std::jthread([this, &worker](const std::stop_token& st) {
+        const std::stop_callback on_stop(st, [&worker] { worker.wake.notify(); });
 
         while (!st.stop_requested()) {
-            const auto pass = pump_conditional();
+            const auto pass = pump_conditional(worker);
             if (pass.progressed) {
                 continue;
             }
@@ -521,9 +557,9 @@ void TaskScheduler::start_conditional_thread()
             }
 
             if (until) {
-                (void)m_conditional_wake.wait_until(*until);
+                (void)worker.wake.wait_until(*until);
             } else {
-                m_conditional_wake.wait();
+                worker.wake.wait();
             }
         }
     });
@@ -531,13 +567,15 @@ void TaskScheduler::start_conditional_thread()
 
 void TaskScheduler::pause_all_tasks()
 {
-    for (auto& entry : m_conditional_tasks) {
-        if (entry.routine && entry.routine->is_active()) {
-            bool current_auto_resume = entry.routine->get_auto_resume();
-            entry.routine->set_state<bool>("was_auto_resume", current_auto_resume);
-            entry.routine->set_auto_resume(false);
+    for_each_worker([](ConditionalWorker& worker) {
+        for (auto& entry : worker.tasks) {
+            if (entry.routine && entry.routine->is_active()) {
+                bool current_auto_resume = entry.routine->get_auto_resume();
+                entry.routine->set_state<bool>("was_auto_resume", current_auto_resume);
+                entry.routine->set_auto_resume(false);
+            }
         }
-    }
+    });
 
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
@@ -550,18 +588,19 @@ void TaskScheduler::pause_all_tasks()
 
 void TaskScheduler::resume_all_tasks()
 {
-    for (auto& entry : m_conditional_tasks) {
-        if (entry.routine && entry.routine->is_active()) {
-            auto was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
-            if (was_auto_resume) {
-                entry.routine->set_auto_resume(*was_auto_resume);
-            } else {
-                entry.routine->set_auto_resume(true);
+    for_each_worker([](ConditionalWorker& worker) {
+        for (auto& entry : worker.tasks) {
+            if (entry.routine && entry.routine->is_active()) {
+                auto was_auto_resume = entry.routine->get_state<bool>("was_auto_resume");
+                if (was_auto_resume) {
+                    entry.routine->set_auto_resume(*was_auto_resume);
+                } else {
+                    entry.routine->set_auto_resume(true);
+                }
             }
         }
-    }
-
-    m_conditional_wake.notify();
+        worker.wake.notify();
+    });
 
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
@@ -577,7 +616,13 @@ void TaskScheduler::resume_all_tasks()
 
 void TaskScheduler::terminate_all_tasks()
 {
-    if (m_conditional_thread.joinable() && m_conditional_thread.get_id() == std::this_thread::get_id()) {
+    bool on_worker_thread = false;
+    for_each_worker([&](ConditionalWorker& worker) {
+        if (worker.thread.joinable() && worker.thread.get_id() == std::this_thread::get_id()) {
+            on_worker_thread = true;
+        }
+    });
+    if (on_worker_thread) {
         return;
     }
 
@@ -596,13 +641,15 @@ void TaskScheduler::terminate_all_tasks()
         std::this_thread::yield();
     }
 
-    if (m_conditional_thread.joinable()) {
-        m_conditional_thread.request_stop();
-        m_conditional_thread.join();
-    }
+    for_each_worker([](ConditionalWorker& worker) {
+        if (worker.thread.joinable()) {
+            worker.thread.request_stop();
+            worker.thread.join();
+        }
+    });
 
     drain_pending_tasks();
-    drain_conditional_pending();
+    for_each_worker([this](ConditionalWorker& worker) { drain_conditional_pending(worker); });
 
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
@@ -651,15 +698,17 @@ void TaskScheduler::terminate_all_tasks()
             "All coroutines terminated successfully");
     }
 
-    for (auto& entry : m_conditional_tasks) {
-        if (entry.routine && entry.routine->is_active())
-            entry.routine->set_should_terminate(true);
-    }
-    for (auto& entry : m_conditional_tasks) {
-        if (entry.routine && entry.routine->is_active())
-            entry.routine->force_resume();
-    }
-    m_conditional_tasks.clear();
+    for_each_worker([](ConditionalWorker& worker) {
+        for (auto& entry : worker.tasks) {
+            if (entry.routine && entry.routine->is_active())
+                entry.routine->set_should_terminate(true);
+        }
+        for (auto& entry : worker.tasks) {
+            if (entry.routine && entry.routine->is_active())
+                entry.routine->force_resume();
+        }
+        worker.tasks.clear();
+    });
 
     m_tasks.clear();
 }
@@ -707,30 +756,30 @@ void TaskScheduler::drain_pending_tasks()
     });
 }
 
-void TaskScheduler::drain_conditional_pending()
+void TaskScheduler::drain_conditional_pending(ConditionalWorker& worker)
 {
-    if (!m_conditional_pending_ops.has_pending())
+    if (!worker.pending.has_pending())
         return;
 
     DrainScope drain_scope(this);
 
-    m_conditional_pending_ops.drain([this](PendingTaskOp&& op) {
+    worker.pending.drain([&worker](PendingTaskOp&& op) {
         if (op.is_addition) {
-            auto it = std::ranges::find_if(m_conditional_tasks,
+            auto it = std::ranges::find_if(worker.tasks,
                 [&](const TaskEntry& e) { return e.name == op.entry.name; });
-            if (it != m_conditional_tasks.end()) {
+            if (it != worker.tasks.end()) {
                 if (it->routine && it->routine->is_active())
                     it->routine->set_should_terminate(true);
-                m_conditional_tasks.erase(it);
+                worker.tasks.erase(it);
             }
-            m_conditional_tasks.push_back(std::move(op.entry));
+            worker.tasks.push_back(std::move(op.entry));
         } else {
-            auto it = std::ranges::find_if(m_conditional_tasks,
+            auto it = std::ranges::find_if(worker.tasks,
                 [&](const TaskEntry& e) { return e.name == op.entry.name; });
-            if (it != m_conditional_tasks.end()) {
+            if (it != worker.tasks.end()) {
                 if (it->routine && it->routine->is_active())
                     it->routine->set_should_terminate(true);
-                m_conditional_tasks.erase(it);
+                worker.tasks.erase(it);
             }
         }
     });
@@ -764,10 +813,43 @@ void TaskScheduler::pump_cross(DelayContext context, ProcessingToken clock_token
     }
 }
 
+TaskScheduler::ConditionalWorker* TaskScheduler::worker_at(uint32_t index) const noexcept
+{
+    return index < m_worker_count.load(std::memory_order_acquire) ? m_workers[index].get() : nullptr;
+}
+
+void TaskScheduler::wake_conditional() noexcept
+{
+    for_each_worker([](ConditionalWorker& worker) { worker.wake.notify(); });
+}
+
+void TaskScheduler::wake_conditional(WorkerId worker) noexcept
+{
+    if (auto* target = worker_at(worker.index)) {
+        target->wake.notify();
+    }
+}
+
+WorkerId TaskScheduler::add_worker(const std::string& name)
+{
+    const std::lock_guard lock(m_worker_creation);
+
+    const uint32_t index = m_worker_count.load(std::memory_order_acquire);
+    if (index >= max_workers) {
+        MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
+            "Worker '{}' not added: the scheduler already has {} workers", name, max_workers);
+        return {};
+    }
+
+    m_workers[index] = std::make_unique<ConditionalWorker>(name);
+    m_worker_count.store(index + 1, std::memory_order_release);
+    return WorkerId { index };
+}
+
 void TaskScheduler::set_conditional_poll_interval(std::chrono::microseconds interval) noexcept
 {
     m_conditional_poll_us.store(std::max<int64_t>(interval.count(), 1), std::memory_order_relaxed);
-    m_conditional_wake.notify();
+    wake_conditional();
 }
 
 std::chrono::microseconds TaskScheduler::conditional_poll_interval() const noexcept
@@ -775,21 +857,21 @@ std::chrono::microseconds TaskScheduler::conditional_poll_interval() const noexc
     return std::chrono::microseconds(m_conditional_poll_us.load(std::memory_order_relaxed));
 }
 
-TaskScheduler::ConditionalPass TaskScheduler::pump_conditional()
+TaskScheduler::ConditionalPass TaskScheduler::pump_conditional(ConditionalWorker& worker)
 {
-    drain_conditional_pending();
+    drain_conditional_pending(worker);
 
-    std::erase_if(m_conditional_tasks, [](const TaskEntry& e) {
+    std::erase_if(worker.tasks, [](const TaskEntry& e) {
         return !e.routine || !e.routine->is_active();
     });
 
     ConditionalPass pass;
-    if (m_conditional_tasks.empty()) {
+    if (worker.tasks.empty()) {
         pass.idle = true;
         return pass;
     }
 
-    for (auto& entry : m_conditional_tasks) {
+    for (auto& entry : worker.tasks) {
         if (!entry.routine || !entry.routine->is_active()) {
             continue;
         }
