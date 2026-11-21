@@ -496,6 +496,20 @@ struct MAYAFLUX_API conditional_promise : public routine_promise<FreeRoutine> {
     std::function<bool()> condition;
 
     /**
+     * @brief Wall-clock time the coroutine waits for, instead of a condition.
+     *
+     * Set by SteadyDelay. The scheduler thread sleeps until the earliest one.
+     */
+    std::optional<std::chrono::steady_clock::time_point> deadline;
+
+    /**
+     * @brief Look at the condition only after TaskScheduler::wake_conditional().
+     *
+     * False polls it every poll interval of the scheduler.
+     */
+    bool wake_only { false };
+
+    /**
      * @brief True while the coroutine is suspended on a ConditionAwaiter.
      *
      * Set to true in await_suspend, cleared to false before handle.resume().

@@ -118,6 +118,7 @@ void TaskScheduler::add_task(const std::shared_ptr<Routine>& routine, const std:
         routine->set_auto_resume(true);
         if (m_conditional_pending_ops.push({ TaskEntry { routine, task_name }, true })) {
             start_conditional_thread();
+            m_conditional_wake.notify();
             return;
         }
         MF_ERROR(Journal::Component::Vruta, Journal::Context::CoroutineScheduling,
@@ -143,6 +144,7 @@ bool TaskScheduler::cancel_task(const std::string& name)
 
     if (m_conditional_thread.joinable()
         && m_conditional_pending_ops.push({ TaskEntry { nullptr, name }, false })) {
+        m_conditional_wake.notify();
         queued = true;
     }
 
@@ -504,8 +506,26 @@ void TaskScheduler::start_conditional_thread()
         return;
 
     m_conditional_thread = std::jthread([this](const std::stop_token& st) {
-        while (!st.stop_requested())
-            pump_conditional();
+        const std::stop_callback on_stop(st, [this] { m_conditional_wake.notify(); });
+
+        while (!st.stop_requested()) {
+            const auto pass = pump_conditional();
+            if (pass.progressed) {
+                continue;
+            }
+
+            std::optional<std::chrono::steady_clock::time_point> until = pass.deadline;
+            if (pass.polled) {
+                const auto next_poll = std::chrono::steady_clock::now() + conditional_poll_interval();
+                until = until ? std::min(*until, next_poll) : next_poll;
+            }
+
+            if (until) {
+                (void)m_conditional_wake.wait_until(*until);
+            } else {
+                m_conditional_wake.wait();
+            }
+        }
     });
 }
 
@@ -540,6 +560,8 @@ void TaskScheduler::resume_all_tasks()
             }
         }
     }
+
+    m_conditional_wake.notify();
 
     for (auto& entry : m_tasks) {
         if (entry.routine && entry.routine->is_active()) {
@@ -742,23 +764,64 @@ void TaskScheduler::pump_cross(DelayContext context, ProcessingToken clock_token
     }
 }
 
-void TaskScheduler::pump_conditional()
+void TaskScheduler::set_conditional_poll_interval(std::chrono::microseconds interval) noexcept
+{
+    m_conditional_poll_us.store(std::max<int64_t>(interval.count(), 1), std::memory_order_relaxed);
+    m_conditional_wake.notify();
+}
+
+std::chrono::microseconds TaskScheduler::conditional_poll_interval() const noexcept
+{
+    return std::chrono::microseconds(m_conditional_poll_us.load(std::memory_order_relaxed));
+}
+
+TaskScheduler::ConditionalPass TaskScheduler::pump_conditional()
 {
     drain_conditional_pending();
-
-    if (m_conditional_tasks.empty()) {
-        std::this_thread::yield();
-        return;
-    }
 
     std::erase_if(m_conditional_tasks, [](const TaskEntry& e) {
         return !e.routine || !e.routine->is_active();
     });
 
-    for (auto& entry : m_conditional_tasks) {
-        if (entry.routine && entry.routine->is_active())
-            entry.routine->try_resume(0);
+    ConditionalPass pass;
+    if (m_conditional_tasks.empty()) {
+        pass.idle = true;
+        return pass;
     }
+
+    for (auto& entry : m_conditional_tasks) {
+        if (!entry.routine || !entry.routine->is_active()) {
+            continue;
+        }
+
+        if (entry.routine->try_resume(0)) {
+            pass.progressed = true;
+            continue;
+        }
+
+        if (!entry.routine->get_auto_resume()) {
+            continue;
+        }
+
+        const auto* free_routine = dynamic_cast<const FreeRoutine*>(entry.routine.get());
+        if (!free_routine) {
+            pass.polled = true;
+            continue;
+        }
+
+        const auto hint = free_routine->wait_hint();
+        if (!hint.armed) {
+            continue;
+        }
+
+        if (hint.deadline) {
+            pass.deadline = pass.deadline ? std::min(*pass.deadline, *hint.deadline) : *hint.deadline;
+        } else if (!hint.wake_only) {
+            pass.polled = true;
+        }
+    }
+
+    return pass;
 }
 
 }

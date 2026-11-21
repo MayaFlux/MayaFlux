@@ -192,6 +192,9 @@ public:
      *
      * The timing is sample-accurate, ensuring that each event occurs at precisely
      * the right moment in the computational timeline.
+     *
+     * The steps are copied when the chain starts. Steps added to a running chain
+     * take effect at the next start().
      */
     void start();
 

@@ -369,13 +369,7 @@ namespace Detail {
                 co_return;
             }
 
-            const double clamped = *seconds > 0.0 ? std::min(*seconds, 1.0e6) : 0.0;
-            const auto deadline = std::chrono::steady_clock::now()
-                + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<double>(clamped));
-
-            co_await ConditionAwaiter { after_one_pass([deadline] {
-                return std::chrono::steady_clock::now() >= deadline;
-            }) };
+            co_await SteadyDelay { *seconds > 0.0 ? std::min(*seconds, 1.0e6) : 0.0 };
         }
     }
 

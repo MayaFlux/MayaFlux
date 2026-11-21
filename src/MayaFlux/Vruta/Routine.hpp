@@ -779,6 +779,16 @@ private:
  * scheduler->add_task(std::make_shared<FreeRoutine>(my_routine()), "ca_evolve");
  * @endcode
  */
+/**
+ * @struct WaitHint
+ * @brief What a suspended FreeRoutine is waiting for, as the conditional thread needs to know it
+ */
+struct WaitHint {
+    bool armed {}; ///< Suspended on a condition or a deadline
+    bool wake_only {}; ///< The condition is looked at only after a wake
+    std::optional<std::chrono::steady_clock::time_point> deadline;
+};
+
 class MAYAFLUX_API FreeRoutine : public Routine {
 public:
     using promise_type = MayaFlux::Vruta::conditional_promise;
@@ -802,6 +812,9 @@ public:
 
     [[nodiscard]] uint64_t next_execution() const override { return 0; }
     [[nodiscard]] bool requires_clock_sync() const override { return false; }
+
+    /** @brief What the routine is waiting for; read on the conditional thread. */
+    [[nodiscard]] WaitHint wait_hint() const;
 
     [[nodiscard]] bool get_auto_resume() const override
     {

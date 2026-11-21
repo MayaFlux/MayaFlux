@@ -27,6 +27,7 @@ target_sources(Transitive_Free INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/Memory/SweepList.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Parallel/AsyncGroup.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Parallel/Dispatch.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Parallel/Notifier.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/Acquisition.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/HostEnvironment.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Platform/Process.hpp
