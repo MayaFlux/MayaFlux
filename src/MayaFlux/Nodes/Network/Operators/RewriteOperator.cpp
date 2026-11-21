@@ -2,8 +2,6 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#include <charconv>
-
 namespace MayaFlux::Nodes::Network {
 
 RewriteOperator::Symbol::Symbol(SymbolId symbol_id, std::initializer_list<double> values)
@@ -30,13 +28,8 @@ RewriteOperator::RewriteOperator(Config config)
     : m_max_word_length(config.max_word_length)
     , m_max_generations(config.max_generations)
     , m_valid(true)
-    , m_coefficients(config.coefficient_count)
     , m_ignore(std::move(config.ignore))
 {
-    for (auto& coefficient : m_coefficients) {
-        coefficient.store(0.0, std::memory_order_relaxed);
-    }
-
     if (config.axiom.size() > m_max_word_length) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::Configuration,
             "RewriteOperator axiom has {} symbols, exceeding max_word_length {}",
@@ -186,45 +179,10 @@ const RewriteOperator::Replacement* RewriteOperator::select_replacement(const Sy
     return m_candidates[std::min(pick, m_candidates.size() - 1)];
 }
 
-bool RewriteOperator::set_coefficient(size_t index, double value)
-{
-    if (index >= m_coefficients.size()) {
-        MF_WARN(Journal::Component::Nodes, Journal::Context::Configuration,
-            "RewriteOperator coefficient index {} exceeds {}", index, m_coefficients.size());
-        return false;
-    }
-
-    m_coefficients[index].store(value, std::memory_order_release);
-    return true;
-}
-
-std::optional<double> RewriteOperator::coefficient(size_t index) const noexcept
-{
-    return index < m_coefficients.size()
-        ? std::optional<double> { m_coefficients[index].load(std::memory_order_acquire) }
-        : std::nullopt;
-}
-
-std::optional<size_t> RewriteOperator::coefficient_index(std::string_view name) const noexcept
-{
-    if (name.size() < 2 || name.front() != 'c') {
-        return std::nullopt;
-    }
-
-    size_t index {};
-    const auto digits = name.substr(1);
-    const auto [end, error] = std::from_chars(digits.data(), digits.data() + digits.size(), index);
-    if (error != std::errc {} || end != digits.data() + digits.size() || index >= m_coefficients.size()) {
-        return std::nullopt;
-    }
-    return index;
-}
-
 void RewriteOperator::set_parameter(std::string_view name, double value)
 {
-    if (const auto index = coefficient_index(name)) {
-        set_indexed_parameter(*index, value);
-    } else {
+    settle_named_control(name);
+    if (!set_named_control(name, value)) {
         MF_WARN(Journal::Component::Nodes, Journal::Context::Configuration,
             "RewriteOperator ignored unknown parameter '{}'", name);
     }
@@ -232,28 +190,7 @@ void RewriteOperator::set_parameter(std::string_view name, double value)
 
 std::optional<double> RewriteOperator::query_state(std::string_view name) const
 {
-    if (const auto index = coefficient_index(name)) {
-        return coefficient(*index);
-    }
-    return std::nullopt;
-}
-
-std::optional<size_t> RewriteOperator::mapped_parameter_index(std::string_view name) const
-{
-    if (const auto index = coefficient_index(name)) {
-        return index;
-    }
-
-    MF_WARN(Journal::Component::Nodes, Journal::Context::Configuration,
-        "RewriteOperator ignored mapping for unknown parameter '{}'", name);
-    return m_coefficients.size();
-}
-
-void RewriteOperator::set_indexed_parameter(size_t index, double value)
-{
-    if (index < m_coefficients.size()) {
-        m_coefficients[index].store(value, std::memory_order_release);
-    }
+    return m_read ? m_read(name) : std::nullopt;
 }
 
 bool RewriteOperator::SubmissionMailbox::push(Submission& submission) noexcept
@@ -305,10 +242,8 @@ RewriteOperator::RewriteResult RewriteOperator::rewrite(uint64_t steps, std::spa
     }
 
     try {
-        std::vector<double> coefficients(m_coefficients.size());
-        for (size_t index = 0; index < coefficients.size(); ++index) {
-            coefficients[index] = m_coefficients[index].load(std::memory_order_acquire);
-        }
+        refresh_controls();
+        const std::shared_ptr<const void> held = m_hold ? m_hold() : nullptr;
         auto current = m_draft;
 
         for (uint64_t step = 0; step < steps; ++step) {
@@ -329,10 +264,11 @@ RewriteOperator::RewriteResult RewriteOperator::rewrite(uint64_t steps, std::spa
             for (size_t position = 0; position < symbols.size(); ++position) {
                 const auto& symbol = symbols[position];
                 const Environment environment {
-                    .coefficients = coefficients,
                     .inputs = inputs,
                     .word = symbols,
-                    .position = position
+                    .position = position,
+                    .held = held.get(),
+                    .held_tag = m_held_tag
                 };
 
                 if (const auto* replacement = select_replacement(symbol, environment)) {

@@ -261,6 +261,18 @@ if (g->rewrite(4) == Rewrite::RewriteResult::REWRITTEN) {   // ABAABABA, built o
 }
 ```
 
+The grammar's own numbers are a struct of `Control` members you describe and declare, so a rule reads `rate` by name and not by index:
+
+```cpp
+struct Grammar {
+    Control rate;
+    Control angle;
+};
+MF_DESCRIBE(Grammar)
+
+g->declare<Grammar>();                     // once, before the first rewrite()
+```
+
 A symbol is an id and up to eight numbers: `Rewrite::Symbol { 'A', 1.0, 90.0 }`. Ids are numbers, so a character literal works and so does any other value. Symbols no replacement names, brackets and turtle commands among them, copy through unchanged.
 
 ```cpp
@@ -275,7 +287,7 @@ g->replace(Rewrite::Replacement {
     .predecessor = 'F',
     .left = { '+' },                              // the symbols before it, in word order
     .right = { ']' },                             // and after it
-    .predicate = [](const Rewrite::Symbol&, Rewrite::Environment e) { return e.coefficients[0] > 0.5; },
+    .predicate = [](const Rewrite::Symbol&, Rewrite::Environment e) { return e.controls<Grammar>().rate.value() > 0.5; },
     .successor = Rewrite::text_successor("L") });
 
 // stochastic: a positive weight makes a choice among the matching weighted replacements
@@ -299,7 +311,7 @@ Replacements apply in the order they were added:
 
 - The first replacement whose predecessor, context and predicate match wins. Unless it has a positive weight: then one of the matching weighted replacements of that symbol is drawn in proportion to its weight.
 - Context is the symbols next to the predecessor in word order, skipping the ids in `Config::ignore`. It does not follow brackets.
-- A callback receives `Environment`: `coefficients`, `inputs`, the whole `word` and the symbol's `position`, so a replacement can read a neighbour's numbers.
+- A callback receives `Environment`: `controls<C>()`, `inputs`, the whole `word` and the symbol's `position`, so a replacement can read a neighbour's numbers.
 - Every symbol is rewritten from the word as it was, so a generation is parallel. `rewrite(n)` makes `n` generations and keeps none of them if a bound refuses one.
 
 Three words for three places:
@@ -313,8 +325,9 @@ n->add<StepOperator>([g](const std::shared_ptr<StepOperator>&, std::span<Relatio
     for (const auto& symbol : g->active_symbols()) { /* a score, a path, a table of targets */ }
 });
 
-g->set_coefficient(0, 0.7);                       // "c0", read by callbacks as e.coefficients[0]
-g->map("c0", Source(n, 3));                       // or driven every block, like any operator parameter
+g->set<Grammar>({ .rate = 0.7 });                 // read by callbacks as e.controls<Grammar>().rate.value()
+g->set<Grammar>({ .rate = lfo });                 // or a node, read as it is when each rewrite() begins
+g->map("rate", Source(n, 3));                     // or driven every block, like any operator parameter
 g->restore_axiom();                               // the draft only; submit() to make it active
 ```
 
