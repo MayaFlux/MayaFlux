@@ -2,9 +2,7 @@
 
 #include "VolumeWriter.hpp"
 
-namespace MayaFlux::Buffers {
-class VolumeGridBuffer;
-}
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
@@ -76,6 +74,18 @@ namespace MayaFlux::IO {
 MAYAFLUX_API bool upload_volume(
     const Kakshya::VolumeData& data,
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume);
+
+/**
+ * @brief The field declarations a VolumeGridBuffer needs to hold a VolumeData.
+ *
+ * One per field, in the data's order: the name and semantics the data carries,
+ * stride sizeof(float) for a scalar and sizeof(glm::vec4) for a vector, which is the
+ * GPU layout every vector field uses whatever VolumeData stores, and double buffered.
+ * A volume made from these over the data's lattice accepts upload_volume of that data
+ * and of any other frame with the same fields.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<Buffers::VolumeGridBuffer::FieldDecl> volume_field_decls(
+    const Kakshya::VolumeData& data);
 
 /**
  * @brief Save a volume directly to disk via the VolumeWriter registry.
