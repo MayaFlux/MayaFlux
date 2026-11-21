@@ -394,12 +394,12 @@ MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
  * @code{.cpp}
  * auto sequence = IO::open_volume_sequence(
  *     { .pattern = "smoke.{:04}.vdb", .count = 96 }, *Kinesis::TimeSampling::uniform(1.0 / 24.0),
- *     IO::UnionLattice {});
+ *     IO::LatticeSource::Union);
  * auto volume = MayaFlux::create_volume_buffer(sequence);
  * auto reflow = MayaFlux::create_volume_reflow(sequence, volume)
  *                   .course({ .in = 0.0, .out = 4.0, .edge = Kriya::CourseEdge::Loop })
  *                   .start();
- * reflow->courses().front()->rate(0.5);
+ * reflow->courses().front()->speed(0.5);
  * @endcode
  *
  * @param source The frames to play, such as a SequenceContainer<VolumeData>.

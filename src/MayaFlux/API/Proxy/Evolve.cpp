@@ -234,7 +234,7 @@ struct Evolve::Impl {
             return nullptr;
         }
 
-        Kriya::VolumeReflowBuilder builder(frames, Kriya::volume_sink(volume), config.rate, get_scheduler());
+        Kriya::VolumeReflowBuilder builder(frames, Kriya::volume_sink(volume), config.cycle_rate, get_scheduler());
         builder.configure(config);
         if (!builder.build()) {
             return nullptr;

@@ -25,13 +25,13 @@ namespace {
 
     std::optional<double> unfolded(const CourseSetting& setting, double clock_offset, double anchor)
     {
-        const double u = has(setting.warp) ? (*setting.warp)(clock_offset) : anchor + clock_offset;
+        const double u = has(setting.time_map) ? (*setting.time_map)(clock_offset) : anchor + clock_offset;
         return std::isfinite(u) ? std::optional<double> { u } : std::nullopt;
     }
 
     double default_anchor(const CourseSetting& setting)
     {
-        return setting.rate >= 0.0 ? setting.in : setting.out;
+        return setting.speed >= 0.0 ? setting.in : setting.out;
     }
 
     Kinesis::TimeWrap wrap_of(CourseEdge edge)
@@ -62,7 +62,7 @@ std::optional<CourseTime> CourseTime::create(double step_rate)
 
 double CourseTime::clock_at(uint64_t step) const noexcept
 {
-    return m_base_clock + m_rate * static_cast<double>(step - m_base_step) * m_period;
+    return m_base_clock + m_speed * static_cast<double>(step - m_base_step) * m_period;
 }
 
 std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
@@ -79,12 +79,12 @@ std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
 
     uint64_t base_step = m_base_step;
     double base_clock = m_base_clock;
-    if (setting.rate != m_rate) {
+    if (setting.speed != m_speed) {
         base_step = m_steps;
         base_clock = previous_clock;
     }
 
-    const double clock = base_clock + setting.rate * static_cast<double>(next_step - base_step) * m_period;
+    const double clock = base_clock + setting.speed * static_cast<double>(next_step - base_step) * m_period;
     if (!std::isfinite(clock)) {
         return std::nullopt;
     }
@@ -148,7 +148,7 @@ std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
             ? std::numeric_limits<uint64_t>::max()
             : total + result.crossings;
 
-        if (setting.edge_count > 0 && total >= setting.edge_count) {
+        if (setting.loop_count > 0 && total >= setting.loop_count) {
             finished = true;
             if (result.crossings > 0) {
                 result.time = at->cycles >= was->cycles ? setting.out : setting.in;
@@ -164,7 +164,7 @@ std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
     m_steps = next_step;
     m_base_step = base_step;
     m_base_clock = base_clock;
-    m_rate = setting.rate;
+    m_speed = setting.speed;
     if (!m_anchor) {
         m_anchor = anchor;
     }
@@ -184,7 +184,7 @@ std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
 
 bool CourseTime::seek(double source_time, const CourseSetting& setting)
 {
-    if (!usable(setting) || has(setting.warp) || !std::isfinite(source_time)) {
+    if (!usable(setting) || has(setting.time_map) || !std::isfinite(source_time)) {
         return false;
     }
     restart();

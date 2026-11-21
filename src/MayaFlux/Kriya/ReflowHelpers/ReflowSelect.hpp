@@ -3,7 +3,7 @@
 #include "MayaFlux/Kinesis/Temporal/TimeSampling.hpp"
 #include "MayaFlux/Kriya/FrameOperation.hpp"
 
-namespace MayaFlux::Kriya {
+namespace MayaFlux::Kriya::Detail {
 
 /**
  * @struct FramePick
@@ -36,4 +36,4 @@ struct FramePicks {
 /** @brief The index of the frame closest to a located time. */
 [[nodiscard]] MAYAFLUX_API size_t nearest_frame(const Kinesis::TimeLocation& location);
 
-} // namespace MayaFlux::Kriya
+} // namespace MayaFlux::Kriya::Detail

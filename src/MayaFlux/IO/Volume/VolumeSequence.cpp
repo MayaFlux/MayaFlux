@@ -114,7 +114,7 @@ std::shared_ptr<const VolumeFileSequence> VolumeFileSequence::create(
             return nullptr;
         }
         pinned = *given;
-    } else if (std::holds_alternative<UnionLattice>(lattice)) {
+    } else if (const auto* source = std::get_if<LatticeSource>(&lattice); source && *source == LatticeSource::Union) {
         const glm::vec3 voxel = first->lattice.cell_size();
         Kinesis::AABB3D bounds = first->lattice.bounds;
         first.reset();

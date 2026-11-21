@@ -71,7 +71,7 @@ namespace Detail {
  * thread at any moment, so a Nexus agent, an expanse or an event handler can steer it
  * while it runs:
  *
- * - Settings (rate, offset, range, edge, warp, repeat, weight) are one immutable snapshot
+ * - Settings (speed, offset, range, edge, time_map, repeat, weight) are one immutable snapshot
  *   that advance() reads whole, so a step never sees half of a change. A change takes effect
  *   on the next advance and never rewinds or jumps the clock.
  * - Commands (start, pause, stop, retrigger, seek, nudge) are queued and applied in order at
@@ -101,9 +101,9 @@ public:
     // Settings
 
     /** @brief Clock seconds per second. Negative runs backwards, zero holds. */
-    bool rate(double value);
+    bool speed(double value);
 
-    /** @brief Seconds added to the clock before the warp. */
+    /** @brief Seconds added to the clock before the time map. */
     bool offset(double seconds);
 
     /** @brief The range of source seconds the course lives in. Needs out above in. */
@@ -113,12 +113,12 @@ public:
     void edge(CourseEdge edge, uint64_t count = 0);
 
     /** @brief Source seconds as a function of clock seconds. */
-    void warp(Kinesis::TimeMap map);
+    void time_map(Kinesis::TimeMap map);
 
     /** @brief Go back to source time that runs with the clock. */
-    void clear_warp();
+    void clear_time_map();
 
-    /** @brief Restart the warp over and over, each repeat as long as the map says when it starts. */
+    /** @brief Restart the time map over and over, each repeat as long as the map says when it starts. */
     void repeat(Kinesis::TimeMap length);
 
     /** @brief Stop repeating. */
@@ -147,11 +147,11 @@ public:
     /**
      * @brief Put the course at a source time, as a new pass.
      *
-     * Refused at the advance, with a warning, while a warp is set: use seek_clock.
+     * Refused at the advance, with a warning, while a time map is set: use seek_clock.
      */
     bool seek(double source_time);
 
-    /** @brief Put the clock at a number of seconds, as a new pass. Works with a warp. */
+    /** @brief Put the clock at a number of seconds, as a new pass. Works with a time map. */
     bool seek_clock(double clock_seconds);
 
     /** @brief Put the course at a fraction of its range, as seek does. Not clamped. */
@@ -184,7 +184,7 @@ public:
     /** @brief Frames reported missing. */
     [[nodiscard]] uint64_t misses() const noexcept { return m_misses_cell.load(std::memory_order_relaxed); }
 
-    /** @brief Steps and commands that could not be applied, such as a seek under a warp. */
+    /** @brief Steps and commands that could not be applied, such as a seek under a time map. */
     [[nodiscard]] uint64_t refusals() const noexcept { return m_refusals_cell.load(std::memory_order_relaxed); }
 
     [[nodiscard]] double weight() const noexcept { return m_weight_cell.load(std::memory_order_relaxed); }

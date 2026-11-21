@@ -25,12 +25,12 @@ Course::Course(CourseTime time, const CourseSetting& setting, bool paused)
     m_time_cell.store(setting.in, std::memory_order_relaxed);
 }
 
-bool Course::rate(double value)
+bool Course::speed(double value)
 {
     if (!std::isfinite(value)) {
         return false;
     }
-    m_setting.update([value](CourseSetting& s) { s.rate = value; });
+    m_setting.update([value](CourseSetting& s) { s.speed = value; });
     return true;
 }
 
@@ -59,19 +59,19 @@ void Course::edge(CourseEdge edge, uint64_t count)
 {
     m_setting.update([edge, count](CourseSetting& s) {
         s.edge = edge;
-        s.edge_count = count;
+        s.loop_count = count;
     });
 }
 
-void Course::warp(Kinesis::TimeMap map)
+void Course::time_map(Kinesis::TimeMap map)
 {
     auto shared = std::make_shared<const Kinesis::TimeMap>(std::move(map));
-    m_setting.update([&shared](CourseSetting& s) { s.warp = shared; });
+    m_setting.update([&shared](CourseSetting& s) { s.time_map = shared; });
 }
 
-void Course::clear_warp()
+void Course::clear_time_map()
 {
-    m_setting.update([](CourseSetting& s) { s.warp.reset(); });
+    m_setting.update([](CourseSetting& s) { s.time_map.reset(); });
 }
 
 void Course::repeat(Kinesis::TimeMap length)
@@ -206,7 +206,7 @@ void Course::apply(const Detail::CourseCommand& command, const CourseSetting& se
     if (!applied) {
         refuse();
         MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-            "Course: a seek was refused; seek by source time needs a setting with no warp, so use seek_clock");
+            "Course: a seek was refused; seek by source time needs a setting with no time map, so use seek_clock");
     }
 }
 
@@ -242,11 +242,11 @@ std::optional<CourseStep> Course::advance(bool advance)
         }
     } catch (const std::exception& error) {
         MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-            "Course: a warp or repeat threw: {}", error.what());
+            "Course: a time map or repeat threw: {}", error.what());
         step.reset();
     } catch (...) {
         MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
-            "Course: a warp or repeat threw");
+            "Course: a time map or repeat threw");
         step.reset();
     }
 

@@ -93,8 +93,8 @@ public:
     /** @brief Cycles ended early by a callable that threw. */
     [[nodiscard]] uint64_t failures() const noexcept { return m_failures.load(std::memory_order_relaxed); }
 
-    /** @brief Cycles per second the courses count in. */
-    [[nodiscard]] double rate() const noexcept { return m_rate; }
+    /** @brief Cycles per second the courses count in. Not the rate of the source's own frames. */
+    [[nodiscard]] double cycle_rate() const noexcept { return m_cycle_rate; }
 
     [[nodiscard]] const std::shared_ptr<const Kakshya::FrameSource<Frame>>& source() const noexcept { return m_source; }
 
@@ -102,7 +102,7 @@ private:
     friend class ReflowBuilder<Frame>;
 
     Reflow(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink,
-        std::vector<FrameOperation<Frame>> operations, FrameSelection selection, Rewrite rewrite, double rate);
+        std::vector<FrameOperation<Frame>> operations, FrameSelection selection, Rewrite rewrite, double cycle_rate);
 
     void hold();
     [[nodiscard]] bool operate(const FrameContext& context, std::shared_ptr<const Frame>& frame);
@@ -113,7 +113,7 @@ private:
     std::optional<typename FrameOperation<Frame>::MixFn> m_mix;
     FrameSelection m_selection;
     Rewrite m_rewrite;
-    double m_rate;
+    double m_cycle_rate;
 
     Memory::SnapshotCell<std::vector<std::shared_ptr<Course>>> m_courses;
     Memory::SnapshotCell<std::shared_ptr<const Frame>> m_current;
@@ -146,7 +146,7 @@ struct ReflowConfig {
     std::vector<FrameOperation<Frame>> operations; ///< Run in order. At most one mix.
     FrameSelection selection { FrameSelection::Floor };
     Rewrite rewrite { Rewrite::OnChange };
-    double rate {}; ///< Cycles per second. Zero takes the registered frame rate.
+    double cycle_rate {}; ///< Cycles per second. Zero takes the registered frame rate.
     bool paused {}; ///< Whether the courses start without running.
 };
 
@@ -163,7 +163,7 @@ struct ReflowConfig {
  *                  .operation(FrameOperation<VolumeData>::derive(note_peak))
  *                  .selection(FrameSelection::Blend)
  *                  .start();
- * smoke->courses().front()->rate(0.5);
+ * smoke->courses().front()->speed(0.5);
  * @endcode
  */
 template <typename Frame>
@@ -174,10 +174,10 @@ public:
     /**
      * @param source The frames to read. Null makes build() return nullptr.
      * @param sink Receives each frame written. Empty makes build() return nullptr.
-     * @param rate Cycles per second. Zero takes the registered frame rate.
+     * @param cycle_rate Cycles per second. Zero takes the registered frame rate.
      * @param scheduler The scheduler start() runs the reflow on. Not needed to build().
      */
-    ReflowBuilder(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double rate = 0.0,
+    ReflowBuilder(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double cycle_rate = 0.0,
         std::shared_ptr<Vruta::TaskScheduler> scheduler = nullptr);
 
     /** @brief Add a course. */
@@ -186,7 +186,7 @@ public:
     /**
      * @brief Add the courses and operations of a config and take its selection and rewrite.
      *
-     * The rate of a config is for whoever makes the builder, since the builder's is
+     * The cycle_rate of a config is for whoever makes the builder, since the builder's is
      * fixed by then.
      */
     ReflowBuilder& configure(const ReflowConfig<Frame>& config);
@@ -219,7 +219,7 @@ private:
 
     std::shared_ptr<const Kakshya::FrameSource<Frame>> m_source;
     Sink m_sink;
-    double m_rate;
+    double m_cycle_rate;
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::vector<Planned> m_courses;
     std::vector<FrameOperation<Frame>> m_operations;

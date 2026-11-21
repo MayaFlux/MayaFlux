@@ -23,10 +23,10 @@ enum class CourseEdge : uint8_t {
  * takes effect on the next step and never rewinds or jumps the clock.
  */
 struct CourseSetting {
-    /** @brief Clock seconds per second. Negative runs backwards, zero holds. */
-    double rate { 1.0 };
+    /** @brief Clock seconds per second, as StreamSlice and Chimera say speed. Negative runs backwards, zero holds. */
+    double speed { 1.0 };
 
-    /** @brief Seconds added to the clock before the warp. */
+    /** @brief Seconds added to the clock before the time map. */
     double offset {};
 
     double in {}; ///< Start of the range, in source seconds.
@@ -40,24 +40,27 @@ struct CourseSetting {
      * Every crossing of an end counts, whichever way the course is moving. Zero never
      * finishes. Ignored by Once and Hold.
      */
-    uint64_t edge_count {};
+    uint64_t loop_count {};
 
     /**
      * @brief Source seconds as a function of clock seconds, or null for source time
      * that runs with the clock from where the course started.
+     *
+     * The clock is scaled by speed first, so unlike StreamSlice, where a time map replaces
+     * speed, the map here is applied to the scaled clock. The two agree at speed 1.
      */
-    std::shared_ptr<const Kinesis::TimeMap> warp;
+    std::shared_ptr<const Kinesis::TimeMap> time_map;
 
     /**
      * @brief How long, in clock seconds, the repeat that starts now lasts, or null for
-     * no repeating. Each repeat restarts the warp from zero.
+     * no repeating. Each repeat restarts the time map from zero.
      */
     std::shared_ptr<const Kinesis::TimeMap> repeat;
 
     /** @brief Whether a course can step under this setting: finite numbers and a range with length. */
     [[nodiscard]] bool usable() const noexcept
     {
-        return std::isfinite(rate) && std::isfinite(offset)
+        return std::isfinite(speed) && std::isfinite(offset)
             && std::isfinite(in) && std::isfinite(out) && out > in;
     }
 };
@@ -80,16 +83,16 @@ struct CourseStep {
  *
  * Pure arithmetic with no scheduler, buffer, source or file type. It counts whole
  * steps, so the clock is the integer step count over the step rate and never a sum of
- * rounded steps. The clock runs at the setting's rate and is re-based whenever the rate
+ * rounded steps. The clock runs at the setting's speed and is re-based whenever the speed
  * changes, so a change carries on from where the clock is. The step rate is a plain
  * number the caller resolves.
  *
- * Source time is the warp of the clock, or the clock itself offset to where the course
+ * Source time is the time map of the clock, or the clock itself offset to where the course
  * started (the start of the range going forwards, its end going backwards, or wherever
  * seek() put it). It is folded into the range by the setting's edge.
  *
- * A step that cannot be computed returns nullopt and changes nothing: a rate, offset or
- * range that is not finite, a range with no length, or a warp or repeat that answers
+ * A step that cannot be computed returns nullopt and changes nothing: a speed, offset or
+ * range that is not finite, a range with no length, or a time map or repeat that answers
  * with something that is not finite.
  *
  * Not thread safe. The owner steps and reads it from one thread.
@@ -116,8 +119,8 @@ public:
      * @brief Put the course at a source time, as the start of a new pass.
      *
      * Restarts the clock, the repeat and the crossing count and clears finished. Needs
-     * a setting with no warp, since a warp cannot be inverted: with one, use seek_clock.
-     * @return false when the setting is unusable or has a warp, leaving the course as it was.
+     * a setting with no time map, since a time map cannot be inverted: with one, use seek_clock.
+     * @return false when the setting is unusable or has a time map, leaving the course as it was.
      */
     bool seek(double source_time, const CourseSetting& setting);
 
@@ -134,8 +137,8 @@ public:
      * @brief Source time now, as if the offset were greater by an amount.
      *
      * Reads without stepping, so a part of an asset can run ahead of or behind the course
-     * (the warp of the clock plus that part's own offset). Changes nothing.
-     * @return nullopt when the setting is unusable or the warp answers with something not finite.
+     * (the time map of the clock plus that part's own offset). Changes nothing.
+     * @return nullopt when the setting is unusable or the time map answers with something not finite.
      */
     [[nodiscard]] std::optional<double> resolve(const CourseSetting& setting, double extra_offset = 0.0) const;
 
@@ -167,7 +170,7 @@ private:
     uint64_t m_steps {};
     uint64_t m_base_step {};
     double m_base_clock {};
-    double m_rate { 1.0 };
+    double m_speed { 1.0 };
 
     std::optional<double> m_anchor;
 

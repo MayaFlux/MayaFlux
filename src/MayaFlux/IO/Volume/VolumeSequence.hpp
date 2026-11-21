@@ -7,31 +7,23 @@
 namespace MayaFlux::IO {
 
 /**
- * @struct FirstFrameLattice
- * @brief Pin a volume sequence to the lattice the first file's content fills.
+ * @enum LatticeSource
+ * @brief Where the one lattice of a volume sequence comes from, when it is not given.
  *
- * Content of later frames outside that extent is not read. Choose this when the
- * first frame bounds the whole sequence.
+ * A VolumeGridBuffer fixes its lattice at construction, so a sequence has exactly one.
+ * FirstFrame takes the lattice the first file's content fills, and content of later frames
+ * outside that extent is not read: choose it when the first frame bounds the whole
+ * sequence. Union reads every file once when the sequence is made, one at a time, to find
+ * the extent, and needs one voxel size across the files: choose it when the content grows
+ * or moves. There is no default: the caller says which, or passes a Lattice3D.
  */
-struct FirstFrameLattice { };
+enum class LatticeSource : uint8_t {
+    FirstFrame,
+    Union
+};
 
-/**
- * @struct UnionLattice
- * @brief Pin a volume sequence to the union of every file's content.
- *
- * Reads every file once when the sequence is made, one at a time, to find the
- * extent. All files must share one voxel size. Choose this when the content grows
- * or moves.
- */
-struct UnionLattice { };
-
-/**
- * @brief The lattice every frame of a volume sequence is read onto.
- *
- * A VolumeGridBuffer fixes its lattice at construction, so a sequence has exactly
- * one. There is no default: the caller says where it comes from.
- */
-using VolumeSequenceLattice = std::variant<FirstFrameLattice, UnionLattice, Kinesis::Lattice3D>;
+/** @brief A lattice source or a lattice of the caller's own. */
+using VolumeSequenceLattice = std::variant<LatticeSource, Kinesis::Lattice3D>;
 
 /**
  * @struct VolumeSequenceOptions
@@ -74,7 +66,7 @@ public:
      * acyclic sampling must store exactly options.count times.
      * @param lattice Where the lattice every frame is read onto comes from. Required.
      * @return nullptr, with the reason logged, when the options are unusable, the first
-     * file cannot be read, a UnionLattice pre-pass meets an unreadable file or files
+     * file cannot be read, a LatticeSource::Union pre-pass meets an unreadable file or files
      * that disagree on voxel size or fields, or a given lattice has a zero axis.
      */
     [[nodiscard]] static std::shared_ptr<const VolumeFileSequence> create(

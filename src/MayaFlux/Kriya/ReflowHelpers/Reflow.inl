@@ -10,12 +10,12 @@ namespace MayaFlux::Kriya {
 
 template <typename Frame>
 Reflow<Frame>::Reflow(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink,
-    std::vector<FrameOperation<Frame>> operations, FrameSelection selection, Rewrite rewrite, double rate)
+    std::vector<FrameOperation<Frame>> operations, FrameSelection selection, Rewrite rewrite, double cycle_rate)
     : m_source(std::move(source))
     , m_sink(std::move(sink))
     , m_selection(selection)
     , m_rewrite(rewrite)
-    , m_rate(rate)
+    , m_cycle_rate(cycle_rate)
     , m_courses(std::vector<std::shared_ptr<Course>> {})
     , m_current(std::shared_ptr<const Frame> {})
 {
@@ -37,7 +37,7 @@ Reflow<Frame>::~Reflow()
 template <typename Frame>
 std::shared_ptr<Course> Reflow<Frame>::add_course(const CourseSetting& setting, bool paused)
 {
-    auto course = Course::create(m_rate, setting, paused);
+    auto course = Course::create(m_cycle_rate, setting, paused);
     if (!course) {
         return nullptr;
     }
@@ -137,7 +137,7 @@ void Reflow<Frame>::advance()
                 continue;
             }
 
-            const auto picks = select_frames(*location, m_selection, course->weight());
+            const auto picks = Detail::select_frames(*location, m_selection, course->weight());
             bool read_any = false;
             for (size_t i = 0; i < picks.count; ++i) {
                 const auto& pick = picks.items[i];
@@ -150,7 +150,7 @@ void Reflow<Frame>::advance()
                 read_any = true;
             }
             if (read_any) {
-                course->report_frame(nearest_frame(*location));
+                course->report_frame(Detail::nearest_frame(*location));
             }
         }
 
@@ -209,11 +209,11 @@ void Reflow<Frame>::stop()
 
 template <typename Frame>
 ReflowBuilder<Frame>::ReflowBuilder(
-    std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double rate,
+    std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double cycle_rate,
     std::shared_ptr<Vruta::TaskScheduler> scheduler)
     : m_source(std::move(source))
     , m_sink(std::move(sink))
-    , m_rate(rate > 0.0 ? rate : static_cast<double>(Vruta::s_registered_frame_rate))
+    , m_cycle_rate(cycle_rate > 0.0 ? cycle_rate : static_cast<double>(Vruta::s_registered_frame_rate))
     , m_scheduler(std::move(scheduler))
 {
 }
@@ -305,10 +305,10 @@ std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::build()
     }
 
     std::shared_ptr<Reflow<Frame>> reflow(
-        new Reflow<Frame>(m_source, m_sink, m_operations, m_selection, m_rewrite, m_rate));
+        new Reflow<Frame>(m_source, m_sink, m_operations, m_selection, m_rewrite, m_cycle_rate));
     for (const auto& plan : planned) {
         if (!reflow->add_course(plan.setting, plan.paused)) {
-            return refuse("a course setting is unusable or the rate is not above zero");
+            return refuse("a course setting is unusable or the cycle rate is not above zero");
         }
     }
     return reflow;
@@ -330,7 +330,7 @@ std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::start()
 
     const std::weak_ptr<Reflow<Frame>> weak = reflow;
     auto routine = metro(
-        1.0 / reflow->rate(),
+        1.0 / reflow->cycle_rate(),
         [weak] {
             if (const auto running = weak.lock()) {
                 running->advance();

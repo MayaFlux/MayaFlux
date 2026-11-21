@@ -1,6 +1,6 @@
 #include "ReflowSelect.hpp"
 
-namespace MayaFlux::Kriya {
+namespace MayaFlux::Kriya::Detail {
 
 size_t nearest_frame(const Kinesis::TimeLocation& location)
 {
@@ -42,4 +42,4 @@ FramePicks select_frames(const Kinesis::TimeLocation& location, FrameSelection s
     return picks;
 }
 
-} // namespace MayaFlux::Kriya
+} // namespace MayaFlux::Kriya::Detail
