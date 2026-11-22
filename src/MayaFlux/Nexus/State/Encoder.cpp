@@ -131,7 +131,11 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
         rec.steps = std::move(steps);
         take_times();
 
-    } else if (!std::holds_alternative<std::monostate>(w->trigger())) {
+    } else if (!w->triggers().empty()) {
+        if (w->triggers().size() > 1) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateEncoder: entity {} has {} triggers, only the first is encoded", id, w->triggers().size());
+        }
         std::visit([&rec](const auto& trigger) {
             using T = std::decay_t<decltype(trigger)>;
             if constexpr (std::is_same_v<T, Wiring::KeyTrigger>) {
@@ -153,7 +157,7 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
                 rec.kind = State::WiringKind::Unsupported;
             }
         },
-            w->trigger());
+            w->triggers().front());
 
     } else if (w->interval()) {
         rec.kind = State::WiringKind::Every;

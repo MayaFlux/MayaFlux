@@ -185,8 +185,10 @@ public:
      * @param cursor Cursor position the firing carries into the influence context. It
      *               belongs to this call alone, so firings from different threads never
      *               see each other's cursor.
+     * @param input  Window event that caused the firing, passed to the influence context
+     *               for the duration of the call.
      */
-    void fire(uint32_t id, std::optional<glm::vec2> cursor = std::nullopt);
+    void fire(uint32_t id, std::optional<glm::vec2> cursor = std::nullopt, const Core::WindowEvent* input = nullptr);
 
     // =========================================================================
     // Spatial queries
@@ -341,7 +343,7 @@ private:
     struct Registration {
         Member member;
         std::string task_name;
-        std::string event_name;
+        std::vector<std::string> event_names;
         std::string chain_name;
         bool commit_driven { false };
         std::optional<uint32_t> spatial_id;
@@ -349,7 +351,7 @@ private:
     };
 
     uint32_t assign_id(Member& m);
-    void fire(const Registration& reg, std::optional<glm::vec2> cursor) const;
+    void fire(const Registration& reg, std::optional<glm::vec2> cursor, const Core::WindowEvent* input) const;
     void track(uint32_t id, Registration& reg, const glm::vec3& position);
     void untrack(Registration& reg);
     void release(Registration& reg);

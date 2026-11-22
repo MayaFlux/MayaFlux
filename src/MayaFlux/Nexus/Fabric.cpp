@@ -52,8 +52,8 @@ Fabric::~Fabric()
         if (!reg.chain_name.empty()) {
             m_scheduler->cancel_task(reg.chain_name);
         }
-        if (!reg.event_name.empty()) {
-            m_event_manager->cancel_event(reg.event_name);
+        for (const auto& name : reg.event_names) {
+            m_event_manager->cancel_event(name);
         }
         release(reg);
     }
@@ -130,8 +130,8 @@ void Fabric::remove(uint32_t id)
     if (!reg.chain_name.empty()) {
         m_scheduler->cancel_task(reg.chain_name);
     }
-    if (!reg.event_name.empty()) {
-        m_event_manager->cancel_event(reg.event_name);
+    for (const auto& name : reg.event_names) {
+        m_event_manager->cancel_event(name);
     }
     untrack(reg);
     release(reg);
@@ -318,12 +318,12 @@ void Fabric::commit()
 
     for (auto& [id, reg] : m_registrations) {
         if (reg.commit_driven) {
-            fire(reg, std::nullopt);
+            fire(reg, std::nullopt, nullptr);
         }
     }
 }
 
-void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor)
+void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor, const Core::WindowEvent* input)
 {
     auto it = m_registrations.find(id);
     if (it == m_registrations.end()) {
@@ -331,7 +331,7 @@ void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor)
             "Fabric::fire: id {} not registered", id);
         return;
     }
-    fire(it->second, cursor);
+    fire(it->second, cursor, input);
 }
 
 // =============================================================================
@@ -405,7 +405,7 @@ uint32_t Fabric::assign_id(Member& m)
     return id;
 }
 
-void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor) const
+void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, const Core::WindowEvent* input) const
 {
     std::visit([&](const auto& ptr) {
         using T = std::decay_t<decltype(*ptr)>;
@@ -421,6 +421,7 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor) cons
             ctx.color = ptr->color();
             ctx.size = ptr->size();
             ctx.cursor_pos = cursor;
+            ctx.input = input;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
@@ -461,6 +462,7 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor) cons
                 ictx.position = *position;
                 ictx.cursor_pos = cursor;
             }
+            ictx.input = input;
             ptr->invoke_influence(ictx);
         }
     },

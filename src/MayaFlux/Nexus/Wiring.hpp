@@ -38,6 +38,11 @@ class StateEncoder;
  * performs an immediate single call with no coroutine. Any scheduling
  * modifier (@c every, @c on, @c move_to, @c position_from, @c use) creates
  * and registers a coroutine owned by Fabric.
+ *
+ * @c on and @c on_scroll add a trigger, so one wiring may hold any number of them:
+ * every key, button and window event an entity answers to goes through one wiring.
+ * The triggers share @c times, and a firing a window event caused carries that event
+ * in @c InfluenceContext::input, so the entity can tell which trigger fired.
  */
 class MAYAFLUX_API Wiring {
 public:
@@ -329,7 +334,7 @@ private:
     Vruta::ProcessingToken m_metro_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
     Vruta::ProcessingToken m_duration_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
 
-    Trigger m_trigger;
+    std::vector<Trigger> m_triggers;
     Factory m_factory;
     EFactory m_event_factory;
     std::string m_factory_name;
@@ -371,10 +376,13 @@ public:
     [[nodiscard]] const std::vector<MoveStep>& move_steps() const { return m_move_steps; }
 
     /** @brief True if @c on_scroll was called. */
-    [[nodiscard]] bool is_scroll() const { return std::holds_alternative<ScrollTrigger>(m_trigger); }
+    [[nodiscard]] bool is_scroll() const
+    {
+        return std::ranges::any_of(m_triggers, [](const Trigger& t) { return std::holds_alternative<ScrollTrigger>(t); });
+    }
 
-    /** @brief Active trigger variant set by @c on. */
-    [[nodiscard]] const Trigger& trigger() const { return m_trigger; }
+    /** @brief Triggers added by @c on and @c on_scroll, in the order they were added. */
+    [[nodiscard]] const std::vector<Trigger>& triggers() const { return m_triggers; }
 
     /** @brief Active factory variant set by @c use for non-Event factories. */
     [[nodiscard]] const Factory& factory() const { return m_factory; }

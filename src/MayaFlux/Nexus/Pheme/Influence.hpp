@@ -4,6 +4,10 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+namespace MayaFlux::Core {
+struct WindowEvent;
+}
+
 namespace MayaFlux::Nexus {
 
 /**
@@ -28,6 +32,8 @@ struct InfluenceContext {
     std::optional<glm::vec2> cursor_pos; ///< Optional cursor position for pending interactions, useful for real-time editing or previewing influence effects.
 
     std::optional<glm::quat> orientation; ///< Optional orientation of the influencer. Local +Z is its forward direction.
+
+    const Core::WindowEvent* input {}; ///< The window event that caused this firing, valid only during the call; null for firings a window event did not cause.
 
     // @note future: ShaderProcessor* shader_proc { nullptr };
     // @note future: std::span<const double> audio_snapshot;
