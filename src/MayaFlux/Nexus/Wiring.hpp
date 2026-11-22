@@ -145,13 +145,6 @@ public:
     }
 
     /**
-     * @brief Fire the entity on each matching window event.
-     * @param source Event stream.
-     * @param filter Optional filter criteria.
-     */
-    Wiring& on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter = {});
-
-    /**
      * @brief Fire the entity on each mouse scroll event from a window.
      *
      * The scroll delta (dx, dy) is passed directly to the emitter's fn via a
@@ -307,14 +300,8 @@ private:
         std::shared_ptr<Vruta::NetworkSource> source;
     };
 
-    struct EventTrigger {
-        Vruta::EventSource* source;
-        Vruta::EventFilter filter;
-    };
-
     struct WindowEventTrigger {
         std::shared_ptr<Core::Window> window;
-        Vruta::WindowEventSource* source {};
         Vruta::WindowEventFilter filter;
     };
 
@@ -323,7 +310,6 @@ private:
         KeyTrigger,
         MouseTrigger,
         NetworkTrigger,
-        EventTrigger,
         WindowEventTrigger,
         ScrollTrigger>;
     using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, CrossFactory>;
@@ -354,8 +340,6 @@ private:
     std::string m_bind_detach_name;
 
     Wiring& window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter);
-
-    Vruta::Event window_event_source_loop(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter, Fabric& fabric, uint32_t id, std::function<void()> fire);
 
 public:
     // =====================================================================

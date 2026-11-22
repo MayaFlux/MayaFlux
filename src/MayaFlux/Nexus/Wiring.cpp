@@ -4,8 +4,6 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
-#include "MayaFlux/Kriya/Awaiters/EventAwaiter.hpp"
-#include "MayaFlux/Kriya/Awaiters/GetPromise.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
 #include "MayaFlux/Kriya/NetworkEvents.hpp"
@@ -98,12 +96,6 @@ Wiring& Wiring::on(std::shared_ptr<Vruta::NetworkSource> source)
 Wiring& Wiring::window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter)
 {
     m_trigger = WindowEventTrigger { .window = std::move(window), .filter = std::move(filter) };
-    return *this;
-}
-
-Wiring& Wiring::on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter)
-{
-    m_trigger = WindowEventTrigger { .source = &source, .filter = std::move(filter) };
     return *this;
 }
 
@@ -415,13 +407,14 @@ void Wiring::finalise()
     // ------------------------------------------------------------------
     if (!std::holds_alternative<std::monostate>(m_trigger)) {
         const auto limit = std::make_shared<FireLimit>(FireLimit { .remaining = m_times, .limited = m_times > 1, .stop = {} });
-        const std::function<void()> fire = [&fab = m_fabric, id, limit]() {
+        const std::function<void(std::optional<glm::vec2>)> fire_at = [&fab = m_fabric, id, limit](std::optional<glm::vec2> cursor) {
             if (limit->spent()) {
                 return;
             }
-            fab.fire(id);
+            fab.fire(id, cursor);
             limit->fired();
         };
+        const std::function<void()> fire = [fire_at]() { fire_at(std::nullopt); };
         const auto stop_event = [ev_manager_ptr, limit](const std::string& name) {
             limit->stop = [ev_manager_ptr, name]() {
                 if (const auto event = ev_manager_ptr->get_event(name)) {
@@ -457,14 +450,8 @@ void Wiring::finalise()
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
                 stop_event(name);
-                Fabric& fab = m_fabric;
-                uint32_t eid = m_entity_id;
-                const auto aimed_fire = [&fab, eid, limit, fire](double px, double py) {
-                    if (limit->spent()) {
-                        return;
-                    }
-                    fab.m_registrations[eid].pending_cursor = glm::vec2(px, py);
-                    fire();
+                const auto aimed_fire = [fire_at](double px, double py) {
+                    fire_at(glm::vec2(px, py));
                 };
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
@@ -510,24 +497,17 @@ void Wiring::finalise()
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
                 stop_event(name);
-                Fabric& fab = m_fabric;
-                if (trig.window) {
-                    ev_manager.add_event(
-                        std::make_shared<Vruta::Event>(
-                            Kriya::window_event(trig.window, trig.filter,
-                                [&fab, id, fire](const Core::WindowEvent& event) {
-                                    if (const auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data)) {
-                                        fab.m_registrations[id].pending_cursor = glm::vec2(pos->x, pos->y);
-                                    }
-                                    fire();
-                                })),
-                        name);
-                } else {
-                    ev_manager.add_event(
-                        std::make_shared<Vruta::Event>(
-                            window_event_source_loop(*trig.source, trig.filter, fab, id, fire)),
-                        name);
-                }
+                ev_manager.add_event(
+                    std::make_shared<Vruta::Event>(
+                        Kriya::window_event(trig.window, trig.filter,
+                            [fire_at](const Core::WindowEvent& event) {
+                                std::optional<glm::vec2> cursor;
+                                if (const auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data)) {
+                                    cursor = glm::vec2(pos->x, pos->y);
+                                }
+                                fire_at(cursor);
+                            })),
+                    name);
             }
         },
             m_trigger);
@@ -637,30 +617,6 @@ void Wiring::detach()
     if (m_bind_detach.has_value() && *m_bind_detach) {
         const auto action = std::exchange(*m_bind_detach, nullptr);
         action();
-    }
-}
-
-// =============================================================================
-// Internal
-// =============================================================================
-
-Vruta::Event Wiring::window_event_source_loop(
-    Vruta::WindowEventSource& source,
-    Vruta::WindowEventFilter filter,
-    Fabric& fabric,
-    uint32_t id,
-    std::function<void()> fire)
-{
-    auto& promise = co_await Kriya::GetEventPromise {};
-    while (true) {
-        if (promise.should_terminate)
-            break;
-        auto event = co_await Kriya::WindowEventAwaiter(source, filter);
-        if (promise.should_terminate)
-            break;
-        if (auto* pos =std::get_if<Core::WindowEvent::MousePosData>(&event.data))
-            fabric.m_registrations[id].pending_cursor = glm::vec2(pos->x, pos->y);
-        fire();
     }
 }
 

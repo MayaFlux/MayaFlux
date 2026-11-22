@@ -181,9 +181,12 @@ public:
 
     /**
      * @brief Fire a single object against the current snapshot without republishing.
-     * @param id Id assigned at registration.
+     * @param id     Id assigned at registration.
+     * @param cursor Cursor position the firing carries into the influence context. It
+     *               belongs to this call alone, so firings from different threads never
+     *               see each other's cursor.
      */
-    void fire(uint32_t id);
+    void fire(uint32_t id, std::optional<glm::vec2> cursor = std::nullopt);
 
     // =========================================================================
     // Spatial queries
@@ -343,11 +346,10 @@ private:
         bool commit_driven { false };
         std::optional<uint32_t> spatial_id;
         std::optional<Wiring> wiring;
-        std::optional<glm::vec2> pending_cursor;
     };
 
     uint32_t assign_id(Member& m);
-    void fire(const Registration& reg) const;
+    void fire(const Registration& reg, std::optional<glm::vec2> cursor) const;
     void track(uint32_t id, Registration& reg, const glm::vec3& position);
     void untrack(Registration& reg);
     void release(Registration& reg);

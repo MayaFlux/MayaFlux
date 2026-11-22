@@ -318,12 +318,12 @@ void Fabric::commit()
 
     for (auto& [id, reg] : m_registrations) {
         if (reg.commit_driven) {
-            fire(reg);
+            fire(reg, std::nullopt);
         }
     }
 }
 
-void Fabric::fire(uint32_t id)
+void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor)
 {
     auto it = m_registrations.find(id);
     if (it == m_registrations.end()) {
@@ -331,8 +331,7 @@ void Fabric::fire(uint32_t id)
             "Fabric::fire: id {} not registered", id);
         return;
     }
-    fire(it->second);
-    it->second.pending_cursor.reset();
+    fire(it->second, cursor);
 }
 
 // =============================================================================
@@ -406,7 +405,7 @@ uint32_t Fabric::assign_id(Member& m)
     return id;
 }
 
-void Fabric::fire(const Registration& reg) const
+void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor) const
 {
     std::visit([&](const auto& ptr) {
         using T = std::decay_t<decltype(*ptr)>;
@@ -421,7 +420,7 @@ void Fabric::fire(const Registration& reg) const
             ctx.radius = ptr->radius();
             ctx.color = ptr->color();
             ctx.size = ptr->size();
-            ctx.cursor_pos = reg.pending_cursor;
+            ctx.cursor_pos = cursor;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
@@ -460,7 +459,7 @@ void Fabric::fire(const Registration& reg) const
             ictx.size = ptr->size();
             if (const auto position = ptr->position()) {
                 ictx.position = *position;
-                ictx.cursor_pos = reg.pending_cursor;
+                ictx.cursor_pos = cursor;
             }
             ptr->invoke_influence(ictx);
         }
