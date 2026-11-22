@@ -119,7 +119,7 @@ template <typename Operator>
 template <typename Region>
 [[nodiscard]] Influence<Kinesis::AABB3D>::Target bind_bounds(const Region& expanse)
 {
-    return [expanse](const Kinesis::AABB3D& bounds) { expanse->set_bounds(bounds); };
+    return [expanse](const Kinesis::AABB3D& bounds) { expanse->set({ .bounds = bounds }); };
 }
 
 /**

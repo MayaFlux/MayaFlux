@@ -16,9 +16,12 @@ class StateEncoder;
  * The box is the authority. The buffer's geometry is read once, when the Mantle
  * is built and on refit(), and the buffer is placed so that geometry fills the
  * box according to the fit mode. The placement is a geometry transform source on
- * every render processor the buffer has, so it follows set_bounds, and with it
- * bind_bounds, without being pushed. It is the reverse of Hull, where the buffer
- * is the authority and the region follows it.
+ * every render processor the buffer has, so it follows the `bounds` control, and
+ * with it bind_bounds, without being pushed. A change of the box, of the geometry
+ * (`local`) or of the fit mode (`fit`, in MantleControls) is applied to the buffer
+ * at the next evaluation of the Expanse, so the look moves on the thread that
+ * commits. It is the reverse of Hull, where the buffer is the authority and the
+ * region follows it.
  *
  * The fit modes are Portal::Graphics::FitMode read for a box. STRETCH scales each
  * axis independently. CONTAIN scales uniformly until the geometry fits inside
@@ -53,11 +56,8 @@ public:
     Mantle(Mantle&&) = delete;
     Mantle& operator=(Mantle&&) = delete;
 
-    /** @brief Set or replace the box and place the buffer to match. */
-    void set_bounds(const Kinesis::AABB3D& bounds) override;
-
     /**
-     * @brief Read the buffer's geometry again and place it to match.
+     * @brief Read the buffer's geometry again and place it to match at the next evaluation.
      *
      * For a deforming mesh. Blocks for a ComputeMeshBuffer, so call it off the
      * graphics thread. The previous geometry is kept if nothing can be read.
@@ -73,8 +73,7 @@ private:
     void refresh();
 
     Attachment m_look;
-    Portal::Graphics::FitMode m_fit;
-    std::optional<Kinesis::AABB3D> m_local;
+    MantleControls& m_mantle { extend<MantleControls>() };
 };
 
 } // namespace MayaFlux::Nexus

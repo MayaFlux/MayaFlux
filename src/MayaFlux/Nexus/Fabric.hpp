@@ -167,6 +167,62 @@ public:
     void remove_expanse(uint32_t id);
 
     // =========================================================================
+    // Population controls
+    // =========================================================================
+
+    /**
+     * @brief Apply one controls struct to every entity of this Fabric.
+     * @tparam C EmitterControls, SensorControls, AgentControls, PresenceControls, LocusControls
+     *         or any struct an entity holds through extend().
+     *
+     * An entity that does not hold C is left alone, so `set_all(PresenceControls { ... })`
+     * reaches only the Presences. Members of @p incoming that are empty are untouched, as
+     * for the entity's own set().
+     */
+    template <typename C>
+    void set_all(const C& incoming)
+    {
+        for (auto& [id, reg] : m_registrations) {
+            std::visit([&incoming](const auto& ptr) { ptr->set(incoming); }, reg.member);
+        }
+    }
+
+    /**
+     * @brief Give each entity its own value of a controls struct.
+     * @tparam C Controls struct, as for set_all().
+     * @param make Called with each entity id, returns the struct that entity takes, or
+     *             nullopt to leave it alone.
+     */
+    template <typename C, typename Make>
+    void set_each(const Make& make)
+    {
+        for (auto& [id, reg] : m_registrations) {
+            if (const std::optional<C> incoming = make(id)) {
+                std::visit([&incoming](const auto& ptr) { ptr->set(*incoming); }, reg.member);
+            }
+        }
+    }
+
+    /**
+     * @brief Apply one controls struct to the entities inside an Expanse.
+     * @tparam C Controls struct, as for set_all().
+     * @param expanse Region whose occupants, as of the last commit, take @p incoming.
+     */
+    template <typename C>
+    void set_within(const Expanse& expanse, const C& incoming)
+    {
+        const auto* inside = expanse.occupants(m_fabric_id);
+        if (!inside) {
+            return;
+        }
+        for (const uint32_t id : *inside) {
+            if (const auto it = m_registrations.find(id); it != m_registrations.end()) {
+                std::visit([&incoming](const auto& ptr) { ptr->set(incoming); }, it->second.member);
+            }
+        }
+    }
+
+    // =========================================================================
     // Commit
     // =========================================================================
 

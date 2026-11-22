@@ -90,6 +90,47 @@ struct LocusControls {
 
 MF_DESCRIBE(LocusControls)
 
+/**
+ * @struct ExpanseControls
+ * @brief The state of an Expanse: the box of its region.
+ *
+ * `bounds` is a Kinesis::AABB3D in world space. An Expanse with none is a predicate alone,
+ * or contains nothing.
+ */
+struct ExpanseControls {
+    Quantity bounds;
+};
+
+MF_DESCRIBE(ExpanseControls)
+
+/**
+ * @struct HullControls
+ * @brief What a Hull adds to an Expanse: the box of its buffer's geometry in the buffer's stored coordinates.
+ *
+ * `local` is a Kinesis::AABB3D. It is set from the buffer when the Hull is built and on refit(),
+ * and may be set from any thread.
+ */
+struct HullControls {
+    Quantity local;
+};
+
+MF_DESCRIBE(HullControls)
+
+/**
+ * @struct MantleControls
+ * @brief What a Mantle adds to an Expanse: the geometry it fits and how it fits it.
+ *
+ * `local` is the box of the buffer's geometry in stored coordinates, a Kinesis::AABB3D.
+ * `fit` is a Portal::Graphics::FitMode. A change of either is applied to the buffer at the
+ * next evaluation of the Expanse.
+ */
+struct MantleControls {
+    Quantity local;
+    Quantity fit;
+};
+
+MF_DESCRIBE(MantleControls)
+
 }
 
 #include "Controls.describe.hpp"

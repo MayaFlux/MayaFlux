@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
+#include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
 
@@ -31,11 +32,13 @@ struct CrossingContext {
  * query; the Fabric drives it, because only the Fabric sees consecutive
  * snapshots.
  *
- * The region is a box, a predicate, or both. A box is plain data: it moves or
- * resizes with set_bounds, which any influence can drive through bind_bounds.
- * A predicate is a function from position to bool that closes over whatever
- * state shapes the region. With both, the box is a cheap first test and both
- * must pass. Derived classes may replace contains().
+ * The region is a box, a predicate, or both. The box is the `bounds` control of
+ * ExpanseControls: `set({ .bounds = box })` moves or resizes it from any thread, and
+ * any influence can drive it through bind_bounds. A predicate is a function from
+ * position to bool that closes over whatever state shapes the region. With both,
+ * the box is a cheap first test and both must pass. Derived classes may replace
+ * contains(). `extend<C>()` adds a struct of the user's own controls, as the
+ * entities have.
  *
  * Crossing actions are either a plain function of the entity id, or any number
  * of typed actions added with add_entry, add_exit and add_inside. A typed
@@ -54,6 +57,7 @@ struct CrossingContext {
  */
 class MAYAFLUX_API Expanse {
 public:
+    using Controls = ExpanseControls;
     using ContainsFn = std::function<bool(const glm::vec3&)>;
     using CrossingFn = std::function<void(uint32_t)>;
 
@@ -89,8 +93,8 @@ public:
     explicit Expanse(const Kinesis::AABB3D& bounds, CrossingFn on_enter = {}, CrossingFn on_exit = {})
         : m_on_enter(std::move(on_enter))
         , m_on_exit(std::move(on_exit))
-        , m_bounds(bounds)
     {
+        m_controls.bounds.observe(bounds);
     }
 
     /**
@@ -137,20 +141,67 @@ public:
     /** @brief Test whether a world position lies within the Expanse. */
     [[nodiscard]] virtual bool contains(const glm::vec3& p) const
     {
-        if (m_bounds && !m_bounds->contains(p)) {
+        const auto box = bounds();
+        if (box && !box->contains(p)) {
             return false;
         }
-        return m_contains ? m_contains(p) : m_bounds.has_value();
+        return m_contains ? m_contains(p) : box.has_value();
+    }
+
+    // =========================================================================
+    // Controls
+    // =========================================================================
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value.
+     * @tparam C ExpanseControls, the struct of a derived class or one added with extend().
+     *
+     * Members left empty are untouched, and `Quantity::unset()` empties a member.
+     * Safe from any thread.
+     */
+    template <typename C = ExpanseControls>
+    void set(const C& incoming)
+    {
+        m_store.merge(incoming);
+    }
+
+    /** @brief A copy of the controls of type C as they are now. */
+    template <typename C = ExpanseControls>
+    [[nodiscard]] C get() const
+    {
+        return m_store.snapshot<C>();
+    }
+
+    /** @brief Add a struct of the user's own controls beside ExpanseControls and return it. */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        return m_store.extend<C>();
+    }
+
+    /** @brief The live controls, read without a copy. */
+    [[nodiscard]] const ExpanseControls& controls() const noexcept { return m_controls; }
+
+    /** @brief Every control by name, for tools that list or set them. */
+    [[nodiscard]] const QuantityStore& store() const noexcept { return m_store; }
+
+    /** @brief The box, if set. */
+    [[nodiscard]] std::optional<Kinesis::AABB3D> bounds() const
+    {
+        return quantity_value<Kinesis::AABB3D>(m_controls.bounds);
     }
 
     /** @brief Set or replace the box. */
-    virtual void set_bounds(const Kinesis::AABB3D& bounds) { m_bounds = bounds; }
+    [[deprecated("use set({ .bounds = ... })")]] void set_bounds(const Kinesis::AABB3D& bounds)
+    {
+        m_controls.bounds.assign(Quantity(bounds));
+    }
 
     /** @brief Remove the box, leaving the predicate. */
-    void clear_bounds() { m_bounds.reset(); }
-
-    /** @brief The box, if set. */
-    [[nodiscard]] const std::optional<Kinesis::AABB3D>& bounds() const { return m_bounds; }
+    [[deprecated("use set({ .bounds = Quantity::unset() })")]] void clear_bounds()
+    {
+        m_controls.bounds.assign(Quantity::unset());
+    }
 
     /** @brief The containment predicate, empty for a box-only Expanse. */
     [[nodiscard]] const ContainsFn& contains_fn() const { return m_contains; }
@@ -310,6 +361,9 @@ public:
      */
     void evict(uint32_t fabric_id);
 
+private:
+    QuantityStore m_store;
+
 protected:
     /** @brief Called at the start of every evaluate(), before any position is tested. */
     virtual void begin_evaluate() { }
@@ -322,13 +376,18 @@ protected:
      */
     [[nodiscard]] virtual std::pair<glm::vec3, float> reach() const
     {
-        if (m_bounds) {
-            return { m_bounds->center(), glm::length(m_bounds->half_extent()) };
+        if (const auto box = bounds()) {
+            return { box->center(), glm::length(box->half_extent()) };
         }
         return { glm::vec3(0.0F), 0.0F };
     }
 
+    /** @brief The live controls, for a derived class to consume what changed. */
+    ExpanseControls& m_controls { open(m_store) };
+
 private:
+    [[nodiscard]] static ExpanseControls& open(QuantityStore& store);
+
     using Action = std::function<void(const CrossingContext&)>;
     using Actions = std::vector<std::pair<std::shared_ptr<void>, Action>>;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
@@ -350,7 +409,6 @@ private:
     ContainsFn m_contains;
     CrossingFn m_on_enter;
     CrossingFn m_on_exit;
-    std::optional<Kinesis::AABB3D> m_bounds;
 
     Actions m_entries;
     Actions m_exits;

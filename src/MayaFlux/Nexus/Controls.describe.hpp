@@ -41,6 +41,30 @@ struct Description<::MayaFlux::Nexus::EmitterControls> {
 };
 
 template <>
+struct Description<::MayaFlux::Nexus::ExpanseControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::ExpanseControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::ExpanseControls::bounds> { "bounds" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::HullControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::HullControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::HullControls::local> { "local" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::LocusControls> {
     static constexpr std::string_view name = "MayaFlux::Nexus::LocusControls";
 
@@ -49,6 +73,19 @@ struct Description<::MayaFlux::Nexus::LocusControls> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::LocusControls::aspect> { "aspect" },
             Member<&::MayaFlux::Nexus::LocusControls::timestep> { "timestep" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::MantleControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::MantleControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::MantleControls::local> { "local" },
+            Member<&::MayaFlux::Nexus::MantleControls::fit> { "fit" },
         };
     }
 };

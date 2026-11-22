@@ -11,18 +11,19 @@ namespace MayaFlux::Nexus {
  *
  * Does what the classes allow and reports the rest. Emitters, Sensors, Agents
  * (including Locus and Presence) are patched by id or constructed; their
- * Expanses are restored. Optional fields (position, orientation, color, size)
- * are applied only when the schema records them, except that an absent position
- * clears the entity's position. Callable name mismatches between schema and
- * live entity are warned but do not abort the patch.
+ * Expanses are restored. Each control of the entity takes the value the schema
+ * saved for it, and one the schema does not list is emptied, so an absent
+ * position clears the entity's position. A control the schema lists and the
+ * entity does not hold is warned and skipped. Callable name mismatches between
+ * schema and live entity are warned but do not abort the patch. Values are read
+ * from the JSON; the EXR is not read.
  *
  * Live objects are never invented. Sinks, typed influences and perceptions,
  * attachments, a Locus's view targets and every wiring source that needs a
  * window, a network source or a callable are reported as warnings, and a wiring
  * that cannot be restored falls back to commit_driven. A Hull needs a buffer
- * and is skipped; a Mantle comes back as its plain box. Files from schema
- * versions k_schema_min_version up to k_schema_version are read, with fields
- * added since taking their defaults.
+ * and is skipped; a Mantle comes back as its plain box. Only files of schema
+ * version k_schema_version are read.
  */
 class MAYAFLUX_API StateDecoder {
 public:
