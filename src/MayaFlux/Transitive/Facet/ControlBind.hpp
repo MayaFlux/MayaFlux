@@ -40,7 +40,8 @@ template <auto Member, typename T, typename Host>
 /**
  * @brief A function that reads one member of a host's controls struct as a type.
  * @tparam Member Pointer to the member, such as `&PhysicsControls::drag`.
- * @tparam T The type to read it as, which must be the type it was set with.
+ * @tparam T The type to read it as. For a numeric slot it must be the type it was set with, and
+ *         for a ControlSnapshot member, such as `&CourseControls::range`, the type it holds.
  * @param host The concrete type that declares the controls, retained by the function.
  *
  * Each call copies the whole struct through `host->get()`, so the value is what the
@@ -55,7 +56,15 @@ template <auto Member, typename T, typename Host>
         if (!slot.has_value()) {
             return std::nullopt;
         }
-        return slot.template value<T>();
+        if constexpr (requires { slot.template value<T>(); }) {
+            return slot.template value<T>();
+        } else {
+            const auto held = slot.value();
+            if (!held) {
+                return std::nullopt;
+            }
+            return T(*held);
+        }
     };
 }
 
