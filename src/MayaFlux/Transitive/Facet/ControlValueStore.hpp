@@ -37,6 +37,54 @@ concept NumericControlSlot = ControlSlot<S> && requires(S slot, double number) {
     S(number);
 };
 
+/** @brief An address that is the same for every use of one type C and differs between types. */
+template <typename C>
+inline constexpr char k_control_tag {};
+
+/**
+ * @class ControlHeld
+ * @brief A frozen copy of the structs a ControlValueStore holds, read back by type.
+ *
+ * For a reader that must see one set of values for a whole piece of work, such as
+ * a rewrite pass or a frame, and that cannot name the struct types when it is
+ * given the copy. Cheap to pass around: it shares its copies.
+ */
+class ControlHeld {
+public:
+    struct Part {
+        const void* tag {};
+        std::shared_ptr<const void> data;
+    };
+
+    ControlHeld() = default;
+
+    explicit ControlHeld(std::vector<Part> parts)
+        : m_parts(std::move(parts))
+    {
+    }
+
+    /**
+     * @brief The held struct of type C.
+     * @return A default one when no struct of that type was held.
+     */
+    template <typename C>
+    [[nodiscard]] const C& get() const noexcept
+    {
+        static const C none {};
+        for (const Part& part : m_parts) {
+            if (part.tag == &k_control_tag<C> && part.data) {
+                return *static_cast<const C*>(part.data.get());
+            }
+        }
+        return none;
+    }
+
+    [[nodiscard]] bool empty() const noexcept { return m_parts.empty(); }
+
+private:
+    std::vector<Part> m_parts;
+};
+
 /**
  * @class ControlValueStore
  * @brief Owns one described struct of Slot members for a host such as a network, an operator or an input node.
@@ -46,7 +94,14 @@ concept NumericControlSlot = ControlSlot<S> && requires(S slot, double number) {
  * applies the members an incoming struct holds, snapshot() copies the struct for
  * get(), and refresh() reads sources once per block. A member named `scale` is
  * mirrored to a value the host passes in, and a host with no scale passes nothing.
- * Every member is a Slot or a described struct of the same, nested to any depth.
+ * Every member is a Slot, another ControlSlot type, or a described struct of
+ * these, nested to any depth. A member of another slot type is merged, copied,
+ * refreshed and settled like the others, but has no named number access.
+ *
+ * extend() adds a second described struct beside the first, such as one a user
+ * declares, with its members named by the struct's own name and a dot. declare()
+ * starts over and drops every extension. Like declare(), extend() belongs before
+ * any other thread uses the store.
  *
  * A member is also reachable by name through set_named() and read_named(), which
  * back an operator's string based set_parameter and query_state. A member of a
@@ -74,9 +129,12 @@ public:
         auto storage = std::make_shared<C>();
         C& controls = *storage;
 
+        m_slots.clear();
+        m_others.clear();
+        m_extensions.clear();
         m_storage = std::move(storage);
         m_tag = tag<C>();
-        m_slots.clear();
+        m_snapshot = &snapshot_of<C>;
         m_scale = nullptr;
 
         add_members(controls, std::string());
@@ -84,15 +142,101 @@ public:
         return controls;
     }
 
-    /** @brief Applies every member of @p incoming that holds a value. */
+    /**
+     * @brief Adds a second struct beside the declared one and returns it.
+     *
+     * Its members are named by the last part of its described name, a dot and the
+     * member, so `Bloom.rate`, and never take the `scale` mirror. A struct that is
+     * already held, the declared one included, is returned as it is.
+     */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        if (C* held = locate<C>()) {
+            return *held;
+        }
+
+        auto storage = std::make_shared<C>();
+        C& controls = *storage;
+        m_extensions.push_back({ tag<C>(), std::move(storage), &snapshot_of<C> });
+
+        add_members(controls, std::string(short_name(Reflect::Generated::Description<C>::name)) + ".");
+
+        return controls;
+    }
+
+    /**
+     * @brief The held struct of type C, or null when none is.
+     *
+     * The live struct and not a copy, so a member can be read without copying the
+     * rest. Its slots are safe to read from any thread.
+     */
+    template <typename C>
+    [[nodiscard]] const C* live() const noexcept
+    {
+        return locate<C>();
+    }
+
+    /**
+     * @brief A frozen copy of every struct the store holds, as they are now.
+     *
+     * The scale mirror is not applied, so a host that has a scale reads its own.
+     */
+    [[nodiscard]] ControlHeld held() const
+    {
+        std::vector<ControlHeld::Part> parts;
+        if (m_storage && m_snapshot) {
+            parts.push_back({ .tag = m_tag, .data = m_snapshot(m_storage.get()) });
+        }
+        for (const Extension& extension : m_extensions) {
+            parts.push_back({ .tag = extension.tag, .data = extension.snapshot(extension.storage.get()) });
+        }
+        return ControlHeld(std::move(parts));
+    }
+
+    /**
+     * @brief The number the member called @p name holds now, read without copying any struct.
+     * @return nullopt for an unknown name, an empty member or a member that holds a vector.
+     *
+     * A member of an extension is named as set_named names it.
+     */
+    [[nodiscard]] std::optional<double> number(std::string_view name) const
+        requires NumericControlSlot<Slot>
+    {
+        const Slot* slot = find(name);
+        if (slot && slot->has_value() && slot->width() == 1) {
+            return slot->value();
+        }
+        return std::nullopt;
+    }
+
+    /** @brief The slot called @p name, or null when no member has that name. */
+    [[nodiscard]] Slot* find(std::string_view name) const noexcept
+    {
+        for (const Entry& entry : m_slots) {
+            if (entry.name == name) {
+                return entry.slot;
+            }
+        }
+        return nullptr;
+    }
+
+    /** @brief Calls visit(name, slot) for every member of the held structs, in declaration order. */
+    template <typename Visit>
+    void for_each(const Visit& visit) const
+    {
+        for (const Entry& entry : m_slots) {
+            visit(std::string_view(entry.name), *entry.slot);
+        }
+    }
+
+    /** @brief Applies every member of @p incoming that holds a value or asks for a clear. */
     template <typename C>
     void merge(const C& incoming)
     {
-        if (m_tag != tag<C>()) {
-            return;
+        if (C* held = locate<C>()) {
+            merge_members(*held, incoming);
         }
-
-        merge_members(*static_cast<C*>(m_storage.get()), incoming);
     }
 
     /**
@@ -102,10 +246,9 @@ public:
     template <typename C>
     [[nodiscard]] C snapshot(const double* scale = nullptr) const
     {
-        C current = m_tag == tag<C>()
-            ? *static_cast<const C*>(m_storage.get())
-            : C {};
-        if (scale) {
+        const C* held = locate<C>();
+        C current = held ? *held : C {};
+        if (scale && m_tag == tag<C>()) {
             std::apply(
                 [&](const auto&... member) {
                     (observe_scale(member, current, *scale), ...);
@@ -123,6 +266,9 @@ public:
     {
         for (const Entry& entry : m_slots) {
             entry.slot->refresh();
+        }
+        for (const Other& other : m_others) {
+            other.refresh(other.slot);
         }
 
         if constexpr (NumericControlSlot<Slot>) {
@@ -157,6 +303,27 @@ public:
     }
 
     /**
+     * @brief Gives the member called @p name the whole of @p value, a vector, a box or a source included.
+     * @return False when no member has that name, or when the member already holds a value of another width.
+     *
+     * The same as set() with that one member. A member that is empty takes any width.
+     */
+    bool set_named(std::string_view name, const Slot& value)
+        requires NumericControlSlot<Slot>
+    {
+        for (const Entry& entry : m_slots) {
+            if (entry.name == name) {
+                if (entry.slot->has_value() && value.has_value() && entry.slot->width() != value.width()) {
+                    return false;
+                }
+                entry.slot->assign(value);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @brief Drops the pending value of the member called @p name.
      * @return False when no member has that name.
      *
@@ -168,6 +335,12 @@ public:
         for (const Entry& entry : m_slots) {
             if (entry.name == name) {
                 entry.slot->settle();
+                return true;
+            }
+        }
+        for (const Other& other : m_others) {
+            if (other.name == name) {
+                other.settle(other.slot);
                 return true;
             }
         }
@@ -197,11 +370,61 @@ private:
         Slot* slot {};
     };
 
+    struct Other {
+        std::string name;
+        void* slot {};
+        void (*refresh)(void*) {};
+        void (*settle)(void*) {};
+    };
+
+    using SnapshotFn = std::shared_ptr<const void> (*)(const void*);
+
+    struct Extension {
+        const void* tag {};
+        std::shared_ptr<void> storage;
+        SnapshotFn snapshot {};
+    };
+
     template <typename C>
     [[nodiscard]] static const void* tag() noexcept
     {
-        static constexpr char value = 0;
-        return &value;
+        return &k_control_tag<C>;
+    }
+
+    template <typename C>
+    [[nodiscard]] static std::shared_ptr<const void> snapshot_of(const void* held)
+    {
+        return std::make_shared<const C>(*static_cast<const C*>(held));
+    }
+
+    [[nodiscard]] static std::string_view short_name(std::string_view qualified) noexcept
+    {
+        const size_t cut = qualified.rfind("::");
+        return cut == std::string_view::npos ? qualified : qualified.substr(cut + 2);
+    }
+
+    template <typename C>
+    [[nodiscard]] C* locate() const noexcept
+    {
+        if (m_tag == tag<C>()) {
+            return static_cast<C*>(m_storage.get());
+        }
+        for (const Extension& extension : m_extensions) {
+            if (extension.tag == tag<C>()) {
+                return static_cast<C*>(extension.storage.get());
+            }
+        }
+        return nullptr;
+    }
+
+    template <typename S>
+    [[nodiscard]] static bool requests_clear(const S& slot) noexcept
+    {
+        if constexpr (requires { { slot.clear_requested() } -> std::convertible_to<bool>; }) {
+            return slot.clear_requested();
+        } else {
+            return false;
+        }
     }
 
     template <typename C>
@@ -226,9 +449,13 @@ private:
                     m_scale = &value;
                 }
             }
+        } else if constexpr (ControlSlot<Value>) {
+            m_others.push_back({ prefix + std::string(member.name), &value,
+                [](void* slot) { static_cast<Value*>(slot)->refresh(); },
+                [](void* slot) { static_cast<Value*>(slot)->settle(); } });
         } else {
             static_assert(Reflect::Described<Value>,
-                "every member of a controls struct must be the store's slot type or a described struct of them");
+                "every member of a controls struct must be a control slot or a described struct of them");
             add_members(value, prefix + std::string(member.name) + ".");
         }
     }
@@ -247,9 +474,9 @@ private:
     static void merge_member(const Member& member, C& live, const C& incoming)
     {
         using Value = typename Member::value_type;
-        if constexpr (std::same_as<Value, Slot>) {
-            const Slot& given = member.get(incoming);
-            if (given.has_value()) {
+        if constexpr (ControlSlot<Value>) {
+            const Value& given = member.get(incoming);
+            if (given.has_value() || requests_clear(given)) {
                 member.get(live).assign(given);
             }
         } else {
@@ -276,10 +503,12 @@ private:
             if (member.name == name && value.has_value() && value.width() == 1) {
                 found = value.value();
             }
-        } else if (name.size() > member.name.size() && name.starts_with(member.name)
-            && name[member.name.size()] == '.') {
-            if (const auto inner = read_named(value, name.substr(member.name.size() + 1))) {
-                found = inner;
+        } else if constexpr (Reflect::Described<typename Member::value_type>) {
+            if (name.size() > member.name.size() && name.starts_with(member.name)
+                && name[member.name.size()] == '.') {
+                if (const auto inner = read_named(value, name.substr(member.name.size() + 1))) {
+                    found = inner;
+                }
             }
         }
     }
@@ -287,6 +516,9 @@ private:
     std::shared_ptr<void> m_storage;
     const void* m_tag = nullptr;
     std::vector<Entry> m_slots;
+    std::vector<Other> m_others;
+    std::vector<Extension> m_extensions;
+    SnapshotFn m_snapshot = nullptr;
     Slot* m_scale = nullptr;
 };
 

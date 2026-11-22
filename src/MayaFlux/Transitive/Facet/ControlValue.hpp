@@ -12,13 +12,20 @@ namespace MayaFlux {
  * @class ControlValue
  * @brief One pending value, written from any thread and applied once per change by one consumer.
  *
- * Holds a number, a bool, an enum, a float glm vector or a box (a struct of
+ * Holds a number, a bool, an enum, a float glm vector, a glm::quat or a box (a struct of
  * exactly a glm::vec3 `min` and a glm::vec3 `max`) as six double lanes, a width
  * and flags. Numbers are atomic, and a vector is written and read under a
  * sequence lock, so it is never seen half written. A value is never lost to a
  * race, only possibly applied twice with the same content. It holds one pending
  * value, so a later value replaces one that no block has applied yet. Integers
  * are carried exactly up to 2^53. A read of another type than was set finds nothing.
+ * A quaternion is carried in x, y, z, w order and read back as it was set, so it
+ * has the same width as a vec4.
+ *
+ * A slot can also be empty on request: a derived slot that offers an unset value
+ * makes a member of a merged struct clear the live slot instead of leaving it alone.
+ * clear_requested() reports it. Nothing in this class makes one, so a slot that
+ * does not derive an unset value never sees it.
  */
 class ControlValue {
 public:
@@ -35,7 +42,10 @@ public:
     } && sizeof(T) == 2 * sizeof(glm::vec3);
 
     template <typename T>
-    static constexpr bool is_value = std::is_arithmetic_v<T> || std::is_enum_v<T> || is_vector<T> || is_box<T>;
+    static constexpr bool is_rotation = std::same_as<T, glm::quat>;
+
+    template <typename T>
+    static constexpr bool is_value = std::is_arithmetic_v<T> || std::is_enum_v<T> || is_vector<T> || is_box<T> || is_rotation<T>;
 
     ControlValue() = default;
 
@@ -72,7 +82,7 @@ public:
     /** @brief True once a value was given. */
     [[nodiscard]] bool has_value() const noexcept { return m_set.load(std::memory_order_acquire); }
 
-    /** @brief Components held: 0 when empty, 1 for a number, flag or enum, 2 to 4 for a vector, 6 for a box. */
+    /** @brief Components held: 0 when empty, 1 for a number, flag or enum, 2 to 4 for a vector, 4 for a quaternion, 6 for a box. */
     [[nodiscard]] size_t width() const noexcept { return m_width.load(std::memory_order_acquire); }
 
     /** @brief The value as a double. */
@@ -116,9 +126,21 @@ public:
     /** @brief Nothing to read for a plain value. A holder with a source hides this. */
     void refresh() noexcept { }
 
-    /** @brief Takes everything @p incoming holds, so the next due() is true. */
+    /** @brief True when this slot asks whoever merges it to empty the live slot. */
+    [[nodiscard]] bool clear_requested() const noexcept { return m_clear.load(std::memory_order_acquire); }
+
+    /**
+     * @brief Takes everything @p incoming holds, so the next due() is true.
+     *
+     * An incoming slot that requests a clear empties this one instead, which is
+     * not due.
+     */
     void assign(const ControlValue& incoming) noexcept
     {
+        if (incoming.clear_requested()) {
+            mark_cleared();
+            return;
+        }
         const State state = incoming.read_state();
         store(state.lanes, state.width, true);
         m_dirty.store(true, std::memory_order_release);
@@ -142,6 +164,8 @@ protected:
             return static_cast<uint8_t>(glm_component_count<T>());
         } else if constexpr (is_box<T>) {
             return 6;
+        } else if constexpr (is_rotation<T>) {
+            return 4;
         } else {
             return 1;
         }
@@ -151,6 +175,18 @@ protected:
 
     /** @brief Marks the slot set with one zero lane and leaves it clean. */
     void set_blank() noexcept { store({}, 1, true); }
+
+    /**
+     * @brief Empties the slot and records that it asks to empty whatever it is merged into.
+     *
+     * For a derived slot to offer as an unset value. The slot is not due.
+     */
+    void mark_cleared() noexcept
+    {
+        store({}, 0, false);
+        m_dirty.store(false, std::memory_order_release);
+        m_clear.store(true, std::memory_order_release);
+    }
 
     void set_scalar(double value) noexcept { m_lane[0].store(value, std::memory_order_relaxed); }
 
@@ -171,6 +207,8 @@ private:
             }
         } else if constexpr (is_box<T>) {
             lanes = { value.min.x, value.min.y, value.min.z, value.max.x, value.max.y, value.max.z };
+        } else if constexpr (is_rotation<T>) {
+            lanes = { value.x, value.y, value.z, value.w };
         } else if constexpr (std::is_enum_v<T>) {
             lanes[0] = static_cast<double>(static_cast<std::underlying_type_t<T>>(value));
         } else {
@@ -193,6 +231,9 @@ private:
             box.min = { static_cast<float>(lanes[0]), static_cast<float>(lanes[1]), static_cast<float>(lanes[2]) };
             box.max = { static_cast<float>(lanes[3]), static_cast<float>(lanes[4]), static_cast<float>(lanes[5]) };
             return box;
+        } else if constexpr (is_rotation<T>) {
+            return T(static_cast<float>(lanes[3]), static_cast<float>(lanes[0]),
+                static_cast<float>(lanes[1]), static_cast<float>(lanes[2]));
         } else if constexpr (std::is_enum_v<T>) {
             return static_cast<T>(static_cast<std::underlying_type_t<T>>(lanes[0]));
         } else if constexpr (std::same_as<T, bool>) {
@@ -233,6 +274,7 @@ private:
         }
         m_width.store(width, std::memory_order_release);
         m_set.store(set, std::memory_order_release);
+        m_clear.store(false, std::memory_order_release);
     }
 
     void copy_state(const ControlValue& other) noexcept
@@ -240,6 +282,7 @@ private:
         const State state = other.read_state();
         store(state.lanes, state.width, state.set);
         m_dirty.store(other.m_dirty.load(std::memory_order_acquire), std::memory_order_release);
+        m_clear.store(other.m_clear.load(std::memory_order_acquire), std::memory_order_release);
     }
 
     mutable Memory::Seqlock m_lock;
@@ -247,6 +290,7 @@ private:
     std::atomic<uint8_t> m_width { 0 };
     std::atomic<bool> m_set { false };
     std::atomic<bool> m_dirty { false };
+    std::atomic<bool> m_clear { false };
 };
 
 }
