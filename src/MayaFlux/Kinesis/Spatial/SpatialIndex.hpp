@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Tendency/TendencyFactories.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 
 #include <Eigen/Core>
 
@@ -12,7 +13,7 @@ struct QueryResult {
     float distance_sq;
 };
 
-/// @brief Immutable spatial snapshot published atomically for lock-free reads.
+/// @brief Immutable spatial snapshot published for lock-free reads.
 /// @tparam PointT Coordinate type (glm::vec3 or Eigen::VectorXd).
 template <typename PointT>
 struct SpatialSnapshot {
@@ -88,17 +89,15 @@ namespace detail {
  *
  * Single-writer thread (typically graphics) calls insert(), update(), remove(),
  * then publish() once per frame. Any reader thread (typically audio) calls
- * within_radius() or k_nearest() against the last published snapshot with no
- * synchronization overhead.
+ * within_radius() or k_nearest() against the last published snapshot without
+ * blocking the writer.
  *
  * Backed by a uniform spatial hash grid for PointT = glm::vec3, and brute-force
  * scan for PointT = Eigen::VectorXd with dimensionality > 6. Grid cell neighbor
  * enumeration scales as 3^D, so the grid is only practical for low dimensionality.
  *
- * Publication model:
- *   Non-macOS: std::atomic<std::shared_ptr<const SpatialSnapshot<PointT>>>
- *   macOS:     raw atomic pointer with hazard pointer array (Apple Clang lacks
- *              std::atomic<std::shared_ptr<T>>)
+ * Publication uses SnapshotCell to keep each snapshot alive while readers
+ * hold a guard.
  */
 template <typename PointT>
 class SpatialIndex {
@@ -228,38 +227,7 @@ private:
         float radius_sq,
         std::vector<QueryResult>& out) const;
 
-    // -----------------------------------------------------------------
-    // Read-side snapshot (lock-free publication)
-    // -----------------------------------------------------------------
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    std::atomic<const SpatialSnapshot<PointT>*> m_snapshot { nullptr };
-
-    static constexpr size_t MAX_READERS = 16;
-    mutable std::array<std::atomic<const SpatialSnapshot<PointT>*>, MAX_READERS> m_hazard_ptrs {};
-    mutable std::atomic<size_t> m_hazard_counter { 0 };
-
-    /**
-     * @brief Acquire a consistent snapshot pointer via hazard pointer protocol.
-     * @return Pair of (snapshot pointer, hazard slot index). Caller must release
-     *         the slot via release_snapshot().
-     */
-    std::pair<const SpatialSnapshot<PointT>*, size_t> acquire_snapshot() const;
-
-    /**
-     * @brief Release a hazard pointer slot after query completion.
-     */
-    void release_snapshot(size_t slot) const;
-
-    /**
-     * @brief Defer deletion of an old snapshot until no hazard pointer references it.
-     */
-    void retire_snapshot(const SpatialSnapshot<PointT>* old);
-
-    std::vector<const SpatialSnapshot<PointT>*> m_retired;
-#else
-    std::atomic<std::shared_ptr<const SpatialSnapshot<PointT>>> m_snapshot;
-#endif
+    Memory::SnapshotCell<SpatialSnapshot<PointT>> m_snapshot;
 };
 
 // =========================================================================
