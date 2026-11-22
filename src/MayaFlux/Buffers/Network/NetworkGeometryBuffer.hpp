@@ -246,7 +246,9 @@ private:
      * puts a GpuFieldOperator in the chain needs no hand-wired
      * VertexFieldProcessor and must not add one itself. Implemented in
      * NetworkGeometryFieldWiring.cpp to keep the compute-processor headers out
-     * of the base translation unit.
+     * of the base translation unit. It resolves what only the network knows
+     * (cell size, bounds, layout, cluster ids) and hands the stage composition
+     * to wire_field_stages.
      */
     void wire_field_operators();
 };

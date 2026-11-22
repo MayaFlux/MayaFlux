@@ -3,6 +3,8 @@
 #include "NeighbourWalkHelper.hpp"
 #include "NetworkGeometryBuffer.hpp"
 
+#include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+#include "MayaFlux/Kinesis/VertexSampler.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/ParticleNetwork.hpp"
@@ -17,12 +19,6 @@ namespace MayaFlux::Buffers {
 std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
     const std::shared_ptr<NetworkGeometryBuffer>& buffer, float cell_size)
 {
-    if (cell_size <= 0.0F) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "SpatialHashConfig::from_network: cell_size {} is not positive", cell_size);
-        return std::nullopt;
-    }
-
     const auto network = buffer->get_network();
 
     Kinesis::SamplerBounds bounds;
@@ -46,11 +42,25 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
         return std::nullopt;
     }
 
-    const auto layout = graphics_op->get_vertex_layout();
+    return from_bounds(bounds, graphics_op->get_vertex_layout(),
+        static_cast<uint32_t>(graphics_op->get_vertex_count()), cell_size);
+}
+
+std::optional<SpatialHashConfig> SpatialHashConfig::from_bounds(
+    const Kinesis::SamplerBounds& bounds,
+    const Kakshya::VertexLayout& layout,
+    uint32_t vertex_count,
+    float cell_size)
+{
+    if (cell_size <= 0.0F) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "SpatialHashConfig: cell_size {} is not positive", cell_size);
+        return std::nullopt;
+    }
 
     if (layout.stride_bytes == 0 || layout.stride_bytes % 4 != 0) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "SpatialHashConfig::from_network: stride {} is not a nonzero multiple of 4",
+            "SpatialHashConfig: stride {} is not a nonzero multiple of 4",
             layout.stride_bytes);
         return std::nullopt;
     }
@@ -58,8 +68,7 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
     const auto position_offset = layout.find_word_offset(Kakshya::DataModality::VERTEX_POSITIONS_3D);
     if (!position_offset.has_value()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "SpatialHashConfig::from_network: vertex layout carries no word-aligned "
-            "position attribute");
+            "SpatialHashConfig: vertex layout carries no word-aligned position attribute");
         return std::nullopt;
     }
 
@@ -75,7 +84,7 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
         .grid_min = bounds.min,
         .grid_dims = dims,
         .cell_size = cell_size,
-        .particle_count = static_cast<uint32_t>(graphics_op->get_vertex_count()),
+        .particle_count = vertex_count,
         .stride_words = layout.stride_bytes / 4,
         .position_word_offset = *position_offset,
     };

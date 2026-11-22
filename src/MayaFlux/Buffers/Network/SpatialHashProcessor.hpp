@@ -6,6 +6,14 @@ namespace MayaFlux::Nodes::Network {
 class GpuFieldOperator;
 }
 
+namespace MayaFlux::Kinesis {
+struct SamplerBounds;
+}
+
+namespace MayaFlux::Kakshya {
+struct VertexLayout;
+}
+
 namespace MayaFlux::Buffers {
 
 class NetworkGeometryBuffer;
@@ -67,6 +75,25 @@ struct MAYAFLUX_API SpatialHashConfig {
      */
     [[nodiscard]] static std::optional<SpatialHashConfig> from_network(
         const std::shared_ptr<NetworkGeometryBuffer>& buffer, float cell_size);
+
+    /**
+     * @brief Build hash grid parameters from explicit values.
+     * @param bounds Box the grid covers. A point outside clamps to the nearest edge cell.
+     * @param layout Vertex record layout: supplies the stride and the position offset.
+     * @param vertex_count Number of records the stages dispatch over.
+     * @param cell_size Grid cell size.
+     * @return Populated config, or nullopt when cell_size is not positive, the layout
+     *         stride is not a nonzero multiple of 4, or the layout carries no
+     *         word-aligned position attribute.
+     *
+     * Needs no network and no buffer, so any source of vertex records can use it.
+     * from_network reads these values from a network and calls this.
+     */
+    [[nodiscard]] static std::optional<SpatialHashConfig> from_bounds(
+        const Kinesis::SamplerBounds& bounds,
+        const Kakshya::VertexLayout& layout,
+        uint32_t vertex_count,
+        float cell_size);
 
     /**
      * @brief Declare the four state fields the hash build stages read and
