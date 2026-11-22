@@ -6,9 +6,9 @@
 
 #include "MayaFlux/Kriya/Awaiters/EventAwaiter.hpp"
 #include "MayaFlux/Kriya/Awaiters/GetPromise.hpp"
-#include "MayaFlux/Kriya/Awaiters/NetworkAwaiter.hpp"
 #include "MayaFlux/Kriya/Chain.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
+#include "MayaFlux/Kriya/NetworkEvents.hpp"
 #include "MayaFlux/Kriya/Tasks.hpp"
 
 #include "MayaFlux/Kriya/Timers.hpp"
@@ -28,6 +28,11 @@ Wiring& Wiring::every(double interval_seconds, Vruta::ProcessingToken token)
     m_interval = interval_seconds;
     m_metro_token = token;
     return *this;
+}
+
+Wiring& Wiring::every(Vruta::ProcessingToken token)
+{
+    return every(0.0, token);
 }
 
 Wiring& Wiring::for_duration(double seconds, Vruta::ProcessingToken token)
@@ -84,9 +89,15 @@ Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button
     return *this;
 }
 
-Wiring& Wiring::on(Vruta::NetworkSource& source)
+Wiring& Wiring::on(std::shared_ptr<Vruta::NetworkSource> source)
 {
-    m_trigger = NetworkTrigger { .source = &source };
+    m_trigger = NetworkTrigger { .source = std::move(source) };
+    return *this;
+}
+
+Wiring& Wiring::window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter)
+{
+    m_trigger = WindowEventTrigger { .window = std::move(window), .filter = std::move(filter) };
     return *this;
 }
 
@@ -227,15 +238,10 @@ Wiring& Wiring::bind(
 
 std::string Wiring::make_name(const char* prefix) const
 {
-    return std::string(prefix) + "_" + std::to_string(m_entity_id) + "_" + std::to_string(m_fabric.m_scheduler.get_next_task_id());
+    return std::string(prefix) + "_" + std::to_string(m_entity_id) + "_" + std::to_string(m_fabric.m_scheduler->get_next_task_id());
 }
 
 namespace {
-
-    std::shared_ptr<Vruta::TaskScheduler> scheduler_handle(Vruta::TaskScheduler& scheduler)
-    {
-        return std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { });
-    }
 
     template <typename Entity>
     void place_entity(Entity& entity, const glm::vec3& position)
@@ -243,24 +249,6 @@ namespace {
         typename Entity::Controls incoming;
         incoming.position = position;
         entity.set(incoming);
-    }
-
-    // =============================================================================
-    // Network coroutine
-    // =============================================================================
-
-    Vruta::SoundRoutine network_loop(
-        Vruta::NetworkSource& source,
-        std::function<void()> fire)
-    {
-        auto& promise = co_await Kriya::GetAudioPromise {};
-        while (true) {
-            if (promise.should_terminate) {
-                break;
-            }
-            co_await source.next_message();
-            fire();
-        }
     }
 
     struct FireLimit {
@@ -277,27 +265,6 @@ namespace {
             }
         }
     };
-
-    Vruta::Event scroll_loop(
-        std::shared_ptr<Core::Window> window,
-        std::function<void(double, double)> fn)
-    {
-        auto& promise = co_await Kriya::GetEventPromise {};
-        auto& source = window->get_event_source();
-
-        Vruta::WindowEventFilter filter;
-        filter.event_type = Core::WindowEventType::MOUSE_SCROLLED;
-
-        while (true) {
-            if (promise.should_terminate)
-                break;
-            auto event = co_await Kriya::WindowEventAwaiter(source, filter);
-            if (promise.should_terminate)
-                break;
-            if (auto* sd =std::get_if<Core::WindowEvent::ScrollData>(&event.data))
-                fn(sd->x_offset, sd->y_offset);
-        }
-    }
 }
 
 // =============================================================================
@@ -306,8 +273,10 @@ namespace {
 
 void Wiring::finalise()
 {
-    auto& scheduler = m_fabric.m_scheduler;
-    auto& ev_manager = m_fabric.m_event_manager;
+    const auto scheduler_ptr = m_fabric.m_scheduler;
+    const auto ev_manager_ptr = m_fabric.m_event_manager;
+    auto& scheduler = *scheduler_ptr;
+    auto& ev_manager = *ev_manager_ptr;
     const uint32_t id = m_entity_id;
     auto& reg = m_fabric.m_registrations[id];
 
@@ -402,7 +371,7 @@ void Wiring::finalise()
         }
 
         if (m_duration.has_value() && m_bind_detach.has_value()) {
-            auto timer = std::make_shared<Kriya::Timer>(scheduler_handle(scheduler), m_duration_token);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler_ptr, m_duration_token);
             auto detach = *m_bind_detach;
             timer->schedule(*m_duration, [timer, detach]() {
                 detach();
@@ -420,7 +389,7 @@ void Wiring::finalise()
         reg.chain_name = name;
 
         Kriya::EventChain chain(
-            scheduler_handle(scheduler), name);
+            scheduler_ptr, name, m_metro_token);
         auto& fab = m_fabric;
         for (auto& step : m_move_steps) {
             glm::vec3 pos = step.position;
@@ -453,9 +422,9 @@ void Wiring::finalise()
             fab.fire(id);
             limit->fired();
         };
-        const auto stop_event = [&ev_manager, limit](const std::string& name) {
-            limit->stop = [&ev_manager, name]() {
-                if (const auto event = ev_manager.get_event(name)) {
+        const auto stop_event = [ev_manager_ptr, limit](const std::string& name) {
+            limit->stop = [ev_manager_ptr, name]() {
+                if (const auto event = ev_manager_ptr->get_event(name)) {
                     event->set_should_terminate(true);
                 }
             };
@@ -518,7 +487,7 @@ void Wiring::finalise()
                 stop_event(name);
                 ev_manager.add_event(
                     std::make_shared<Vruta::Event>(
-                        scroll_loop(trig.window, [limit, fn = trig.fn](double x, double y) {
+                        Kriya::mouse_scrolled(trig.window, [limit, fn = trig.fn](double x, double y) {
                             if (limit->spent()) {
                                 return;
                             }
@@ -528,23 +497,37 @@ void Wiring::finalise()
                     name);
 
             } else if constexpr (std::is_same_v<T, NetworkTrigger>) {
-                auto name = make_name("nexus_task");
-                reg.task_name = name;
-                limit->stop = [&scheduler, name]() { scheduler.cancel_task(name); };
-                scheduler.add_task(
-                    std::make_shared<Vruta::SoundRoutine>(
-                        network_loop(*trig.source, fire)),
-                    name, false);
+                auto name = make_name("nexus_event");
+                reg.event_name = name;
+                stop_event(name);
+                ev_manager.add_event(
+                    std::make_shared<Vruta::Event>(
+                        Kriya::message_received(trig.source,
+                            [fire](const Core::NetworkMessage&) { fire(); })),
+                    name);
 
             } else if constexpr (std::is_same_v<T, WindowEventTrigger>) {
                 auto name = make_name("nexus_event");
                 reg.event_name = name;
                 stop_event(name);
                 Fabric& fab = m_fabric;
-                ev_manager.add_event(
-                    std::make_shared<Vruta::Event>(
-                        window_event_source_loop(*trig.source, trig.filter, fab, id, fire)),
-                    name);
+                if (trig.window) {
+                    ev_manager.add_event(
+                        std::make_shared<Vruta::Event>(
+                            Kriya::window_event(trig.window, trig.filter,
+                                [&fab, id, fire](const Core::WindowEvent& event) {
+                                    if (const auto* pos = std::get_if<Core::WindowEvent::MousePosData>(&event.data)) {
+                                        fab.m_registrations[id].pending_cursor = glm::vec2(pos->x, pos->y);
+                                    }
+                                    fire();
+                                })),
+                        name);
+                } else {
+                    ev_manager.add_event(
+                        std::make_shared<Vruta::Event>(
+                            window_event_source_loop(*trig.source, trig.filter, fab, id, fire)),
+                        name);
+                }
             }
         },
             m_trigger);
@@ -580,37 +563,44 @@ void Wiring::finalise()
         auto name = make_name("nexus_metro");
         reg.task_name = name;
         auto& fab = m_fabric;
-        auto self = std::make_shared<std::weak_ptr<Vruta::Routine>>();
+        const auto limit = std::make_shared<FireLimit>(FireLimit { .remaining = m_times, .limited = m_times > 1, .stop = {} });
 
-        auto routine = Kriya::metro(
-            *m_interval,
-            [&fab, id, pos_fn, self, remaining = m_times, limited = m_times > 1]() mutable {
-                if (pos_fn.has_value()) {
-                    glm::vec3 p = (*pos_fn)();
-                    std::visit([&p](const auto& ptr) {
-                        place_entity(*ptr, p);
-                    },
-                        fab.m_registrations[id].member);
-                }
-                fab.fire(id);
-                if (limited) {
-                    --remaining;
-                    if (remaining == 0) {
-                        if (auto running = self->lock()) {
-                            running->set_should_terminate(true);
-                        }
-                    }
-                }
-            },
-            m_metro_token);
+        const auto cycle = [&fab, id, pos_fn, limit]() {
+            if (limit->spent()) {
+                return;
+            }
+            if (pos_fn.has_value()) {
+                glm::vec3 p = (*pos_fn)();
+                std::visit([&p](const auto& ptr) {
+                    place_entity(*ptr, p);
+                },
+                    fab.m_registrations[id].member);
+            }
+            fab.fire(id);
+            limit->fired();
+        };
 
-        *self = routine;
+        auto routine = *m_interval > 0.0
+            ? Kriya::metro(*m_interval, cycle, m_metro_token)
+            : Kriya::each_cycle(cycle, m_metro_token);
+
+        if (!routine) {
+            reg.task_name.clear();
+            m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
+            return;
+        }
+
+        limit->stop = [running = std::weak_ptr<Vruta::Routine>(routine)]() {
+            if (const auto live = running.lock()) {
+                live->set_should_terminate(true);
+            }
+        };
         scheduler.add_task(routine, name, false);
 
         if (m_duration.has_value()) {
-            auto timer = std::make_shared<Kriya::Timer>(scheduler_handle(scheduler), m_duration_token);
-            timer->schedule(*m_duration, [name, timer, &scheduler]() {
-                scheduler.cancel_task(name);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler_ptr, m_duration_token);
+            timer->schedule(*m_duration, [name, timer, scheduler_ptr]() {
+                scheduler_ptr->cancel_task(name);
             });
         }
     }
@@ -627,15 +617,15 @@ void Wiring::cancel()
     auto& reg = m_fabric.m_registrations[m_entity_id];
 
     if (!reg.task_name.empty()) {
-        m_fabric.m_scheduler.cancel_task(reg.task_name);
+        m_fabric.m_scheduler->cancel_task(reg.task_name);
         reg.task_name.clear();
     }
     if (!reg.chain_name.empty()) {
-        m_fabric.m_scheduler.cancel_task(reg.chain_name);
+        m_fabric.m_scheduler->cancel_task(reg.chain_name);
         reg.chain_name.clear();
     }
     if (!reg.event_name.empty()) {
-        m_fabric.m_event_manager.cancel_event(reg.event_name);
+        m_fabric.m_event_manager->cancel_event(reg.event_name);
         reg.event_name.clear();
     }
 

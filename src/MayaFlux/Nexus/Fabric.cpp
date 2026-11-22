@@ -7,16 +7,35 @@
 
 namespace MayaFlux::Nexus {
 
+namespace {
+
+    template <typename T>
+    std::shared_ptr<T> unowned(T& object)
+    {
+        return std::shared_ptr<T>(&object, [](T*) { });
+    }
+
+} // namespace
+
+Fabric::Fabric(
+    std::shared_ptr<Vruta::TaskScheduler> scheduler,
+    std::shared_ptr<Vruta::EventManager> event_manager,
+    std::shared_ptr<Buffers::BufferManager> buffer_manager,
+    float cell_size)
+    : m_scheduler(std::move(scheduler))
+    , m_event_manager(std::move(event_manager))
+    , m_buffers(std::move(buffer_manager))
+    , m_index(Kinesis::make_spatial_index_3d(cell_size))
+    , m_cell_size(cell_size)
+{
+}
+
 Fabric::Fabric(
     Vruta::TaskScheduler& scheduler,
     Vruta::EventManager& event_manager,
     Buffers::BufferManager& buffer_manager,
     float cell_size)
-    : m_scheduler(scheduler)
-    , m_event_manager(event_manager)
-    , m_buffers(buffer_manager)
-    , m_index(Kinesis::make_spatial_index_3d(cell_size))
-    , m_cell_size(cell_size)
+    : Fabric(unowned(scheduler), unowned(event_manager), unowned(buffer_manager), cell_size)
 {
 }
 
@@ -28,13 +47,13 @@ Fabric::~Fabric()
 
     for (auto& [id, reg] : m_registrations) {
         if (!reg.task_name.empty()) {
-            m_scheduler.cancel_task(reg.task_name);
+            m_scheduler->cancel_task(reg.task_name);
         }
         if (!reg.chain_name.empty()) {
-            m_scheduler.cancel_task(reg.chain_name);
+            m_scheduler->cancel_task(reg.chain_name);
         }
         if (!reg.event_name.empty()) {
-            m_event_manager.cancel_event(reg.event_name);
+            m_event_manager->cancel_event(reg.event_name);
         }
         release(reg);
     }
@@ -50,7 +69,7 @@ void Fabric::release(Registration& reg)
         using T = std::decay_t<decltype(*ptr)>;
         if constexpr (std::is_same_v<T, Emitter> || std::is_same_v<T, Agent>) {
             ptr->detach();
-            ptr->release_sinks(m_buffers);
+            ptr->release_sinks(*m_buffers);
         }
     },
         reg.member);
@@ -106,13 +125,13 @@ void Fabric::remove(uint32_t id)
     auto& reg = it->second;
 
     if (!reg.task_name.empty()) {
-        m_scheduler.cancel_task(reg.task_name);
+        m_scheduler->cancel_task(reg.task_name);
     }
     if (!reg.chain_name.empty()) {
-        m_scheduler.cancel_task(reg.chain_name);
+        m_scheduler->cancel_task(reg.chain_name);
     }
     if (!reg.event_name.empty()) {
-        m_event_manager.cancel_event(reg.event_name);
+        m_event_manager->cancel_event(reg.event_name);
     }
     untrack(reg);
     release(reg);

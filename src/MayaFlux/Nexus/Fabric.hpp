@@ -55,7 +55,18 @@ public:
      *                      entity unregisters them from it.
      * @param cell_size     Grid cell edge length for the spatial index.
      */
-    explicit Fabric(
+    Fabric(
+        std::shared_ptr<Vruta::TaskScheduler> scheduler,
+        std::shared_ptr<Vruta::EventManager> event_manager,
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        float cell_size = 1.0F);
+
+    /**
+     * @brief Construct from references the caller keeps alive for the Fabric's life.
+     * @deprecated Pass shared_ptrs; this overload is removed next release.
+     */
+    [[deprecated("pass shared_ptr scheduler, event manager and buffer manager")]]
+    Fabric(
         Vruta::TaskScheduler& scheduler,
         Vruta::EventManager& event_manager,
         Buffers::BufferManager& buffer_manager,
@@ -342,9 +353,9 @@ private:
     void release(Registration& reg);
     void translate(std::vector<Kinesis::QueryResult>& results) const;
 
-    Vruta::TaskScheduler& m_scheduler;
-    Vruta::EventManager& m_event_manager;
-    Buffers::BufferManager& m_buffers;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
+    std::shared_ptr<Vruta::EventManager> m_event_manager;
+    std::shared_ptr<Buffers::BufferManager> m_buffers;
 
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
     std::map<uint32_t, Registration> m_registrations;

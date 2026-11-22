@@ -55,10 +55,19 @@ public:
 
     /**
      * @brief Fire the entity on a recurring interval.
-     * @param interval_seconds Period between invocations.
-     * @param token Scheduler rate to use (default: SAMPLE_ACCURATE).
+     * @param interval_seconds Period between invocations; zero or less fires once per cycle of the token.
+     * @param token Scheduler rate to use (default: SAMPLE_ACCURATE). Every token runs on its own clock, and a choreography built with @c move_to uses it too.
      */
     Wiring& every(double interval_seconds, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /**
+     * @brief Fire the entity once per cycle of a clock.
+     *
+     * No seconds-to-unit rounding: FRAME_ACCURATE fires once per frame, SAMPLE_ACCURATE
+     * once per sample. Equivalent to @c every(0.0, token).
+     * @param token Scheduler rate whose cycle drives the entity.
+     */
+    Wiring& every(Vruta::ProcessingToken token);
 
     /**
      * @brief Limit a recurring registration to a fixed duration then cancel.
@@ -117,9 +126,23 @@ public:
 
     /**
      * @brief Fire the entity on each incoming message from a network source.
-     * @param source OSC or raw network source.
+     * @param source OSC or raw network source; the wiring keeps it alive.
      */
-    Wiring& on(Vruta::NetworkSource& source);
+    Wiring& on(std::shared_ptr<Vruta::NetworkSource> source);
+
+    /**
+     * @brief Fire the entity on each matching event of a window.
+     *
+     * A mouse position carried by the event is made available to the entity as the cursor.
+     * @param window Source window.
+     * @param filter Filter criteria; an empty filter matches every event. Constrained to
+     *               exactly WindowEventFilter so a key or ModifiedKey still selects the key overload.
+     */
+    template <std::same_as<Vruta::WindowEventFilter> Filter>
+    Wiring& on(std::shared_ptr<Core::Window> window, Filter filter)
+    {
+        return window_filter(std::move(window), std::move(filter));
+    }
 
     /**
      * @brief Fire the entity on each matching window event.
@@ -281,7 +304,7 @@ private:
     };
 
     struct NetworkTrigger {
-        Vruta::NetworkSource* source;
+        std::shared_ptr<Vruta::NetworkSource> source;
     };
 
     struct EventTrigger {
@@ -290,6 +313,7 @@ private:
     };
 
     struct WindowEventTrigger {
+        std::shared_ptr<Core::Window> window;
         Vruta::WindowEventSource* source {};
         Vruta::WindowEventFilter filter;
     };
@@ -328,6 +352,8 @@ private:
     std::optional<std::function<void()>> m_bind_detach;
     std::string m_bind_attach_name;
     std::string m_bind_detach_name;
+
+    Wiring& window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter);
 
     Vruta::Event window_event_source_loop(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter, Fabric& fabric, uint32_t id, std::function<void()> fire);
 
