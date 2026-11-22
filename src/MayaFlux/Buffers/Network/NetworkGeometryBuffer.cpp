@@ -1,5 +1,7 @@
 #include "NetworkGeometryBuffer.hpp"
 
+#include "GeometryRenderSetup.hpp"
+
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
@@ -11,47 +13,6 @@
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 namespace MayaFlux::Buffers {
-
-namespace {
-    void configure_shader_defaults(
-        Portal::Graphics::RenderConfig& resolved,
-        const Portal::Graphics::RenderConfig& requested)
-    {
-        if (resolved.triangulate)
-            resolved.geometry_shader.clear();
-
-        switch (resolved.topology) {
-        case Portal::Graphics::PrimitiveTopology::POINT_LIST:
-            if (requested.vertex_shader.empty())
-                resolved.vertex_shader = "point.vert.spv";
-            if (requested.fragment_shader.empty())
-                resolved.fragment_shader = "point.frag.spv";
-            break;
-        case Portal::Graphics::PrimitiveTopology::LINE_LIST:
-        case Portal::Graphics::PrimitiveTopology::LINE_STRIP:
-            if (requested.vertex_shader.empty())
-                resolved.vertex_shader = "line.vert.spv";
-            if (requested.fragment_shader.empty())
-                resolved.fragment_shader = "line.frag.spv";
-            if (!resolved.triangulate && requested.geometry_shader.empty())
-                resolved.geometry_shader = "line.geom.spv";
-            break;
-        case Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST:
-        case Portal::Graphics::PrimitiveTopology::TRIANGLE_STRIP:
-        case Portal::Graphics::PrimitiveTopology::TRIANGLE_FAN:
-            if (requested.vertex_shader.empty())
-                resolved.vertex_shader = "triangle.vert.spv";
-            if (requested.fragment_shader.empty())
-                resolved.fragment_shader = "triangle.frag.spv";
-            break;
-        default:
-            if (requested.vertex_shader.empty())
-                resolved.vertex_shader = "point.vert.spv";
-            if (requested.fragment_shader.empty())
-                resolved.fragment_shader = "point.frag.spv";
-        }
-    }
-}
 
 NetworkGeometryBuffer::NetworkGeometryBuffer(
     std::shared_ptr<Nodes::Network::NodeNetwork> network,
@@ -119,31 +80,10 @@ void NetworkGeometryBuffer::setup_rendering(const RenderConfig& config)
             run_topologies.push_back(run.topology);
     }
 
-    auto resolved_config = config;
-    if (resolved_config.topology == PrimitiveTopology::POINT_LIST) {
-        const auto first_non_point = std::ranges::find_if(
-            run_topologies, [](auto topology) { return topology != PrimitiveTopology::POINT_LIST; });
-        if (first_non_point != run_topologies.end())
-            resolved_config.topology = *first_non_point;
-    }
-    resolved_config.triangulate |= Portal::Graphics::needs_triangulation(
-        resolved_config.topology, resolved_config.polygon_mode);
-    resolved_config.triangulate |= std::ranges::any_of(run_topologies,
-        [&](auto topology) {
-            return Portal::Graphics::needs_triangulation(
-                topology, resolved_config.polygon_mode);
-        });
-    configure_shader_defaults(resolved_config, config);
+    const auto resolved_config = resolve_geometry_render_config(config, run_topologies);
 
     apply_render_config(resolved_config, ShaderConfig { resolved_config.vertex_shader });
-
-    if (resolved_config.triangulate
-        && resolved_config.polygon_mode == Portal::Graphics::PolygonMode::POINT
-        && m_render_processor) {
-        auto mill_spec = m_render_processor->get_mill_spec();
-        mill_spec.use_vertex_extent = false;
-        m_render_processor->set_mill_spec(mill_spec);
-    }
+    tune_point_mill(m_render_processor, resolved_config);
 
     get_processing_chain()->add_processor(m_render_processor, shared_from_this());
 
@@ -224,10 +164,7 @@ size_t NetworkGeometryBuffer::calculate_buffer_size(
 
 void NetworkGeometryBuffer::add_chain_operator_rendering(const RenderConfig& config)
 {
-    auto resolved_config = config;
-    resolved_config.triangulate |= Portal::Graphics::needs_triangulation(
-        resolved_config.topology, resolved_config.polygon_mode);
-    configure_shader_defaults(resolved_config, config);
+    const auto resolved_config = resolve_geometry_render_config(config, {});
     auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
 
     std::shared_ptr<RenderProcessor> render;
@@ -284,36 +221,7 @@ void NetworkGeometryBuffer::update_chain_render_range(
 
 void NetworkGeometryBuffer::update_render_runs(std::vector<Portal::Graphics::DrawRun> runs)
 {
-    if (!m_render_processor) {
-        return;
-    }
-
-    const auto config = get_render_config();
-    const bool point_mill = config.triangulate
-        && config.polygon_mode == Portal::Graphics::PolygonMode::POINT;
-    if (point_mill) {
-        m_render_processor->set_triangulate(true);
-    }
-
-    const bool unchanged = std::ranges::equal(runs, m_applied_runs,
-        [](const auto& a, const auto& b) {
-            return a.topology == b.topology && a.vertex_offset == b.vertex_offset
-                && a.vertex_count == b.vertex_count && a.fill == b.fill;
-        });
-    if (unchanged) {
-        return;
-    }
-    m_applied_runs = runs;
-
-    if (point_mill) {
-        for (auto& run : runs) {
-            if (run.topology == Portal::Graphics::PrimitiveTopology::LINE_LIST
-                || run.topology == Portal::Graphics::PrimitiveTopology::LINE_STRIP) {
-                run.topology = Portal::Graphics::PrimitiveTopology::POINT_LIST;
-            }
-        }
-    }
-    m_render_processor->set_runs(std::move(runs));
+    apply_draw_runs(m_render_processor, get_render_config(), m_applied_runs, std::move(runs));
 }
 
 //-----------------------------------------------------------------------------

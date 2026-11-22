@@ -61,7 +61,8 @@ void wire_field_stages(
     const std::shared_ptr<Nodes::Network::GpuFieldOperator>& field_op,
     const std::optional<SpatialHashConfig>& hash,
     const std::vector<uint32_t>& cluster_ids,
-    Nodes::Network::PhysicsOperator* physics)
+    Nodes::Network::PhysicsOperator* physics,
+    bool live_gated)
 {
     auto chain = buffer ? buffer->get_processing_chain() : nullptr;
     if (!chain || !field_op) {
@@ -102,6 +103,15 @@ void wire_field_stages(
         reserve_enabled = false;
     }
 
+    if (reserve_enabled && live_gated) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "wire_field_stages: reserve_fraction cannot combine with caller-kept liveness "
+            "(the caller decides which records are live); reserve capacity disabled");
+        reserve_enabled = false;
+    }
+
+    const bool gate_alive = reserve_enabled || live_gated;
+
     uint32_t total_count = live_count;
     if (reserve_enabled) {
         const auto reserve_count = static_cast<uint32_t>(
@@ -130,12 +140,14 @@ void wire_field_stages(
         pop_config = PopulationConfig { .hash = hash_config, .live_count = live_count };
         pop_config->declare_fields(buffer);
         chain->add_processor(std::make_shared<PopulationInitProcessor>(*pop_config), buffer);
+    } else if (live_gated) {
+        PopulationConfig { .hash = hash_config, .live_count = live_count }.declare_fields(buffer);
     }
 
     chain->add_processor(std::make_shared<HashClearProcessor>(hash_config), buffer);
-    chain->add_processor(std::make_shared<HashCountProcessor>(hash_config, reserve_enabled), buffer);
+    chain->add_processor(std::make_shared<HashCountProcessor>(hash_config, gate_alive), buffer);
     chain->add_processor(std::make_shared<HashScanProcessor>(hash_config), buffer);
-    chain->add_processor(std::make_shared<HashScatterProcessor>(hash_config, reserve_enabled), buffer);
+    chain->add_processor(std::make_shared<HashScatterProcessor>(hash_config, gate_alive), buffer);
 
     if (pconfig.density_color) {
         chain->add_processor(
@@ -153,7 +165,7 @@ void wire_field_stages(
 
     chain->add_processor(std::make_shared<ClaimInitProcessor>(claim_config), buffer);
     chain->add_processor(
-        std::make_shared<ClaimProcessor>(claim_config, field_op, reserve_enabled), buffer);
+        std::make_shared<ClaimProcessor>(claim_config, field_op, gate_alive), buffer);
     chain->add_processor(std::make_shared<ClaimFlattenProcessor>(claim_config), buffer);
     chain->add_processor(
         std::make_shared<ClaimAccumulateProcessor>(
