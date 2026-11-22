@@ -1,57 +1,12 @@
 #pragma once
 
-#include "MayaFlux/Kakshya/NDData/NDData.hpp"
-
-namespace MayaFlux::Portal::Graphics {
-enum class PrimitiveTopology : uint8_t;
-}
+#include "MayaFlux/Kakshya/NDData/SpatialData.hpp"
 
 namespace MayaFlux::IO {
 
 /**
- * @enum SpatialScope
- * @brief How many elements one attribute contributes per sample.
- *
- * Mirrors Alembic's own GeometryScope, narrowed to the three values that
- * apply to points and curves (kVertexScope/kFacevaryingScope are mesh-only
- * concepts with no equivalent here):
- *   Constant: one value for the whole stream.
- *   Uniform: one value per curve. Meaningless for PrimitiveTopology::POINT_LIST
- *            (a point cloud has no sub-grouping smaller than the stream
- *            itself, so it is treated as Constant there).
- *   Varying: one value per point, or per curve vertex for curve topologies.
- */
-enum class SpatialScope : uint8_t {
-    Constant,
-    Uniform,
-    Varying,
-};
-
-/**
- * @struct SpatialAttribute
- * @brief One named, scoped channel of already-typed values.
- *
- * values holds one of Kakshya::DataVariant's float/glm::vec2/glm::vec3/
- * glm::vec4/uint32_t vectors, sized per SpatialScope against the sample it
- * is attached to (1 for Constant, curve count for Uniform, point/vertex
- * count for Varying). Any other DataVariant alternative is rejected.
- *
- * A vec3 named exactly "color" or "normal" is declared through Alembic's
- * dedicated color/normal GeomParam types instead of a plain vector one, so
- * an importer recognizes it as such rather than an arbitrary direction. A
- * vec4 "color" is written as an RGBA color. Every other vec4 is a float
- * GeomParam with array extent 4, and every other name stays generic.
- * MayaFlux's own vertex fields already use these names for these roles.
- */
-struct SpatialAttribute {
-    std::string name;
-    SpatialScope scope;
-    Kakshya::DataVariant values;
-};
-
-/**
  * @struct SpatialSample
- * @brief One sample's worth of data for one named stream.
+ * @brief One sample's worth of data for one named stream, borrowed.
  *
  * topology decides which of the remaining fields apply:
  *   POINT_LIST: ids/velocities meaningful, vertex_counts_per_curve must be
@@ -68,7 +23,20 @@ struct SpatialSample {
     std::span<const int32_t> vertex_counts_per_curve;
     std::span<const uint64_t> ids;
     std::span<const glm::vec3> velocities;
-    std::span<const SpatialAttribute> attributes;
+    std::span<const Kakshya::SpatialAttribute> attributes;
+
+    /** @brief A SpatialData holding a copy of everything this sample borrows. */
+    [[nodiscard]] Kakshya::SpatialData to_data() const
+    {
+        return {
+            .topology = topology,
+            .positions = { positions.begin(), positions.end() },
+            .vertex_counts_per_curve = { vertex_counts_per_curve.begin(), vertex_counts_per_curve.end() },
+            .ids = { ids.begin(), ids.end() },
+            .velocities = { velocities.begin(), velocities.end() },
+            .attributes = { attributes.begin(), attributes.end() },
+        };
+    }
 };
 
 /**

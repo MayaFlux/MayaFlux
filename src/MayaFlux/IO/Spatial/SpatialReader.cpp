@@ -51,7 +51,7 @@ namespace {
         std::vector<int32_t> vertex_counts_per_curve;
         std::vector<uint64_t> ids;
         std::vector<glm::vec3> velocities;
-        std::vector<SpatialAttribute> attributes;
+        std::vector<Kakshya::SpatialAttribute> attributes;
     };
 
     struct StreamRecord {
@@ -65,16 +65,16 @@ namespace {
         SampleStorage storage;
     };
 
-    std::optional<SpatialScope> from_alembic_scope(GeometryScope scope)
+    std::optional<Kakshya::SpatialScope> from_alembic_scope(GeometryScope scope)
     {
         switch (scope) {
         case kConstantScope:
-            return SpatialScope::Constant;
+            return Kakshya::SpatialScope::Constant;
         case kUniformScope:
-            return SpatialScope::Uniform;
+            return Kakshya::SpatialScope::Uniform;
         case kVaryingScope:
         case kVertexScope:
-            return SpatialScope::Varying;
+            return Kakshya::SpatialScope::Varying;
         default:
             return std::nullopt;
         }
@@ -125,7 +125,7 @@ namespace {
     }
 
     template <class Param, class Elem>
-    std::optional<SpatialAttribute> read_param(
+    std::optional<Kakshya::SpatialAttribute> read_param(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
         const ISampleSelector& selector)
@@ -138,14 +138,14 @@ namespace {
             return std::nullopt;
         }
 
-        return SpatialAttribute {
+        return Kakshya::SpatialAttribute {
             .name = decl.name,
             .scope = *scope,
             .values = Kakshya::DataVariant { copy_array<Elem>(values) }
         };
     }
 
-    std::optional<SpatialAttribute> read_float4_param(
+    std::optional<Kakshya::SpatialAttribute> read_float4_param(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
         const ISampleSelector& selector)
@@ -161,14 +161,14 @@ namespace {
         std::vector<glm::vec4> quads(values->size() / 4);
         std::memcpy(quads.data(), values->get(), values->size() * sizeof(float));
 
-        return SpatialAttribute {
+        return Kakshya::SpatialAttribute {
             .name = decl.name,
             .scope = *scope,
             .values = Kakshya::DataVariant { std::move(quads) }
         };
     }
 
-    std::optional<SpatialAttribute> read_attribute(
+    std::optional<Kakshya::SpatialAttribute> read_attribute(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
         const ISampleSelector& selector)
