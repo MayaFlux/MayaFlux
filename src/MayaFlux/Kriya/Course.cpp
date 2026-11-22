@@ -6,6 +6,21 @@ namespace MayaFlux::Kriya {
 
 using Kind = Detail::CourseCommand::Kind;
 
+namespace {
+
+    double number(const ControlValue& slot, double fallback) noexcept
+    {
+        return slot.has_value() ? slot.value() : fallback;
+    }
+
+    std::shared_ptr<const Kinesis::TimeMap> mapped(const ControlSnapshot<Kinesis::TimeMap>& slot)
+    {
+        auto map = slot.value();
+        return map && map->fn ? map : nullptr;
+    }
+
+} // namespace
+
 std::shared_ptr<Course> Course::create(double step_rate, const CourseSetting& setting, bool paused)
 {
     auto clock = CourseTime::create(step_rate);
@@ -15,14 +30,50 @@ std::shared_ptr<Course> Course::create(double step_rate, const CourseSetting& se
     return std::shared_ptr<Course>(new Course(*clock, setting, paused));
 }
 
+CourseControls& Course::open(CourseStore& store)
+{
+    return store.declare<CourseControls>();
+}
+
 Course::Course(CourseTime time, const CourseSetting& setting, bool paused)
-    : m_setting(setting)
-    , m_listeners(std::vector<Detail::CourseListener> {})
+    : m_listeners(std::vector<Detail::CourseListener> {})
     , m_clock(time)
     , m_paused(paused)
 {
+    m_controls.speed.observe(setting.speed);
+    m_controls.offset.observe(setting.offset);
+    m_controls.weight.observe(1.0);
+    m_controls.edge.observe(setting.edge);
+    m_controls.loop_count.observe(static_cast<double>(setting.loop_count));
+    m_controls.range.set(CourseRange { .in = setting.in, .out = setting.out });
+    if (setting.time_map) {
+        m_controls.time_map.set(*setting.time_map);
+    }
+    if (setting.repeat) {
+        m_controls.repeat.set(*setting.repeat);
+    }
+
     m_paused_cell.store(paused, std::memory_order_relaxed);
     m_time_cell.store(setting.in, std::memory_order_relaxed);
+}
+
+CourseSetting Course::compose() const
+{
+    CourseSetting setting;
+    setting.speed = number(m_controls.speed, setting.speed);
+    setting.offset = number(m_controls.offset, setting.offset);
+    if (const auto range = m_controls.range.value()) {
+        setting.in = range->in;
+        setting.out = range->out;
+    }
+    if (m_controls.edge.has_value()) {
+        setting.edge = m_controls.edge.value<CourseEdge>();
+    }
+    const double count = number(m_controls.loop_count, 0.0);
+    setting.loop_count = std::isfinite(count) && count > 0.0 ? static_cast<uint64_t>(count) : 0;
+    setting.time_map = mapped(m_controls.time_map);
+    setting.repeat = mapped(m_controls.repeat);
+    return setting;
 }
 
 bool Course::speed(double value)
@@ -30,7 +81,9 @@ bool Course::speed(double value)
     if (!std::isfinite(value)) {
         return false;
     }
-    m_setting.update([value](CourseSetting& s) { s.speed = value; });
+    CourseControls incoming;
+    incoming.speed = ControlValue(value);
+    set(incoming);
     return true;
 }
 
@@ -39,7 +92,9 @@ bool Course::offset(double seconds)
     if (!std::isfinite(seconds)) {
         return false;
     }
-    m_setting.update([seconds](CourseSetting& s) { s.offset = seconds; });
+    CourseControls incoming;
+    incoming.offset = ControlValue(seconds);
+    set(incoming);
     return true;
 }
 
@@ -48,41 +103,46 @@ bool Course::range(double in, double out)
     if (!std::isfinite(in) || !std::isfinite(out) || !(out > in)) {
         return false;
     }
-    m_setting.update([in, out](CourseSetting& s) {
-        s.in = in;
-        s.out = out;
-    });
+    CourseControls incoming;
+    incoming.range = ControlSnapshot<CourseRange>(CourseRange { .in = in, .out = out });
+    set(incoming);
     return true;
 }
 
 void Course::edge(CourseEdge edge, uint64_t count)
 {
-    m_setting.update([edge, count](CourseSetting& s) {
-        s.edge = edge;
-        s.loop_count = count;
-    });
+    CourseControls incoming;
+    incoming.edge = ControlValue(edge);
+    incoming.loop_count = ControlValue(static_cast<double>(count));
+    set(incoming);
 }
 
 void Course::time_map(Kinesis::TimeMap map)
 {
-    auto shared = std::make_shared<const Kinesis::TimeMap>(std::move(map));
-    m_setting.update([&shared](CourseSetting& s) { s.time_map = shared; });
+    CourseControls incoming;
+    incoming.time_map = ControlSnapshot<Kinesis::TimeMap>(std::move(map));
+    set(incoming);
 }
 
 void Course::clear_time_map()
 {
-    m_setting.update([](CourseSetting& s) { s.time_map.reset(); });
+    CourseControls incoming;
+    incoming.time_map = ControlSnapshot<Kinesis::TimeMap>(Kinesis::TimeMap {});
+    set(incoming);
 }
 
 void Course::repeat(Kinesis::TimeMap length)
 {
-    auto shared = std::make_shared<const Kinesis::TimeMap>(std::move(length));
-    m_setting.update([&shared](CourseSetting& s) { s.repeat = shared; });
+    CourseControls incoming;
+    incoming.repeat = ControlSnapshot<Kinesis::TimeMap>(std::move(length));
+    set(incoming);
 }
 
 void Course::clear_repeat()
 {
-    m_setting.update([](CourseSetting& s) { s.repeat.reset(); });
+    CourseControls incoming;
+    incoming.repeat = ControlSnapshot<Kinesis::TimeMap>(Kinesis::TimeMap {});
+    set(incoming);
 }
 
 bool Course::weight(double value)
@@ -90,14 +150,21 @@ bool Course::weight(double value)
     if (!std::isfinite(value) || value < 0.0) {
         return false;
     }
-    m_weight_cell.store(value, std::memory_order_relaxed);
+    CourseControls incoming;
+    incoming.weight = ControlValue(value);
+    set(incoming);
     return true;
+}
+
+double Course::weight() const noexcept
+{
+    const double value = number(m_controls.weight, 1.0);
+    return std::isfinite(value) && value > 0.0 ? value : 0.0;
 }
 
 CourseSetting Course::setting() const
 {
-    const auto pinned = m_setting.read();
-    return pinned ? *pinned : CourseSetting {};
+    return compose();
 }
 
 bool Course::push(Kind kind, double value)
@@ -223,11 +290,7 @@ void Course::publish(const CourseSetting& setting, const CourseStep& step)
 
 std::optional<CourseStep> Course::advance(bool advance)
 {
-    const auto pinned = m_setting.read();
-    if (!pinned) {
-        return std::nullopt;
-    }
-    const CourseSetting& setting = *pinned;
+    const CourseSetting setting = compose();
 
     std::optional<CourseStep> step;
     try {
@@ -283,8 +346,7 @@ std::optional<CourseStep> Course::advance(bool advance)
 
 std::optional<double> Course::time_at(double extra_offset) const
 {
-    const auto pinned = m_setting.read();
-    return pinned ? m_clock.resolve(*pinned, extra_offset) : std::nullopt;
+    return m_clock.resolve(compose(), extra_offset);
 }
 
 void Course::report_frame(uint64_t index)

@@ -2,6 +2,9 @@
 
 #include "MayaFlux/Kriya/Awaiters/BroadcastAwaiter.hpp"
 #include "MayaFlux/Kriya/ReflowHelpers/CourseTime.hpp"
+#include "MayaFlux/Transitive/Facet/ControlSnapshot.hpp"
+#include "MayaFlux/Transitive/Facet/ControlValue.hpp"
+#include "MayaFlux/Transitive/Facet/ControlValueStore.hpp"
 #include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
@@ -32,6 +35,44 @@ struct CourseEvent {
 
 /** @brief A stream of a course's events, awaited by one coroutine. */
 using CourseEvents = Vruta::BroadcastSource<CourseEvent>;
+
+/**
+ * @struct CourseRange
+ * @brief The range of source seconds a course lives in, as one value so both ends change together.
+ */
+struct CourseRange {
+    double in {};
+    double out {};
+};
+
+/**
+ * @struct CourseControls
+ * @brief What steers a course through time, written from any thread and read once per advance.
+ *
+ * Numbers are ControlValue and the rest ControlSnapshot, so a write never waits for the
+ * advance and the advance never waits for a write. An empty member is left alone when a
+ * struct is merged. `edge` is a CourseEdge. `loop_count` is the crossings after which a
+ * Loop or PingPong course finishes, 0 for never. `time_map` and `repeat` take a TimeMap,
+ * and a TimeMap with no function clears them. `range` is one snapshot because it is the
+ * one setting with a rule across its parts, out above in; every other member is valid
+ * whatever the others hold. A value that cannot be stepped, such as a speed that is not
+ * finite, is held back by the advance as CourseTime holds it back.
+ */
+struct CourseControls {
+    ControlValue speed;
+    ControlValue offset;
+    ControlValue weight;
+    ControlSnapshot<CourseRange> range;
+    ControlValue edge;
+    ControlValue loop_count;
+    ControlSnapshot<Kinesis::TimeMap> time_map;
+    ControlSnapshot<Kinesis::TimeMap> repeat;
+};
+
+MF_DESCRIBE(CourseControls)
+
+/** @brief The store every course holds its controls in. */
+using CourseStore = ControlValueStore<ControlValue>;
 
 namespace Detail {
 
@@ -71,9 +112,15 @@ namespace Detail {
  * thread at any moment, so a Nexus agent, an expanse or an event handler can steer it
  * while it runs:
  *
- * - Settings (speed, offset, range, edge, time_map, repeat, weight) are one immutable snapshot
- *   that advance() reads whole, so a step never sees half of a change. A change takes effect
- *   on the next advance and never rewinds or jumps the clock.
+ * - Settings (speed, offset, range, edge, time_map, repeat, weight) are the members of
+ *   CourseControls. advance() reads each once and builds one setting from them, so a step never
+ *   sees the two ends of the range half changed, and no write waits for it. A change takes effect
+ *   on the next advance and never rewinds or jumps the clock. The named setters below check
+ *   their value and refuse what cannot be used; set() writes what it is given, and the advance
+ *   holds back a value that cannot be stepped.
+ * - More can be added beside them. extend() holds a struct of the user's own controls, which a
+ *   frame operation reads through get() or store() while the course runs, and a member added to
+ *   CourseControls reaches the advance in one place, compose().
  * - Commands (start, pause, stop, retrigger, seek, nudge) are queued and applied in order at
  *   the start of the next advance. They return false when not queued, because the value is not
  *   finite or the queue is full.
@@ -88,6 +135,8 @@ namespace Detail {
  */
 class MAYAFLUX_API Course {
 public:
+    using Controls = CourseControls;
+
     /**
      * @brief Make a course.
      * @param step_rate Steps per second, such as the frame rate.
@@ -97,6 +146,45 @@ public:
      */
     [[nodiscard]] static std::shared_ptr<Course> create(
         double step_rate, const CourseSetting& setting, bool paused = false);
+
+    // Controls
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value.
+     * @tparam C CourseControls, or a struct added with extend().
+     *
+     * Members left empty are untouched. Safe from any thread while the course runs.
+     */
+    template <typename C = CourseControls>
+    void set(const C& incoming)
+    {
+        m_store.merge(incoming);
+    }
+
+    /** @brief A copy of the controls of type C as they are now. */
+    template <typename C = CourseControls>
+    [[nodiscard]] C get() const
+    {
+        return m_store.snapshot<C>();
+    }
+
+    /**
+     * @brief Add a struct of the user's own controls beside CourseControls and return it.
+     *
+     * Belongs before the course is shared with another thread, and before get() is called
+     * from one: the advance reads only CourseControls and is not affected.
+     */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        return m_store.extend<C>();
+    }
+
+    /** @brief The live controls, read without a copy. */
+    [[nodiscard]] const CourseControls& controls() const noexcept { return m_controls; }
+
+    /** @brief Every control by name, for tools that list or set them. */
+    [[nodiscard]] const CourseStore& store() const noexcept { return m_store; }
 
     // Settings
 
@@ -127,7 +215,7 @@ public:
     /** @brief How much this course counts where several are mixed. Finite and not negative. */
     bool weight(double value);
 
-    /** @brief The setting now. */
+    /** @brief The setting the next advance will step with, built from the controls now. */
     [[nodiscard]] CourseSetting setting() const;
 
     // Commands
@@ -187,7 +275,8 @@ public:
     /** @brief Steps and commands that could not be applied, such as a seek under a time map. */
     [[nodiscard]] uint64_t refusals() const noexcept { return m_refusals_cell.load(std::memory_order_relaxed); }
 
-    [[nodiscard]] double weight() const noexcept { return m_weight_cell.load(std::memory_order_relaxed); }
+    /** @brief How much this course counts: the weight control, and zero where it is not finite or is negative. */
+    [[nodiscard]] double weight() const noexcept;
 
     // Events
 
@@ -233,13 +322,16 @@ public:
 private:
     Course(CourseTime time, const CourseSetting& setting, bool paused);
 
+    [[nodiscard]] static CourseControls& open(CourseStore& store);
+    [[nodiscard]] CourseSetting compose() const;
     bool push(Detail::CourseCommand::Kind kind, double value = 0.0);
     void apply(const Detail::CourseCommand& command, const CourseSetting& setting);
     void publish(const CourseSetting& setting, const CourseStep& step);
     void announce(CourseEventKind kind, double time, uint64_t value) const;
     void refuse();
 
-    Memory::SnapshotCell<CourseSetting> m_setting;
+    CourseStore m_store;
+    CourseControls& m_controls { open(m_store) };
     Memory::PendingQueue<Detail::CourseCommand, 64> m_commands;
     Memory::SnapshotCell<std::vector<Detail::CourseListener>> m_listeners;
 
@@ -253,7 +345,6 @@ private:
 
     std::atomic<double> m_time_cell { 0.0 };
     std::atomic<double> m_progress_cell { 0.0 };
-    std::atomic<double> m_weight_cell { 1.0 };
     std::atomic<uint64_t> m_steps_cell { 0 };
     std::atomic<uint64_t> m_crossings_cell { 0 };
     std::atomic<uint64_t> m_frame_cell { 0 };
@@ -265,3 +356,5 @@ private:
 };
 
 } // namespace MayaFlux::Kriya
+
+#include "Course.describe.hpp"
