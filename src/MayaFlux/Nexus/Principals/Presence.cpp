@@ -21,6 +21,7 @@ Presence::Presence(float query_radius,
     , m_falloff(linear_falloff)
     , m_radiate(std::move(radiate))
 {
+    m_presence.falloff_curve.observe(FalloffCurve::Linear);
 }
 
 Presence::Presence(float query_radius,
@@ -34,10 +35,12 @@ Presence::Presence(float query_radius,
     , m_radiate_fn_name(std::move(radiate_fn_name))
     , m_radiate(std::move(radiate))
 {
+    m_presence.falloff_curve.observe(FalloffCurve::Linear);
 }
 
 void Presence::set_falloff_curve(FalloffCurve curve)
 {
+    m_presence.falloff_curve.observe(curve);
     m_falloff_curve = curve;
     switch (curve) {
     case FalloffCurve::Linear:
@@ -58,6 +61,10 @@ void Presence::set_falloff_curve(FalloffCurve curve)
 void Presence::invoke_perception(const PerceptionContext& ctx)
 {
     Agent::invoke_perception(ctx);
+
+    if (const auto curve = m_presence.falloff_curve.pending<FalloffCurve>()) {
+        set_falloff_curve(*curve);
+    }
 
     m_neighbors.clear();
 

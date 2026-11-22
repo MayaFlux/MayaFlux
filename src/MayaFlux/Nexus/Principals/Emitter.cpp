@@ -8,6 +8,14 @@
 
 namespace MayaFlux::Nexus {
 
+EmitterControls& Emitter::open(QuantityStore& store)
+{
+    auto& controls = store.declare<EmitterControls>();
+    controls.intensity.observe(1.0F);
+    controls.radius.observe(1.0F);
+    return controls;
+}
+
 void Emitter::set_vertices(const void* data, size_t byte_count)
 {
     for (auto& s : m_render_sinks)
@@ -37,15 +45,25 @@ void Emitter::detach()
 
 void Emitter::recenter()
 {
-    if (m_attachment) {
-        recenter_attachment(*m_attachment, m_position, {});
+    if (!m_attachment) {
+        return;
+    }
+    auto placed = position();
+    recenter_attachment(*m_attachment, placed, {});
+    if (placed) {
+        m_controls.position.observe(*placed);
     }
 }
 
 void Emitter::follow_attachment()
 {
-    if (m_attachment) {
-        Nexus::follow_attachment(*m_attachment, m_position, {});
+    if (!m_attachment) {
+        return;
+    }
+    auto placed = position();
+    Nexus::follow_attachment(*m_attachment, placed, {});
+    if (placed) {
+        m_controls.position.observe(*placed);
     }
 }
 

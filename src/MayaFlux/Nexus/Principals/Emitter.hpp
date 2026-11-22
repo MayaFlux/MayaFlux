@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
@@ -24,13 +25,21 @@ namespace MayaFlux::Nexus {
  *
  * RenderConfig takes a designated initializer.
  *
+ * Its state is a struct of Quantity members, EmitterControls. `set()` applies the
+ * members that hold a value, from any thread, and a member given
+ * `Quantity::unset()` is emptied. The getters read the state as it is now.
+ * `extend<C>()` adds a struct of the user's own beside it.
+ *
  * @code
+ * emitter->set({ .position = glm::vec3(0, 1, 0), .intensity = 0.5 });
+ * emitter->set({ .position = Quantity::unset() });
  * emitter->set_influence<InfluenceBlock>(InfluenceBlock::from, bind_influence_block(proc));
  * emitter->render(mgr, { .target_window = window });
  * @endcode
  */
 class MAYAFLUX_API Emitter {
 public:
+    using Controls = EmitterControls;
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
 
     /**
@@ -71,21 +80,67 @@ public:
     /** @brief The influence function itself. */
     [[nodiscard]] const InfluenceFn& fn() const { return m_fn; }
 
+    // =========================================================================
+    // Controls
+    // =========================================================================
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value.
+     * @tparam C EmitterControls, or a struct added with extend().
+     *
+     * Members left empty are untouched, and `Quantity::unset()` empties a member.
+     * Safe from any thread.
+     */
+    template <typename C = EmitterControls>
+    void set(const C& incoming)
+    {
+        m_store.merge(incoming);
+    }
+
+    /** @brief A copy of the controls of type C as they are now. */
+    template <typename C = EmitterControls>
+    [[nodiscard]] C get() const
+    {
+        return m_store.snapshot<C>();
+    }
+
+    /** @brief Add a struct of the user's own controls beside EmitterControls and return it. */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        return m_store.extend<C>();
+    }
+
+    /** @brief The live controls, read without a copy. */
+    [[nodiscard]] const EmitterControls& controls() const noexcept { return m_controls; }
+
+    /** @brief Every control by name, for tools that list or set them. */
+    [[nodiscard]] const QuantityStore& store() const noexcept { return m_store; }
+
     /**
      * @brief Return the current position, if set.
      */
-    [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
+    [[nodiscard]] std::optional<glm::vec3> position() const
+    {
+        return quantity_value<glm::vec3>(m_controls.position);
+    }
 
     /**
      * @brief Set the position, enabling spatial indexing for this object.
      * @param p World-space coordinates.
      */
-    void set_position(const glm::vec3& p) { m_position = p; }
+    [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
+    {
+        m_controls.position.assign(Quantity(p));
+    }
 
     /**
      * @brief Clear the position, removing this object from spatial queries.
      */
-    void clear_position() { m_position.reset(); }
+    [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
+    {
+        m_controls.position.assign(Quantity::unset());
+    }
 
     /**
      * @brief Return the stable object id assigned by Fabric.
@@ -129,14 +184,14 @@ public:
      */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config)
     {
-        add_render_sink(m_render_sinks, mgr, config, {}, "", m_position);
+        add_render_sink(m_render_sinks, mgr, config, {}, "", position());
     }
 
     /** @brief Register a render output targeting @p window with a producer function. */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
         std::string fn_name, RenderFn fn)
     {
-        add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), position());
     }
 
     /** @brief Unregister every audio and render sink. */
@@ -190,34 +245,64 @@ public:
     }
 
     /** @brief Set the intensity, a general-purpose parameter for influence functions. */
-    void set_intensity(float i) { m_intensity = i; }
+    [[deprecated("use set({ .intensity = ... })")]] void set_intensity(float i)
+    {
+        m_controls.intensity.assign(Quantity(i));
+    }
 
     /** @brief Get the current intensity. */
-    [[nodiscard]] float intensity() const { return m_intensity; }
+    [[nodiscard]] float intensity() const
+    {
+        return quantity_value<float>(m_controls.intensity).value_or(1.0F);
+    }
 
     /** @brief Set the radius, a general-purpose parameter for influence functions. */
-    void set_radius(float r) { m_radius = r; }
+    [[deprecated("use set({ .radius = ... })")]] void set_radius(float r)
+    {
+        m_controls.radius.assign(Quantity(r));
+    }
 
     /** @brief Get the current radius. */
-    [[nodiscard]] float radius() const { return m_radius; }
+    [[nodiscard]] float radius() const
+    {
+        return quantity_value<float>(m_controls.radius).value_or(1.0F);
+    }
 
     /** @brief Set the color, a general-purpose parameter for influence functions. */
-    void set_color(const glm::vec3& c) { m_color = c; }
+    [[deprecated("use set({ .color = ... })")]] void set_color(const glm::vec3& c)
+    {
+        m_controls.color.assign(Quantity(c));
+    }
 
     /** @brief Clear the color, resetting it to an unset state. */
-    void clear_color() { m_color.reset(); }
+    [[deprecated("use set({ .color = Quantity::unset() })")]] void clear_color()
+    {
+        m_controls.color.assign(Quantity::unset());
+    }
 
     /** @brief Get the current color, if set. */
-    [[nodiscard]] const std::optional<glm::vec3>& color() const { return m_color; }
+    [[nodiscard]] std::optional<glm::vec3> color() const
+    {
+        return quantity_value<glm::vec3>(m_controls.color);
+    }
 
     /** @brief Set the size, a general-purpose parameter for influence functions. */
-    void set_size(float s) { m_size = s; }
+    [[deprecated("use set({ .size = ... })")]] void set_size(float s)
+    {
+        m_controls.size.assign(Quantity(s));
+    }
 
     /** @brief Clear the size, resetting it to an unset state. */
-    void clear_size() { m_size.reset(); }
+    [[deprecated("use set({ .size = Quantity::unset() })")]] void clear_size()
+    {
+        m_controls.size.assign(Quantity::unset());
+    }
 
     /** @brief Get the current size, if set. */
-    [[nodiscard]] const std::optional<float>& size() const { return m_size; }
+    [[nodiscard]] std::optional<float> size() const
+    {
+        return quantity_value<float>(m_controls.size);
+    }
 
     /**
      * @brief Make an existing, already rendered buffer the look of this object.
@@ -288,11 +373,10 @@ public:
     }
 
 private:
-    std::optional<glm::vec3> m_position;
-    std::optional<glm::vec3> m_color;
-    std::optional<float> m_size;
-    float m_intensity { 1.0F };
-    float m_radius { 1.0F };
+    [[nodiscard]] static EmitterControls& open(QuantityStore& store);
+
+    QuantityStore m_store;
+    EmitterControls& m_controls { open(m_store) };
 
     InfluenceFn m_fn;
     uint32_t m_id {};

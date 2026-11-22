@@ -105,10 +105,16 @@ public:
      * Defaults to 1. Set from the target window's framebuffer dimensions so the
      * projection matches what is on screen.
      */
-    void set_aspect(float aspect) { m_aspect = aspect; }
+    [[deprecated("use set(LocusControls { .aspect = ... })")]] void set_aspect(float aspect)
+    {
+        m_locus.aspect.assign(Quantity(aspect));
+    }
 
     /** @brief Current aspect ratio. */
-    [[nodiscard]] float aspect() const { return m_aspect; }
+    [[nodiscard]] float aspect() const
+    {
+        return quantity_value<float>(m_locus.aspect).value_or(1.0F);
+    }
 
     /**
      * @brief Advance the eye by a fixed number of seconds on every perception.
@@ -116,13 +122,22 @@ public:
      * Without one the eye advances by the wall time since the last perception.
      * A fixed timestep makes the same input give the same eye path.
      */
-    void set_timestep(float dt) { m_timestep = dt; }
+    [[deprecated("use set(LocusControls { .timestep = ... })")]] void set_timestep(float dt)
+    {
+        m_locus.timestep.assign(Quantity(dt));
+    }
 
     /** @brief Return to advancing by wall time. */
-    void clear_timestep() { m_timestep.reset(); }
+    [[deprecated("use set(LocusControls { .timestep = Quantity::unset() })")]] void clear_timestep()
+    {
+        m_locus.timestep.assign(Quantity::unset());
+    }
 
     /** @brief The fixed timestep, if one is set. */
-    [[nodiscard]] const std::optional<float>& timestep() const { return m_timestep; }
+    [[nodiscard]] std::optional<float> timestep() const
+    {
+        return quantity_value<float>(m_locus.timestep);
+    }
 
     // =========================================================================
     // View targets — the processors this Locus re-views
@@ -184,11 +199,12 @@ public:
     void invoke_influence(const InfluenceContext& ctx) const override;
 
 private:
+    LocusControls& m_locus { open_locus() };
     Kinesis::NavigationState m_nav;
     Kinesis::ViewTransform m_view {};
-    float m_aspect { 1.0F };
-    std::optional<float> m_timestep;
     std::vector<std::shared_ptr<Buffers::RenderProcessor>> m_view_targets;
+
+    [[nodiscard]] LocusControls& open_locus();
 };
 
 } // namespace MayaFlux::Nexus

@@ -1,0 +1,84 @@
+#pragma once
+
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
+
+#ifndef MAYAFLUX_REFLECT_SCAN
+
+namespace MayaFlux::Reflect::Generated {
+
+template <>
+struct Description<::MayaFlux::Nexus::AgentControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::AgentControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::AgentControls::position> { "position" },
+            Member<&::MayaFlux::Nexus::AgentControls::orientation> { "orientation" },
+            Member<&::MayaFlux::Nexus::AgentControls::intensity> { "intensity" },
+            Member<&::MayaFlux::Nexus::AgentControls::radius> { "radius" },
+            Member<&::MayaFlux::Nexus::AgentControls::color> { "color" },
+            Member<&::MayaFlux::Nexus::AgentControls::size> { "size" },
+            Member<&::MayaFlux::Nexus::AgentControls::query_radius> { "query_radius" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::EmitterControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::EmitterControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::EmitterControls::position> { "position" },
+            Member<&::MayaFlux::Nexus::EmitterControls::intensity> { "intensity" },
+            Member<&::MayaFlux::Nexus::EmitterControls::radius> { "radius" },
+            Member<&::MayaFlux::Nexus::EmitterControls::color> { "color" },
+            Member<&::MayaFlux::Nexus::EmitterControls::size> { "size" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::LocusControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::LocusControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::LocusControls::aspect> { "aspect" },
+            Member<&::MayaFlux::Nexus::LocusControls::timestep> { "timestep" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::PresenceControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::PresenceControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::PresenceControls::falloff_radius> { "falloff_radius" },
+            Member<&::MayaFlux::Nexus::PresenceControls::falloff_curve> { "falloff_curve" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::SensorControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::SensorControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::SensorControls::position> { "position" },
+            Member<&::MayaFlux::Nexus::SensorControls::query_radius> { "query_radius" },
+        };
+    }
+};
+
+}
+
+#endif

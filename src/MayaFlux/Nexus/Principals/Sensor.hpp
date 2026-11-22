@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
 
 namespace MayaFlux::Nexus {
@@ -9,15 +10,19 @@ namespace MayaFlux::Nexus {
  * @brief Object that reacts to nearby entities when committed.
  *
  * Constructed with a query radius and, optionally, a perception function. Position
- * is optional: call @c set_position before registering with @c Fabric if
- * spatial queries are required. A Sensor without a position receives an
+ * is optional: set one with `set({ .position = ... })` before registering with
+ * @c Fabric if spatial queries are required. A Sensor without a position receives an
  * empty @c spatial_results span on each commit.
+ *
+ * Its state is a struct of Quantity members, SensorControls, applied with `set()`
+ * from any thread. `extend<C>()` adds a struct of the user's own beside it.
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime.
  */
 class MAYAFLUX_API Sensor {
 public:
+    using Controls = SensorControls;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
 
     /**
@@ -27,8 +32,8 @@ public:
      *                     Ignored if no position has been set.
      */
     explicit Sensor(float query_radius = 1.0F)
-        : m_query_radius(query_radius)
     {
+        m_controls.query_radius.observe(query_radius);
     }
 
     /**
@@ -38,9 +43,9 @@ public:
      * @param fn           Called on every commit with the current context.
      */
     explicit Sensor(float query_radius, PerceptionFn fn)
-        : m_query_radius(query_radius)
-        , m_fn(std::move(fn))
+        : m_fn(std::move(fn))
     {
+        m_controls.query_radius.observe(query_radius);
     }
 
     /**
@@ -50,11 +55,44 @@ public:
      * @param fn           Called on every commit with the current context.
      */
     Sensor(float query_radius, std::string fn_name, PerceptionFn fn)
-        : m_query_radius(query_radius)
-        , m_fn_name(std::move(fn_name))
+        : m_fn_name(std::move(fn_name))
         , m_fn(std::move(fn))
     {
+        m_controls.query_radius.observe(query_radius);
     }
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value.
+     * @tparam C SensorControls, or a struct added with extend().
+     *
+     * Members left empty are untouched, and `Quantity::unset()` empties a member.
+     * Safe from any thread.
+     */
+    template <typename C = SensorControls>
+    void set(const C& incoming)
+    {
+        m_store.merge(incoming);
+    }
+
+    /** @brief A copy of the controls of type C as they are now. */
+    template <typename C = SensorControls>
+    [[nodiscard]] C get() const
+    {
+        return m_store.snapshot<C>();
+    }
+
+    /** @brief Add a struct of the user's own controls beside SensorControls and return it. */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        return m_store.extend<C>();
+    }
+
+    /** @brief The live controls, read without a copy. */
+    [[nodiscard]] const SensorControls& controls() const noexcept { return m_controls; }
+
+    /** @brief Every control by name, for tools that list or set them. */
+    [[nodiscard]] const QuantityStore& store() const noexcept { return m_store; }
 
     /** @brief Identifier assigned to the perception function, empty if anonymous. */
     [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
@@ -68,29 +106,44 @@ public:
     /**
      * @brief Return the current position, if set.
      */
-    [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
+    [[nodiscard]] std::optional<glm::vec3> position() const
+    {
+        return quantity_value<glm::vec3>(m_controls.position);
+    }
 
     /**
      * @brief Set the position, enabling spatial queries for this object.
      * @param p World-space coordinates.
      */
-    void set_position(const glm::vec3& p) { m_position = p; }
+    [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
+    {
+        m_controls.position.assign(Quantity(p));
+    }
 
     /**
      * @brief Clear the position, disabling spatial queries for this object.
      */
-    void clear_position() { m_position.reset(); }
+    [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
+    {
+        m_controls.position.assign(Quantity::unset());
+    }
 
     /**
      * @brief Return the query radius.
      */
-    [[nodiscard]] float query_radius() const { return m_query_radius; }
+    [[nodiscard]] float query_radius() const
+    {
+        return quantity_value<float>(m_controls.query_radius).value_or(1.0F);
+    }
 
     /**
      * @brief Set the query radius.
      * @param r New radius in world-space units.
      */
-    void set_query_radius(float r) { m_query_radius = r; }
+    [[deprecated("use set({ .query_radius = ... })")]] void set_query_radius(float r)
+    {
+        m_controls.query_radius.assign(Quantity(r));
+    }
 
     /**
      * @brief Return the stable object id assigned by Fabric.
@@ -132,8 +185,10 @@ public:
     }
 
 private:
-    std::optional<glm::vec3> m_position;
-    float m_query_radius;
+    [[nodiscard]] static SensorControls& open(QuantityStore& store);
+
+    QuantityStore m_store;
+    SensorControls& m_controls { open(m_store) };
     std::string m_fn_name;
     PerceptionFn m_fn;
     PerceptionFn m_perception;

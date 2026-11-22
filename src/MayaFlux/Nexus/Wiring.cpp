@@ -232,6 +232,14 @@ std::string Wiring::make_name(const char* prefix) const
 
 namespace {
 
+    template <typename Entity>
+    void place_entity(Entity& entity, const glm::vec3& position)
+    {
+        typename Entity::Controls incoming;
+        incoming.position = position;
+        entity.set(incoming);
+    }
+
     // =============================================================================
     // Network coroutine
     // =============================================================================
@@ -413,7 +421,7 @@ void Wiring::finalise()
             glm::vec3 pos = step.position;
             chain.then([&fab, pos, id]() {
                 std::visit([&pos](const auto& ptr) {
-                    ptr->set_position(pos);
+                    place_entity(*ptr, pos);
                 },
                     fab.m_registrations[id].member);
                 fab.fire(id);
@@ -575,7 +583,7 @@ void Wiring::finalise()
                 if (pos_fn.has_value()) {
                     glm::vec3 p = (*pos_fn)();
                     std::visit([&p](const auto& ptr) {
-                        ptr->set_position(p);
+                        place_entity(*ptr, p);
                     },
                         fab.m_registrations[id].member);
                 }

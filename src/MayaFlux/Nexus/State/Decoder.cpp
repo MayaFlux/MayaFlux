@@ -296,7 +296,7 @@ namespace {
             state.yaw = std::atan2(dir.x, dir.z);
             state.pitch = std::asin(glm::clamp(dir.y, -1.0F, 1.0F));
         }
-        locus.set_aspect(nav.aspect);
+        locus.set(LocusControls { .aspect = nav.aspect });
     }
 
     void apply_presence(Presence& presence, const State::EntityRecord& entry)
@@ -307,35 +307,36 @@ namespace {
             }
         }
         if (entry.falloff_radius) {
-            presence.set_falloff_radius(*entry.falloff_radius);
+            presence.set(PresenceControls { .falloff_radius = *entry.falloff_radius });
         }
+    }
+
+    Quantity position_of(const Fields& f)
+    {
+        return f.position ? Quantity(*f.position) : Quantity::unset();
     }
 
     void apply_emitter(Emitter& emitter, const State::EntityRecord& entry, const Fields& f)
     {
-        if (f.position) {
-            emitter.set_position(*f.position);
-        } else {
-            emitter.clear_position();
-        }
-        emitter.set_intensity(f.intensity);
-        emitter.set_radius(f.radius);
+        EmitterControls incoming;
+        incoming.position = position_of(f);
+        incoming.intensity = f.intensity;
+        incoming.radius = f.radius;
         if (entry.color) {
-            emitter.set_color(f.color);
+            incoming.color = f.color;
         }
         if (entry.size) {
-            emitter.set_size(f.size);
+            incoming.size = f.size;
         }
+        emitter.set(incoming);
     }
 
     void apply_sensor(Sensor& sensor, const Fields& f)
     {
-        if (f.position) {
-            sensor.set_position(*f.position);
-        } else {
-            sensor.clear_position();
-        }
-        sensor.set_query_radius(f.query_radius);
+        SensorControls incoming;
+        incoming.position = position_of(f);
+        incoming.query_radius = f.query_radius;
+        sensor.set(incoming);
     }
 
     void apply_agent(
@@ -344,24 +345,22 @@ namespace {
         const Fields& f,
         std::vector<std::string>& warnings)
     {
-        if (f.position) {
-            agent.set_position(*f.position);
-        } else {
-            agent.clear_position();
-        }
+        AgentControls incoming;
+        incoming.position = position_of(f);
         if (entry.orientation) {
-            agent.set_orientation(glm::quat(
-                entry.orientation->w, entry.orientation->x, entry.orientation->y, entry.orientation->z));
+            incoming.orientation = glm::quat(
+                entry.orientation->w, entry.orientation->x, entry.orientation->y, entry.orientation->z);
         }
-        agent.set_intensity(f.intensity);
-        agent.set_radius(f.radius);
-        agent.set_query_radius(f.query_radius);
+        incoming.intensity = f.intensity;
+        incoming.radius = f.radius;
+        incoming.query_radius = f.query_radius;
         if (entry.color) {
-            agent.set_color(f.color);
+            incoming.color = f.color;
         }
         if (entry.size) {
-            agent.set_size(f.size);
+            incoming.size = f.size;
         }
+        agent.set(incoming);
 
         if (entry.locus_nav) {
             if (auto* locus = dynamic_cast<Locus*>(&agent)) {
