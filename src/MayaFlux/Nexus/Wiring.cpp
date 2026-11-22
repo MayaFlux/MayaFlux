@@ -501,6 +501,10 @@ void Wiring::finalise()
                             [fire_at](const Core::NetworkMessage&) { fire_at(std::nullopt, nullptr); }),
                         "nexus_event", true);
 
+                } else if constexpr (std::is_same_v<T, BroadcastTrigger>) {
+                    add(trig.listen([fire_at] { fire_at(std::nullopt, nullptr); }),
+                        "nexus_event", true);
+
                 } else if constexpr (std::is_same_v<T, WindowEventTrigger>) {
                     add(Kriya::window_event(trig.window, trig.filter,
                             [fire_at](const Core::WindowEvent& event) {

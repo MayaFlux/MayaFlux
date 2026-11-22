@@ -3,6 +3,7 @@
 #include "Principals/Agent.hpp"
 
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Kriya/BroadcastEvents.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -134,6 +135,26 @@ public:
      * @param source OSC or raw network source; the wiring keeps it alive.
      */
     Wiring& on(std::shared_ptr<Vruta::NetworkSource> source);
+
+    /**
+     * @brief Fire the entity on each value a broadcast source signals.
+     *
+     * The firing runs on the thread that signals the source, so a Kriya::Course event
+     * fires the entity on the routine that advances the course. The value is not passed
+     * on: the entity is fired as for any trigger. A source holds one pending value, so
+     * give each wiring its own, as Course::subscribe does.
+     * @tparam T Payload type of the source.
+     * @param source Source to listen to; the wiring keeps it alive.
+     */
+    template <typename T>
+    Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source)
+    {
+        m_triggers.emplace_back(BroadcastTrigger {
+            .listen = [source = std::move(source)](std::function<void()> fire) {
+                return Kriya::on_signal(source, [fire = std::move(fire)](const T&) { fire(); });
+            } });
+        return *this;
+    }
 
     /**
      * @brief Fire the entity on each matching event of a window.
@@ -310,13 +331,18 @@ private:
         Vruta::WindowEventFilter filter;
     };
 
+    struct BroadcastTrigger {
+        std::function<Vruta::Event(std::function<void()>)> listen;
+    };
+
     using Trigger = std::variant<
         std::monostate,
         KeyTrigger,
         MouseTrigger,
         NetworkTrigger,
         WindowEventTrigger,
-        ScrollTrigger>;
+        ScrollTrigger,
+        BroadcastTrigger>;
     using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, CrossFactory>;
     using EFactory = std::optional<EventFactory>;
 
