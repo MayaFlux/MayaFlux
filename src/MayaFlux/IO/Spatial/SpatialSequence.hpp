@@ -48,6 +48,16 @@ public:
     /** @brief What every frame is: POINT_LIST or LINE_STRIP. */
     [[nodiscard]] Portal::Graphics::PrimitiveTopology topology() const noexcept { return m_topology; }
 
+    /**
+     * @brief The most vertices any frame of the stream holds.
+     *
+     * Read from the size of each sample's positions, so no frame is decoded. The answer is
+     * found on the first call and kept.
+     *
+     * @return The count, or nullopt, with the reason logged, when a sample's size cannot be read.
+     */
+    [[nodiscard]] std::optional<uint32_t> max_vertex_count() const;
+
 private:
     SpatialFileFrames(SpatialReader reader, std::string stream, Kinesis::TimeSampling times,
         size_t count, Portal::Graphics::PrimitiveTopology topology);
@@ -59,6 +69,7 @@ private:
     Portal::Graphics::PrimitiveTopology m_topology;
 
     mutable std::mutex m_mutex;
+    mutable std::optional<uint32_t> m_max_vertices;
     mutable std::unordered_map<size_t, std::weak_ptr<const Kakshya::SpatialData>> m_live;
 };
 

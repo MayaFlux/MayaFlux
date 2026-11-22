@@ -113,6 +113,17 @@ public:
     [[nodiscard]] std::optional<double> sample_time(
         const std::string& stream_name, size_t index) const;
 
+    /**
+     * @brief Number of vertices a sample holds, read from the size of its positions.
+     *
+     * Nothing of the sample is decoded, so it is cheap to ask of every sample of a stream.
+     *
+     * @return The count, or nullopt for an unknown stream, an index out of range or a
+     *         read failure; a failure is in get_last_error().
+     */
+    [[nodiscard]] std::optional<size_t> get_vertex_count(
+        const std::string& stream_name, size_t index) const;
+
     [[nodiscard]] std::string get_last_error() const { return m_last_error; }
 
 private:

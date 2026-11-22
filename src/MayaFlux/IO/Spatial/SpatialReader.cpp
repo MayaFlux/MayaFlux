@@ -508,6 +508,38 @@ std::optional<SpatialSample> SpatialReader::read_sample(
     }
 }
 
+std::optional<size_t> SpatialReader::get_vertex_count(
+    const std::string& stream_name, size_t index) const
+{
+    if (!m_impl->archive.valid()) {
+        set_error("get_vertex_count: no archive open");
+        return std::nullopt;
+    }
+
+    const auto it = m_impl->records.find(stream_name);
+    if (it == m_impl->records.end() || index >= it->second.sample_count) {
+        return std::nullopt;
+    }
+
+    try {
+        const ISampleSelector selector(static_cast<index_t>(index));
+        Alembic::Util::Dimensions dimensions;
+
+        if (auto* points = std::get_if<IPoints>(&it->second.object)) {
+            points->getSchema().getPositionsProperty().getDimensions(dimensions, selector);
+        } else if (auto* curves = std::get_if<ICurves>(&it->second.object)) {
+            curves->getSchema().getPositionsProperty().getDimensions(dimensions, selector);
+        }
+
+        return static_cast<size_t>(dimensions.numPoints());
+    } catch (const std::exception& e) {
+        set_error(std::string("get_vertex_count: ") + e.what());
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader::get_vertex_count: '{}' sample {}: {}", stream_name, index, e.what());
+        return std::nullopt;
+    }
+}
+
 std::optional<double> SpatialReader::sample_time(
     const std::string& stream_name, size_t index) const
 {

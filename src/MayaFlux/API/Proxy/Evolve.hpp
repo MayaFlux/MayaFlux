@@ -4,7 +4,12 @@
 
 #include "MayaFlux/Buffers/State/RelaxationGridBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/Kriya/SpatialReflow.hpp"
 #include "MayaFlux/Kriya/VolumeReflow.hpp"
+
+namespace MayaFlux::Buffers {
+class RecordedGeometryBuffer;
+}
 
 namespace MayaFlux::Nodes::Network {
 class NodeNetwork;
@@ -56,6 +61,9 @@ concept GridCellData = (ArithmeticData<State> || GlmVec2Type<State> || GlmVec4Ty
  *   registered, rendering is attached, and the reflow starts on the frame clock. The call
  *   returns the Reflow, whose courses steer the playback, and the proxy keeps it playing
  *   until its stop() is called.
+ * - A recorded stream of spatial frames, such as an Alembic capture, played into a
+ *   RecordedGeometryBuffer the same way. The buffer's own field operator decides which
+ *   spatial stages run over the frames.
  *
  * The first three route to the graphics domain and every call requires
  * RenderConfig::target_window. There is no default window. A null target logs
@@ -248,6 +256,39 @@ public:
     }
 
     /**
+     * @brief Play a stream of spatial frames into a recorded geometry buffer and attach rendering.
+     * @param buffer Unregistered buffer made for the frames: capacity of at least the largest
+     *        frame (IO::SpatialFileFrames::max_vertex_count), the stream's topology, and a
+     *        field operator if the spatial stages are wanted.
+     * @param frames The frames to play, such as an IO::SpatialFileFrames.
+     * @param reflow Courses, frame operations, selection and rewrite. Default constructed
+     *        plays the whole stream once.
+     * @param render Render target. target_window is required.
+     * @return The reflow, or nullptr if the buffer or the frames are null, the target window
+     *         is null, or the config cannot make a reflow. Nothing is registered in that case.
+     *
+     * The config is checked first, then the buffer is registered in the graphics domain,
+     * which wires its stages, rendering is attached, and the reflow is started on the
+     * engine's frame clock. Each frame replaces the buffer's geometry (Kriya::spatial_sink).
+     * The proxy holds the reflow, so it keeps playing if the caller lets go, until stop() is
+     * called on it. A buffer made by MayaFlux::create_recorded_geometry_buffer is already
+     * registered: play that one with MayaFlux::create_spatial_reflow instead.
+     */
+    auto operator()(
+        const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::SpatialData>& reflow,
+        const RenderConfig& render)
+        -> std::shared_ptr<Kriya::SpatialReflow>
+    {
+        auto playing = build_reflow(buffer, frames, reflow, render);
+        if (playing) {
+            MF_LIVE_EXPOSE_AUTO(playing);
+        }
+        return playing;
+    }
+
+    /**
      * @brief Drive a network's vertices with fields and spatial stages, and attach rendering.
      * @tparam Network A field-compatible NodeNetwork subclass, such as ParticleNetwork.
      * @param network Unregistered network.
@@ -326,6 +367,20 @@ private:
         const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
         const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& frames,
         const Kriya::ReflowConfig<Kakshya::VolumeData>& reflow,
+        const RenderConfig& render);
+
+    /**
+     * @brief Check the config, register the buffer, render it and start the reflow.
+     * @param buffer Buffer to play into.
+     * @param frames Frames to play.
+     * @param reflow Reflow description.
+     * @param render Render target.
+     * @return The reflow, kept by the proxy, or nullptr on failure with nothing registered.
+     */
+    std::shared_ptr<Kriya::SpatialReflow> build_reflow(
+        const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::SpatialData>& reflow,
         const RenderConfig& render);
 
     /**

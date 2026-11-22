@@ -6,9 +6,11 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
+#include "MayaFlux/IO/Spatial/SpatialSequence.hpp"
 #include "MayaFlux/IO/Volume/VolumeTransfer.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
@@ -308,6 +310,38 @@ Kriya::VolumeReflowBuilder create_volume_reflow(
 {
     return Kriya::VolumeReflowBuilder(
         std::move(source), volume ? Kriya::volume_sink(volume) : Kriya::VolumeReflow::Sink {}, 0.0, get_scheduler());
+}
+
+std::shared_ptr<Buffers::RecordedGeometryBuffer> create_recorded_geometry_buffer(
+    const std::shared_ptr<const IO::SpatialFileFrames>& source,
+    Kinesis::SamplerBounds bounds,
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op,
+    std::optional<uint32_t> capacity)
+{
+    if (!source) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_recorded_geometry_buffer: no source");
+        return nullptr;
+    }
+
+    const auto vertices = capacity ? capacity : source->max_vertex_count();
+    if (!vertices || *vertices == 0) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "create_recorded_geometry_buffer: no frame of '{}' holds a vertex, or the sizes could not be read",
+            source->stream());
+        return nullptr;
+    }
+
+    return get_buffer_manager()->create_graphics_buffer<Buffers::RecordedGeometryBuffer>(
+        Buffers::ProcessingToken::GRAPHICS_BACKEND, *vertices, source->topology(), bounds, std::move(field_op));
+}
+
+Kriya::SpatialReflowBuilder create_spatial_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>> source,
+    const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer)
+{
+    return Kriya::SpatialReflowBuilder(
+        std::move(source), buffer ? Kriya::spatial_sink(buffer) : Kriya::SpatialReflow::Sink {}, 0.0, get_scheduler());
 }
 
 std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()

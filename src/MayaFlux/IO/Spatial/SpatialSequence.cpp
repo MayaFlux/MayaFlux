@@ -97,6 +97,28 @@ std::shared_ptr<const Kakshya::SpatialData> SpatialFileFrames::read(size_t index
     return frame;
 }
 
+std::optional<uint32_t> SpatialFileFrames::max_vertex_count() const
+{
+    const std::scoped_lock lock(m_mutex);
+
+    if (m_max_vertices) {
+        return m_max_vertices;
+    }
+
+    size_t most = 0;
+    for (size_t i = 0; i < m_count; ++i) {
+        const auto vertices = m_reader.get_vertex_count(m_stream, i);
+        if (!vertices) {
+            fail("the size of sample " + std::to_string(i) + " of '" + m_stream + "' could not be read");
+            return std::nullopt;
+        }
+        most = std::max(most, *vertices);
+    }
+
+    m_max_vertices = static_cast<uint32_t>(most);
+    return m_max_vertices;
+}
+
 std::shared_ptr<Kakshya::SequenceContainer<Kakshya::SpatialData>> open_spatial_sequence(
     const std::string& path, std::string stream)
 {

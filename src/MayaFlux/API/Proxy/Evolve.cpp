@@ -3,6 +3,7 @@
 #include "MayaFlux/API/Chronie.hpp"
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GraphicsOperator.hpp"
@@ -134,6 +135,9 @@ struct Evolve::Impl {
     /** @brief Reflows started here, kept so they play until stopped. */
     std::vector<std::shared_ptr<Kriya::VolumeReflow>> playing;
 
+    /** @brief Spatial reflows started here, kept so they play until stopped. */
+    std::vector<std::shared_ptr<Kriya::SpatialReflow>> playing_spatial;
+
     /**
      * @brief Fill unresolved refs of a flow config from the volume.
      * @param volume Volume being wired.
@@ -250,6 +254,38 @@ struct Evolve::Impl {
         return reflow;
     }
 
+    [[nodiscard]] std::shared_ptr<Kriya::SpatialReflow> build_reflow(
+        const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::SpatialData>& config,
+        const RenderConfig& render)
+    {
+        if (!buffer || !frames) {
+            MF_ERROR(Journal::Component::API, Journal::Context::Init,
+                "evolve: null RecordedGeometryBuffer or frames");
+            return nullptr;
+        }
+
+        if (!has_target(render)) {
+            return nullptr;
+        }
+
+        Kriya::SpatialReflowBuilder builder(frames, Kriya::spatial_sink(buffer), config.cycle_rate, get_scheduler());
+        builder.configure(config);
+        if (!builder.build()) {
+            return nullptr;
+        }
+
+        register_graphics_buffer(buffer);
+        buffer->setup_rendering(render);
+
+        auto reflow = builder.start();
+        if (reflow) {
+            playing_spatial.push_back(reflow);
+        }
+        return reflow;
+    }
+
     [[nodiscard]] bool build_field(
         const std::shared_ptr<Nodes::Network::NodeNetwork>& network,
         const Nodes::Network::SpatialFieldConfig& spatial,
@@ -337,6 +373,15 @@ std::shared_ptr<Kriya::VolumeReflow> Evolve::build_reflow(
     const RenderConfig& render)
 {
     return m_impl->build_reflow(volume, frames, reflow, render);
+}
+
+std::shared_ptr<Kriya::SpatialReflow> Evolve::build_reflow(
+    const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,
+    const std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>>& frames,
+    const Kriya::ReflowConfig<Kakshya::SpatialData>& reflow,
+    const RenderConfig& render)
+{
+    return m_impl->build_reflow(buffer, frames, reflow, render);
 }
 
 bool Evolve::build_field(
