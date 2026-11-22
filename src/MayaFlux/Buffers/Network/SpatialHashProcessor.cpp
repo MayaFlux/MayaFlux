@@ -81,7 +81,7 @@ std::optional<SpatialHashConfig> SpatialHashConfig::from_network(
     };
 }
 
-void SpatialHashConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const
+void SpatialHashConfig::declare_fields(const std::shared_ptr<StateFieldBuffer>& buffer) const
 {
     const uint32_t cells = cell_count();
     buffer->declare_state("hash_cell_count", cells, sizeof(uint32_t), false);
@@ -134,7 +134,7 @@ void NetworkStateFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer
 {
     ComputeProcessor::on_attach(buffer);
 
-    m_buffer = std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer);
+    m_buffer = std::dynamic_pointer_cast<StateFieldBuffer>(buffer);
     if (!m_buffer) {
         return;
     }
@@ -181,7 +181,7 @@ bool NetworkStateFieldProcessor::on_before_execute(
     Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)
 {
-    return m_buffer && std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer) != nullptr;
+    return m_buffer && std::dynamic_pointer_cast<StateFieldBuffer>(buffer) != nullptr;
 }
 
 //=============================================================================

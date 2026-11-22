@@ -45,7 +45,7 @@ struct MAYAFLUX_API PopulationConfig {
      * ClaimAccumulateProcessor (destroy) and PopulationSpawnProcessor (spawn)
      * ever touch them again, forward-only, until the next reseed.
      */
-    void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
+    void declare_fields(const std::shared_ptr<StateFieldBuffer>& buffer) const;
 };
 
 /**

@@ -1,7 +1,7 @@
 #include "MutationClaimProcessor.hpp"
 
 #include "NeighbourWalkHelper.hpp"
-#include "NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/PhysicsOperator.hpp"
@@ -13,7 +13,7 @@
 
 namespace MayaFlux::Buffers {
 
-void MutationConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const
+void MutationConfig::declare_fields(const std::shared_ptr<StateFieldBuffer>& buffer) const
 {
     buffer->declare_state("mutation_claimed_by", hash.particle_count, sizeof(uint32_t), false);
     buffer->declare_state("mutation_swallow_count", hash.particle_count, sizeof(uint32_t), false);

@@ -9,6 +9,7 @@ class GpuFieldOperator;
 namespace MayaFlux::Buffers {
 
 class NetworkGeometryBuffer;
+class StateFieldBuffer;
 
 /**
  * @struct SpatialHashConfig
@@ -97,7 +98,7 @@ struct MAYAFLUX_API SpatialHashConfig {
      * cluster-aware guard built on this field is a no-op for the ordinary
      * single-population case.
      */
-    void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
+    void declare_fields(const std::shared_ptr<StateFieldBuffer>& buffer) const;
 };
 
 /**
@@ -139,8 +140,8 @@ inline GridPushConstants make_grid_push_constants(const SpatialHashConfig& c)
 /**
  * @class NetworkStateFieldProcessor
  * @brief ComputeProcessor operating on named state fields of a
- *        NetworkGeometryBuffer, plus optionally the buffer's own primary
- *        vertex storage.
+ *        StateFieldBuffer (a NetworkGeometryBuffer is one), plus optionally
+ *        the buffer's own primary vertex storage.
  *
  * Mirrors VolumeFieldProcessor's relationship to VolumeGridBuffer: every
  * binding lives at a private set 0, descriptors are written directly
@@ -173,7 +174,7 @@ public:
     };
 
     /** @brief The attached buffer, or null if attachment failed validation. */
-    [[nodiscard]] const std::shared_ptr<NetworkGeometryBuffer>& get_network_buffer() const { return m_buffer; }
+    [[nodiscard]] const std::shared_ptr<StateFieldBuffer>& get_network_buffer() const { return m_buffer; }
 
 protected:
     /**
@@ -186,7 +187,7 @@ protected:
 
     /**
      * @brief Cache and validate the buffer, then call on_buffer_ready.
-     * @param buffer The attached buffer, expected to be a NetworkGeometryBuffer.
+     * @param buffer The attached buffer, expected to be a StateFieldBuffer.
      *
      * On any validation failure the cached buffer is reset, which makes
      * on_before_execute reject every subsequent cycle.
@@ -207,7 +208,7 @@ protected:
         std::vector<Portal::Graphics::PushDescriptorWrite>& writes) override;
 
     /**
-     * @brief Reject buffers that are not the validated NetworkGeometryBuffer.
+     * @brief Reject buffers that are not the validated StateFieldBuffer.
      */
     bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer) override;
 
@@ -280,7 +281,7 @@ private:
     bool validate_fields();
 
     std::vector<FieldBinding> m_bindings;
-    std::shared_ptr<NetworkGeometryBuffer> m_buffer;
+    std::shared_ptr<StateFieldBuffer> m_buffer;
 };
 
 /**

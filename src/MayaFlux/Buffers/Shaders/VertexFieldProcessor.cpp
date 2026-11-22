@@ -1,6 +1,6 @@
 #include "VertexFieldProcessor.hpp"
 
-#include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 #include "RenderProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -109,7 +109,7 @@ void VertexFieldProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 
     bind_buffer("vertices", vk_buf);
 
-    m_network_buffer = std::dynamic_pointer_cast<NetworkGeometryBuffer>(buffer);
+    m_network_buffer = std::dynamic_pointer_cast<StateFieldBuffer>(buffer);
     ensure_cluster_binding();
 
     ComputeProcessor::on_attach(buffer);
@@ -250,7 +250,7 @@ bool VertexFieldProcessor::ensure_cluster_binding()
     if (!m_network_buffer) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "VertexFieldProcessor: operator has a cluster-scoped binding but the "
-            "attached buffer is not a NetworkGeometryBuffer, so hash_cluster_id "
+            "attached buffer is not a StateFieldBuffer, so hash_cluster_id "
             "has nowhere to live. Dispatch suppressed.");
         return false;
     }
@@ -258,8 +258,8 @@ bool VertexFieldProcessor::ensure_cluster_binding()
     if (!m_network_buffer->ensure_cluster_ids()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "VertexFieldProcessor: operator has a cluster-scoped binding but "
-            "hash_cluster_id could not be derived (no primary GraphicsOperator, "
-            "or it reports zero points). Dispatch suppressed.");
+            "hash_cluster_id could not be derived or was never declared. Dispatch "
+            "suppressed.");
         return false;
     }
 

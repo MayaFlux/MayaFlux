@@ -6,7 +6,7 @@
 #include "MayaFlux/Buffers/Geometry/GeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
-#include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
@@ -86,7 +86,7 @@ void DataWriteProcessor::write_field(std::string name, Kakshya::DataVariant data
             return;
         }
 
-        if (const auto network = std::dynamic_pointer_cast<NetworkGeometryBuffer>(vk);
+        if (const auto network = std::dynamic_pointer_cast<StateFieldBuffer>(vk);
             network && network->has_state(name)) {
             if (size != network->get_state_bytes(name)) {
                 MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
