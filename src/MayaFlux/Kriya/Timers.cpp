@@ -1,6 +1,7 @@
 #include "Timers.hpp"
 
 #include "MayaFlux/Kriya/RoutineTraits.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Network/NodeNetwork.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
@@ -27,7 +28,7 @@ namespace {
 
 }
 
-Timer::Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token)
+Timer::Timer(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
     , m_token(token)
 {
@@ -42,21 +43,27 @@ Timer::~Timer()
 
 void Timer::schedule(double delay_seconds, std::function<void()> callback)
 {
+    if (!m_Scheduler) {
+        MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+            "Timer::schedule ignored: the timer has no scheduler");
+        return;
+    }
+
     cancel();
     m_pending = std::make_shared<Pending>(Pending { .callback = std::move(callback), .active = true });
 
     if (m_token == Vruta::ProcessingToken::FRAME_ACCURATE) {
-        const auto units = m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::FRAME_ACCURATE);
+        const auto units = m_Scheduler->seconds_to_units(delay_seconds, Vruta::ProcessingToken::FRAME_ACCURATE);
         m_routine = std::make_shared<Vruta::GraphicsRoutine>(
             timer_routine<RoutineTraits<Vruta::ProcessingToken::FRAME_ACCURATE>>(m_pending, units));
     } else {
-        const auto units = m_Scheduler.seconds_to_units(delay_seconds, Vruta::ProcessingToken::SAMPLE_ACCURATE);
+        const auto units = m_Scheduler->seconds_to_units(delay_seconds, Vruta::ProcessingToken::SAMPLE_ACCURATE);
         m_routine = std::make_shared<Vruta::SoundRoutine>(
             timer_routine<RoutineTraits<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(m_pending, units));
     }
 
-    uint64_t current_time = m_Scheduler.current_units(m_token);
-    m_Scheduler.add_task(m_routine, "", false);
+    uint64_t current_time = m_Scheduler->current_units(m_token);
+    m_Scheduler->add_task(m_routine, "", false);
 
     m_routine->initialize_state(current_time);
 }
@@ -64,13 +71,13 @@ void Timer::schedule(double delay_seconds, std::function<void()> callback)
 void Timer::cancel()
 {
     if (m_pending && m_pending->active && m_routine) {
-        m_Scheduler.cancel_task(m_routine);
+        m_Scheduler->cancel_task(m_routine);
         m_routine = nullptr;
         m_pending->active = false;
     }
 }
 
-TimedAction::TimedAction(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token)
+TimedAction::TimedAction(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, Vruta::ProcessingToken token)
     : m_Scheduler(scheduler)
     , m_timer(scheduler, token)
     , m_token(token)
@@ -94,7 +101,7 @@ bool TimedAction::is_pending() const
     return m_timer.is_active();
 }
 
-TemporalActivation::TemporalActivation(Vruta::TaskScheduler& scheduler,
+TemporalActivation::TemporalActivation(const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
     Nodes::NodeGraphManager& node_graph_manager,
     Buffers::BufferManager& buffer_manager, Vruta::ProcessingToken token)
     : m_scheduler(scheduler)

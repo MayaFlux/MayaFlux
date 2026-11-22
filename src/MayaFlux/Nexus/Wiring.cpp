@@ -232,6 +232,11 @@ std::string Wiring::make_name(const char* prefix) const
 
 namespace {
 
+    std::shared_ptr<Vruta::TaskScheduler> scheduler_handle(Vruta::TaskScheduler& scheduler)
+    {
+        return std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { });
+    }
+
     template <typename Entity>
     void place_entity(Entity& entity, const glm::vec3& position)
     {
@@ -397,7 +402,7 @@ void Wiring::finalise()
         }
 
         if (m_duration.has_value() && m_bind_detach.has_value()) {
-            auto timer = std::make_shared<Kriya::Timer>(scheduler, m_duration_token);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler_handle(scheduler), m_duration_token);
             auto detach = *m_bind_detach;
             timer->schedule(*m_duration, [timer, detach]() {
                 detach();
@@ -415,7 +420,7 @@ void Wiring::finalise()
         reg.chain_name = name;
 
         Kriya::EventChain chain(
-            std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }), name);
+            scheduler_handle(scheduler), name);
         auto& fab = m_fabric;
         for (auto& step : m_move_steps) {
             glm::vec3 pos = step.position;
@@ -603,7 +608,7 @@ void Wiring::finalise()
         scheduler.add_task(routine, name, false);
 
         if (m_duration.has_value()) {
-            auto timer = std::make_shared<Kriya::Timer>(scheduler, m_duration_token);
+            auto timer = std::make_shared<Kriya::Timer>(scheduler_handle(scheduler), m_duration_token);
             timer->schedule(*m_duration, [name, timer, &scheduler]() {
                 scheduler.cancel_task(name);
             });

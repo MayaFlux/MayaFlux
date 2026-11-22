@@ -200,7 +200,7 @@ Kriya is the vocabulary for writing time-structured processing work against Vrut
 
 The awaiters `SampleDelay`, `BufferDelay`, `FrameDelay`, and `MultiRateDelay` express time in terms the system understands. `ProcessingGate` suspends until a condition becomes true. `EventAwaiter` and `NetworkAwaiter` suspend until an event or message fires.
 
-`Tasks` provides common scheduling primitives: `metro` fires a callback at a regular interval with sample-accurate timing; `sequence` fires callbacks at specified offsets; `line` interpolates a value over a duration. `Kriya::pattern` passes an incrementing index to a typed generator and delivers each result to a callback. Its steps can follow a condition, a repeating duration list, or durations generated for each pass.
+`Tasks` provides common scheduling primitives: `metro` fires a callback at a regular interval on any of the four clocked tokens (samples, frames, multi-rate, or the conditional worker in wall-clock seconds); `each_cycle` calls a function once per unit of a token's clock, with no interval to round; `sequence` fires callbacks at specified offsets; `line` interpolates a value over a duration. `Kriya::pattern` passes an incrementing index to a typed generator and delivers each result to a callback. Its steps can follow a condition, a repeating duration list, or durations generated for each pass.
 
 `BufferPipeline` composes buffer operations as coroutine-driven chains at audio or frame rate. `SamplingPipeline` connects a `DynamicSoundStream` to audio buffers and plays `StreamSlice` values through independently controlled slots.
 
@@ -208,9 +208,20 @@ Frame-rate pipelines can capture camera or video frames into a `DynamicVideoStre
 
 `Chain` (the `EventChain`) sequences discrete actions with sample-accurate delays via `then()`, `wait()`, `every()`, `repeat()`, `times()`.
 
-`Timer` and `TimedAction` provide fire-once and fire-with-cleanup scheduling.
+`Timer` and `TimedAction` provide fire-once and fire-with-cleanup scheduling. They take the scheduler as a `shared_ptr` and keep it alive.
 
-Input events enter the scheduling system through `InputEvents`: `any_key`, `mouse_pressed`, `mouse_released`, `mouse_move`. Network events enter through `NetworkEvents`: `message_received`, which takes an optional filter, either a sender address, a connection id or a predicate.
+Input events enter the scheduling system through `InputEvents`: `any_key`, `mouse_pressed`, `mouse_released`, `mouse_move`. Each passes only what its name says; `window_event` takes a `WindowEventFilter` and hands the callback the whole `WindowEvent`. Network events enter through `NetworkEvents`: `message_received`, which takes an optional filter, either a sender address, a connection id or a predicate.
+
+Where a callback runs depends on what drives it:
+
+| Driver | The callback runs on |
+| --- | --- |
+| `metro`, `each_cycle`, `sequence`, `pattern`, `EventChain` on a sample, frame or multi-rate token | the thread that processes that clock: the audio callback for samples, the graphics loop for frames |
+| the same on the CONDITIONAL token | the conditional worker thread |
+| window events (`key_pressed`, `window_event`, and the others) | the thread that polls the window |
+| network events (`message_received`) | the network IO thread |
+| broadcast events (`on_signal`, `subscribe`) | the thread that signals the source |
+| `EventChain::on` | where the chain runs, which checks the source on its own clock |
 
 ---
 

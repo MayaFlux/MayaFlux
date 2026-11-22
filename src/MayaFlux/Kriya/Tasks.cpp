@@ -1,4 +1,5 @@
 #include "Tasks.hpp"
+#include "Awaiters/ConditionAwaiter.hpp"
 #include "Awaiters/DelayAwaiters.hpp"
 #include "RoutineTraits.hpp"
 
@@ -26,6 +27,15 @@ namespace {
         }
     }
 
+    Vruta::FreeRoutine free_metro_routine(double interval, std::function<void()> cb)
+    {
+        auto& p = co_await OnWorker { Vruta::WorkerId {} };
+        while (!p.should_terminate) {
+            cb();
+            co_await SteadyDelay { interval };
+        }
+    }
+
     template <typename Traits>
     typename Traits::Routine sequence_routine(std::vector<std::pair<double, std::function<void()>>> seq)
     {
@@ -35,26 +45,105 @@ namespace {
         }
     }
 
+    Vruta::FreeRoutine free_sequence_routine(std::vector<std::pair<double, std::function<void()>>> seq)
+    {
+        auto& p = co_await OnWorker { Vruta::WorkerId {} };
+        for (const auto& [time, cb] : seq) {
+            co_await SteadyDelay { time };
+            if (p.should_terminate) {
+                co_return;
+            }
+            cb();
+        }
+    }
+
+    template <typename Traits>
+    typename Traits::Routine cycle_routine(std::function<void()> cb)
+    {
+        auto& p = co_await typename Traits::GetPromise {};
+        while (!p.should_terminate) {
+            cb();
+            co_await Traits::pause();
+        }
+    }
+
+    Vruta::FreeRoutine free_cycle_routine(std::function<void()> cb)
+    {
+        auto& p = co_await OnWorker { Vruta::WorkerId {} };
+        while (!p.should_terminate) {
+            cb();
+            co_await SteadyDelay { 0.0 };
+        }
+    }
+
 }
 
 std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<void()> callback, Vruta::ProcessingToken token)
 {
-    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+    using Vruta::ProcessingToken;
+
+    switch (token) {
+    case ProcessingToken::FRAME_ACCURATE:
         return std::make_shared<Vruta::GraphicsRoutine>(
-            metro_routine<RoutineTraits<Vruta::ProcessingToken::FRAME_ACCURATE>>(interval_seconds, std::move(callback)));
+            metro_routine<RoutineTraits<ProcessingToken::FRAME_ACCURATE>>(interval_seconds, std::move(callback)));
+    case ProcessingToken::MULTI_RATE:
+        return std::make_shared<Vruta::CrossRoutine>(
+            metro_routine<RoutineTraits<ProcessingToken::MULTI_RATE>>(interval_seconds, std::move(callback)));
+    case ProcessingToken::CONDITIONAL:
+        return std::make_shared<Vruta::FreeRoutine>(
+            free_metro_routine(interval_seconds, std::move(callback)));
+    default:
+        return std::make_shared<Vruta::SoundRoutine>(
+            metro_routine<RoutineTraits<ProcessingToken::SAMPLE_ACCURATE>>(interval_seconds, std::move(callback)));
     }
-    return std::make_shared<Vruta::SoundRoutine>(
-        metro_routine<RoutineTraits<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(interval_seconds, std::move(callback)));
 }
 
 std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token)
 {
-    if (token == Vruta::ProcessingToken::FRAME_ACCURATE) {
+    using Vruta::ProcessingToken;
+
+    switch (token) {
+    case ProcessingToken::FRAME_ACCURATE:
         return std::make_shared<Vruta::GraphicsRoutine>(
-            sequence_routine<RoutineTraits<Vruta::ProcessingToken::FRAME_ACCURATE>>(std::move(sequence)));
+            sequence_routine<RoutineTraits<ProcessingToken::FRAME_ACCURATE>>(std::move(sequence)));
+    case ProcessingToken::MULTI_RATE:
+        return std::make_shared<Vruta::CrossRoutine>(
+            sequence_routine<RoutineTraits<ProcessingToken::MULTI_RATE>>(std::move(sequence)));
+    case ProcessingToken::CONDITIONAL:
+        return std::make_shared<Vruta::FreeRoutine>(free_sequence_routine(std::move(sequence)));
+    default:
+        return std::make_shared<Vruta::SoundRoutine>(
+            sequence_routine<RoutineTraits<ProcessingToken::SAMPLE_ACCURATE>>(std::move(sequence)));
     }
-    return std::make_shared<Vruta::SoundRoutine>(
-        sequence_routine<RoutineTraits<Vruta::ProcessingToken::SAMPLE_ACCURATE>>(std::move(sequence)));
+}
+
+std::shared_ptr<Vruta::Routine> each_cycle(std::function<void()> callback, Vruta::ProcessingToken token)
+{
+    using Vruta::ProcessingToken;
+
+    if (!callback) {
+        MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+            "each_cycle requires a callback");
+        return nullptr;
+    }
+
+    switch (token) {
+    case ProcessingToken::SAMPLE_ACCURATE:
+        return std::make_shared<Vruta::SoundRoutine>(
+            cycle_routine<RoutineTraits<ProcessingToken::SAMPLE_ACCURATE>>(std::move(callback)));
+    case ProcessingToken::FRAME_ACCURATE:
+        return std::make_shared<Vruta::GraphicsRoutine>(
+            cycle_routine<RoutineTraits<ProcessingToken::FRAME_ACCURATE>>(std::move(callback)));
+    case ProcessingToken::MULTI_RATE:
+        return std::make_shared<Vruta::CrossRoutine>(
+            cycle_routine<RoutineTraits<ProcessingToken::MULTI_RATE>>(std::move(callback)));
+    case ProcessingToken::CONDITIONAL:
+        return std::make_shared<Vruta::FreeRoutine>(free_cycle_routine(std::move(callback)));
+    default:
+        MF_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+            "each_cycle supports SAMPLE_ACCURATE, FRAME_ACCURATE, MULTI_RATE and CONDITIONAL tokens");
+        return nullptr;
+    }
 }
 
 Vruta::SoundRoutine line(float start_value, float end_value, float duration_seconds, uint32_t step_duration, bool restartable)
