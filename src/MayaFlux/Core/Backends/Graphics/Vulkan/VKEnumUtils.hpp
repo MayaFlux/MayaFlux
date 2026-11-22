@@ -107,6 +107,7 @@ inline uint32_t vk_format_bytes_per_pixel(vk::Format fmt)
     case vk::Format::eR16Uint:
     case vk::Format::eR16Sint:
     case vk::Format::eR16Sfloat:
+    case vk::Format::eD16Unorm:
         return 2U;
 
     case vk::Format::eR8G8B8Unorm:

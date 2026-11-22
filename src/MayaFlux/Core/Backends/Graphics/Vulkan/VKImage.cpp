@@ -85,7 +85,15 @@ vk::ImageAspectFlags VKImage::get_aspect_flags() const
         }
     }
 
-    return vk::ImageAspectFlagBits::eColor;
+    switch (m_format) {
+    case vk::Format::eD16Unorm:
+    case vk::Format::eD32Sfloat:
+    case vk::Format::eX8D24UnormPack32:
+        return vk::ImageAspectFlagBits::eDepth;
+
+    default:
+        return vk::ImageAspectFlagBits::eColor;
+    }
 }
 
 size_t VKImage::get_size_bytes() const
