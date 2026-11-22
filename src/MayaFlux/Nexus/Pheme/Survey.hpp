@@ -36,7 +36,7 @@ MAYAFLUX_API std::optional<glm::vec3> read_anchor(
  * GeometryBuffer on a node other than a MeshWriterNode, a point or path node for
  * example, reports the node's own vertices, downloaded from the device when a
  * VertexFieldProcessor is on the buffer. An InstanceNetworkBuffer reports the union
- * of its slots' bounds through the slot transforms as the CPU holds them; the eight
+ * of its drawn geometry, the first slot's node, through each slot's transform as the CPU holds it; the eight
  * corners are placed, so a rotated slot is bounded loosely, and a transform a GPU
  * kernel drives is not seen. A MeshNetworkBuffer is read through its slots' transforms.
  * Other mesh buffers are read as read_anchor reads them.

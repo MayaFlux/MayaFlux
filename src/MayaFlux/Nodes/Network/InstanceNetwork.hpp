@@ -9,12 +9,13 @@ namespace MayaFlux::Nodes::Network {
  * @class InstanceNetwork
  * @brief NodeNetwork whose slots are flat, peer GeometrySlots for instanced rendering.
  *
- * All slots may hold the same node (shared template geometry) or distinct nodes.
- * No DAG, no parent indices. process_batch() runs the operator chain then calls
- * compute_frame() on each slot's node. The buffer layer reads the slot list each
- * cycle and uploads per-instance transforms as an SSBO for a single instanced
- * draw call. Per-vertex data (color, normals, UVs) is owned by each node's
- * vertex buffer and is unchanged by the instancing path.
+ * The geometry drawn is the first slot's node, instanced once per slot, so a slot
+ * is a transform and the slots usually share one node. No DAG, no parent
+ * indices. process_batch() runs the operator chain then calls compute_frame() on
+ * each slot's node. The buffer layer reads the slot list each cycle and uploads
+ * per-instance transforms as an SSBO for a single instanced draw call. Per-vertex
+ * data (color, normals, UVs) is owned by the first slot's node and is unchanged by
+ * the instancing path.
  *
  * Usage:
  * @code

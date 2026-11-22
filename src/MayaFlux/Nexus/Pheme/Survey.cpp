@@ -187,13 +187,19 @@ namespace {
             return std::nullopt;
         }
 
+        if (network->slot_count() == 0) {
+            return std::nullopt;
+        }
+
+        const auto& first = network->get_slot(0);
+        const auto local = first.node ? node_bounds(first.node) : std::nullopt;
+        if (!local) {
+            return std::nullopt;
+        }
+
         std::optional<Kinesis::AABB3D> total;
         for (uint32_t i = 0; i < network->slot_count(); ++i) {
             const auto& slot = network->get_slot(i);
-            const auto local = slot.node ? node_bounds(slot.node) : std::nullopt;
-            if (!local) {
-                continue;
-            }
 
             for (int corner = 0; corner < 8; ++corner) {
                 const glm::vec3 point {
