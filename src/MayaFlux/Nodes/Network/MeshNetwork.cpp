@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
 #include "MayaFlux/Nodes/Network/Operators/MeshOperator.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -227,6 +228,28 @@ void MeshNetwork::propagate_world_transforms()
 
 std::optional<Kakshya::MeshData> MeshNetwork::get_mesh_data() const
 {
+    return merged_mesh_data(false);
+}
+
+std::optional<Kakshya::MeshData> MeshNetwork::get_world_mesh_data() const
+{
+    return merged_mesh_data(true);
+}
+
+glm::mat4 MeshNetwork::composed_transform(const MeshSlot& slot) const
+{
+    glm::mat4 world = slot.local_transform;
+    std::optional<uint32_t> parent = slot.parent_index;
+    for (size_t hops = 0; parent && hops < m_slots.size(); ++hops) {
+        const MeshSlot& above = m_slots[*parent];
+        world = above.local_transform * world;
+        parent = above.parent_index;
+    }
+    return world;
+}
+
+std::optional<Kakshya::MeshData> MeshNetwork::merged_mesh_data(bool placed) const
+{
     auto mesh_data = Kakshya::MeshData::empty();
     Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
 
@@ -235,9 +258,16 @@ std::optional<Kakshya::MeshData> MeshNetwork::get_mesh_data() const
             continue;
         }
 
-        const auto packed = slot.node->get_mesh_data();
+        auto packed = slot.node->get_mesh_data();
         if (!packed) {
             continue;
+        }
+
+        if (placed) {
+            Kakshya::place_vertices(
+                std::get<std::vector<uint8_t>>(packed->vertex_variant),
+                packed->layout,
+                composed_transform(slot));
         }
 
         ins.insert_submesh(

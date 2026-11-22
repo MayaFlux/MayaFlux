@@ -106,6 +106,17 @@ public:
      */
     [[nodiscard]] std::optional<Kakshya::MeshData> get_mesh_data() const;
 
+    /**
+     * @brief Every slot's geometry merged into one MeshData, placed where the slots are.
+     *
+     * As get_mesh_data, but each slot's world transform is applied to its positions,
+     * normals and tangents. The transform is composed from the local transforms up the
+     * parent chain, so it is current whether or not the network has processed a block.
+     *
+     * @return The merged mesh, or nullopt when no slot has geometry.
+     */
+    [[nodiscard]] std::optional<Kakshya::MeshData> get_world_mesh_data() const;
+
     // -------------------------------------------------------------------------
     // NodeNetwork interface
     // -------------------------------------------------------------------------
@@ -181,6 +192,9 @@ private:
 
     void rebuild_sort();
     void propagate_world_transforms();
+
+    [[nodiscard]] glm::mat4 composed_transform(const MeshSlot& slot) const;
+    [[nodiscard]] std::optional<Kakshya::MeshData> merged_mesh_data(bool placed) const;
 };
 
 } // namespace MayaFlux::Nodes::Network

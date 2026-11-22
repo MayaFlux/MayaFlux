@@ -31,7 +31,7 @@ namespace {
 
         if (const auto network_buffer = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buffer)) {
             const auto network = network_buffer->get_network();
-            return network ? network->get_mesh_data() : std::nullopt;
+            return network ? network->get_world_mesh_data() : std::nullopt;
         }
 
         if (const auto geometry = std::dynamic_pointer_cast<Buffers::GeometryBuffer>(buffer)) {
