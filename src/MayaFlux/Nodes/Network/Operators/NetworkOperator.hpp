@@ -155,6 +155,22 @@ protected:
     }
 
     /**
+     * @brief A frozen copy of every controls struct the operator holds, read back by type.
+     *
+     * For work that must see one set of values from start to finish, such as a rewrite pass.
+     */
+    [[nodiscard]] ControlHeld held_controls() const { return m_controls_store.held(); }
+
+    /**
+     * @brief The number the control called @p name holds now, without copying any struct.
+     * @return nullopt for an unknown name, an empty control or one that holds a vector.
+     */
+    [[nodiscard]] std::optional<double> named_control(std::string_view name) const
+    {
+        return m_controls_store.number(name);
+    }
+
+    /**
      * @brief Read node sources into their controls.
      *
      * Call once per block from process() before reading the controls struct.

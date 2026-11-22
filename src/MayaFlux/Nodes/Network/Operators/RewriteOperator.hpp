@@ -54,31 +54,22 @@ public:
         uint64_t generation {};
     };
 
-    /** @brief A tag that is the same for every use of one type C in a module, and differs between types. */
-    template <typename C>
-    [[nodiscard]] static const void* controls_tag() noexcept
-    {
-        static const char tag {};
-        return &tag;
-    }
-
     /** @brief What a replacement sees: the caller's inputs, the word with the symbol's position in it, and the grammar's controls. */
     struct Environment {
         std::span<const double> inputs;
         std::span<const Symbol> word;
         size_t position {};
-        const void* held {};
-        const void* held_tag {};
+        const ControlHeld* held {};
 
         /**
          * @brief The grammar's controls as they were when this rewrite began.
-         * @tparam C The struct given to declare(). Any other type returns a default one.
+         * @tparam C The struct given to declare(), or one added with extend. Any other type returns a default one.
          */
         template <typename C>
         [[nodiscard]] const C& controls() const noexcept
         {
             static const C none {};
-            return held_tag == controls_tag<C>() && held != nullptr ? *static_cast<const C*>(held) : none;
+            return held != nullptr ? held->get<C>() : none;
         }
     };
 
@@ -183,13 +174,6 @@ public:
     template <typename C>
     C& declare()
     {
-        m_hold = [this] {
-            return std::shared_ptr<const void>(std::make_shared<const C>(snapshot_controls<C>()));
-        };
-        m_read = [this](std::string_view name) {
-            return ControlStore::read_named(snapshot_controls<C>(), name);
-        };
-        m_held_tag = controls_tag<C>();
         return declare_controls<C>();
     }
 
@@ -295,9 +279,6 @@ private:
     size_t m_max_word_length;
     uint64_t m_max_generations;
     bool m_valid;
-    std::function<std::shared_ptr<const void>()> m_hold;
-    std::function<std::optional<double>(std::string_view)> m_read;
-    const void* m_held_tag {};
     std::vector<SymbolId> m_ignore;
     std::vector<Replacement> m_replacements;
     Kinesis::Stochastic::Stochastic m_generator;

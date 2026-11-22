@@ -190,7 +190,7 @@ void RewriteOperator::set_parameter(std::string_view name, double value)
 
 std::optional<double> RewriteOperator::query_state(std::string_view name) const
 {
-    return m_read ? m_read(name) : std::nullopt;
+    return named_control(name);
 }
 
 bool RewriteOperator::SubmissionMailbox::push(Submission& submission) noexcept
@@ -243,7 +243,7 @@ RewriteOperator::RewriteResult RewriteOperator::rewrite(uint64_t steps, std::spa
 
     try {
         refresh_controls();
-        const std::shared_ptr<const void> held = m_hold ? m_hold() : nullptr;
+        const ControlHeld held = held_controls();
         auto current = m_draft;
 
         for (uint64_t step = 0; step < steps; ++step) {
@@ -267,8 +267,7 @@ RewriteOperator::RewriteResult RewriteOperator::rewrite(uint64_t steps, std::spa
                     .inputs = inputs,
                     .word = symbols,
                     .position = position,
-                    .held = held.get(),
-                    .held_tag = m_held_tag
+                    .held = &held
                 };
 
                 if (const auto* replacement = select_replacement(symbol, environment)) {
