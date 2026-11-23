@@ -1,5 +1,6 @@
 #include "SpatialAssembly.hpp"
 
+#include "CameraSequence.hpp"
 #include "MeshSequence.hpp"
 #include "SpatialSequence.hpp"
 
@@ -31,6 +32,9 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> open_spatial_assembly(const std:
         if (std::holds_alternative<Kakshya::MeshData>(source.geometry)) {
             const auto frames = MeshFileFrames::create(archive, source.origin);
             attached = frames && assembly->set_mesh_frames(index, frames);
+        } else if (std::holds_alternative<Kinesis::Lens>(source.geometry)) {
+            const auto frames = CameraFileFrames::create(archive, source.origin);
+            attached = frames && assembly->set_lens_frames(index, frames);
         } else {
             const auto frames = SpatialFileFrames::create(archive, source.origin);
             attached = frames && assembly->set_spatial_frames(index, frames, frames->max_vertex_count());

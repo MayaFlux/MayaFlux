@@ -14,8 +14,8 @@ namespace MayaFlux::IO {
  * What SpatialReader::create_mesh_assembly builds: the hierarchy as placement rows, every
  * mesh, points and curves object as a source with its first shot. A source whose geometry changes
  * over time (its topology variance is not Constant) also gets the frames of its object, a
- * MeshFileFrames or a SpatialFileFrames, set with MeshAssemblyContainer::set_mesh_frames or
- * set_spatial_frames. Every one of them reads through the one archive, so the file is opened once
+ * MeshFileFrames, a SpatialFileFrames or a CameraFileFrames, set with MeshAssemblyContainer::set_mesh_frames,
+ * set_spatial_frames or set_lens_frames. A camera is a source its row shows, and its lens is the source. Every one of them reads through the one archive, so the file is opened once
  * however many objects animate, and a points source is told the most vertices its frames hold.
  *
  * @param path Path to the .abc file.

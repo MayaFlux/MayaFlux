@@ -114,6 +114,18 @@ public:
     bool set_spatial_frames(size_t source, std::shared_ptr<const FrameSource<SpatialData>> frames,
         std::optional<uint32_t> max_vertices = std::nullopt);
 
+    /**
+     * @brief As set_mesh_frames, for a source that holds a camera's lens.
+     * @return false when source is out of range or does not hold a lens.
+     */
+    bool set_lens_frames(size_t source, std::shared_ptr<const FrameSource<Kinesis::Lens>> frames);
+
+    /** @brief The lens of a camera source, or nullptr when it is not one or out of range. */
+    [[nodiscard]] const Kinesis::Lens* lens(size_t source) const noexcept;
+
+    /** @brief The frames of a camera source, or nullptr when it has none. */
+    [[nodiscard]] std::shared_ptr<const FrameSource<Kinesis::Lens>> lens_frames(size_t source) const;
+
     /** @brief The frames of a mesh source, or nullptr when it has none. */
     [[nodiscard]] std::shared_ptr<const FrameSource<MeshData>> mesh_frames(size_t source) const;
 
@@ -258,6 +270,7 @@ private:
     MeshAssemblyData m_data;
     std::vector<std::shared_ptr<const FrameSource<MeshData>>> m_mesh_frames;
     std::vector<std::shared_ptr<const FrameSource<SpatialData>>> m_spatial_frames;
+    std::vector<std::shared_ptr<const FrameSource<Kinesis::Lens>>> m_lens_frames;
     std::vector<std::optional<uint32_t>> m_spatial_max;
 };
 

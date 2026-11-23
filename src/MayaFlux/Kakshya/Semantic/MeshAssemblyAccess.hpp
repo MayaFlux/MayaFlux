@@ -90,7 +90,10 @@ public:
     /** @brief The points or curves of a source, or nullptr. */
     [[nodiscard]] const SpatialData* spatial(size_t source) const noexcept { return m_assembly->spatial(source); }
 
-    /** @brief The mesh or points of the source a row shows, or nullopt for a joint. */
+    /** @brief The lens of a camera source, or nullptr. */
+    [[nodiscard]] const Kinesis::Lens* lens(size_t source) const noexcept { return m_assembly->lens(source); }
+
+    /** @brief The source a row shows, or nullopt for a joint. */
     [[nodiscard]] std::optional<uint64_t> source_of(size_t row) const;
 
     /** @brief The channel of a motion that moves a row, or nullptr. */

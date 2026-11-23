@@ -5,6 +5,7 @@
 #include "SpatialData.hpp"
 
 #include "MayaFlux/Kinesis/Temporal/TimedValues.hpp"
+#include "MayaFlux/Kinesis/Viewport/Lens.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -25,7 +26,12 @@ enum class TopologyVariance : uint8_t {
 
 /**
  * @struct MeshAssemblySource
- * @brief One piece of geometry, stored once however many placements use it.
+ * @brief One thing a row can show, stored once however many placements use it: a mesh, points
+ *        or curves, or a camera's lens.
+ *
+ * A camera is shown the way geometry is: a row whose source is a lens places the camera, so its
+ * world placement comes from the hierarchy and its motion from the row's channels, and the lens
+ * itself (focal length, film back, clip planes) is the source.
  *
  * geometry is the first shot of the source, or its only one. time and variance
  * are what the file said about how the source changes; the frames themselves
@@ -35,7 +41,7 @@ enum class TopologyVariance : uint8_t {
  * reader reads it by, empty for geometry made in code.
  */
 struct MeshAssemblySource {
-    std::variant<MeshData, SpatialData> geometry;
+    std::variant<MeshData, SpatialData, Kinesis::Lens> geometry;
     std::string name;
     std::string origin;
     std::optional<Kinesis::TimeSampling> time;

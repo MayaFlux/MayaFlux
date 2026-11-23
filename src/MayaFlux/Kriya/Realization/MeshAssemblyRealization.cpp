@@ -109,6 +109,10 @@ std::shared_ptr<MeshAssemblyRealization> MeshAssemblyRealization::create(
             continue;
         }
 
+        if (part.kind == Kakshya::MeshAssemblyRowKind::Camera) {
+            continue;
+        }
+
         MeshAssemblyRealizedPart made;
         made.kind = part.kind;
         made.rows = part.rows;

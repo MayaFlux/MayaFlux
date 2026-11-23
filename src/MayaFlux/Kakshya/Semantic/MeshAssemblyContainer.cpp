@@ -198,6 +198,26 @@ bool MeshAssemblyContainer::set_spatial_frames(size_t source, std::shared_ptr<co
     return true;
 }
 
+bool MeshAssemblyContainer::set_lens_frames(size_t source, std::shared_ptr<const FrameSource<Kinesis::Lens>> frames)
+{
+    if (lens(source) == nullptr) {
+        return false;
+    }
+    m_lens_frames.resize(std::max(m_lens_frames.size(), source + 1));
+    m_lens_frames[source] = std::move(frames);
+    return true;
+}
+
+const Kinesis::Lens* MeshAssemblyContainer::lens(size_t source) const noexcept
+{
+    return source < m_data.sources.size() ? std::get_if<Kinesis::Lens>(&m_data.sources[source].geometry) : nullptr;
+}
+
+std::shared_ptr<const FrameSource<Kinesis::Lens>> MeshAssemblyContainer::lens_frames(size_t source) const
+{
+    return source < m_lens_frames.size() ? m_lens_frames[source] : nullptr;
+}
+
 std::shared_ptr<const FrameSource<MeshData>> MeshAssemblyContainer::mesh_frames(size_t source) const
 {
     return source < m_mesh_frames.size() ? m_mesh_frames[source] : nullptr;
@@ -432,6 +452,7 @@ void MeshAssemblyContainer::clear()
     m_data = MeshAssemblyData {};
     m_mesh_frames.clear();
     m_spatial_frames.clear();
+    m_lens_frames.clear();
     m_spatial_max.clear();
     clear_region_groups();
 }

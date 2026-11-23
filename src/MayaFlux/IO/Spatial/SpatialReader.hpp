@@ -3,6 +3,7 @@
 #include "SpatialCache.hpp"
 
 #include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
+#include "MayaFlux/Kinesis/Viewport/Lens.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -23,6 +24,7 @@ enum class SpatialObjectKind : uint8_t {
     Curves,
     PolyMesh,
     SubD,
+    Camera,
     Other
 };
 
@@ -191,6 +193,37 @@ public:
      * @return The time, or nullopt if the mesh or index is invalid.
      */
     [[nodiscard]] std::optional<double> mesh_time(const std::string& mesh_name, size_t index) const;
+
+    /**
+     * @brief Paths of the camera objects, in file order.
+     */
+    [[nodiscard]] const std::vector<std::string>& get_camera_names() const;
+
+    /**
+     * @brief Number of samples of a camera object, 0 for an unknown one.
+     */
+    [[nodiscard]] size_t get_camera_sample_count(const std::string& camera_name) const;
+
+    /**
+     * @brief Time in seconds the archive assigns to a sample of a camera object.
+     * @return The time, or nullopt if the camera or index is invalid.
+     */
+    [[nodiscard]] std::optional<double> camera_time(const std::string& camera_name, size_t index) const;
+
+    /**
+     * @brief Read one sample of a camera object as a lens.
+     *
+     * Focal length, film back, clip planes, f-stop and focus distance as the file wrote them, and the
+     * screen window Alembic works out from the film offset, overscan, lens squeeze and film back
+     * transform (CameraSample::getScreenWindow). The camera's own placement is not in the lens: it is
+     * the world placement of the camera's row, read through the transform objects above it.
+     *
+     * @param camera_name Path from get_camera_names().
+     * @param index Sample index, below get_camera_sample_count().
+     * @return The lens, or nullopt for an unknown camera, an index out of range or a read failure;
+     *         the reason is in get_last_error().
+     */
+    [[nodiscard]] std::optional<Kinesis::Lens> read_lens(const std::string& camera_name, size_t index) const;
 
     /**
      * @brief Read one sample of a mesh object as triangles.

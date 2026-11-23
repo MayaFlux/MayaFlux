@@ -16,7 +16,7 @@
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
-#include "MayaFlux/Kriya/MeshAssemblyRealization.hpp"
+#include "MayaFlux/Kriya/Realization/MeshAssemblyRealization.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
 #include "MayaFlux/Yantra/Workflows/Vision/VisionWorkflow.hpp"

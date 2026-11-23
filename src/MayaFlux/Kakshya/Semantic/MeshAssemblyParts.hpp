@@ -12,7 +12,8 @@ enum class MeshAssemblyRowKind : uint8_t {
     Joint, ///< Nothing: the row only carries a placement for its children.
     Mesh, ///< A mesh.
     Points, ///< A set of points.
-    Curves ///< Curves, as lines.
+    Curves, ///< Curves, as lines.
+    Camera ///< A camera's lens: nothing to draw, a view to look through.
 };
 
 /** @brief What the row shows, Joint for a row with no source or a source out of range. */

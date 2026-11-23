@@ -12,6 +12,9 @@ MeshAssemblyRowKind row_kind(const MeshAssemblyContainer& assembly, size_t row)
     if (assembly.mesh(*placement->source)) {
         return MeshAssemblyRowKind::Mesh;
     }
+    if (assembly.lens(*placement->source)) {
+        return MeshAssemblyRowKind::Camera;
+    }
     if (const auto* spatial = assembly.spatial(*placement->source)) {
         return spatial->topology == Portal::Graphics::PrimitiveTopology::POINT_LIST
             ? MeshAssemblyRowKind::Points
