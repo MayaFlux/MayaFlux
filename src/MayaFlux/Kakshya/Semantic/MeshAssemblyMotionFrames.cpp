@@ -18,7 +18,7 @@ namespace {
 }
 
 std::shared_ptr<const MeshAssemblyMotionFrames> MeshAssemblyMotionFrames::create(
-    std::shared_ptr<const MeshAssemblyContainer> assembly, size_t motion, Kinesis::OutOfRange policy)
+    const std::shared_ptr<const MeshAssemblyContainer>& assembly, size_t motion, Kinesis::OutOfRange policy)
 {
     if (!assembly || motion >= assembly->get_data().motions.size()) {
         return nullptr;
@@ -37,7 +37,7 @@ std::shared_ptr<const MeshAssemblyMotionFrames> MeshAssemblyMotionFrames::create
     }
 
     return std::shared_ptr<const MeshAssemblyMotionFrames>(
-        new MeshAssemblyMotionFrames(std::move(assembly), motion, policy, first, last));
+        new MeshAssemblyMotionFrames(assembly, motion, policy, first, last));
 }
 
 std::shared_ptr<const MeshAssemblyLocals> MeshAssemblyMotionFrames::sample(double time) const

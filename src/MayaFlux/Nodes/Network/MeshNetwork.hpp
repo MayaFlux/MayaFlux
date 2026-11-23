@@ -3,6 +3,10 @@
 #include "MeshSlot.hpp"
 #include "NodeNetwork.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -204,5 +208,23 @@ private:
     [[nodiscard]] glm::mat4 composed_transform(const MeshSlot& slot) const;
     [[nodiscard]] std::optional<Kakshya::MeshData> merged_mesh_data(bool placed) const;
 };
+
+/**
+ * @brief Build a MeshNetwork from a MeshAssembly: one slot for every row, in row order.
+ * @param assembly The assembly to read. Null gives nullptr.
+ * @return A network where slot i is row i. A slot has the row's name and parent, its local
+ *         transform is the row's local placement and its world transform the row's world
+ *         placement. A row that shows a mesh gets a node of its own holding a copy of that
+ *         mesh with its submeshes and polygon faces, so a mesh shared by several rows is
+ *         copied into each. A joint, and a row whose source is points or curves, gets no
+ *         node and only carries its transform. Nullptr for an assembly with no rows.
+ *
+ * Because slot i is row i, an assembly's motion plays on the network by writing one local
+ * matrix per slot (Kriya::slot_sink). The material is not applied: a MeshAssemblyMaterial
+ * holds a path, and loading and binding the texture is the caller's, with
+ * MeshNetwork::set_slot_texture.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<MeshNetwork> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly);
 
 } // namespace MayaFlux::Nodes::Network

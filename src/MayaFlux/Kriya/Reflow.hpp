@@ -262,7 +262,7 @@ public:
      * @param sampled The source. Null makes build() return nullptr.
      * @param sink Receives each frame written. May be empty when every course is a route with a sink.
      */
-    [[nodiscard]] static ReflowBuilder sampling(std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled, Sink sink,
+    [[nodiscard]] static ReflowBuilder sampling(const std::shared_ptr<const Kakshya::SampledFrames<Frame>>& sampled, Sink sink,
         double cycle_rate = 0.0, std::shared_ptr<Vruta::TaskScheduler> scheduler = nullptr);
 
     /** @brief Add a course. */

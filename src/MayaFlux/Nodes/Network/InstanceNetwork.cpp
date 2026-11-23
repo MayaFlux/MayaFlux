@@ -110,15 +110,19 @@ std::unordered_map<std::string, std::string> InstanceNetwork::get_metadata() con
 }
 
 std::shared_ptr<InstanceNetwork> make_instance_network(
-    const Kakshya::MeshAssemblyContainer& assembly,
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
     const Kakshya::MeshAssemblyGroup& group)
 {
-    const auto* mesh = assembly.mesh(group.source);
+    if (!assembly) {
+        return nullptr;
+    }
+
+    const auto* mesh = assembly->mesh(group.source);
     if (!mesh) {
         return nullptr;
     }
 
-    const auto world = assembly.world_transforms();
+    const auto world = assembly->world_transforms();
     if (std::ranges::any_of(group.rows, [&world](uint64_t row) { return row >= world.size(); })) {
         return nullptr;
     }
@@ -128,7 +132,7 @@ std::shared_ptr<InstanceNetwork> make_instance_network(
 
     auto network = std::make_shared<InstanceNetwork>();
     for (const uint64_t row : group.rows) {
-        const auto placement = assembly.placement(row);
+        const auto placement = assembly->placement(row);
         const auto index = network->add_slot(placement ? placement->name : std::string {}, node);
         network->get_slot(index).transform = world[row];
     }

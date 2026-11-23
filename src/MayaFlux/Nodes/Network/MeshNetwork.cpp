@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
 #include "MayaFlux/Nodes/Network/Operators/MeshOperator.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
@@ -310,6 +312,48 @@ std::optional<Kakshya::MeshData> MeshNetwork::merged_mesh_data(bool placed) cons
     mesh_data.submeshes = access->submeshes;
 
     return mesh_data;
+}
+
+std::shared_ptr<MeshNetwork> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly)
+{
+    if (!assembly) {
+        return nullptr;
+    }
+
+    const size_t rows = assembly->get_total_elements();
+    if (rows == 0) {
+        return nullptr;
+    }
+
+    const auto world = assembly->world_transforms();
+    auto network = std::make_shared<MeshNetwork>();
+
+    for (size_t row = 0; row < rows; ++row) {
+        const auto placement = assembly->placement(row);
+        if (!placement) {
+            return nullptr;
+        }
+
+        std::shared_ptr<GpuSync::MeshWriterNode> node;
+        if (placement->source) {
+            if (const auto* mesh = assembly->mesh(*placement->source)) {
+                node = std::make_shared<GpuSync::MeshWriterNode>(mesh->vertex_count());
+                node->set_mesh(*mesh);
+            }
+        }
+
+        std::optional<uint32_t> parent;
+        if (placement->parent) {
+            parent = static_cast<uint32_t>(*placement->parent);
+        }
+
+        const auto index = network->add_slot(placement->name, std::move(node), parent);
+        auto& slot = network->get_slot(index);
+        slot.local_transform = placement->local;
+        slot.world_transform = world[row];
+    }
+    return network;
 }
 
 } // namespace MayaFlux::Nodes::Network

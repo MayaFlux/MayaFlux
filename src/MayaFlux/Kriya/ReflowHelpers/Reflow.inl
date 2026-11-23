@@ -349,11 +349,11 @@ ReflowBuilder<Frame>::ReflowBuilder(
 
 template <typename Frame>
 ReflowBuilder<Frame> ReflowBuilder<Frame>::sampling(
-    std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled, Sink sink, double cycle_rate,
+    const std::shared_ptr<const Kakshya::SampledFrames<Frame>>& sampled, Sink sink, double cycle_rate,
     std::shared_ptr<Vruta::TaskScheduler> scheduler)
 {
     ReflowBuilder builder(nullptr, std::move(sink), cycle_rate, std::move(scheduler));
-    builder.m_sampled = std::move(sampled);
+    builder.m_sampled = sampled;
     return builder;
 }
 

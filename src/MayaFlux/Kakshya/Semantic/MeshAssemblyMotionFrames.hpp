@@ -35,7 +35,7 @@ public:
      * @return nullptr for a null assembly, a motion out of range or a motion with no keyed component.
      */
     [[nodiscard]] static std::shared_ptr<const MeshAssemblyMotionFrames> create(
-        std::shared_ptr<const MeshAssemblyContainer> assembly, size_t motion,
+        const std::shared_ptr<const MeshAssemblyContainer>& assembly, size_t motion,
         Kinesis::OutOfRange policy = Kinesis::OutOfRange::Hold);
 
     [[nodiscard]] std::pair<double, double> extent() const override { return { m_first, m_last }; }
@@ -43,9 +43,9 @@ public:
     [[nodiscard]] std::shared_ptr<const MeshAssemblyLocals> sample(double time) const override;
 
 private:
-    MeshAssemblyMotionFrames(std::shared_ptr<const MeshAssemblyContainer> assembly, size_t motion,
+    MeshAssemblyMotionFrames(const std::shared_ptr<const MeshAssemblyContainer>& assembly, size_t motion,
         Kinesis::OutOfRange policy, double first, double last)
-        : m_assembly(std::move(assembly))
+        : m_assembly(assembly)
         , m_motion(motion)
         , m_policy(policy)
         , m_first(first)
