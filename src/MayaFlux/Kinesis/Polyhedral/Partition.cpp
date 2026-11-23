@@ -82,14 +82,14 @@ std::optional<FacePartition> partition_faces(
     return result;
 }
 
-std::optional<FaceList> reorder_faces(const Incidence& incidence, std::span<const uint32_t> face_order)
+std::optional<Kakshya::FaceList> reorder_faces(const Incidence& incidence, std::span<const uint32_t> face_order)
 {
     constexpr uint64_t limit = std::numeric_limits<uint32_t>::max();
     if (face_order.size() >= limit) {
         return std::nullopt;
     }
 
-    FaceList result;
+    Kakshya::FaceList result;
     result.sizes.resize(face_order.size());
     std::vector<uint32_t> starts(face_order.size() + 1, 0U);
 

@@ -147,6 +147,17 @@ std::optional<size_t> attribute_offset(const Kakshya::VertexLayout& layout, Kaks
     return it->offset_in_vertex;
 }
 
+std::optional<std::vector<glm::vec3>> read_vertex_positions(
+    std::span<const uint8_t> records, const Kakshya::VertexLayout& layout)
+{
+    const auto columns = columns_of(records, layout);
+    const auto position = offset_fitting(layout, DataModality::VERTEX_POSITIONS_3D, sizeof(glm::vec3));
+    if (!columns || !position) {
+        return std::nullopt;
+    }
+    return decode<glm::vec3>(records, *columns, *position);
+}
+
 std::vector<uint8_t> gather_records(
     std::span<const uint8_t> records, size_t stride, std::span<const uint32_t> source_vertex)
 {

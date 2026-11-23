@@ -25,7 +25,8 @@ std::optional<MeshAccess> as_mesh_access(
     const DataVariant& vertex_variant,
     const DataVariant& index_variant,
     const VertexLayout& layout,
-    std::optional<RegionGroup> submeshes)
+    std::optional<RegionGroup> submeshes,
+    const FaceList* faces)
 {
     const auto* vbytes = std::get_if<std::vector<uint8_t>>(&vertex_variant);
     if (!vbytes || vbytes->empty()) {
@@ -68,6 +69,7 @@ std::optional<MeshAccess> as_mesh_access(
     ma.layout = layout;
     ma.layout.vertex_count = static_cast<uint32_t>(vbytes->size() / layout.stride_bytes);
     ma.submeshes = std::move(submeshes);
+    ma.faces = faces;
     return ma;
 }
 

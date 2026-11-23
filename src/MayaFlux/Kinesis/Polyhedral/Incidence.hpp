@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/FaceList.hpp"
+
 #include <execution>
 
 namespace MayaFlux::Kinesis {
@@ -40,15 +42,6 @@ namespace detail {
     }
 
 } // namespace detail
-
-/**
- * @struct FaceList
- * @brief The owning form of a face set: one size per face and the vertex of every corner.
- */
-struct FaceList {
-    std::vector<uint32_t> sizes;
-    std::vector<uint32_t> corners;
-};
 
 /**
  * @struct VertexCorners
@@ -95,12 +88,12 @@ public:
         std::span<const uint32_t> corners,
         size_t vertex_count);
 
-    [[nodiscard]] static std::optional<Incidence> create(const FaceList& faces, size_t vertex_count)
+    [[nodiscard]] static std::optional<Incidence> create(const Kakshya::FaceList& faces, size_t vertex_count)
     {
         return create(faces.sizes, faces.corners, vertex_count);
     }
 
-    [[nodiscard]] static std::optional<Incidence> create(FaceList&&, size_t) = delete;
+    [[nodiscard]] static std::optional<Incidence> create(Kakshya::FaceList&&, size_t) = delete;
 
     [[nodiscard]] size_t face_count() const noexcept { return m_sizes.size(); }
     [[nodiscard]] size_t corner_count() const noexcept { return m_corners.size(); }

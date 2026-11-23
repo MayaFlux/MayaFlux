@@ -80,7 +80,7 @@ public:
      * Vertex bytes are appended to the existing vector<uint8_t>; indices are
      * offset by the current vertex count and appended to vector<uint32_t>.
      * A Region is added to the internal submesh RegionGroup recording the
-     * index sub-range and names.
+     * index sub-range, the vertex range the batch occupies, and the names.
      *
      * layout is taken from the first call; subsequent calls must have the
      * same stride_bytes and attribute count. Mismatches log an error and
@@ -97,6 +97,26 @@ public:
         std::span<const uint32_t> index_data,
         std::string_view name = {},
         std::string_view material_name = {},
+        const VertexLayout& layout = VertexLayout::for_meshes(68));
+
+    /**
+     * @brief Append one submesh batch under a Region the producer already built.
+     *
+     * Behaves as the overload above, except that the submesh's Region is a copy of
+     * @p carried. Its MeshSubrange, if it has one, keeps its names and paths and gets
+     * the index range and vertex range this batch lands at, and every other struct or
+     * Facet value on the Region, its label and its modality are kept as they are. Its
+     * coordinates become the index range.
+     *
+     * Only the triangles are placed. Polygon faces are a property of a MeshData and are
+     * not merged here.
+     *
+     * @param carried Region whose attached values travel with the submesh.
+     */
+    void insert_submesh(
+        std::span<const uint8_t> vertex_bytes,
+        std::span<const uint32_t> index_data,
+        const Region& carried,
         const VertexLayout& layout = VertexLayout::for_meshes(68));
 
     /**

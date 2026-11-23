@@ -2,6 +2,10 @@
 
 #include "MeshAccess.hpp"
 
+namespace MayaFlux::Kinesis {
+struct TriangulationOptions;
+}
+
 namespace MayaFlux::Kakshya {
 
 /**
@@ -22,7 +26,15 @@ namespace MayaFlux::Kakshya {
  *
  * Submesh structure follows the established Region convention:
  * a single RegionGroup named "submeshes" holds one Region per submesh,
- * each carrying the complete MeshSubrange as one typed value.
+ * each carrying the complete MeshSubrange as one typed value. A producer may
+ * attach further structs or Facet values to the same Region, and they travel with
+ * the submesh.
+ *
+ * The triangle list is always what draws. A mesh that came from polygons also keeps
+ * them in faces, and index_variant is then the triangulation of those faces. A mesh
+ * with no faces is triangles only, and every consumer that reads index_variant works
+ * for both. face_count() counts triangles, polygon_count() counts the faces the mesh
+ * was made of.
  *
  * MeshData is not a container. It has no processing state, no read head,
  * no processor chain. For per-cycle mesh mutation use MeshWriterNode.
@@ -34,6 +46,7 @@ struct MAYAFLUX_API MeshData {
     DataVariant index_variant; ///< vector<uint32_t>: triangle index list
     VertexLayout layout;
     std::optional<RegionGroup> submeshes;
+    std::optional<FaceList> faces; ///< The polygons index_variant was derived from, when there were any
 
     // -------------------------------------------------------------------------
     // Construction helpers
@@ -59,7 +72,8 @@ struct MAYAFLUX_API MeshData {
     // -------------------------------------------------------------------------
 
     /**
-     * @brief True when both variants are non-empty and layout stride is set.
+     * @brief True when both variants are non-empty, layout stride is set and any
+     *        polygon faces are well formed over the vertices.
      */
     [[nodiscard]] bool is_valid() const noexcept
     {
@@ -67,8 +81,15 @@ struct MAYAFLUX_API MeshData {
         const auto* ib = std::get_if<std::vector<uint32_t>>(&index_variant);
         return vb && !vb->empty()
             && ib && !ib->empty()
-            && layout.stride_bytes > 0;
+            && layout.stride_bytes > 0
+            && (!faces.has_value() || faces_are_valid());
     }
+
+    /**
+     * @brief True when every face has at least three corners, the sizes add up to the
+     *        corners, and every corner names a vertex. A mesh without faces passes.
+     */
+    [[nodiscard]] bool faces_are_valid() const noexcept;
 
     /**
      * @brief Number of vertices derived from vertex byte count and layout stride.
@@ -98,6 +119,67 @@ struct MAYAFLUX_API MeshData {
         return static_cast<uint32_t>(ib->size() / 3);
     }
 
+    /**
+     * @brief True when the mesh keeps the polygon faces its triangles were derived from.
+     */
+    [[nodiscard]] bool has_polygons() const noexcept
+    {
+        return faces.has_value();
+    }
+
+    /**
+     * @brief Number of faces the mesh was made of: its polygons, or its triangles when
+     *        it has none.
+     */
+    [[nodiscard]] uint32_t polygon_count() const noexcept
+    {
+        return faces.has_value() ? static_cast<uint32_t>(faces->sizes.size()) : face_count();
+    }
+
+    // -------------------------------------------------------------------------
+    // Polygons
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief Make the mesh from polygon faces over its own vertices.
+     *
+     * Reads the positions from vertex_variant through layout, triangulates every face
+     * (see Kinesis::triangulate_faces), keeps @p polygons in faces and replaces
+     * index_variant with the triangles. Submeshes are dropped because their ranges
+     * refer to the index array that was replaced. Nothing changes when this fails.
+     *
+     * A face that cannot be triangulated stays in faces and has no triangles.
+     *
+     * @param polygons Corners of every face over the vertices of vertex_variant.
+     * @return The faces that could not be triangulated, which may be none, or nullopt when
+     * the vertices hold no position attribute or the faces are not well formed over them.
+     */
+    [[nodiscard]] std::optional<std::vector<uint32_t>> assign_faces(FaceList polygons);
+
+    /** @brief As above, with the choices a triangulation leaves open. */
+    [[nodiscard]] std::optional<std::vector<uint32_t>> assign_faces(
+        FaceList polygons, const Kinesis::TriangulationOptions& options);
+
+    // -------------------------------------------------------------------------
+    // Submeshes
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief Take one submesh back out as a mesh of its own.
+     *
+     * Copies the submesh's vertices (MeshSubrange::vertex_offset and vertex_count) and
+     * its triangles, with the indices made local to the copy. The result holds that one
+     * submesh, as the Region it had here: its MeshSubrange now starts at index and vertex
+     * zero, and every other struct or Facet value on the Region, and on the group, comes
+     * along. The polygon faces are not carried, since they span the whole mesh, so the
+     * result is triangles only.
+     *
+     * @param index Position of the submesh in the "submeshes" group.
+     * @return nullopt when there is no such submesh, it has no MeshSubrange or no recorded
+     * vertex range, its ranges leave the arrays, or a triangle names a vertex outside it.
+     */
+    [[nodiscard]] std::optional<MeshData> extract_submesh(size_t index) const;
+
     // -------------------------------------------------------------------------
     // Accessor layer
     // -------------------------------------------------------------------------
@@ -115,7 +197,8 @@ struct MAYAFLUX_API MeshData {
         if (!is_valid()) {
             return std::nullopt;
         }
-        return as_mesh_access(vertex_variant, index_variant, layout, submeshes);
+        return as_mesh_access(vertex_variant, index_variant, layout, submeshes,
+            faces.has_value() ? &*faces : nullptr);
     }
 };
 

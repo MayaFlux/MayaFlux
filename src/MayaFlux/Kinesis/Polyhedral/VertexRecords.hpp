@@ -34,6 +34,17 @@ enum class FillOutcome : uint8_t {
     const Kakshya::VertexLayout& layout, Kakshya::DataModality modality);
 
 /**
+ * @brief The position of every record.
+ *
+ * Reads the vec3 at the layout's position attribute, so any stride works.
+ *
+ * @return nullopt when the layout has no position attribute that fits in a record, the stride
+ * is zero, or the bytes are not whole records.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<std::vector<glm::vec3>> read_vertex_positions(
+    std::span<const uint8_t> records, const Kakshya::VertexLayout& layout);
+
+/**
  * @brief Copy the records of the listed vertices, in that order.
  *
  * Turns an Identification into the records of its new vertices: every attribute the

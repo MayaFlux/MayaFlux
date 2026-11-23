@@ -584,6 +584,7 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
     sub.index_start = 0;
     sub.index_count = static_cast<uint32_t>(indices.size());
     sub.vertex_offset = 0;
+    sub.vertex_count = static_cast<uint32_t>(verts.size());
     sub.name = std::string(mesh_name);
     sub.material_name = std::string(material_name);
 

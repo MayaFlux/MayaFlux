@@ -16,6 +16,7 @@ struct Description<::MayaFlux::Kakshya::MeshSubrange> {
             Member<&::MayaFlux::Kakshya::MeshSubrange::index_start> { "index_start" },
             Member<&::MayaFlux::Kakshya::MeshSubrange::index_count> { "index_count" },
             Member<&::MayaFlux::Kakshya::MeshSubrange::vertex_offset> { "vertex_offset" },
+            Member<&::MayaFlux::Kakshya::MeshSubrange::vertex_count> { "vertex_count" },
             Member<&::MayaFlux::Kakshya::MeshSubrange::name> { "name" },
             Member<&::MayaFlux::Kakshya::MeshSubrange::material_name> { "material_name" },
             Member<&::MayaFlux::Kakshya::MeshSubrange::diffuse_path> { "diffuse_path" },

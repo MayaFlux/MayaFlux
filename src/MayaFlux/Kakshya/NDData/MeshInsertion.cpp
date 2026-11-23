@@ -105,6 +105,18 @@ void MeshInsertion::insert_submesh(
     std::string_view material_name,
     const VertexLayout& layout)
 {
+    MeshSubrange sub;
+    sub.name = std::string(name);
+    sub.material_name = std::string(material_name);
+    insert_submesh(vertex_bytes, index_data, sub.to_region(), layout);
+}
+
+void MeshInsertion::insert_submesh(
+    std::span<const uint8_t> vertex_bytes,
+    std::span<const uint32_t> index_data,
+    const Region& carried,
+    const VertexLayout& layout)
+{
     if (layout.stride_bytes == 0) {
         MF_ERROR(Journal::Component::Kakshya, Journal::Context::Runtime,
             "MeshInsertion::insert_submesh: layout stride_bytes is zero");
@@ -146,17 +158,22 @@ void MeshInsertion::insert_submesh(
         ibuf.push_back(idx + m_vertex_count);
     }
 
-    MeshSubrange sub;
+    const auto* carried_sub = carried.get<MeshSubrange>();
+    MeshSubrange sub = carried_sub ? *carried_sub : MeshSubrange {};
     sub.index_start = index_start;
     sub.index_count = static_cast<uint32_t>(index_data.size());
     sub.vertex_offset = m_vertex_count;
-    sub.name = std::string(name);
-    sub.material_name = std::string(material_name);
+    sub.vertex_count = submesh_vcount;
+
+    Region placed = carried;
+    placed.set(sub);
+    placed.start_coordinates = { static_cast<uint64_t>(sub.index_start) };
+    placed.end_coordinates = { static_cast<uint64_t>(sub.index_start) + sub.index_count };
 
     if (!m_submeshes.has_value()) {
         m_submeshes = RegionGroup("submeshes");
     }
-    m_submeshes->add_region(sub.to_region());
+    m_submeshes->add_region(placed);
 
     m_vertex_count += submesh_vcount;
     m_index_count += static_cast<uint32_t>(index_data.size());
@@ -165,7 +182,7 @@ void MeshInsertion::insert_submesh(
     MF_DEBUG(Journal::Component::Kakshya, Journal::Context::Runtime,
         "MeshInsertion::insert_submesh: '{}' +{} vertices, +{} indices, "
         "running totals: {} vertices / {} indices",
-        name.empty() ? "<unnamed>" : name,
+        sub.name.empty() ? "<unnamed>" : sub.name,
         submesh_vcount, index_data.size(),
         m_vertex_count, m_index_count);
 }

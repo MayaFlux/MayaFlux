@@ -3,23 +3,36 @@
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
+#include "FaceList.hpp"
 #include "VertexLayout.hpp"
 
 namespace MayaFlux::Kakshya {
 
 /**
  * @struct MeshSubrange
- * @brief Byte-range descriptor for one submesh within the shared index buffer.
+ * @brief Where one submesh lives in the shared index and vertex arrays, and its names.
  *
- * start and end are element indices into the uint32_t index array, not byte
- * offsets. Callers multiply by sizeof(uint32_t) when computing GPU offsets.
+ * index_start and index_count are element indices into the uint32_t index array, not
+ * byte offsets. Callers multiply by sizeof(uint32_t) when computing GPU offsets.
+ *
+ * vertex_offset and vertex_count are the submesh's own vertices within the shared vertex
+ * array, in vertices rather than bytes: it owns [vertex_offset, vertex_offset + vertex_count).
+ * The indices in its range already address the shared array, so vertex_offset is not added
+ * to them. It is what lets a submesh be taken back out on its own (MeshData::extract_submesh)
+ * and what a draw call needs as a base vertex when it is drawn with indices local to it. A
+ * vertex_count of zero means the vertex range was not recorded.
+ *
  * name and material_name are sourced from the originating file; both may be
  * empty for single-mesh files or loaders that do not expose names.
+ *
+ * The Region that holds a MeshSubrange may carry any further structs or Facet values a
+ * producer attaches, and MeshInsertion keeps them when it places the submesh.
  */
 struct MAYAFLUX_API MeshSubrange {
     uint32_t index_start {};
     uint32_t index_count {};
-    uint32_t vertex_offset {}; ///< Base vertex added to each index (large-mesh batching)
+    uint32_t vertex_offset {};
+    uint32_t vertex_count {};
     std::string name;
     std::string material_name;
     std::string diffuse_path;
@@ -72,6 +85,12 @@ struct MAYAFLUX_API MeshAccess {
 
     std::optional<RegionGroup> submeshes;
 
+    /**
+     * Polygon faces the triangle indices were derived from, or null when the mesh is
+     * triangles only. Borrowed from the owner, which must outlive this view.
+     */
+    const FaceList* faces = nullptr;
+
     // -------------------------------------------------------------------------
     // Convenience queries
     // -------------------------------------------------------------------------
@@ -94,6 +113,14 @@ struct MAYAFLUX_API MeshAccess {
     [[nodiscard]] uint32_t face_count() const noexcept
     {
         return index_count / 3;
+    }
+
+    /**
+     * @brief True when the mesh keeps the polygon faces its triangles came from.
+     */
+    [[nodiscard]] bool has_polygons() const noexcept
+    {
+        return faces != nullptr;
     }
 
     /**
@@ -147,12 +174,15 @@ struct MAYAFLUX_API MeshAccess {
  * stores a typed MeshSubrange value. This mirrors the
  * audio/video pattern where e.g. "transients" is the group and each onset
  * event is a Region inside it.
+ *
+ * faces is stored in the view as given and is not checked here.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<MeshAccess> as_mesh_access(
     const DataVariant& vertex_variant,
     const DataVariant& index_variant,
     const VertexLayout& layout,
-    std::optional<RegionGroup> submeshes = std::nullopt);
+    std::optional<RegionGroup> submeshes = std::nullopt,
+    const FaceList* faces = nullptr);
 
 } // namespace MayaFlux::Kakshya
 #include "MeshAccess.describe.hpp"

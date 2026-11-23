@@ -2,6 +2,8 @@
 
 #include "Incidence.hpp"
 
+#include "MayaFlux/Kakshya/NDData/FaceList.hpp"
+
 namespace MayaFlux::Kinesis {
 
 /**
@@ -50,7 +52,7 @@ struct FacePartition {
  * @return nullopt when an entry is not a face of the incidence, or the corners would not
  * fit in 32 bits.
  */
-[[nodiscard]] MAYAFLUX_API std::optional<FaceList> reorder_faces(
+[[nodiscard]] MAYAFLUX_API std::optional<Kakshya::FaceList> reorder_faces(
     const Incidence& incidence, std::span<const uint32_t> face_order);
 
 } // namespace MayaFlux::Kinesis
