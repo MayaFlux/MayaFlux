@@ -434,8 +434,10 @@ public:
     /**
      * @brief Release an image's GPU resources and stop retaining it in the Loom.
      *
-     * The caller must ensure that no submitted work or other consumer still uses
-     * the image. Images not retained by the Loom are also cleaned up.
+     * Recorded library uses retain managed allocations until completion. The
+     * caller must ensure that no consumer intends to record another use.
+     * Raw handle users must synchronize independently. Images not retained by
+     * the Loom are also cleaned up.
      */
     void clear_image_residency(const std::shared_ptr<Core::VKImage>& image);
 

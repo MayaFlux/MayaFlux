@@ -118,10 +118,16 @@ public:
     void initialize_image(const std::shared_ptr<VKImage>& image);
 
     /**
-     * @brief Cleanup a VKImage (destroy view, image, and free memory)
+     * @brief Detach a managed image and retire its allocation after recorded use
      * @param image VKImage to cleanup
+     *
+     * Managed images lose their handles immediately. Recorded library commands
+     * retain the old allocation until they complete or are discarded.
      */
     void cleanup_image(const std::shared_ptr<VKImage>& image);
+
+    /** Keep this image's current allocation alive through a recorded command. */
+    [[nodiscard]] std::shared_ptr<void> retain_image_allocation(const std::shared_ptr<VKImage>& image) const;
 
     /**
      * @brief Transition every mip level and layer of an image to a new layout
@@ -298,6 +304,15 @@ private:
         ~BufferAllocation();
     };
 
+    struct ImageAllocation {
+        vk::Device device;
+        vk::Image image;
+        vk::ImageView view;
+        vk::DeviceMemory memory;
+
+        ~ImageAllocation();
+    };
+
     void load_host_copy_layouts();
     [[nodiscard]] bool host_copy_src_layout(vk::ImageLayout layout) const;
     [[nodiscard]] bool host_copy_dst_layout(vk::ImageLayout layout) const;
@@ -339,6 +354,7 @@ private:
 
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
     std::map<std::shared_ptr<Buffers::VKBuffer>, std::shared_ptr<BufferAllocation>, std::owner_less<>> m_buffer_allocations;
+    std::map<std::shared_ptr<VKImage>, std::shared_ptr<ImageAllocation>, std::owner_less<>> m_image_allocations;
     std::shared_ptr<Memory::SnapshotCell<AllocationSizes>> m_buffer_allocation_sizes =
         std::make_shared<Memory::SnapshotCell<AllocationSizes>>();
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;

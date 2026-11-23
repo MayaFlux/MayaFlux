@@ -451,6 +451,19 @@ BackendResourceManager::BufferAllocation::~BufferAllocation()
     }
 }
 
+BackendResourceManager::ImageAllocation::~ImageAllocation()
+{
+    if (view) {
+        device.destroyImageView(view);
+    }
+    if (image) {
+        device.destroyImage(image);
+    }
+    if (memory) {
+        device.freeMemory(memory);
+    }
+}
+
 void BackendResourceManager::flush_pending_buffer_operations()
 {
     for (auto& buffer_wrapper : m_managed_buffers) {
@@ -680,6 +693,8 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
     image->set_image_resources(resources);
     image->set_current_layout(vk::ImageLayout::eUndefined);
     image->set_host_transfer(host_transfer);
+    m_image_allocations[image] = std::make_shared<ImageAllocation>(
+        m_context.get_device(), vk_image, image_view, memory);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage initialized: {}x{}x{}, format: {}, {} mips, {} layers",
@@ -691,6 +706,16 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
 void BackendResourceManager::cleanup_image(const std::shared_ptr<VKImage>& image)
 {
     if (!image || !image->is_initialized()) {
+        return;
+    }
+
+    auto allocation = m_image_allocations.find(image);
+    if (allocation != m_image_allocations.end()) {
+        auto held = std::move(allocation->second);
+        m_image_allocations.erase(allocation);
+        image->set_image_resources(VKImageResources {});
+        image->set_host_transfer(false);
+        m_command_manager.retire_resource([held = std::move(held)] {}, m_command_manager.submitted());
         return;
     }
 
@@ -713,6 +738,13 @@ void BackendResourceManager::cleanup_image(const std::shared_ptr<VKImage>& image
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage cleaned up");
+}
+
+std::shared_ptr<void> BackendResourceManager::retain_image_allocation(
+    const std::shared_ptr<VKImage>& image) const
+{
+    const auto it = m_image_allocations.find(image);
+    return it == m_image_allocations.end() ? nullptr : it->second;
 }
 
 void BackendResourceManager::load_host_copy_layouts()
@@ -1640,6 +1672,14 @@ TimelinePoint BackendResourceManager::execute_async(
     const std::function<void(vk::CommandBuffer)>& recorder,
     std::vector<std::shared_ptr<void>> keep_alive)
 {
+    std::vector<std::shared_ptr<void>> allocations;
+    for (const auto& held : keep_alive) {
+        if (auto it = m_image_allocations.find(held); it != m_image_allocations.end()) {
+            allocations.push_back(it->second);
+        }
+    }
+    keep_alive.insert(keep_alive.end(), allocations.begin(), allocations.end());
+
     const vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
     if (!cmd) {
         return {};
@@ -1667,6 +1707,10 @@ void BackendResourceManager::record_deferred_commands(
     for (const auto& held : keep_alive) {
         if (auto it = m_buffer_allocations.find(held);
             it != m_buffer_allocations.end()) {
+            allocations.push_back(it->second);
+        }
+        if (auto it = m_image_allocations.find(held);
+            it != m_image_allocations.end()) {
             allocations.push_back(it->second);
         }
     }
@@ -1720,6 +1764,11 @@ void BackendResourceManager::cleanup()
     }
     m_managed_buffers.clear();
     m_buffer_allocations.clear();
+    for (const auto& [image, allocation] : m_image_allocations) {
+        image->set_image_resources(VKImageResources {});
+        image->set_host_transfer(false);
+    }
+    m_image_allocations.clear();
     m_buffer_allocation_sizes->reset();
     m_host_copy_layouts_ready = false;
     m_host_copy_src_layouts.clear();

@@ -130,7 +130,7 @@ void UVFieldProcessor::collect_push_writes(
 }
 
 bool UVFieldProcessor::on_before_execute(
-    Portal::Graphics::CommandBufferID /*cmd_id*/,
+    Portal::Graphics::CommandBufferID cmd_id,
     const std::shared_ptr<VKBuffer>& buffer)
 {
     if (!buffer) {
@@ -140,6 +140,10 @@ bool UVFieldProcessor::on_before_execute(
     m_pc.vertex_count = static_cast<uint32_t>(buffer->get_size_bytes() / sizeof(Kakshya::MeshVertex));
     if (m_pc.vertex_count == 0) {
         return false;
+    }
+
+    if (m_texture) {
+        Portal::Graphics::get_shader_foundry().hold_image(cmd_id, m_texture);
     }
 
     MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,

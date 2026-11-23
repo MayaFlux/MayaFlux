@@ -1032,6 +1032,10 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     auto cmd_id = foundry.begin_secondary_commands(color_format, depth_format);
     auto cmd = foundry.get_command_buffer(cmd_id);
 
+    for (const auto& [binding, texture] : m_texture_bindings) {
+        foundry.hold_image(cmd_id, texture.texture);
+    }
+
     uint32_t width = 0, height = 0;
     m_display_service->get_swapchain_extent(m_target_window, width, height);
 

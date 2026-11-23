@@ -80,7 +80,7 @@ struct WindowRenderContext {
     WindowRenderContext(const WindowRenderContext&) = delete;
     WindowRenderContext& operator=(const WindowRenderContext&) = delete;
 
-    void cleanup(VKContext& context);
+    void cleanup(VKContext& context, BackendResourceManager& resource_manager);
 };
 
 class MAYAFLUX_API BackendWindowHandler {

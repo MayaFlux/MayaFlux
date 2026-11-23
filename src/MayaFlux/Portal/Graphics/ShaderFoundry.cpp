@@ -1233,6 +1233,19 @@ void ShaderFoundry::hold_until_complete(CommandBufferID cmd_id, SlotLease hold)
     }
 }
 
+void ShaderFoundry::hold_image(CommandBufferID cmd_id, const std::shared_ptr<Core::VKImage>& image)
+{
+    auto it = m_command_buffers.find(cmd_id);
+    if (it == m_command_buffers.end() || !it->second.is_active || !image) {
+        return;
+    }
+
+    auto allocation = m_backend->get_resource_manager().retain_image_allocation(image);
+    if (allocation && std::ranges::find(it->second.image_holds, allocation) == it->second.image_holds.end()) {
+        it->second.image_holds.push_back(std::move(allocation));
+    }
+}
+
 Core::TimelinePoint ShaderFoundry::submit_state(
     const CommandBufferState& state,
     std::span<const vk::SemaphoreSubmitInfo> signals)
@@ -1437,6 +1450,10 @@ void ShaderFoundry::release_fence(FenceID fence_id)
                 cmd_manager.retire_resource(
                     [holds = std::make_shared<std::vector<SlotLease>>(std::move(cmd_it->second.holds))] { },
                     state.point);
+            }
+            if (!cmd_it->second.image_holds.empty()) {
+                cmd_manager.retire_resource(
+                    [held = std::move(cmd_it->second.image_holds)] {}, state.point);
             }
             m_command_buffers.erase(cmd_it);
         }
