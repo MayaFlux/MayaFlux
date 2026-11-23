@@ -15,6 +15,9 @@ namespace MayaFlux::Kinesis {
  * rotation. CubicSpline follows the Hermite form of glTF, with an incoming and an
  * outgoing tangent stored per key. Only Step is available to a value type that
  * cannot be blended.
+ *
+ * Not Kinesis::InterpolationMode, which shapes spatial path curves: it has no Step and
+ * derives its Hermite tangents from the points, where a key here carries its own.
  */
 enum class KeyInterpolation : uint8_t {
     Step,
