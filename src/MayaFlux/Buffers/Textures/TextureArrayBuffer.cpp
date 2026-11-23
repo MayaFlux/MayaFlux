@@ -369,7 +369,8 @@ void TextureArrayBuffer::ensure_array()
         return;
     }
 
-    set_gpu_texture(std::move(image));
+    set_gpu_texture(image);
+    loom.release_image(image);
 }
 
 void TextureArrayBuffer::ensure_weights()

@@ -99,7 +99,7 @@ public:
      */
     [[nodiscard]] std::optional<uint32_t> get_live_vertex_count() const;
 
-    ~ComputeMeshBuffer() override = default;
+    ~ComputeMeshBuffer() override;
 
     void setup_processors(ProcessingToken token) override;
 

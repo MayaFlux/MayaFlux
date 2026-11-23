@@ -6,6 +6,7 @@
 #include "TextureProcessor.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -175,8 +176,16 @@ void TextureBuffer::mark_pixels_dirty()
     m_texture_dirty = true;
 }
 
+TextureBuffer::~TextureBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_gpu_texture);
+}
+
 void TextureBuffer::set_gpu_texture(std::shared_ptr<Core::VKImage> image)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(image);
+    loom.release_image(m_gpu_texture);
     m_gpu_texture = std::move(image);
 
     if (m_render_processor && m_gpu_texture) {
@@ -194,6 +203,7 @@ void TextureBuffer::resize_texture(uint32_t new_width, uint32_t new_height)
 
     m_width = new_width;
     m_height = new_height;
+    Portal::Graphics::get_texture_manager().release_image(m_gpu_texture);
     m_gpu_texture.reset();
     m_texture_dirty = true;
     m_geometry_dirty = true;

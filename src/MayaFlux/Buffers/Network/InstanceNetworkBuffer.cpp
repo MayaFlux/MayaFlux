@@ -6,6 +6,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -178,8 +179,23 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_config.vertex_shader, m_render_config.fragment_shader);
 }
 
+InstanceNetworkBuffer::~InstanceNetworkBuffer()
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& image : m_instance_textures) {
+        loom.release_image(image);
+    }
+}
+
 void InstanceNetworkBuffer::bind_instance_textures(std::vector<std::shared_ptr<Core::VKImage>> images)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& image : images) {
+        loom.retain_image(image);
+    }
+    for (const auto& image : m_instance_textures) {
+        loom.release_image(image);
+    }
     m_instance_textures = std::move(images);
 
     if (m_render_processor) {

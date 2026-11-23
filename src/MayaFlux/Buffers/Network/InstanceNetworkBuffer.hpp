@@ -56,7 +56,7 @@ public:
         std::shared_ptr<Nodes::Network::InstanceNetwork> network,
         float over_allocate_factor = 1.5F);
 
-    ~InstanceNetworkBuffer() override = default;
+    ~InstanceNetworkBuffer() override;
 
     void setup_processors(ProcessingToken token) override;
     void setup_rendering(const RenderConfig& config);

@@ -289,19 +289,55 @@ std::optional<Kakshya::MeshData> MeshNetwork::merged_mesh_data(bool placed) cons
             continue;
         }
 
-        if (placed) {
-            Kakshya::place_vertices(
-                std::get<std::vector<uint8_t>>(packed->vertex_variant),
-                packed->layout,
-                composed_transform(slot));
+        const std::string name = slot.name.empty() ? std::to_string(slot.index) : slot.name;
+        const glm::mat4 transform = placed ? composed_transform(slot) : glm::mat4(1.0F);
+
+        const size_t part_count = packed->submeshes ? packed->submeshes->regions.size() : 0;
+        std::vector<Kakshya::MeshData> parts;
+        uint64_t covered_indices = 0;
+        uint64_t covered_vertices = 0;
+        for (size_t i = 0; i < part_count; ++i) {
+            auto part = packed->extract_submesh(i);
+            const auto* range = packed->submeshes->regions[i].get<Kakshya::MeshSubrange>();
+            if (!part || !range) {
+                parts.clear();
+                break;
+            }
+            covered_indices += range->index_count;
+            covered_vertices += range->vertex_count;
+            parts.push_back(std::move(*part));
         }
 
-        ins.insert_submesh(
-            std::get<std::vector<uint8_t>>(packed->vertex_variant),
-            std::get<std::vector<uint32_t>>(packed->index_variant),
-            slot.name.empty() ? std::to_string(slot.index) : slot.name,
-            {},
-            packed->layout);
+        const bool keeps_parts = !parts.empty() && parts.size() == part_count
+            && covered_indices == std::get<std::vector<uint32_t>>(packed->index_variant).size()
+            && covered_vertices == packed->vertex_count();
+
+        if (!keeps_parts) {
+            if (placed) {
+                Kakshya::place_vertices(
+                    std::get<std::vector<uint8_t>>(packed->vertex_variant), packed->layout, transform);
+            }
+            ins.insert_submesh(
+                std::get<std::vector<uint8_t>>(packed->vertex_variant),
+                std::get<std::vector<uint32_t>>(packed->index_variant),
+                name, {}, packed->layout);
+            continue;
+        }
+
+        for (auto& part : parts) {
+            auto& vertices = std::get<std::vector<uint8_t>>(part.vertex_variant);
+            if (placed) {
+                Kakshya::place_vertices(vertices, part.layout, transform);
+            }
+
+            Kakshya::Region carried = part.submeshes->regions.front();
+            auto range = *carried.get<Kakshya::MeshSubrange>();
+            if (range.name.empty()) {
+                range.name = name;
+            }
+            carried.set(range);
+            ins.insert_submesh(vertices, std::get<std::vector<uint32_t>>(part.index_variant), carried, part.layout);
+        }
     }
 
     const auto access = ins.build();

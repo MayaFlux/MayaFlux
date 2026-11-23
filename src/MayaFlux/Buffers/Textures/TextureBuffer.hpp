@@ -48,7 +48,7 @@ public:
         Portal::Graphics::ImageFormat format,
         const void* initial_pixel_data = nullptr);
 
-    ~TextureBuffer() override = default;
+    ~TextureBuffer() override;
 
     void setup_processors(ProcessingToken token) override;
 

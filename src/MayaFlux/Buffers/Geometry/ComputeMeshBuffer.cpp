@@ -7,6 +7,7 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -223,8 +224,16 @@ void ComputeMeshBuffer::set_dirty()
 // Texture
 // ============================================================================
 
+ComputeMeshBuffer::~ComputeMeshBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_diffuse_texture);
+}
+
 void ComputeMeshBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(image);
+    loom.release_image(m_diffuse_texture);
     m_diffuse_texture = std::move(image);
     m_diffuse_binding = std::move(binding);
 

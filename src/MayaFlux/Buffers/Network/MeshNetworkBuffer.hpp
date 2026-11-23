@@ -28,7 +28,8 @@ class RenderProcessor;
  * Texture support follows MeshBuffer's model exactly:
  * - bind_diffuse_texture() binds one shared diffuse texture for all slots.
  * - RenderConfig::additional_textures carries any further bindings.
- * - Per-slot distinct textures (texture array path) are deferred.
+ * - A slot's diffuse_texture, set with MeshNetwork::set_slot_texture, is bound for that slot's
+ *   draw range, so slots may carry distinct textures.
  *
  * Usage:
  * @code
