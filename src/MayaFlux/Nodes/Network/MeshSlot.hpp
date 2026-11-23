@@ -18,10 +18,17 @@ namespace MayaFlux::Nodes::Network {
  *
  * World transform composes as: world = parent_world * local.
  *
- * slot.dirty signals the buffer layer that slot-level configuration changed
- * (transform, texture binding, parent reassignment) independently of whether
- * the node's vertex data changed. The processor checks both:
+ * slot.dirty tells the buffer layer to look at this slot after a change to
+ * its transform or configuration (local_transform, texture binding, parent
+ * reassignment), independently of whether the node's vertex data changed. The
+ * processor checks both:
  *   slot.dirty || slot.node->needs_gpu_update()
+ * and works out what to upload. Only a change to a node's geometry, to which
+ * nodes supply geometry, or to the vertex layout re-uploads the geometry. A
+ * transform change uploads only the model matrices, and none at all when the
+ * composed matrices are the ones already uploaded, so setting dirty after
+ * writing local_transform is cheap. The flag is still needed: a transform
+ * written without it is not looked at.
  *
  * diffuse_texture is optional. When set, MeshNetworkBuffer binds it to the
  * shader's diffuse slot for this slot's draw range. Slots sharing the same
