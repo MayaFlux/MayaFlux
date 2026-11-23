@@ -56,6 +56,31 @@ namespace {
         return mode == aiAnimInterpolation_Step ? Kinesis::KeyInterpolation::Step : Kinesis::KeyInterpolation::Linear;
     }
 
+    /**
+     * Whether the keys are glTF cubic spline keys as Assimp 6.0.6 and later write them: every
+     * key marked cubic, and for each logical key three keys at the one time, the incoming
+     * tangent, the value and the outgoing tangent. Older Assimp keeps only the value and marks
+     * nothing, so those keys are read as plain keys.
+     */
+    template <typename Key>
+    bool cubic_triplets(const Key* keys, unsigned int count)
+    {
+        if (count < 3 || count % 3 != 0) {
+            return false;
+        }
+        for (unsigned int i = 0; i < count; ++i) {
+            if (keys[i].mInterpolation != aiAnimInterpolation_Cubic_Spline) {
+                return false;
+            }
+        }
+        for (unsigned int i = 0; i < count; i += 3) {
+            if (keys[i].mTime != keys[i + 1].mTime || keys[i + 1].mTime != keys[i + 2].mTime) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     template <typename Key, typename Convert>
     auto timed_values(const Key* keys, unsigned int count, double ticks_per_second,
         Kinesis::ValueKind kind, Convert convert)
@@ -64,6 +89,35 @@ namespace {
         using Value = decltype(convert(keys[0]));
         if (count == 0) {
             return std::nullopt;
+        }
+
+        if (cubic_triplets(keys, count)) {
+            const unsigned int logical = count / 3;
+            std::vector<double> times;
+            std::vector<Value> values;
+            std::vector<Value> in_tangents;
+            std::vector<Value> out_tangents;
+            times.reserve(logical);
+            values.reserve(logical);
+            in_tangents.reserve(logical);
+            out_tangents.reserve(logical);
+            for (unsigned int i = 0; i < logical; ++i) {
+                times.push_back(keys[3 * i + 1].mTime / ticks_per_second);
+                in_tangents.push_back(convert(keys[3 * i]));
+                values.push_back(convert(keys[3 * i + 1]));
+                out_tangents.push_back(convert(keys[3 * i + 2]));
+            }
+
+            auto sampling = Kinesis::TimeSampling::acyclic(std::move(times));
+            if (!sampling) {
+                return std::nullopt;
+            }
+            return Kinesis::TimedValues<Value>::create({ .times = std::move(*sampling),
+                .values = std::move(values),
+                .in_tangents = std::move(in_tangents),
+                .out_tangents = std::move(out_tangents),
+                .default_mode = Kinesis::KeyInterpolation::CubicSpline,
+                .kind = kind });
         }
 
         std::vector<double> times;
@@ -218,144 +272,35 @@ ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
 std::shared_ptr<Nodes::Network::MeshNetwork>
 ModelReader::create_mesh_network(const TextureResolver& resolver) const
 {
-    if (!m_impl->scene) {
-        set_error("No scene loaded");
+    const auto assembly = create_mesh_assembly();
+    if (!assembly) {
         return nullptr;
     }
 
-    auto net = std::make_shared<Nodes::Network::MeshNetwork>();
-    const aiScene* s = m_impl->scene;
+    auto net = Nodes::Network::make_mesh_network(assembly);
+    if (!net) {
+        return std::make_shared<Nodes::Network::MeshNetwork>();
+    }
 
-    struct Extracted {
-        std::string name;
-        Kakshya::MeshData data;
-        bool ok { false };
-    };
-    std::vector<std::optional<Extracted>> cache(s->mNumMeshes);
-    std::vector<bool> placed(s->mNumMeshes, false);
-
-    auto extracted = [&](unsigned int i) -> const Extracted* {
-        auto& entry = cache[i];
-        if (!entry) {
-            const aiMesh* ai_mesh = s->mMeshes[i];
-            Extracted e;
-            e.name = ai_mesh->mName.C_Str();
-            if (e.name.empty()) {
-                e.name = "mesh_" + std::to_string(i);
-            }
-
-            std::string mat_name;
-            if (s->mNumMaterials > 0 && ai_mesh->mMaterialIndex < s->mNumMaterials) {
-                aiString ai_mat;
-                s->mMaterials[ai_mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, ai_mat);
-                mat_name = ai_mat.C_Str();
-            }
-
-            e.data = extract_single_mesh(ai_mesh, s, e.name, mat_name);
-            e.ok = e.data.is_valid()
-                && std::get_if<std::vector<uint8_t>>(&e.data.vertex_variant)
-                && std::get_if<std::vector<uint32_t>>(&e.data.index_variant);
-            if (!e.ok) {
-                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                    "ModelReader::create_mesh_network: skipping invalid mesh '{}'", e.name);
-            }
-            entry = std::move(e);
-        }
-        return entry->ok ? &*entry : nullptr;
-    };
-
-    auto add_geometry_slot = [&](std::string slot_name, const Extracted& e,
-                                 std::optional<uint32_t> parent,
-                                 const glm::mat4& local, const glm::mat4& parent_world) {
-        const auto& vb = std::get<std::vector<uint8_t>>(e.data.vertex_variant);
-
-        const size_t vertex_count = vb.size() / sizeof(Kakshya::MeshVertex);
-        auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>(vertex_count);
-        node->set_mesh(e.data);
-
-        const auto slot_idx = net->add_slot(std::move(slot_name), node, parent);
-        auto& slot = net->get_slot(slot_idx);
-        slot.local_transform = local;
-        slot.world_transform = parent_world * local;
-
-        if (resolver) {
-            const auto raw = get_diffuse_path(e.data);
-            if (!raw.empty()) {
-                auto image = resolver(raw);
-                if (image) {
-                    net->set_slot_texture(slot_idx, std::move(image));
-                } else {
-                    MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-                        "ModelReader::create_mesh_network: resolver returned null for '{}' (slot '{}')",
-                        raw, slot.name);
-                }
-            }
-        }
-        return slot_idx;
-    };
-
-    std::function<void(const aiNode*, std::optional<uint32_t>, const glm::mat4&, bool)> visit;
-    visit = [&](const aiNode* ai_node, std::optional<uint32_t> parent,
-                const glm::mat4& parent_world, bool is_scene_root) {
-        const glm::mat4 local = to_glm(ai_node->mTransformation);
-
-        std::vector<std::pair<unsigned int, const Extracted*>> meshes;
-        for (unsigned int m = 0; m < ai_node->mNumMeshes; ++m) {
-            const unsigned int mesh_index = ai_node->mMeshes[m];
-            if (mesh_index >= s->mNumMeshes) {
+    if (resolver) {
+        const auto& materials = assembly->get_data().materials;
+        for (uint32_t slot = 0; slot < net->slot_count(); ++slot) {
+            const auto placement = assembly->placement(slot);
+            if (!placement || !placement->material || !net->get_slot(slot).node) {
                 continue;
             }
-            placed[mesh_index] = true;
-            if (const auto* e = extracted(mesh_index)) {
-                meshes.emplace_back(mesh_index, e);
+            const auto& material = materials[*placement->material];
+            if (material.diffuse_path.empty() || material.diffuse_embedded) {
+                continue;
             }
-        }
 
-        if (is_scene_root && is_identity(local)) {
-            for (const auto& [mesh_index, e] : meshes) {
-                add_geometry_slot(e->name, *e, std::nullopt, glm::mat4(1.0F), glm::mat4(1.0F));
+            if (auto image = resolver(material.diffuse_path)) {
+                net->set_slot_texture(slot, std::move(image));
+            } else {
+                MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_network: resolver returned null for '{}' (slot '{}')",
+                    material.diffuse_path, net->get_slot(slot).name);
             }
-            for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
-                visit(ai_node->mChildren[c], std::nullopt, glm::mat4(1.0F), false);
-            }
-            return;
-        }
-
-        std::string node_name = ai_node->mName.C_Str();
-        const glm::mat4 world = parent_world * local;
-
-        uint32_t own_index {};
-        if (meshes.empty()) {
-            if (node_name.empty()) {
-                node_name = "node_" + std::to_string(net->slot_count());
-            }
-            own_index = net->add_slot(std::move(node_name), nullptr, parent);
-            auto& joint = net->get_slot(own_index);
-            joint.local_transform = local;
-            joint.world_transform = world;
-        } else {
-            own_index = add_geometry_slot(
-                node_name.empty() ? meshes.front().second->name : node_name,
-                *meshes.front().second, parent, local, parent_world);
-            for (size_t m = 1; m < meshes.size(); ++m) {
-                add_geometry_slot(meshes[m].second->name, *meshes[m].second,
-                    own_index, glm::mat4(1.0F), world);
-            }
-        }
-
-        for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
-            visit(ai_node->mChildren[c], own_index, world, false);
-        }
-    };
-
-    visit(s->mRootNode, std::nullopt, glm::mat4(1.0F), true);
-
-    for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
-        if (placed[i]) {
-            continue;
-        }
-        if (const auto* e = extracted(i)) {
-            add_geometry_slot(e->name, *e, std::nullopt, glm::mat4(1.0F), glm::mat4(1.0F));
         }
     }
 
@@ -627,7 +572,9 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
     constexpr unsigned int polygons = aiProcess_FlipUVs
         | aiProcess_JoinIdenticalVertices;
 
-    m_impl->scene = m_impl->importer.ReadFile(resolved, m_keep_polygons ? polygons : triangles_only);
+    const unsigned int flags = (m_keep_polygons ? polygons : triangles_only)
+        | (m_flatten ? static_cast<unsigned int>(aiProcess_PreTransformVertices) : 0U);
+    m_impl->scene = m_impl->importer.ReadFile(resolved, flags);
     m_polygons_imported = m_keep_polygons;
 
     if (!m_impl->scene

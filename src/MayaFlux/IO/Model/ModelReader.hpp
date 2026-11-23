@@ -95,6 +95,16 @@ public:
      */
     void set_keep_polygons(bool keep) noexcept { m_keep_polygons = keep; }
 
+    /**
+     * @brief Whether the next open() bakes the node tree into the vertices.
+     *
+     * Applies to the next open(). Off by default. On, Assimp (aiProcess_PreTransformVertices)
+     * places every mesh where its node put it and leaves one root, so the scene has no
+     * hierarchy to animate, and it drops the scene's animations and bones. Use it for a static
+     * scene that should be one flat set of placed meshes.
+     */
+    void set_flatten(bool flatten) noexcept { m_flatten = flatten; }
+
     // -------------------------------------------------------------------------
     // Primary API — use these
     // -------------------------------------------------------------------------
@@ -152,6 +162,10 @@ public:
      * added as root slots, named from aiMesh::mName (or "mesh_N" if unnamed).
      * Each slot's MeshWriterNode holds the extracted vertex and index data.
      *
+     * The network is built from create_mesh_assembly(), so slot i is row i of that assembly and
+     * one of its motions plays on this network through Kriya::slot_sink. An identity scene root
+     * that an animation targets is kept as a joint.
+     *
      * If resolver is provided, it is called with the raw diffuse path from each
      * mesh's material. The returned VKImage is assigned to slot.diffuse_texture.
      * Null resolver skips texture binding entirely.
@@ -179,8 +193,11 @@ public:
      * that matches no row or more than one row, a node with no row, and a node an
      * animation keys twice are skipped with a warning. Times are seconds: key time over
      * mTicksPerSecond, with 0 ticks per second read as 1. A key's interpolation is Step
-     * or Linear (rotations spherical); cubic spline keys arrive as Linear, as Assimp
-     * drops their tangents. The scene's ModelInfo is kept in the assembly's facets.
+     * or Linear (rotations spherical), or CubicSpline with the tangents of its key: the glTF
+     * importer of Assimp 6.0.6 and later hands over a cubic sampler as three keys at one time,
+     * the incoming tangent, the value and the outgoing tangent, and they are read as one key.
+     * Older Assimp keeps only the value, so such keys arrive as Linear. The scene's ModelInfo is
+     * kept in the assembly's facets.
      *
      * Requires open(). Does not call close(). Textures are not resolved: the assembly
      * holds the paths.
@@ -252,6 +269,7 @@ private:
 
     bool m_is_open { false };
     bool m_keep_polygons { false };
+    bool m_flatten { false };
     bool m_polygons_imported { false };
     mutable std::string m_last_error;
 
