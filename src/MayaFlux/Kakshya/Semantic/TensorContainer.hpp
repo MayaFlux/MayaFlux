@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/TensorInsertion.hpp"
-#include "MayaFlux/Kakshya/Semantic/SemanticContainer.hpp"
+#include "MayaFlux/Kakshya/SemanticContainer.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 namespace MayaFlux::Kakshya {

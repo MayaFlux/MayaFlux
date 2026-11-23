@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Kakshya/FrameSource.hpp"
 #include "MayaFlux/Kakshya/Region/RegionSegment.hpp"
-#include "MayaFlux/Kakshya/Semantic/SemanticContainer.hpp"
+#include "MayaFlux/Kakshya/SemanticContainer.hpp"
 
 namespace MayaFlux::Kakshya {
 
