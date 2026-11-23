@@ -36,6 +36,11 @@ namespace {
 
 }
 
+DataWriteProcessor::~DataWriteProcessor()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_gpu_texture);
+}
+
 DataWriteProcessor::DataWriteProcessor()
     : m_writes(std::make_unique<Memory::LockFreeQueue<WriteFn, k_write_queue_capacity>>())
 {

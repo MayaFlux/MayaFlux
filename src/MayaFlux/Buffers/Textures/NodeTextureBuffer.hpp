@@ -54,7 +54,7 @@ public:
         std::shared_ptr<Nodes::GpuSync::TextureNode> node,
         std::string binding_name = "texture");
 
-    ~NodeTextureBuffer() override = default;
+    ~NodeTextureBuffer() override;
 
     /**
      * @brief Initialize the buffer, create GPU texture, and setup processors

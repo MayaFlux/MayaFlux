@@ -84,6 +84,8 @@ public:
         const Kakshya::VideoStreamSpec& spec,
         std::optional<Portal::Graphics::FitMode> fit = Portal::Graphics::FitMode::STRETCH);
 
+    ~TextureArrayBuffer() override;
+
     void setup_processors(ProcessingToken token) override;
 
     void setup_rendering(const RenderConfig& config) override;

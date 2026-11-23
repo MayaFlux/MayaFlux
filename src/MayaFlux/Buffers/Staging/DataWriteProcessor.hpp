@@ -64,7 +64,7 @@ namespace MayaFlux::Buffers {
 class MAYAFLUX_API DataWriteProcessor : public VKBufferProcessor {
 public:
     DataWriteProcessor();
-    ~DataWriteProcessor() override = default;
+    ~DataWriteProcessor() override;
 
     /**
      * @brief Supply a single data value for the next cycle (slot 0).
