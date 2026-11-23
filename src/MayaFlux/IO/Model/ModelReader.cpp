@@ -517,9 +517,9 @@ ModelReader::create_mesh_assembly() const
     for (unsigned int a = 0; a < s->mNumAnimations; ++a) {
         const aiAnimation* animation = s->mAnimations[a];
         const double ticks_per_second = animation->mTicksPerSecond > 0.0 ? animation->mTicksPerSecond : 1.0;
-        Kakshya::MeshAssemblyClip clip { .name = animation->mName.C_Str(), .channels = {} };
-        if (clip.name.empty()) {
-            clip.name = "animation_" + std::to_string(a);
+        Kakshya::MeshAssemblyMotion motion { .name = animation->mName.C_Str(), .channels = {} };
+        if (motion.name.empty()) {
+            motion.name = "animation_" + std::to_string(a);
         }
 
         std::unordered_set<uint64_t> targeted;
@@ -531,14 +531,14 @@ ModelReader::create_mesh_assembly() const
             if (rows == rows_by_name.end() || rows->second.size() != 1) {
                 MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                     "ModelReader::create_mesh_assembly: animation '{}' channel targets '{}', which matches {} rows, skipped",
-                    clip.name, target, rows == rows_by_name.end() ? 0 : rows->second.size());
+                    motion.name, target, rows == rows_by_name.end() ? 0 : rows->second.size());
                 continue;
             }
             const uint64_t row = rows->second.front();
             if (!targeted.insert(row).second) {
                 MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                     "ModelReader::create_mesh_assembly: animation '{}' keys '{}' twice, the later channel skipped",
-                    clip.name, target);
+                    motion.name, target);
                 continue;
             }
 
@@ -551,16 +551,16 @@ ModelReader::create_mesh_assembly() const
                 ticks_per_second, Kinesis::ValueKind::Plain, to_vec3);
 
             if (keyed.translation || keyed.rotation || keyed.scale) {
-                clip.channels.push_back(std::move(keyed));
+                motion.channels.push_back(std::move(keyed));
             } else {
                 MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                     "ModelReader::create_mesh_assembly: animation '{}' channel '{}' has no usable keys, skipped",
-                    clip.name, target);
+                    motion.name, target);
             }
         }
 
-        if (!clip.channels.empty()) {
-            std::ignore = assembly->add_clip(std::move(clip));
+        if (!motion.channels.empty()) {
+            std::ignore = assembly->add_motion(std::move(motion));
         }
     }
 
@@ -574,9 +574,9 @@ ModelReader::create_mesh_assembly() const
     assembly->set_facets(std::move(facets));
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "ModelReader::create_mesh_assembly: {} rows, {} sources, {} clips",
+        "ModelReader::create_mesh_assembly: {} rows, {} sources, {} motions",
         assembly->get_total_elements(), assembly->get_data().sources.size(),
-        assembly->get_data().clips.size());
+        assembly->get_data().motions.size());
 
     return assembly;
 }

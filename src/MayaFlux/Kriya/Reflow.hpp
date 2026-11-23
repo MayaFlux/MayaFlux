@@ -14,15 +14,58 @@ namespace MayaFlux::Kriya {
 template <typename Frame>
 class ReflowBuilder;
 
+/** @brief What receives a frame a reflow writes. */
+template <typename Frame>
+using FrameSink = std::function<void(const std::shared_ptr<const Frame>&, const FrameContext&)>;
+
+/**
+ * @struct CourseRoute
+ * @brief A course together with what it reads, what is done to its frames and where they go.
+ *
+ * A plain course shares the reflow's source, joins the other plain courses in the one mix, and
+ * its mixed frame goes through the reflow's operations to the reflow's sink. A route changes
+ * any of that for one course:
+ *
+ * - source or sampled reads another source of the same frames. At most one of them is given.
+ * - operations run on this course's frame before it goes anywhere. They may transform, derive
+ *   or decline, and there is no mix among them: the frames a course picks are reduced by the
+ *   reflow's mix, or the heaviest wins.
+ * - sink receives this course's frame itself. The course then leaves the shared mix, and the
+ *   reflow's operations and sink never see its frames. Left empty, the frame joins the mix.
+ * - enters_after delays the first step of the course by this many seconds of the reflow's
+ *   cycles. Before then it does not step, read or write.
+ * - every reads and writes once per this many cycles. The course still steps every cycle, so
+ *   its time is the same however seldom it is shown.
+ */
+template <typename Frame>
+struct CourseRoute {
+    CourseSetting course;
+    bool paused {};
+    std::shared_ptr<const Kakshya::FrameSource<Frame>> source;
+    std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled;
+    std::vector<FrameOperation<Frame>> operations;
+    FrameSink<Frame> sink;
+    double enters_after {};
+    uint32_t every { 1 };
+};
+
 /**
  * @class Reflow
  * @brief Frames of a source brought back through time, one cycle at a time, into a sink.
  *
- * A reflow reads one FrameSource through any number of courses. Each cycle every course
- * advances and places its time among the frames, the frames it picks are read and mixed
- * into one, the frame operations run on that one, and the sink receives the result. A
- * buffer is only ever one frame, so the sink is where a frame becomes a buffer's content,
- * and what the buffer's own processors do afterwards is the sink's concern.
+ * A reflow reads a FrameSource, or a SampledFrames that answers for any time, through any
+ * number of courses. Each cycle every course advances and places its time among the frames,
+ * the frames it picks are read and mixed into one, the frame operations run on that one, and
+ * the sink receives the result. A buffer is only ever one frame, so the sink is where a frame
+ * becomes a buffer's content, and what the buffer's own processors do afterwards is the
+ * sink's concern.
+ *
+ * The selection among frames applies to a listed source. A sampled source answers for the time
+ * itself and is never blended.
+ *
+ * A course added as a CourseRoute may read a source of its own, run operations of its own,
+ * enter later, show less often, and write to a sink of its own, so one reflow can drive
+ * several targets with independently timed readers of one or several sources.
  *
  * The reflow knows no medium and no buffer. The source, the sink and every operation are
  * the caller's, so a volume sequence, a point cache and a set of slot transforms differ
@@ -44,7 +87,7 @@ class ReflowBuilder;
 template <typename Frame>
 class Reflow : public std::enable_shared_from_this<Reflow<Frame>> {
 public:
-    using Sink = std::function<void(const std::shared_ptr<const Frame>&, const FrameContext&)>;
+    using Sink = FrameSink<Frame>;
 
     ~Reflow();
 
@@ -58,6 +101,14 @@ public:
      * @return The course, or nullptr when the setting is unusable.
      */
     std::shared_ptr<Course> add_course(const CourseSetting& setting, bool paused = false);
+
+    /**
+     * @brief Start a course with a source, operations or sink of its own.
+     * @return The course, or nullptr when the setting is unusable, both kinds of source are
+     * given, an operation is empty or is a mix, every is zero, enters_after is negative, or
+     * what it leaves unsaid (a source, a sink) is not there to be shared.
+     */
+    std::shared_ptr<Course> add_route(const CourseRoute<Frame>& route);
 
     /** @brief Stop a course taking part. It keeps its own state. */
     bool remove_course(const std::shared_ptr<Course>& course);
@@ -96,18 +147,39 @@ public:
     /** @brief Cycles per second the courses count in. Not the rate of the source's own frames. */
     [[nodiscard]] double cycle_rate() const noexcept { return m_cycle_rate; }
 
+    /** @brief The shared source, or null when the reflow reads a sampled one. */
     [[nodiscard]] const std::shared_ptr<const Kakshya::FrameSource<Frame>>& source() const noexcept { return m_source; }
+
+    /** @brief The shared sampled source, or null when the reflow reads a listed one. */
+    [[nodiscard]] const std::shared_ptr<const Kakshya::SampledFrames<Frame>>& sampled() const noexcept { return m_sampled; }
 
 private:
     friend class ReflowBuilder<Frame>;
 
-    Reflow(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink,
+    struct Lane {
+        std::shared_ptr<Course> course;
+        std::shared_ptr<const Kakshya::FrameSource<Frame>> source;
+        std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled;
+        std::vector<FrameOperation<Frame>> operations;
+        Sink sink;
+        uint64_t enter_cycle {};
+        uint32_t every { 1 };
+        std::shared_ptr<const Frame> last_written;
+    };
+
+    Reflow(std::shared_ptr<const Kakshya::FrameSource<Frame>> source,
+        std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled, Sink sink,
         std::vector<FrameOperation<Frame>> operations, FrameSelection selection, Rewrite rewrite, double cycle_rate);
 
     void hold();
-    [[nodiscard]] bool operate(const FrameContext& context, std::shared_ptr<const Frame>& frame);
+    [[nodiscard]] bool operate(const std::vector<FrameOperation<Frame>>& operations,
+        const FrameContext& context, std::shared_ptr<const Frame>& frame);
+    [[nodiscard]] bool read_lane(Lane& lane, double time, std::vector<WeightedFrame<Frame>>& into);
+    [[nodiscard]] std::shared_ptr<const Frame> reduce(
+        const FrameContext& context, const std::vector<WeightedFrame<Frame>>& frames) const;
 
     std::shared_ptr<const Kakshya::FrameSource<Frame>> m_source;
+    std::shared_ptr<const Kakshya::SampledFrames<Frame>> m_sampled;
     Sink m_sink;
     std::vector<FrameOperation<Frame>> m_operations;
     std::optional<typename FrameOperation<Frame>::MixFn> m_mix;
@@ -115,12 +187,14 @@ private:
     Rewrite m_rewrite;
     double m_cycle_rate;
 
-    Memory::SnapshotCell<std::vector<std::shared_ptr<Course>>> m_courses;
+    Memory::SnapshotCell<std::vector<std::shared_ptr<Lane>>> m_lanes;
     Memory::SnapshotCell<std::shared_ptr<const Frame>> m_current;
 
     uint64_t m_cycle {};
     std::shared_ptr<const Frame> m_last_written;
     std::vector<WeightedFrame<Frame>> m_gathered;
+    std::vector<WeightedFrame<Frame>> m_lane_frames;
+    std::vector<std::shared_ptr<Course>> m_course_scratch;
     bool m_holding {};
 
     std::atomic<uint64_t> m_cycle_cell { 0 };
@@ -142,12 +216,13 @@ private:
  */
 template <typename Frame>
 struct ReflowConfig {
-    std::vector<CourseSetting> courses; ///< Empty means one course over the whole source.
+    std::vector<CourseSetting> courses; ///< Empty, with no routes, means one course over the whole source.
     std::vector<FrameOperation<Frame>> operations; ///< Run in order. At most one mix.
     FrameSelection selection { FrameSelection::Floor };
     Rewrite rewrite { Rewrite::OnChange };
     double cycle_rate {}; ///< Cycles per second. Zero takes the registered frame rate.
     bool paused {}; ///< Whether the courses start without running.
+    std::vector<CourseRoute<Frame>> routes; ///< Courses with a source, operations or sink of their own.
 };
 
 /**
@@ -155,7 +230,7 @@ struct ReflowConfig {
  * @brief Describes a reflow, then builds it or starts it on a scheduler.
  *
  * Defaults: one course over the whole source (Once, or Hold for a single frame), Floor
- * selection, Rewrite::OnChange. Adding a course replaces that default.
+ * selection, Rewrite::OnChange. Adding a course or a route replaces that default.
  *
  * @code
  * auto smoke = ReflowBuilder<VolumeData>(sequence, write_into_volume)
@@ -172,16 +247,29 @@ public:
     using Sink = typename Reflow<Frame>::Sink;
 
     /**
-     * @param source The frames to read. Null makes build() return nullptr.
-     * @param sink Receives each frame written. Empty makes build() return nullptr.
+     * @param source The frames to read. Null makes build() return nullptr, unless every course is a
+     *        route with a source of its own.
+     * @param sink Receives each frame written. Empty makes build() return nullptr, unless every
+     *        course is a route with a sink of its own.
      * @param cycle_rate Cycles per second. Zero takes the registered frame rate.
      * @param scheduler The scheduler start() runs the reflow on. Not needed to build().
      */
     ReflowBuilder(std::shared_ptr<const Kakshya::FrameSource<Frame>> source, Sink sink, double cycle_rate = 0.0,
         std::shared_ptr<Vruta::TaskScheduler> scheduler = nullptr);
 
+    /**
+     * @brief A builder over a source that answers for any time, such as keyed motion.
+     * @param sampled The source. Null makes build() return nullptr.
+     * @param sink Receives each frame written. May be empty when every course is a route with a sink.
+     */
+    [[nodiscard]] static ReflowBuilder sampling(std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled, Sink sink,
+        double cycle_rate = 0.0, std::shared_ptr<Vruta::TaskScheduler> scheduler = nullptr);
+
     /** @brief Add a course. */
     ReflowBuilder& course(const CourseSetting& setting, bool paused = false);
+
+    /** @brief Add a course with a source, operations or sink of its own. */
+    ReflowBuilder& route(CourseRoute<Frame> route);
 
     /**
      * @brief Add the courses and operations of a config and take its selection and rewrite.
@@ -218,10 +306,12 @@ private:
     };
 
     std::shared_ptr<const Kakshya::FrameSource<Frame>> m_source;
+    std::shared_ptr<const Kakshya::SampledFrames<Frame>> m_sampled;
     Sink m_sink;
     double m_cycle_rate;
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::vector<Planned> m_courses;
+    std::vector<CourseRoute<Frame>> m_routes;
     std::vector<FrameOperation<Frame>> m_operations;
     FrameSelection m_selection { FrameSelection::Floor };
     Rewrite m_rewrite { Rewrite::OnChange };

@@ -45,6 +45,7 @@ struct WeightedFrame {
 struct FrameContext {
     std::span<const std::shared_ptr<Course>> courses;
     uint64_t cycle {};
+    const Course* course {}; ///< The course the frame came from, or null where several have been mixed.
 };
 
 /**

@@ -175,7 +175,7 @@ public:
      * row and each further mesh a child row, an identity scene root with no row unless
      * an animation targets it, and meshes no node references as root rows.
      *
-     * Each Assimp animation becomes a clip. A channel is resolved by node name; a name
+     * Each Assimp animation becomes a motion. A channel is resolved by node name; a name
      * that matches no row or more than one row, a node with no row, and a node an
      * animation keys twice are skipped with a warning. Times are seconds: key time over
      * mTicksPerSecond, with 0 ticks per second read as 1. A key's interpolation is Step

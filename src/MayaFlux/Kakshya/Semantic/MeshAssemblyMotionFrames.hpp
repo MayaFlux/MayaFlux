@@ -1,0 +1,63 @@
+#pragma once
+
+#include "MeshAssemblyContainer.hpp"
+
+#include "MayaFlux/Kakshya/FrameSource.hpp"
+
+namespace MayaFlux::Kakshya {
+
+/**
+ * @struct MeshAssemblyLocals
+ * @brief The local placement of every row of an assembly at one time of a motion, one matrix per row.
+ */
+struct MeshAssemblyLocals {
+    std::vector<glm::mat4> matrices;
+};
+
+/**
+ * @class MeshAssemblyMotionFrames
+ * @brief A motion of a MeshAssemblyContainer as a SampledFrames of MeshAssemblyLocals.
+ *
+ * Every time of the motion's range answers with the placements the motion's keys give there, cubic
+ * splines and any key spacing included, so a Reflow plays a motion without baking it to frames.
+ * The range runs from the earliest key of any channel to the latest.
+ *
+ * Holds the assembly, so the motion stays readable for as long as the source lives. The assembly
+ * must not be changed while the source is read.
+ */
+class MAYAFLUX_API MeshAssemblyMotionFrames final : public SampledFrames<MeshAssemblyLocals> {
+public:
+    /**
+     * @brief Make the source for one motion.
+     * @param assembly The assembly. Null gives nullptr.
+     * @param motion Motion index.
+     * @param policy What a channel answers outside its own keys.
+     * @return nullptr for a null assembly, a motion out of range or a motion with no keyed component.
+     */
+    [[nodiscard]] static std::shared_ptr<const MeshAssemblyMotionFrames> create(
+        std::shared_ptr<const MeshAssemblyContainer> assembly, size_t motion,
+        Kinesis::OutOfRange policy = Kinesis::OutOfRange::Hold);
+
+    [[nodiscard]] std::pair<double, double> extent() const override { return { m_first, m_last }; }
+
+    [[nodiscard]] std::shared_ptr<const MeshAssemblyLocals> sample(double time) const override;
+
+private:
+    MeshAssemblyMotionFrames(std::shared_ptr<const MeshAssemblyContainer> assembly, size_t motion,
+        Kinesis::OutOfRange policy, double first, double last)
+        : m_assembly(std::move(assembly))
+        , m_motion(motion)
+        , m_policy(policy)
+        , m_first(first)
+        , m_last(last)
+    {
+    }
+
+    std::shared_ptr<const MeshAssemblyContainer> m_assembly;
+    size_t m_motion;
+    Kinesis::OutOfRange m_policy;
+    double m_first;
+    double m_last;
+};
+
+} // namespace MayaFlux::Kakshya

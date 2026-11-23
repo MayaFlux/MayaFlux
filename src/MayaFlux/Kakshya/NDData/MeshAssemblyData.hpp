@@ -75,15 +75,15 @@ struct MeshAssemblyChannel {
 };
 
 /**
- * @struct MeshAssemblyClip
+ * @struct MeshAssemblyMotion
  * @brief A named set of channels, each targeting a different placement row.
  */
-struct MeshAssemblyClip {
+struct MeshAssemblyMotion {
     std::string name;
     std::vector<MeshAssemblyChannel> channels;
 };
 
-MF_DESCRIBE(MeshAssemblyClip)
+MF_DESCRIBE(MeshAssemblyMotion)
 
 /**
  * @struct MeshAssemblyGroup
@@ -124,7 +124,7 @@ MF_DESCRIBE(MeshAssemblyPlacement)
  *        Alembic archive holds, as one passive value.
  *
  * Sources and materials are stored once. The placement table has one row per
- * MeshAssemblyPlacement. Clips move rows by keys over time. facets holds what
+ * MeshAssemblyPlacement. Motions move rows by keys over time. facets holds what
  * describes the whole file (its path, application, units, up axis), by typed key
  * or as whole structs, so no such fact is a member.
  *
@@ -144,7 +144,7 @@ struct MAYAFLUX_API MeshAssemblyData {
     std::vector<MeshAssemblySource> sources;
     std::vector<MeshAssemblyMaterial> materials;
     CompositeArray placements { placement_layout() };
-    std::vector<MeshAssemblyClip> clips;
+    std::vector<MeshAssemblyMotion> motions;
     Facets facets;
 };
 

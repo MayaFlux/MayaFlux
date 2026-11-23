@@ -82,31 +82,31 @@ namespace {
             }
         }
 
-        for (const auto& clip : data.clips) {
-            MeshAssemblyClip kept { .name = clip.name, .channels = {} };
-            for (const auto& channel : clip.channels) {
+        for (const auto& motion : data.motions) {
+            MeshAssemblyMotion kept { .name = motion.name, .channels = {} };
+            for (const auto& channel : motion.channels) {
                 if (channel.row >= start && channel.row < start + count) {
                     kept.channels.push_back(channel);
                     kept.channels.back().row -= start;
                 }
             }
             if (!kept.channels.empty()) {
-                out.clips.push_back(std::move(kept));
+                out.motions.push_back(std::move(kept));
             }
         }
         return out;
     }
 
-    bool channels_are_valid(const MeshAssemblyClip& clip, size_t rows, std::string& error)
+    bool channels_are_valid(const MeshAssemblyMotion& motion, size_t rows, std::string& error)
     {
         std::vector<bool> targeted(rows, false);
-        for (const auto& channel : clip.channels) {
+        for (const auto& channel : motion.channels) {
             if (channel.row >= rows) {
-                error = "clip " + clip.name + " targets a row that does not exist";
+                error = "motion " + motion.name + " targets a row that does not exist";
                 return false;
             }
             if (targeted[channel.row]) {
-                error = "clip " + clip.name + " targets a row twice";
+                error = "motion " + motion.name + " targets a row twice";
                 return false;
             }
             targeted[channel.row] = true;
@@ -164,8 +164,8 @@ bool MeshAssemblyContainer::validate(const MeshAssemblyData& data, std::string& 
         }
     }
 
-    return std::ranges::all_of(data.clips, [&](const MeshAssemblyClip& clip) {
-        return channels_are_valid(clip, rows, error);
+    return std::ranges::all_of(data.motions, [&](const MeshAssemblyMotion& motion) {
+        return channels_are_valid(motion, rows, error);
     });
 }
 
@@ -203,14 +203,14 @@ std::optional<MeshAssemblyPlacement> MeshAssemblyContainer::placement(size_t row
     return read_placement(m_data.placements, row);
 }
 
-std::optional<size_t> MeshAssemblyContainer::add_clip(MeshAssemblyClip clip)
+std::optional<size_t> MeshAssemblyContainer::add_motion(MeshAssemblyMotion motion)
 {
     std::string reason;
-    if (!channels_are_valid(clip, m_data.placements.size(), reason)) {
+    if (!channels_are_valid(motion, m_data.placements.size(), reason)) {
         return std::nullopt;
     }
-    m_data.clips.push_back(std::move(clip));
-    return m_data.clips.size() - 1;
+    m_data.motions.push_back(std::move(motion));
+    return m_data.motions.size() - 1;
 }
 
 const MeshData* MeshAssemblyContainer::mesh(size_t source) const noexcept
@@ -282,14 +282,14 @@ std::vector<MeshAssemblyGroup> MeshAssemblyContainer::groups() const
 }
 
 std::optional<std::vector<glm::mat4>> MeshAssemblyContainer::sample(
-    size_t clip, double time, Kinesis::OutOfRange policy) const
+    size_t motion, double time, Kinesis::OutOfRange policy) const
 {
-    if (clip >= m_data.clips.size()) {
+    if (motion >= m_data.motions.size()) {
         return std::nullopt;
     }
 
     auto locals = local_transforms();
-    for (const auto& channel : m_data.clips[clip].channels) {
+    for (const auto& channel : m_data.motions[motion].channels) {
         glm::mat4& local = locals[channel.row];
         const auto rest = Kinesis::decompose_transform(local).value_or(
             std::tuple { glm::vec3(0.0F), glm::quat(1.0F, 0.0F, 0.0F, 0.0F), glm::vec3(1.0F) });

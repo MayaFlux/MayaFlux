@@ -244,7 +244,7 @@ public:
      * curves, polygon or subdivision mesh object becomes a source holding its first sample,
      * with its sample times and its topology variance, and a row that shows it. An instance
      * shares the sources of the object it instances instead of reading them again. A
-     * transform that changes over time becomes a channel of one clip named for the file.
+     * transform that changes over time becomes a channel of one motion named for the file.
      *
      * The variance of a mesh or curves object is the file's; that of a points object is
      * Constant for one sample and Heterogeneous for more, since the point count may change.

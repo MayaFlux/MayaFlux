@@ -47,6 +47,32 @@ public:
 };
 
 /**
+ * @class SampledFrames
+ * @brief A source of frames that exist at every time of a range and are answered on demand.
+ *
+ * Where a FrameSource holds a finite list and a time falls among its frames, a sampled source
+ * has no list: the frame at a time is computed when asked, so keyed motion, a function of time
+ * or a procedural form can be played with the same courses. A frame is shared and never changed
+ * once handed out, and a source may hand out the same frame for the same time.
+ *
+ * sample() may be called from any thread.
+ */
+template <typename Frame>
+class SampledFrames {
+public:
+    virtual ~SampledFrames() = default;
+
+    /** @brief The first and last time, in seconds, the source answers for. The last is not before the first. */
+    [[nodiscard]] virtual std::pair<double, double> extent() const = 0;
+
+    /**
+     * @brief The frame at a time.
+     * @return The frame, or nullptr for a time it cannot answer.
+     */
+    [[nodiscard]] virtual std::shared_ptr<const Frame> sample(double time) const = 0;
+};
+
+/**
  * @class ResidentFrames
  * @brief A FrameSource that holds every frame in memory.
  */

@@ -15,9 +15,9 @@ namespace MayaFlux::Kakshya {
  * or draw anything. Four things live here:
  * - the geometry, stored once in sources and referred to by index from placement rows
  * - the hierarchy, a parent column over the rows, indexed by ForestIndex on request
- * - the time a source or a clip declared (TimeSampling, TopologyVariance, TimedValues)
+ * - the time a source or a motion declared (TimeSampling, TopologyVariance, TimedValues)
  * - the derived views every consumer needs: world transforms, rows grouped by shared
- *   source and material, and a clip sampled at a time
+ *   source and material, and a motion sampled at a time
  *
  * Frames of a source that changes over time are not held; they come from a FrameSource
  * behind a SequenceContainer. Conversion to a network or a buffer is the consumer's.
@@ -28,7 +28,7 @@ namespace MayaFlux::Kakshya {
  * It has no frame axis.
  *
  * Every add_* call checks what it is given against what is already held, so a parent
- * always precedes its child, every source and material index is in range and a clip
+ * always precedes its child, every source and material index is in range and a motion
  * never targets a row twice. The forest therefore always indexes.
  *
  * Usage:
@@ -61,7 +61,7 @@ public:
     /**
      * @brief Whether data is consistent: the placement table has the placement layout,
      *        every parent is an earlier row, every source and material index is in
-     *        range, and no clip targets a row twice or one that is missing.
+     *        range, and no motion targets a row twice or one that is missing.
      * @param error Receives the reason when false is returned.
      */
     [[nodiscard]] static bool validate(const MeshAssemblyData& data, std::string& error);
@@ -87,11 +87,11 @@ public:
     [[nodiscard]] std::optional<MeshAssemblyPlacement> placement(size_t row) const;
 
     /**
-     * @brief Add a clip.
-     * @return The clip index, or nullopt when a channel targets a missing row or two
+     * @brief Add a motion.
+     * @return The motion index, or nullopt when a channel targets a missing row or two
      *         channels target the same row.
      */
-    [[nodiscard]] std::optional<size_t> add_clip(MeshAssemblyClip clip);
+    [[nodiscard]] std::optional<size_t> add_motion(MeshAssemblyMotion motion);
 
     /** @brief Replace the facets that describe the whole assembly. */
     void set_facets(Facets facets) { m_data.facets = std::move(facets); }
@@ -147,17 +147,17 @@ public:
     [[nodiscard]] std::vector<MeshAssemblyGroup> groups() const;
 
     /**
-     * @brief Local placement of every row with a clip sampled at a time.
-     * @param clip Clip index.
+     * @brief Local placement of every row with a motion sampled at a time.
+     * @param motion Motion index.
      * @param time Time in seconds.
      * @param policy What a channel answers outside its keys. Absent leaves that
      *        component at the row's rest value.
-     * @return One matrix per row, or nullopt when clip is out of range. A row no
+     * @return One matrix per row, or nullopt when motion is out of range. A row no
      *         channel targets keeps its rest placement, and so does any component a
      *         channel does not key.
      */
     [[nodiscard]] std::optional<std::vector<glm::mat4>> sample(
-        size_t clip, double time,
+        size_t motion, double time,
         Kinesis::OutOfRange policy = Kinesis::OutOfRange::Hold) const;
 
     /** @brief Describe the placement row axis. */
@@ -183,7 +183,7 @@ public:
      *
      * A parent outside the region leaves its child a root. Only the sources and
      * materials the rows use are kept, in their original order, with their facets, and
-     * the clips keep the channels that target a copied row. The file-level facets are
+     * the motions keep the channels that target a copied row. The file-level facets are
      * kept whole.
      *
      * @return One value, or empty when the region is invalid.
@@ -212,7 +212,7 @@ public:
     /** @brief Map a linear row index to one-dimensional coordinates. */
     [[nodiscard]] std::vector<uint64_t> linear_index_to_coordinates(uint64_t linear_index) const override;
 
-    /** @brief Remove everything: sources, materials, rows, clips and region groups. */
+    /** @brief Remove everything: sources, materials, rows, motions and region groups. */
     void clear() override;
 
     /** @brief Borrow the packed placement bytes, or nullptr when empty. */

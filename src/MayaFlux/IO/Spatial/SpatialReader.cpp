@@ -1081,7 +1081,7 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assem
     };
 
     std::vector<std::optional<uint64_t>> row_of(objects.size());
-    Kakshya::MeshAssemblyClip clip { .name = std::filesystem::path(m_impl->path).stem().string(), .channels = {} };
+    Kakshya::MeshAssemblyMotion motion { .name = std::filesystem::path(m_impl->path).stem().string(), .channels = {} };
 
     for (size_t i = 0; i < objects.size(); ++i) {
         const auto& object = objects[i];
@@ -1141,7 +1141,7 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assem
                 { .times = *sampling, .values = std::move(rotations), .kind = Kinesis::ValueKind::Rotation });
             channel.scale = Kinesis::TimedValues<glm::vec3>::create(
                 { .times = std::move(*sampling), .values = std::move(scales) });
-            clip.channels.push_back(std::move(channel));
+            motion.channels.push_back(std::move(channel));
             break;
         }
         case SpatialObjectKind::Points:
@@ -1170,14 +1170,14 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assem
         }
     }
 
-    if (!clip.channels.empty()) {
-        std::ignore = assembly->add_clip(std::move(clip));
+    if (!motion.channels.empty()) {
+        std::ignore = assembly->add_motion(std::move(motion));
     }
 
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
-        "SpatialReader::create_mesh_assembly: {} rows, {} sources, {} clips",
+        "SpatialReader::create_mesh_assembly: {} rows, {} sources, {} motions",
         assembly->get_total_elements(), assembly->get_data().sources.size(),
-        assembly->get_data().clips.size());
+        assembly->get_data().motions.size());
 
     return assembly;
 }

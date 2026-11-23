@@ -22,19 +22,6 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblyChannel> {
 };
 
 template <>
-struct Description<::MayaFlux::Kakshya::MeshAssemblyClip> {
-    static constexpr std::string_view name = "MayaFlux::Kakshya::MeshAssemblyClip";
-
-    static constexpr auto members()
-    {
-        return std::tuple {
-            Member<&::MayaFlux::Kakshya::MeshAssemblyClip::name> { "name" },
-            Member<&::MayaFlux::Kakshya::MeshAssemblyClip::channels> { "channels" },
-        };
-    }
-};
-
-template <>
 struct Description<::MayaFlux::Kakshya::MeshAssemblyGroup> {
     static constexpr std::string_view name = "MayaFlux::Kakshya::MeshAssemblyGroup";
 
@@ -59,6 +46,19 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblyMaterial> {
             Member<&::MayaFlux::Kakshya::MeshAssemblyMaterial::diffuse_path> { "diffuse_path" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyMaterial::diffuse_embedded> { "diffuse_embedded" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyMaterial::facets> { "facets" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Kakshya::MeshAssemblyMotion> {
+    static constexpr std::string_view name = "MayaFlux::Kakshya::MeshAssemblyMotion";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Kakshya::MeshAssemblyMotion::name> { "name" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblyMotion::channels> { "channels" },
         };
     }
 };
