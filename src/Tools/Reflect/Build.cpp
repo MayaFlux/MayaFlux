@@ -91,16 +91,7 @@ bool write_depfile(const std::filesystem::path& path, const std::string& target,
 
 bool write_generated(const std::filesystem::path& path, const std::string& content, std::string& error)
 {
-    if (!write_if_changed(path, content, error)) {
-        return false;
-    }
-    std::error_code code;
-    std::filesystem::last_write_time(path, std::filesystem::file_time_type::clock::now(), code);
-    if (code) {
-        error = "cannot update the timestamp of " + path.string();
-        return false;
-    }
-    return true;
+    return write_if_changed(path, content, error);
 }
 
 std::vector<std::filesystem::path> without_sidecars(std::vector<std::filesystem::path> dependencies)
