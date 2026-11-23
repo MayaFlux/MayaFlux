@@ -27,7 +27,10 @@ namespace MayaFlux::Buffers {
  *    geometry changed (node->needs_gpu_update()), when the nodes that supply
  *    geometry are no longer the ones last uploaded (a slot added, removed,
  *    reordered or given another node), or when the vertex layout changed
- *    (set_milling_slot_attribute). Otherwise only transforms can have changed.
+ *    (set_milling_slot_attribute). It is also done every cycle while an
+ *    operator of the network demands the vertices be restored (a
+ *    GpuFieldOperator with a bound field, which displaces them in place on the
+ *    GPU). Otherwise only transforms can have changed.
  * 3. Full upload: concatenates vertex bytes from all slots in topological order,
  *    concatenates index data with each slot's indices rebased by the running
  *    vertex count so all slots share one index buffer and one draw call,
@@ -98,6 +101,7 @@ private:
 
     [[nodiscard]] bool any_slot_dirty() const;
     [[nodiscard]] bool needs_full_upload() const;
+    [[nodiscard]] bool demands_vertex_restore() const;
     void collect_model_matrices(std::vector<glm::mat4>& out) const;
     void upload_model_matrices();
     void clear_slot_dirty_flags();

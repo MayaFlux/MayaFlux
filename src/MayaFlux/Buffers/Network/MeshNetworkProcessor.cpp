@@ -1,6 +1,7 @@
 #include "MeshNetworkProcessor.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
@@ -127,7 +128,7 @@ void MeshNetworkProcessor::processing_function(const std::shared_ptr<Buffer>& bu
     if (!vk_buf)
         return;
 
-    if (!any_slot_dirty())
+    if (!any_slot_dirty() && !demands_vertex_restore())
         return;
 
     if (needs_full_upload()) {
@@ -315,9 +316,20 @@ bool MeshNetworkProcessor::any_slot_dirty() const
     });
 }
 
+bool MeshNetworkProcessor::demands_vertex_restore() const
+{
+    if (const auto* primary = m_network->get_operator(); primary && primary->demands_full_vertex_restore())
+        return true;
+
+    const auto chain = m_network->get_operator_chain();
+    return chain && std::ranges::any_of(chain->operators(), [](const auto& op) {
+        return op && op->demands_full_vertex_restore();
+    });
+}
+
 bool MeshNetworkProcessor::needs_full_upload() const
 {
-    if (m_force_full_upload)
+    if (m_force_full_upload || demands_vertex_restore())
         return true;
 
     const auto& slots = m_network->slots();

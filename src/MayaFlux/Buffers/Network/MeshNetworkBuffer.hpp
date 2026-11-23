@@ -2,6 +2,8 @@
 
 #include "MeshNetworkProcessor.hpp"
 
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
+
 namespace MayaFlux::Core {
 class VKImage;
 }
@@ -16,7 +18,7 @@ class RenderProcessor;
 
 /**
  * @class MeshNetworkBuffer
- * @brief VKBuffer that renders a MeshNetwork as a single indexed draw call.
+ * @brief StateFieldBuffer that renders a MeshNetwork as a single indexed draw call.
  *
  * Analogous to MeshBuffer but driven by a MeshNetwork rather than a single
  * MeshData. All slots are concatenated by MeshNetworkProcessor into one
@@ -39,7 +41,7 @@ class RenderProcessor;
  * buf->setup_rendering({ .target_window = window });
  * @endcode
  */
-class MAYAFLUX_API MeshNetworkBuffer : public VKBuffer {
+class MAYAFLUX_API MeshNetworkBuffer : public StateFieldBuffer {
 public:
     /**
      * @brief Construct from an existing MeshNetwork.
@@ -67,6 +69,18 @@ public:
      * - Defaults to triangle.vert.spv / triangle.frag.spv (untextured)
      *   or mesh_textured.frag.spv when a diffuse texture is bound.
      * - RenderConfig::additional_textures registers extra texture slots.
+     *
+     * A GpuFieldOperator in the network's operator chain adds its field pass to
+     * this buffer here, once the vertex record size is known, so a network that
+     * is never rendered gets no field pass. The pass displaces the vertices in
+     * their own slot space; the model matrices still place them. While it has a
+     * bound field MeshNetworkProcessor restores the vertices from the nodes every
+     * cycle, so the field is applied to the rest geometry and does not
+     * accumulate. Only the field pass is wired: SpatialFieldConfig stages (hash,
+     * claim, density, population) and cluster scoped fields are not, and each
+     * is reported when asked for. The operator's layout must have the size of the
+     * vertex record, MeshVertex or, when the draw is milled, MeshVertex and two
+     * floats.
      */
     void setup_rendering(const RenderConfig& config);
 
@@ -120,6 +134,8 @@ private:
     std::string m_diffuse_binding { "diffuseTex" };
 
     RenderConfig m_render_config;
+
+    void wire_field_pass(size_t record_bytes);
 
     static size_t estimate_vertex_bytes(
         const std::shared_ptr<Nodes::Network::MeshNetwork>& network,

@@ -3,6 +3,10 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
+
+#include "SpatialFieldWiring.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
@@ -18,7 +22,7 @@ namespace MayaFlux::Buffers {
 MeshNetworkBuffer::MeshNetworkBuffer(
     std::shared_ptr<Nodes::Network::MeshNetwork> network,
     float over_allocate_factor)
-    : VKBuffer(
+    : StateFieldBuffer(
           estimate_vertex_bytes(network, over_allocate_factor),
           Usage::VERTEX,
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
@@ -112,6 +116,8 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     }
     set_vertex_layout(vertex_layout);
 
+    wire_field_pass(vertex_layout.stride_bytes);
+
     for (const auto& entry : config.additional_textures)
         m_render_config.additional_textures.push_back(entry);
 
@@ -187,6 +193,44 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_config.vertex_shader,
         m_render_config.fragment_shader,
         textured);
+}
+
+void MeshNetworkBuffer::wire_field_pass(size_t record_bytes)
+{
+    const auto chain = m_network->get_operator_chain();
+    if (!chain)
+        return;
+
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op;
+    for (const auto& op : chain->operators()) {
+        field_op = std::dynamic_pointer_cast<Nodes::Network::GpuFieldOperator>(op);
+        if (field_op)
+            break;
+    }
+    if (!field_op)
+        return;
+
+    if (field_op->get_layout().stride_bytes != record_bytes) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer: the field operator's layout is {} bytes per vertex, the buffer's "
+            "records are {}; no field pass is wired",
+            field_op->get_layout().stride_bytes, record_bytes);
+        return;
+    }
+
+    if (wants_spatial_stages(field_op->get_field_config())) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer: the hash, claim, density and population stages are not wired for a "
+            "MeshNetwork; only the field pass is");
+    }
+
+    wire_field_stages(
+        std::dynamic_pointer_cast<StateFieldBuffer>(shared_from_this()),
+        field_op, std::nullopt, {}, nullptr);
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "MeshNetworkBuffer: field pass wired, {} bound fields, {} bytes per vertex",
+        field_op->binding_count(), record_bytes);
 }
 
 // =============================================================================
