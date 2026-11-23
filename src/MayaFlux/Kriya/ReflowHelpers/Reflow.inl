@@ -86,6 +86,7 @@ std::shared_ptr<Course> Reflow<Frame>::add_route(const CourseRoute<Frame>& route
     lane->course = course;
     lane->operations = route.operations;
     lane->every = route.every;
+    lane->selection = route.selection;
     lane->enter_cycle = m_cycle_cell.load(std::memory_order_relaxed)
         + static_cast<uint64_t>(std::ceil(route.enters_after * m_cycle_rate));
 
@@ -190,7 +191,7 @@ bool Reflow<Frame>::read_lane(Lane& lane, double time, std::vector<WeightedFrame
         return false;
     }
 
-    const auto picks = Detail::select_frames(*location, m_selection, weight);
+    const auto picks = Detail::select_frames(*location, lane.selection.value_or(m_selection), weight);
     bool read_any = false;
     for (size_t i = 0; i < picks.count; ++i) {
         const auto& pick = picks.items[i];

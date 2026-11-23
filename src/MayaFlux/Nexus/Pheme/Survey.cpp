@@ -7,10 +7,12 @@
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/VertexFieldProcessor.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Kakshya/NDData/SpatialAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexInsertion.hpp"
 #include "MayaFlux/Kinesis/Morphology.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
@@ -120,6 +122,39 @@ namespace {
         return Cloud { .positions = std::move(*positions), .clusters = graphics->build_cluster_ids() };
     }
 
+    std::optional<Cloud> recorded_cloud(const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer)
+    {
+        const auto frame = buffer->current_frame();
+        if (!frame || frame->positions.empty()) {
+            return std::nullopt;
+        }
+
+        Cloud cloud { .positions = frame->positions, .clusters = Kakshya::spatial_cluster_ids(*frame) };
+        const size_t drawn = std::min<size_t>(cloud.positions.size(), buffer->capacity());
+        cloud.positions.resize(drawn);
+        cloud.clusters.resize(std::min(cloud.clusters.size(), drawn));
+        return cloud;
+    }
+
+    std::optional<Kinesis::AABB3D> cloud_bounds(const std::optional<Cloud>& cloud, const std::optional<uint32_t>& collection)
+    {
+        if (!cloud || cloud->positions.empty()) {
+            return std::nullopt;
+        }
+        if (!collection) {
+            return Kinesis::aabb(cloud->positions);
+        }
+
+        std::vector<glm::vec3> chosen;
+        const size_t count = std::min(cloud->positions.size(), cloud->clusters.size());
+        for (size_t i = 0; i < count; ++i) {
+            if (cloud->clusters.at(i) == *collection) {
+                chosen.push_back(cloud->positions.at(i));
+            }
+        }
+        return chosen.empty() ? std::nullopt : std::optional<Kinesis::AABB3D> { Kinesis::aabb(chosen) };
+    }
+
     bool field_driven(const std::shared_ptr<Buffers::VKBuffer>& buffer)
     {
         const auto chain = buffer->get_processing_chain();
@@ -164,6 +199,9 @@ namespace {
         }
         if (const auto geometry = std::dynamic_pointer_cast<Buffers::GeometryBuffer>(buffer)) {
             return node_cloud(geometry);
+        }
+        if (const auto recorded = std::dynamic_pointer_cast<Buffers::RecordedGeometryBuffer>(buffer)) {
+            return recorded_cloud(recorded);
         }
         return std::nullopt;
     }
@@ -270,22 +308,11 @@ std::optional<Kinesis::AABB3D> read_bounds(
     }
 
     if (const auto network_buffer = std::dynamic_pointer_cast<Buffers::NetworkGeometryBuffer>(buf)) {
-        const auto cloud = network_cloud(network_buffer);
-        if (!cloud || cloud->positions.empty()) {
-            return std::nullopt;
-        }
-        if (!collection) {
-            return Kinesis::aabb(cloud->positions);
-        }
+        return cloud_bounds(network_cloud(network_buffer), collection);
+    }
 
-        std::vector<glm::vec3> chosen;
-        const size_t count = std::min(cloud->positions.size(), cloud->clusters.size());
-        for (size_t i = 0; i < count; ++i) {
-            if (cloud->clusters.at(i) == *collection) {
-                chosen.push_back(cloud->positions.at(i));
-            }
-        }
-        return chosen.empty() ? std::nullopt : std::optional<Kinesis::AABB3D> { Kinesis::aabb(chosen) };
+    if (const auto recorded = std::dynamic_pointer_cast<Buffers::RecordedGeometryBuffer>(buf)) {
+        return cloud_bounds(recorded_cloud(recorded), collection);
     }
 
     if (const auto geometry = std::dynamic_pointer_cast<Buffers::GeometryBuffer>(buf)) {

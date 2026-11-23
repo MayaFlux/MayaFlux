@@ -37,6 +37,9 @@ class RenderProcessor;
  * bound, the frame is written again every cycle, since the field pass displaces the
  * records in place. Cluster ids and liveness are written once per frame.
  *
+ * A claim that relabels hash_cluster_id (transfer_on_claim) lasts until the next frame, which
+ * writes the frame's recorded cluster ids again.
+ *
  * write_frame may be called from any thread and never blocks. Only the newest frame
  * is kept, and it is written on the next graphics cycle.
  */

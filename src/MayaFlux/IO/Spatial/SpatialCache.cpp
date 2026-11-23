@@ -249,8 +249,22 @@ SpatialCache::SpatialCache()
 }
 
 SpatialCache::~SpatialCache() = default;
-SpatialCache::SpatialCache(SpatialCache&&) noexcept = default;
-SpatialCache& SpatialCache::operator=(SpatialCache&&) noexcept = default;
+SpatialCache::SpatialCache(SpatialCache&& other) noexcept
+    : m_impl(std::move(other.m_impl))
+    , m_last_error(std::move(other.m_last_error))
+{
+    other.m_impl = std::make_unique<Impl>();
+}
+
+SpatialCache& SpatialCache::operator=(SpatialCache&& other) noexcept
+{
+    if (this != &other) {
+        m_impl = std::move(other.m_impl);
+        m_last_error = std::move(other.m_last_error);
+        other.m_impl = std::make_unique<Impl>();
+    }
+    return *this;
+}
 
 bool SpatialCache::open(const std::string& filepath)
 {

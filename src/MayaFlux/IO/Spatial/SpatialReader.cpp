@@ -131,44 +131,81 @@ namespace {
         return std::nullopt;
     }
 
+    enum class ValueScope : uint8_t {
+        None,
+        Vertex,
+        Corner,
+        Face,
+        Constant
+    };
+
     template <class Elem>
-    struct CornerValues {
+    struct MeshValues {
         std::vector<Elem> values;
-        bool per_corner { false };
+        ValueScope scope { ValueScope::None };
+
+        [[nodiscard]] bool per_corner_or_face() const noexcept
+        {
+            return scope == ValueScope::Corner || scope == ValueScope::Face;
+        }
+
+        [[nodiscard]] Elem at(size_t corner, size_t vertex, size_t face) const
+        {
+            switch (scope) {
+            case ValueScope::Vertex:
+                return values[vertex];
+            case ValueScope::Corner:
+                return values[corner];
+            case ValueScope::Face:
+                return values[face];
+            default:
+                return values[0];
+            }
+        }
     };
 
     template <class Param, class Elem, class Convert>
-    CornerValues<Elem> read_corner_values(
+    MeshValues<Elem> read_mesh_values(
         const Param& param, const ISampleSelector& selector,
-        size_t vertex_count, size_t corner_count,
+        size_t vertex_count, size_t corner_count, size_t face_count,
         const char* what, const std::string& name, Convert convert)
     {
-        CornerValues<Elem> result;
+        MeshValues<Elem> result;
         if (!param.valid()) {
             return result;
         }
 
         const auto sample = param.getExpandedValue(selector);
         const auto values = sample.getVals();
-        if (!values) {
+        if (!values || values->size() == 0) {
             return result;
         }
 
         const auto scope = sample.getScope();
-        const bool per_vertex = (scope == kVertexScope || scope == kVaryingScope) && values->size() == vertex_count;
-        const bool corner = scope == kFacevaryingScope && values->size() == corner_count;
-        if (!per_vertex && !corner) {
+        const size_t count = values->size();
+        ValueScope found = ValueScope::None;
+        if (scope == kConstantScope && count == 1) {
+            found = ValueScope::Constant;
+        } else if (scope == kUniformScope && count == face_count) {
+            found = ValueScope::Face;
+        } else if ((scope == kVertexScope || scope == kVaryingScope) && count == vertex_count) {
+            found = ValueScope::Vertex;
+        } else if (scope == kFacevaryingScope && count == corner_count) {
+            found = ValueScope::Corner;
+        }
+
+        if (found == ValueScope::None) {
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                 "SpatialReader: mesh '{}': the {} have a scope or size this reader does not read, skipped",
                 name, what);
             return result;
         }
 
-        result.values.reserve(values->size());
-        for (size_t i = 0; i < values->size(); ++i) {
+        result.values.reserve(count);
+        for (size_t i = 0; i < count; ++i) {
             result.values.push_back(convert((*values)[i]));
         }
-        result.per_corner = corner;
+        result.scope = found;
         return result;
     }
 
@@ -182,16 +219,20 @@ namespace {
         const auto positions = sample.getPositions();
         const auto face_indices = sample.getFaceIndices();
         const auto face_counts = sample.getFaceCounts();
-        if (!positions || !face_indices || !face_counts || positions->size() == 0 || face_counts->size() == 0) {
+        if (!positions || !face_indices || !face_counts) {
             error = "the sample has no positions or no faces";
             return std::nullopt;
+        }
+        if (positions->size() == 0 || face_counts->size() == 0) {
+            return Kakshya::MeshData::empty();
         }
 
         const size_t vertex_count = positions->size();
         const size_t corner_count = face_indices->size();
+        const size_t face_count = face_counts->size();
 
         uint64_t summed = 0;
-        for (size_t f = 0; f < face_counts->size(); ++f) {
+        for (size_t f = 0; f < face_count; ++f) {
             const int32_t count = (*face_counts)[f];
             if (count < 3) {
                 error = "a face has fewer than three corners";
@@ -214,46 +255,49 @@ namespace {
         const auto to_vec2 = [](const Imath::V2f& v) { return glm::vec2(v.x, v.y); };
         const auto to_vec3 = [](const Imath::V3f& v) { return glm::vec3(v.x, v.y, v.z); };
 
-        const auto uvs = read_corner_values<IV2fGeomParam, glm::vec2>(
-            schema.getUVsParam(), selector, vertex_count, corner_count, "texture coordinates", name, to_vec2);
+        const auto uvs = read_mesh_values<IV2fGeomParam, glm::vec2>(
+            schema.getUVsParam(), selector, vertex_count, corner_count, face_count, "texture coordinates", name, to_vec2);
 
-        CornerValues<glm::vec3> normals;
+        MeshValues<glm::vec3> normals;
         if constexpr (std::is_same_v<Schema, IPolyMeshSchema>) {
-            normals = read_corner_values<IN3fGeomParam, glm::vec3>(
-                schema.getNormalsParam(), selector, vertex_count, corner_count, "normals", name, to_vec3);
+            normals = read_mesh_values<IN3fGeomParam, glm::vec3>(
+                schema.getNormalsParam(), selector, vertex_count, corner_count, face_count, "normals", name, to_vec3);
         }
 
-        const bool split = uvs.per_corner || normals.per_corner;
+        const bool split = uvs.per_corner_or_face() || normals.per_corner_or_face();
 
         std::vector<Kakshya::MeshVertex> vertices(split ? corner_count : vertex_count);
         if (split) {
-            for (size_t c = 0; c < corner_count; ++c) {
-                const auto source = static_cast<size_t>((*face_indices)[c]);
-                vertices[c].position = to_vec3((*positions)[source]);
-                if (!normals.values.empty()) {
-                    vertices[c].normal = normals.values[normals.per_corner ? c : source];
-                }
-                if (!uvs.values.empty()) {
-                    vertices[c].uv = uvs.values[uvs.per_corner ? c : source];
+            size_t corner = 0;
+            for (size_t f = 0; f < face_count; ++f) {
+                for (int32_t k = 0; k < (*face_counts)[f]; ++k, ++corner) {
+                    const auto source = static_cast<size_t>((*face_indices)[corner]);
+                    vertices[corner].position = to_vec3((*positions)[source]);
+                    if (normals.scope != ValueScope::None) {
+                        vertices[corner].normal = normals.at(corner, source, f);
+                    }
+                    if (uvs.scope != ValueScope::None) {
+                        vertices[corner].uv = uvs.at(corner, source, f);
+                    }
                 }
             }
         } else {
             for (size_t v = 0; v < vertex_count; ++v) {
                 vertices[v].position = to_vec3((*positions)[v]);
-                if (!normals.values.empty()) {
-                    vertices[v].normal = normals.values[v];
+                if (normals.scope != ValueScope::None) {
+                    vertices[v].normal = normals.at(0, v, 0);
                 }
-                if (!uvs.values.empty()) {
-                    vertices[v].uv = uvs.values[v];
+                if (uvs.scope != ValueScope::None) {
+                    vertices[v].uv = uvs.at(0, v, 0);
                 }
             }
         }
 
         Kakshya::FaceList faces;
-        faces.sizes.reserve(face_counts->size());
+        faces.sizes.reserve(face_count);
         faces.corners.reserve(corner_count);
         size_t offset = 0;
-        for (size_t f = 0; f < face_counts->size(); ++f) {
+        for (size_t f = 0; f < face_count; ++f) {
             const auto count = static_cast<size_t>((*face_counts)[f]);
             faces.sizes.push_back(static_cast<uint32_t>(count));
             for (size_t k = count; k > 0; --k) {
@@ -271,7 +315,7 @@ namespace {
         }
 
         (void)Kinesis::write_vertex_normals(*mesh);
-        if (!uvs.values.empty()) {
+        if (uvs.scope != ValueScope::None) {
             (void)Kinesis::write_vertex_tangents(*mesh);
         }
         return mesh;
@@ -602,8 +646,23 @@ SpatialReader::SpatialReader()
 }
 
 SpatialReader::~SpatialReader() = default;
-SpatialReader::SpatialReader(SpatialReader&&) noexcept = default;
-SpatialReader& SpatialReader::operator=(SpatialReader&&) noexcept = default;
+
+SpatialReader::SpatialReader(SpatialReader&& other) noexcept
+    : m_impl(std::move(other.m_impl))
+    , m_last_error(std::move(other.m_last_error))
+{
+    other.m_impl = std::make_unique<Impl>();
+}
+
+SpatialReader& SpatialReader::operator=(SpatialReader&& other) noexcept
+{
+    if (this != &other) {
+        m_impl = std::move(other.m_impl);
+        m_last_error = std::move(other.m_last_error);
+        other.m_impl = std::make_unique<Impl>();
+    }
+    return *this;
+}
 
 bool SpatialReader::open(const std::string& filepath)
 {
@@ -1022,6 +1081,16 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assem
         }
 
         source.variance = record->second.sample_count > 1 ? Kakshya::TopologyVariance::Heterogeneous : Kakshya::TopologyVariance::Constant;
+        if (std::holds_alternative<IPoints>(record->second.object) && record->second.sample_count > 1) {
+            const auto first_count = get_vertex_count(stream, 0);
+            bool same = first_count.has_value();
+            for (size_t i = 1; i < record->second.sample_count && same; ++i) {
+                same = get_vertex_count(stream, i) == first_count;
+            }
+            if (same) {
+                source.variance = Kakshya::TopologyVariance::Homogeneous;
+            }
+        }
         if (const auto* curves = std::get_if<ICurves>(&record->second.object); curves && record->second.sample_count > 1) {
             switch (curves->getSchema().getTopologyVariance()) {
             case kConstantTopology:

@@ -18,7 +18,7 @@ namespace MayaFlux::IO {
  * this class.
  */
 struct SpatialSample {
-    Portal::Graphics::PrimitiveTopology topology;
+    Portal::Graphics::PrimitiveTopology topology {};
     std::span<const glm::vec3> positions;
     std::span<const int32_t> vertex_counts_per_curve;
     std::span<const uint64_t> ids;

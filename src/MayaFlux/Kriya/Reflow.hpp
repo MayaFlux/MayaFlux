@@ -34,6 +34,8 @@ using FrameSink = std::function<void(const std::shared_ptr<const Frame>&, const 
  *   reflow's operations and sink never see its frames. Left empty, the frame joins the mix.
  * - enters_after delays the first step of the course by this many seconds of the reflow's
  *   cycles. Before then it does not step, read or write.
+ * - selection picks among a listed source's frames in its own way, and the reflow's applies when
+ *   it is left empty.
  * - every reads and writes once per this many cycles. The course still steps every cycle, so
  *   its time is the same however seldom it is shown.
  */
@@ -47,6 +49,7 @@ struct CourseRoute {
     FrameSink<Frame> sink;
     double enters_after {};
     uint32_t every { 1 };
+    std::optional<FrameSelection> selection;
 };
 
 /**
@@ -164,6 +167,7 @@ private:
         Sink sink;
         uint64_t enter_cycle {};
         uint32_t every { 1 };
+        std::optional<FrameSelection> selection;
         std::shared_ptr<const Frame> last_written;
     };
 
