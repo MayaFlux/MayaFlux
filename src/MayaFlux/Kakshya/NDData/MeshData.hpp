@@ -1,10 +1,7 @@
 #pragma once
 
 #include "MeshAccess.hpp"
-
-namespace MayaFlux::Kinesis {
-struct TriangulationOptions;
-}
+#include "VertexFormats.hpp"
 
 namespace MayaFlux::Kakshya {
 
@@ -66,6 +63,110 @@ struct MAYAFLUX_API MeshData {
         d.layout = VertexLayout::for_meshes(68);
         return d;
     }
+
+    // -------------------------------------------------------------------------
+    // Construction from arrays
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief A mesh over interleaved records and the layout that describes them.
+     *
+     * The records are copied as they are, whatever the stride, so every attribute the
+     * layout names comes through untouched.
+     *
+     * This and every from_* below check what they are given, log why they refused, and
+     * return nullopt rather than a mesh that would not be valid. Triangles are three vertex
+     * indices each. Polygons are a FaceList, triangulated as assign_faces does: a face that
+     * cannot be triangulated is kept in faces, has no triangles, and is logged. An attribute
+     * a source does not supply keeps the MeshVertex default, so normals are (0, 0, 1) until
+     * something derives them (Kinesis::write_vertex_normals).
+     */
+    [[nodiscard]] static std::optional<MeshData> from_records(
+        std::span<const uint8_t> records,
+        const VertexLayout& layout,
+        std::span<const uint32_t> triangles);
+
+    /**
+     * @brief As above, from polygons. The layout needs a position attribute.
+     *
+     * Every polygon overload takes the two choices of Kinesis::triangulate_faces: whether a
+     * convex quadrilateral splits along its shorter diagonal, and the convexity tolerance.
+     */
+    [[nodiscard]] static std::optional<MeshData> from_records(
+        std::span<const uint8_t> records,
+        const VertexLayout& layout,
+        FaceList polygons,
+        bool shorter_quad_diagonal = true,
+        float convexity_tolerance = 1.0e-6F);
+
+    /**
+     * @brief A mesh over bare positions, every other attribute at its default.
+     */
+    [[nodiscard]] static std::optional<MeshData> from_positions(
+        std::span<const glm::vec3> positions,
+        std::span<const uint32_t> triangles);
+
+    /** @brief As above, from polygons. */
+    [[nodiscard]] static std::optional<MeshData> from_positions(
+        std::span<const glm::vec3> positions,
+        FaceList polygons,
+        bool shorter_quad_diagonal = true,
+        float convexity_tolerance = 1.0e-6F);
+
+    /**
+     * @brief A mesh over arrays of Vertex, PointVertex, LineVertex or MeshVertex.
+     *
+     * The four share one record layout, so their bytes are used directly and every field,
+     * uv included, is kept. Any contiguous range of them will do: a vector, an array or a
+     * span.
+     */
+    template <std::ranges::contiguous_range R>
+        requires CanonicalVertex<std::ranges::range_value_t<R>>
+    [[nodiscard]] static std::optional<MeshData> from_vertices(
+        const R& vertices, std::span<const uint32_t> triangles)
+    {
+        return from_records(canonical_bytes(vertices), VertexLayout::for_meshes(68), triangles);
+    }
+
+    /** @brief As above, from polygons. */
+    template <std::ranges::contiguous_range R>
+        requires CanonicalVertex<std::ranges::range_value_t<R>>
+    [[nodiscard]] static std::optional<MeshData> from_vertices(
+        const R& vertices,
+        FaceList polygons,
+        bool shorter_quad_diagonal = true,
+        float convexity_tolerance = 1.0e-6F)
+    {
+        return from_records(canonical_bytes(vertices), VertexLayout::for_meshes(68), std::move(polygons),
+            shorter_quad_diagonal, convexity_tolerance);
+    }
+
+    /**
+     * @brief A mesh over the arrays a DataVariant can hold.
+     *
+     * @p vertices may be:
+     * - vector<glm::vec3>, the positions;
+     * - vector<float> or vector<double>, positions as flat x, y, z triples;
+     * - vector<uint8_t>, interleaved records laid out as @p layout says.
+     *
+     * @p triangles may be vector<uint32_t>, vector<uint16_t> or vector<uint8_t>, widened
+     * to 32 bits. Anything else is refused, and so is a flat array that is not a whole
+     * number of triples.
+     *
+     * @param layout Used only for a vector<uint8_t> of records.
+     */
+    [[nodiscard]] static std::optional<MeshData> from_variants(
+        const DataVariant& vertices,
+        const DataVariant& triangles,
+        const VertexLayout& layout = VertexLayout::for_meshes(68));
+
+    /** @brief As above, from polygons. */
+    [[nodiscard]] static std::optional<MeshData> from_variants(
+        const DataVariant& vertices,
+        FaceList polygons,
+        bool shorter_quad_diagonal = true,
+        float convexity_tolerance = 1.0e-6F,
+        const VertexLayout& layout = VertexLayout::for_meshes(68));
 
     // -------------------------------------------------------------------------
     // Validity
@@ -151,14 +252,14 @@ struct MAYAFLUX_API MeshData {
      * A face that cannot be triangulated stays in faces and has no triangles.
      *
      * @param polygons Corners of every face over the vertices of vertex_variant.
+     * @param shorter_quad_diagonal Split a convex quadrilateral along its shorter diagonal;
+     * false splits from the first corner to the third.
+     * @param convexity_tolerance As Kinesis::polygon_is_convex.
      * @return The faces that could not be triangulated, which may be none, or nullopt when
      * the vertices hold no position attribute or the faces are not well formed over them.
      */
-    [[nodiscard]] std::optional<std::vector<uint32_t>> assign_faces(FaceList polygons);
-
-    /** @brief As above, with the choices a triangulation leaves open. */
     [[nodiscard]] std::optional<std::vector<uint32_t>> assign_faces(
-        FaceList polygons, const Kinesis::TriangulationOptions& options);
+        FaceList polygons, bool shorter_quad_diagonal = true, float convexity_tolerance = 1.0e-6F);
 
     // -------------------------------------------------------------------------
     // Submeshes
@@ -199,6 +300,15 @@ struct MAYAFLUX_API MeshData {
         }
         return as_mesh_access(vertex_variant, index_variant, layout, submeshes,
             faces.has_value() ? &*faces : nullptr);
+    }
+
+private:
+    template <std::ranges::contiguous_range R>
+    [[nodiscard]] static std::span<const uint8_t> canonical_bytes(const R& vertices) noexcept
+    {
+        return std::span<const uint8_t>(
+            reinterpret_cast<const uint8_t*>(std::ranges::data(vertices)),
+            std::ranges::size(vertices) * sizeof(std::ranges::range_value_t<R>));
     }
 };
 

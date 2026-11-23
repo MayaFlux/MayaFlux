@@ -151,6 +151,18 @@ struct TextureQuadVertex {
 };
 
 /**
+ * @concept CanonicalVertex
+ * @brief One of the four vertex structs that share the 68 byte record layout: Vertex,
+ *        PointVertex, LineVertex and MeshVertex.
+ *
+ * Their bytes are interchangeable, so a contiguous range of any of them can be read as
+ * interleaved records with VertexLayout::for_raw().
+ */
+template <typename V>
+concept CanonicalVertex = std::same_as<V, Vertex> || std::same_as<V, PointVertex>
+    || std::same_as<V, LineVertex> || std::same_as<V, MeshVertex>;
+
+/**
  * @brief Deduce a VertexLayout from a vertex struct type.
  */
 template <typename T>

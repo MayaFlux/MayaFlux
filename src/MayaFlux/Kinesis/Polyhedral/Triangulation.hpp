@@ -7,24 +7,6 @@
 namespace MayaFlux::Kinesis {
 
 /**
- * @enum QuadDiagonal
- * @brief Which diagonal splits a convex quadrilateral.
- */
-enum class QuadDiagonal : uint8_t {
-    First, ///< From the first corner to the third.
-    Shorter ///< Whichever diagonal is shorter, the first on a tie.
-};
-
-/**
- * @struct TriangulationOptions
- * @brief Choices a triangulation makes where the face leaves them open.
- */
-struct TriangulationOptions {
-    QuadDiagonal quad_diagonal { QuadDiagonal::Shorter };
-    float convexity_tolerance { 1.0e-6F }; ///< As polygon_is_convex.
-};
-
-/**
  * @struct Triangulation
  * @brief A face set decomposed into triangles that keep each face's winding.
  *
@@ -45,11 +27,15 @@ struct Triangulation {
  * of its Newell normal and clipped by Kinesis::triangulate_polygon, so it must be a
  * simple outline. Faces are independent and run in parallel.
  *
+ * @param shorter_quad_diagonal Split a convex quadrilateral along its shorter diagonal, the
+ * first on a tie. False always splits from the first corner to the third.
+ * @param convexity_tolerance As polygon_is_convex.
  * @return nullopt when @p positions has fewer entries than the incidence has vertices.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<Triangulation> triangulate_faces(
     std::span<const glm::vec3> positions,
     const Incidence& incidence,
-    const TriangulationOptions& options = {});
+    bool shorter_quad_diagonal = true,
+    float convexity_tolerance = 1.0e-6F);
 
 } // namespace MayaFlux::Kinesis

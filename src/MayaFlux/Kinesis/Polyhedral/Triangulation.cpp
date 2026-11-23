@@ -20,11 +20,11 @@ namespace {
     bool split_quad(
         std::span<const glm::vec3> positions,
         std::span<const uint32_t> ring,
-        QuadDiagonal diagonal,
+        bool shorter_diagonal,
         uint32_t* out) noexcept
     {
         bool second = false;
-        if (diagonal == QuadDiagonal::Shorter) {
+        if (shorter_diagonal) {
             const dvec3 p0(positions[ring[0]]);
             const dvec3 p1(positions[ring[1]]);
             const dvec3 p2(positions[ring[2]]);
@@ -104,7 +104,8 @@ namespace {
     bool triangulate_face(
         std::span<const glm::vec3> positions,
         std::span<const uint32_t> ring,
-        const TriangulationOptions& options,
+        bool shorter_diagonal,
+        float convexity_tolerance,
         uint32_t* out)
     {
         const size_t count = ring.size();
@@ -113,9 +114,9 @@ namespace {
             return true;
         }
 
-        if (polygon_is_convex(positions, ring, options.convexity_tolerance)) {
+        if (polygon_is_convex(positions, ring, convexity_tolerance)) {
             if (count == 4) {
-                return split_quad(positions, ring, options.quad_diagonal, out);
+                return split_quad(positions, ring, shorter_diagonal, out);
             }
             for (size_t i = 1; i + 1 < count; ++i) {
                 emit(out + 3 * (i - 1), ring[0], ring[i], ring[i + 1]);
@@ -131,7 +132,8 @@ namespace {
 std::optional<Triangulation> triangulate_faces(
     std::span<const glm::vec3> positions,
     const Incidence& incidence,
-    const TriangulationOptions& options)
+    bool shorter_quad_diagonal,
+    float convexity_tolerance)
 {
     if (positions.size() < incidence.vertex_count()) {
         return std::nullopt;
@@ -152,7 +154,10 @@ std::optional<Triangulation> triangulate_faces(
     detail::for_each_indexed(std::execution::par, std::span<uint8_t>(succeeded),
         [&](size_t face, uint8_t& ok) {
             const auto ring = incidence.face(face);
-            ok = triangulate_face(positions, ring, options, result.indices.data() + 3 * first_triangle[face]) ? 1 : 0;
+            ok = triangulate_face(positions, ring, shorter_quad_diagonal, convexity_tolerance,
+                     result.indices.data() + 3 * first_triangle[face])
+                ? 1
+                : 0;
             std::fill_n(result.triangle_face.data() + first_triangle[face], ring.size() - 2, static_cast<uint32_t>(face));
         });
 
