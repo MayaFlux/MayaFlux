@@ -14,16 +14,37 @@ void InstanceFieldOperator::bind_position(uint32_t slot_index, PositionField fie
     m_position_fields[slot_index] = std::move(field);
 }
 
+void InstanceFieldOperator::bind_tint(uint32_t slot_index, TintField field)
+{
+    m_tint_fields[slot_index] = std::move(field);
+}
+
+void InstanceFieldOperator::bind_scalar(uint32_t slot_index, ScalarField field)
+{
+    m_scalar_fields[slot_index] = std::move(field);
+}
+
+void InstanceFieldOperator::bind_texture(uint32_t slot_index, TextureField field)
+{
+    m_texture_fields[slot_index] = std::move(field);
+}
+
 void InstanceFieldOperator::unbind(uint32_t slot_index)
 {
     m_transform_fields.erase(slot_index);
     m_position_fields.erase(slot_index);
+    m_tint_fields.erase(slot_index);
+    m_scalar_fields.erase(slot_index);
+    m_texture_fields.erase(slot_index);
 }
 
 void InstanceFieldOperator::unbind_all()
 {
     m_transform_fields.clear();
     m_position_fields.clear();
+    m_tint_fields.clear();
+    m_scalar_fields.clear();
+    m_texture_fields.clear();
 }
 
 void InstanceFieldOperator::set_gpu_executor(
@@ -66,14 +87,35 @@ void InstanceFieldOperator::process_slot(GeometrySlot& slot, float /*dt*/)
         it != m_transform_fields.end() && it->second) {
         slot.transform = it->second(slot.transform);
         slot.dirty = true;
-        return;
+    } else if (auto position = m_position_fields.find(slot.index);
+        position != m_position_fields.end() && position->second.fn) {
+        const glm::vec3 pos { slot.transform[3] };
+        slot.transform[3] = glm::vec4(position->second(pos), 1.0F);
+        slot.dirty = true;
     }
 
-    if (auto it = m_position_fields.find(slot.index);
-        it != m_position_fields.end() && it->second.fn) {
-        const glm::vec3 pos { slot.transform[3] };
-        slot.transform[3] = glm::vec4(it->second(pos), 1.0F);
-        slot.dirty = true;
+    if (auto it = m_tint_fields.find(slot.index); it != m_tint_fields.end() && it->second) {
+        const glm::vec3 tint = it->second(slot.tint);
+        if (tint != slot.tint) {
+            slot.tint = tint;
+            slot.dirty = true;
+        }
+    }
+
+    if (auto it = m_scalar_fields.find(slot.index); it != m_scalar_fields.end() && it->second) {
+        const float scalar = it->second(slot.scalar);
+        if (scalar != slot.scalar) {
+            slot.scalar = scalar;
+            slot.dirty = true;
+        }
+    }
+
+    if (auto it = m_texture_fields.find(slot.index); it != m_texture_fields.end() && it->second) {
+        const uint32_t texture = it->second(slot.texture);
+        if (texture != slot.texture) {
+            slot.texture = texture;
+            slot.dirty = true;
+        }
     }
 }
 
