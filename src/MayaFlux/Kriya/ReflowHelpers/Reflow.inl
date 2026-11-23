@@ -18,6 +18,7 @@ Reflow<Frame>::Reflow(std::shared_ptr<const Kakshya::FrameSource<Frame>> source,
     , m_selection(selection)
     , m_rewrite(rewrite)
     , m_cycle_rate(cycle_rate)
+    , m_listeners(std::vector<Listener> {})
     , m_lanes(std::vector<std::shared_ptr<Lane>> {})
     , m_current(std::shared_ptr<const Frame> {})
 {
@@ -51,6 +52,9 @@ std::shared_ptr<Course> Reflow<Frame>::add_route(const CourseRoute<Frame>& route
     if (route.source && route.sampled) {
         return nullptr;
     }
+    if (route.selector && (route.source || route.sampled)) {
+        return nullptr;
+    }
     for (const auto& operation : route.operations) {
         if (!operation.valid() || operation.kind() == FrameOperation<Frame>::Kind::Mix) {
             return nullptr;
@@ -58,19 +62,22 @@ std::shared_ptr<Course> Reflow<Frame>::add_route(const CourseRoute<Frame>& route
     }
 
     auto lane = std::make_shared<Lane>();
-    if (route.sampled) {
-        lane->sampled = route.sampled;
-    } else if (route.source) {
-        lane->source = route.source;
-    } else {
-        lane->sampled = m_sampled;
-        lane->source = m_source;
-    }
-    if (!lane->source && !lane->sampled) {
-        return nullptr;
-    }
-    if (lane->source && lane->source->count() == 0) {
-        return nullptr;
+    lane->selector = route.selector;
+    if (!route.selector) {
+        if (route.sampled) {
+            lane->sampled = route.sampled;
+        } else if (route.source) {
+            lane->source = route.source;
+        } else {
+            lane->sampled = m_sampled;
+            lane->source = m_source;
+        }
+        if (!lane->source && !lane->sampled) {
+            return nullptr;
+        }
+        if (lane->source && lane->source->count() == 0) {
+            return nullptr;
+        }
     }
 
     lane->sink = route.sink ? route.sink : Sink {};
@@ -78,7 +85,11 @@ std::shared_ptr<Course> Reflow<Frame>::add_route(const CourseRoute<Frame>& route
         return nullptr;
     }
 
-    auto course = Course::create(m_cycle_rate, route.course, route.paused);
+    CourseSetting setting = route.course;
+    if (route.selector && !setting.usable()) {
+        setting = CourseSetting { .in = 0.0, .out = 1.0, .edge = CourseEdge::Hold };
+    }
+    auto course = Course::create(m_cycle_rate, setting, route.paused);
     if (!course) {
         return nullptr;
     }
@@ -130,6 +141,47 @@ std::shared_ptr<const Frame> Reflow<Frame>::current() const
 }
 
 template <typename Frame>
+std::shared_ptr<const Frame> Reflow<Frame>::current(const std::shared_ptr<Course>& course) const
+{
+    const auto pinned = m_lanes.read();
+    if (!pinned) {
+        return nullptr;
+    }
+    for (const auto& lane : *pinned) {
+        if (lane->course == course) {
+            const auto shown = lane->shown.read();
+            return shown ? *shown : nullptr;
+        }
+    }
+    return nullptr;
+}
+
+template <typename Frame>
+std::shared_ptr<ReflowEvents> Reflow<Frame>::subscribe(ReflowEventKind kind)
+{
+    auto source = std::make_shared<ReflowEvents>();
+    m_listeners.update([&](std::vector<Listener>& listeners) {
+        listeners.push_back({ .kind = kind, .source = source });
+    });
+    return source;
+}
+
+template <typename Frame>
+void Reflow<Frame>::announce(ReflowEventKind kind, uint64_t cycle, uint64_t value) const
+{
+    const auto listeners = m_listeners.read();
+    if (!listeners) {
+        return;
+    }
+    const ReflowEvent event { .kind = kind, .cycle = cycle, .value = value };
+    for (const auto& listener : *listeners) {
+        if (listener.kind == kind) {
+            listener.source->signal(event);
+        }
+    }
+}
+
+template <typename Frame>
 void Reflow<Frame>::hold()
 {
     m_holds.fetch_add(1, std::memory_order_relaxed);
@@ -168,9 +220,41 @@ bool Reflow<Frame>::operate(const std::vector<FrameOperation<Frame>>& operations
 }
 
 template <typename Frame>
-bool Reflow<Frame>::read_lane(Lane& lane, double time, std::vector<WeightedFrame<Frame>>& into)
+bool Reflow<Frame>::read_lane(Lane& lane, const FrameContext& context, const CourseStep& step,
+    FrameSelection selection, std::vector<WeightedFrame<Frame>>& into)
 {
     const double weight = lane.course->weight();
+
+    if (lane.selector) {
+        if (!(weight > 0.0)) {
+            return false;
+        }
+        const size_t before = into.size();
+        lane.selector(context, into);
+
+        auto kept = into.begin() + static_cast<std::ptrdiff_t>(before);
+        for (auto it = kept; it != into.end(); ++it) {
+            it->weight *= weight;
+            if (it->frame && it->weight > 0.0 && std::isfinite(it->weight)) {
+                if (it != kept) {
+                    *kept = std::move(*it);
+                }
+                ++kept;
+            }
+        }
+        into.erase(kept, into.end());
+
+        if (into.size() == before) {
+            lane.course->report_miss(0);
+            return false;
+        }
+        const auto heaviest = std::max_element(into.begin() + static_cast<std::ptrdiff_t>(before), into.end(),
+            [](const auto& a, const auto& b) { return a.weight < b.weight; });
+        lane.course->report_frame(heaviest->index);
+        return true;
+    }
+
+    const double time = step.time;
 
     if (lane.sampled) {
         if (!(weight > 0.0)) {
@@ -191,7 +275,7 @@ bool Reflow<Frame>::read_lane(Lane& lane, double time, std::vector<WeightedFrame
         return false;
     }
 
-    const auto picks = Detail::select_frames(*location, lane.selection.value_or(m_selection), weight);
+    const auto picks = Detail::select_frames(*location, lane.selection.value_or(selection), weight);
     bool read_any = false;
     for (size_t i = 0; i < picks.count; ++i) {
         const auto& pick = picks.items[i];
@@ -225,6 +309,16 @@ std::shared_ptr<const Frame> Reflow<Frame>::reduce(
 template <typename Frame>
 void Reflow<Frame>::advance()
 {
+    if (m_controls.enabled.has_value() && m_controls.enabled.value() == 0.0) {
+        return;
+    }
+    const FrameSelection selection = m_controls.selection.has_value()
+        ? m_controls.selection.value<FrameSelection>()
+        : m_selection;
+    const Rewrite rewrite = m_controls.rewrite.has_value()
+        ? m_controls.rewrite.value<Rewrite>()
+        : m_rewrite;
+
     const auto pinned = m_lanes.read();
     std::span<const std::shared_ptr<Lane>> lanes;
     if (pinned) {
@@ -237,19 +331,26 @@ void Reflow<Frame>::advance()
     }
 
     const uint64_t cycle = m_cycle;
-    const FrameContext context { .courses = m_course_scratch, .cycle = cycle };
+    const FrameContext context {
+        .courses = m_course_scratch,
+        .cycle = cycle,
+        .time = static_cast<double>(cycle) / m_cycle_rate,
+    };
     m_cycle_cell.store(++m_cycle, std::memory_order_relaxed);
 
     try {
         m_gathered.clear();
         size_t shared_due = 0;
+        bool all_finished = !lanes.empty();
 
         for (const auto& lane : lanes) {
             if (cycle < lane->enter_cycle) {
+                all_finished = false;
                 continue;
             }
 
             const auto step = lane->course->advance(lane->course->advanced());
+            all_finished = all_finished && lane->course->finished();
             const bool due = lane->every <= 1 || (cycle - lane->enter_cycle) % lane->every == 0;
             if (!due) {
                 continue;
@@ -263,14 +364,16 @@ void Reflow<Frame>::advance()
                 continue;
             }
 
+            FrameContext lane_context = context;
+            lane_context.course = lane->course.get();
+            lane_context.elapsed = static_cast<double>(cycle - lane->enter_cycle) / m_cycle_rate;
+
             const bool reduced = own || !lane->operations.empty();
             m_lane_frames.clear();
-            if (!read_lane(*lane, step->time, reduced ? m_lane_frames : m_gathered) || !reduced) {
+            if (!read_lane(*lane, lane_context, *step, selection, reduced ? m_lane_frames : m_gathered) || !reduced) {
                 continue;
             }
 
-            FrameContext lane_context = context;
-            lane_context.course = lane->course.get();
             auto frame = reduce(lane_context, m_lane_frames);
             if (!frame || !operate(lane->operations, lane_context, frame)) {
                 m_skips.fetch_add(1, std::memory_order_relaxed);
@@ -282,18 +385,27 @@ void Reflow<Frame>::advance()
                 continue;
             }
 
-            if (m_rewrite == Rewrite::OnChange && frame == lane->last_written) {
+            if (rewrite == Rewrite::OnChange && frame == lane->last_written) {
                 m_skips.fetch_add(1, std::memory_order_relaxed);
                 continue;
             }
             lane->sink(frame, lane_context);
+            lane->shown.publish(frame);
             lane->last_written = std::move(frame);
-            m_writes.fetch_add(1, std::memory_order_relaxed);
+            announce(ReflowEventKind::Written, cycle, m_writes.fetch_add(1, std::memory_order_relaxed) + 1);
+        }
+
+        if (all_finished != m_was_finished) {
+            m_was_finished = all_finished;
+            if (all_finished) {
+                announce(ReflowEventKind::Finished, cycle, 0);
+            }
         }
 
         if (m_gathered.empty()) {
             if (shared_due > 0) {
                 hold();
+                announce(ReflowEventKind::Held, cycle, m_holds.load(std::memory_order_relaxed));
             }
             return;
         }
@@ -304,7 +416,7 @@ void Reflow<Frame>::advance()
             m_skips.fetch_add(1, std::memory_order_relaxed);
             return;
         }
-        if (m_rewrite == Rewrite::OnChange && frame == m_last_written) {
+        if (rewrite == Rewrite::OnChange && frame == m_last_written) {
             m_skips.fetch_add(1, std::memory_order_relaxed);
             return;
         }
@@ -312,15 +424,17 @@ void Reflow<Frame>::advance()
         m_sink(frame, context);
         m_last_written = frame;
         m_current.publish(frame);
-        m_writes.fetch_add(1, std::memory_order_relaxed);
+        announce(ReflowEventKind::Written, cycle, m_writes.fetch_add(1, std::memory_order_relaxed) + 1);
     } catch (const std::exception& error) {
-        m_failures.fetch_add(1, std::memory_order_relaxed);
+        const auto failures = m_failures.fetch_add(1, std::memory_order_relaxed) + 1;
         MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
             "Reflow: a source, operation or sink threw: {}", error.what());
+        announce(ReflowEventKind::Failed, cycle, failures);
     } catch (...) {
-        m_failures.fetch_add(1, std::memory_order_relaxed);
+        const auto failures = m_failures.fetch_add(1, std::memory_order_relaxed) + 1;
         MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
             "Reflow: a source, operation or sink threw");
+        announce(ReflowEventKind::Failed, cycle, failures);
     }
 }
 
@@ -439,7 +553,7 @@ std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::build()
     bool needs_shared_source = !m_courses.empty();
     bool needs_shared_sink = !m_courses.empty();
     for (const auto& route : m_routes) {
-        needs_shared_source = needs_shared_source || (!route.source && !route.sampled);
+        needs_shared_source = needs_shared_source || (!route.source && !route.sampled && !route.selector);
         needs_shared_sink = needs_shared_sink || !route.sink;
     }
 

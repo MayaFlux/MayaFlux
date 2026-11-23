@@ -3,6 +3,7 @@
 #include "MayaFlux/Kakshya/FrameSource.hpp"
 #include "MayaFlux/Kriya/Course.hpp"
 #include "MayaFlux/Kriya/FrameOperation.hpp"
+#include "MayaFlux/Kriya/ReflowHelpers/ReflowControls.hpp"
 
 namespace MayaFlux::Vruta {
 class TaskScheduler;
@@ -27,6 +28,10 @@ using FrameSink = std::function<void(const std::shared_ptr<const Frame>&, const 
  * any of that for one course:
  *
  * - source or sampled reads another source of the same frames. At most one of them is given.
+ * - selector picks the frames itself, from whatever it closed over, and reads no source of the
+ *   lane. It excludes source and sampled. The course still steps every cycle for the lane's
+ *   clock, weight, pause and events, and a selector lane with no usable course setting runs one
+ *   that holds over [0, 1]. A selector that picks nothing counts a miss.
  * - operations run on this course's frame before it goes anywhere. They may transform, derive
  *   or decline, and there is no mix among them: the frames a course picks are reduced by the
  *   reflow's mix, or the heaviest wins.
@@ -45,6 +50,7 @@ struct CourseRoute {
     bool paused {};
     std::shared_ptr<const Kakshya::FrameSource<Frame>> source;
     std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled;
+    FrameSelector<Frame> selector;
     std::vector<FrameOperation<Frame>> operations;
     FrameSink<Frame> sink;
     double enters_after {};
@@ -85,6 +91,11 @@ struct CourseRoute {
  * scheduler's frame clock, and tests or a caller with a clock of its own call it by hand.
  * Courses may be added, removed, steered and subscribed to from any thread.
  *
+ * What picks the frames is not fixed. A course reads its source through time, and a route's
+ * selector may read anything: a position, a feature, weights a Nexus influence writes, a
+ * FrameRing a lane trails. Whatever steers the reflow as a whole is in ReflowControls, set
+ * through set() like a course's controls, so a Nexus influence can drive it with control_writer.
+ *
  * Made by ReflowBuilder. Dropping the last reference stops the routine.
  */
 template <typename Frame>
@@ -123,9 +134,62 @@ public:
     [[nodiscard]] std::shared_ptr<const Frame> current() const;
 
     /**
+     * @brief The frame last written by a course's own sink, or null when it has none or has written nothing.
+     *
+     * Readable from any thread, as a perception of what a lane shows.
+     */
+    [[nodiscard]] std::shared_ptr<const Frame> current(const std::shared_ptr<Course>& course) const;
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value.
+     * @tparam C ReflowControls, or a struct added with extend().
+     *
+     * Safe from any thread while the reflow runs. Read once per cycle.
+     */
+    template <typename C = ReflowControls>
+    void set(const C& incoming)
+    {
+        m_store.merge(incoming);
+    }
+
+    /** @brief A copy of the controls of type C as they are now. */
+    template <typename C = ReflowControls>
+    [[nodiscard]] C get() const
+    {
+        return m_store.template snapshot<C>();
+    }
+
+    /**
+     * @brief Add a struct of the user's own controls beside ReflowControls and return it.
+     *
+     * Belongs before the reflow is shared with another thread. A selector or operation reads it
+     * through get() or store() while the reflow runs.
+     */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        return m_store.template extend<C>();
+    }
+
+    /** @brief The live controls, read without a copy. */
+    [[nodiscard]] const ReflowControls& controls() const noexcept { return m_controls; }
+
+    /** @brief Every control by name, for tools that list or set them. */
+    [[nodiscard]] const ReflowStore& store() const noexcept { return m_store; }
+
+    /**
+     * @brief A stream of one kind of event from now on, for one waiting coroutine.
+     *
+     * A source holds one waiting coroutine and one pending value, so a slow subscriber
+     * loses all but the latest of its kind.
+     */
+    [[nodiscard]] std::shared_ptr<ReflowEvents> subscribe(ReflowEventKind kind);
+
+    /**
      * @brief Do one cycle: advance every course, select, mix, operate and write.
      *
-     * Only one thread at a time, and the same thread every cycle.
+     * Only one thread at a time, and the same thread every cycle. Does nothing while the
+     * enabled control is zero.
      */
     void advance();
 
@@ -163,12 +227,24 @@ private:
         std::shared_ptr<Course> course;
         std::shared_ptr<const Kakshya::FrameSource<Frame>> source;
         std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled;
+        FrameSelector<Frame> selector;
         std::vector<FrameOperation<Frame>> operations;
         Sink sink;
         uint64_t enter_cycle {};
         uint32_t every { 1 };
         std::optional<FrameSelection> selection;
         std::shared_ptr<const Frame> last_written;
+        Memory::SnapshotCell<std::shared_ptr<const Frame>> shown;
+
+        Lane()
+            : shown(std::shared_ptr<const Frame> {})
+        {
+        }
+    };
+
+    struct Listener {
+        ReflowEventKind kind {};
+        std::shared_ptr<ReflowEvents> source;
     };
 
     Reflow(std::shared_ptr<const Kakshya::FrameSource<Frame>> source,
@@ -178,7 +254,9 @@ private:
     void hold();
     [[nodiscard]] bool operate(const std::vector<FrameOperation<Frame>>& operations,
         const FrameContext& context, std::shared_ptr<const Frame>& frame);
-    [[nodiscard]] bool read_lane(Lane& lane, double time, std::vector<WeightedFrame<Frame>>& into);
+    [[nodiscard]] bool read_lane(Lane& lane, const FrameContext& context, const CourseStep& step,
+        FrameSelection selection, std::vector<WeightedFrame<Frame>>& into);
+    void announce(ReflowEventKind kind, uint64_t cycle, uint64_t value) const;
     [[nodiscard]] std::shared_ptr<const Frame> reduce(
         const FrameContext& context, const std::vector<WeightedFrame<Frame>>& frames) const;
 
@@ -191,6 +269,10 @@ private:
     Rewrite m_rewrite;
     double m_cycle_rate;
 
+    ReflowStore m_store;
+    ReflowControls& m_controls { m_store.template declare<ReflowControls>() };
+    Memory::SnapshotCell<std::vector<Listener>> m_listeners;
+
     Memory::SnapshotCell<std::vector<std::shared_ptr<Lane>>> m_lanes;
     Memory::SnapshotCell<std::shared_ptr<const Frame>> m_current;
 
@@ -200,6 +282,7 @@ private:
     std::vector<WeightedFrame<Frame>> m_lane_frames;
     std::vector<std::shared_ptr<Course>> m_course_scratch;
     bool m_holding {};
+    bool m_was_finished {};
 
     std::atomic<uint64_t> m_cycle_cell { 0 };
     std::atomic<uint64_t> m_writes { 0 };

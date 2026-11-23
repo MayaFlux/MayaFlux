@@ -46,7 +46,20 @@ struct FrameContext {
     std::span<const std::shared_ptr<Course>> courses;
     uint64_t cycle {};
     const Course* course {}; ///< The course the frame came from, or null where several have been mixed.
+    double time {}; ///< Seconds of the reflow's cycles at this cycle, cycle over cycle_rate.
+    double elapsed {}; ///< Seconds of the reflow's cycles since this lane entered, zero where several have been mixed.
 };
+
+/**
+ * @brief Picks of a lane in one cycle, appended by a selector.
+ *
+ * A selector decides which frames a lane shows and how much each counts. It reads whatever it
+ * closed over (a source, a field, a ring, cells a Nexus influence writes) and appends none,
+ * one or many weighted frames. The lane's course weight scales every pick it appends. Time is
+ * one thing a selector may read, through FrameContext::course, and is not required.
+ */
+template <typename Frame>
+using FrameSelector = std::function<void(const FrameContext&, std::vector<WeightedFrame<Frame>>&)>;
 
 /**
  * @class FrameOperation
