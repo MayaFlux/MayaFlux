@@ -287,7 +287,7 @@ void GeometryBindingsProcessor::upload_index_data(
     binding.gpu_vertex_buffer->set_index_resources(
         binding.gpu_index_buffer->get_buffer(),
         binding.gpu_index_buffer->get_buffer_resources().memory,
-        binding.gpu_index_buffer->get_size_bytes());
+        required);
 
     MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "Uploaded {} indices ({} bytes) for '{}'",

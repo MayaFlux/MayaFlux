@@ -306,7 +306,7 @@ void MeshNetworkProcessor::link_index_resources(
     vertex_buf->set_index_resources(
         m_gpu_index_buffer->get_buffer(),
         m_gpu_index_buffer->get_buffer_resources().memory,
-        m_gpu_index_buffer->get_size_bytes());
+        m_index_aggregate.size() * sizeof(uint32_t));
 }
 
 bool MeshNetworkProcessor::any_slot_dirty() const
