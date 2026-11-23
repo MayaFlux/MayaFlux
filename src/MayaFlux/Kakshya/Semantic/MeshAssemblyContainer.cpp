@@ -175,6 +175,44 @@ size_t MeshAssemblyContainer::add_source(MeshAssemblySource source)
     return m_data.sources.size() - 1;
 }
 
+bool MeshAssemblyContainer::set_mesh_frames(size_t source, std::shared_ptr<const FrameSource<MeshData>> frames)
+{
+    if (mesh(source) == nullptr) {
+        return false;
+    }
+    m_mesh_frames.resize(std::max(m_mesh_frames.size(), source + 1));
+    m_mesh_frames[source] = std::move(frames);
+    return true;
+}
+
+bool MeshAssemblyContainer::set_spatial_frames(size_t source, std::shared_ptr<const FrameSource<SpatialData>> frames,
+    std::optional<uint32_t> max_vertices)
+{
+    if (spatial(source) == nullptr) {
+        return false;
+    }
+    m_spatial_frames.resize(std::max(m_spatial_frames.size(), source + 1));
+    m_spatial_max.resize(m_spatial_frames.size());
+    m_spatial_frames[source] = std::move(frames);
+    m_spatial_max[source] = max_vertices;
+    return true;
+}
+
+std::shared_ptr<const FrameSource<MeshData>> MeshAssemblyContainer::mesh_frames(size_t source) const
+{
+    return source < m_mesh_frames.size() ? m_mesh_frames[source] : nullptr;
+}
+
+std::shared_ptr<const FrameSource<SpatialData>> MeshAssemblyContainer::spatial_frames(size_t source) const
+{
+    return source < m_spatial_frames.size() ? m_spatial_frames[source] : nullptr;
+}
+
+std::optional<uint32_t> MeshAssemblyContainer::spatial_max_vertices(size_t source) const
+{
+    return source < m_spatial_max.size() ? m_spatial_max[source] : std::nullopt;
+}
+
 size_t MeshAssemblyContainer::add_material(MeshAssemblyMaterial material)
 {
     m_data.materials.push_back(std::move(material));
@@ -392,6 +430,9 @@ std::vector<uint64_t> MeshAssemblyContainer::linear_index_to_coordinates(uint64_
 void MeshAssemblyContainer::clear()
 {
     m_data = MeshAssemblyData {};
+    m_mesh_frames.clear();
+    m_spatial_frames.clear();
+    m_spatial_max.clear();
     clear_region_groups();
 }
 

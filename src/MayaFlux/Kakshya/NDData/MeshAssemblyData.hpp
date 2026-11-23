@@ -31,11 +31,13 @@ enum class TopologyVariance : uint8_t {
  * are what the file said about how the source changes; the frames themselves
  * are served by a FrameSource, not held here. facets carries anything else the
  * file attached to the source (user properties, bounds, extras), by typed key or
- * as whole structs.
+ * as whole structs. origin is where in the file the geometry came from, the name its
+ * reader reads it by, empty for geometry made in code.
  */
 struct MeshAssemblySource {
     std::variant<MeshData, SpatialData> geometry;
     std::string name;
+    std::string origin;
     std::optional<Kinesis::TimeSampling> time;
     TopologyVariance variance { TopologyVariance::Constant };
     Facets facets;

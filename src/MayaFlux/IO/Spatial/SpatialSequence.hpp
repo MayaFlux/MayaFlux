@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SpatialReader.hpp"
+#include "SpatialArchive.hpp"
 
 #include "MayaFlux/Kakshya/FrameSource.hpp"
 #include "MayaFlux/Kakshya/NDData/SpatialData.hpp"
@@ -13,9 +13,10 @@ namespace MayaFlux::IO {
  * @brief A FrameSource of Kakshya::SpatialData over one stream of an Alembic archive, read lazily.
  *
  * Frame i is sample i of the stream, copied out of the archive when asked for. The archive
- * is read by one SpatialReader, which is not thread safe, so reads take turns behind a
- * lock, and any number of threads may call read(). A frame that something still holds is
- * shared by later reads of the same index; a frame nobody holds is read again.
+ * is read through a SpatialArchive, whose reader is not thread safe, so reads take turns behind
+ * its lock, and any number of threads may call read(). Sources made over the same archive share
+ * that one reader. A frame that something still holds is shared by later reads of the same
+ * index; a frame nobody holds is read again.
  *
  * Every frame is timed by the archive: the sample times of the stream, which a file that
  * SpatialCache wrote gives as the sample index in seconds. A sample that cannot be read
@@ -33,6 +34,13 @@ public:
      */
     [[nodiscard]] static std::shared_ptr<const SpatialFileFrames> create(
         const std::string& path, std::string stream = {});
+
+    /**
+     * @brief Open one stream of an archive that is already open, sharing its reader.
+     * @return nullptr as for a path, and for a null archive.
+     */
+    [[nodiscard]] static std::shared_ptr<const SpatialFileFrames> create(
+        const std::shared_ptr<SpatialArchive>& archive, std::string stream = {});
 
     ~SpatialFileFrames() override;
 
@@ -59,10 +67,10 @@ public:
     [[nodiscard]] std::optional<uint32_t> max_vertex_count() const;
 
 private:
-    SpatialFileFrames(SpatialReader reader, std::string stream, Kinesis::TimeSampling times,
+    SpatialFileFrames(std::shared_ptr<SpatialArchive> archive, std::string stream, Kinesis::TimeSampling times,
         size_t count, Portal::Graphics::PrimitiveTopology topology);
 
-    mutable SpatialReader m_reader;
+    std::shared_ptr<SpatialArchive> m_archive;
     std::string m_stream;
     Kinesis::TimeSampling m_times;
     size_t m_count;

@@ -12,7 +12,30 @@ namespace MayaFlux::Kakshya {
  */
 struct MeshAssemblyLocals {
     std::vector<glm::mat4> matrices;
+
+    /**
+     * @brief The same rows placed in the world: each local composed through its parents.
+     *
+     * Filled by the sources in this header, so a part that shows its rows without a hierarchy
+     * (a flat part) reads this and one that keeps the hierarchy reads matrices. Empty for a frame
+     * made by hand, until resolve_world fills it.
+     */
+    std::vector<glm::mat4> world;
 };
+
+/**
+ * @brief A frame of local placements with its world placements resolved through the assembly's parents.
+ * @param locals One matrix per row of the assembly.
+ * @return The frame, with world empty when locals has the wrong size.
+ */
+[[nodiscard]] inline MeshAssemblyLocals resolve_world(
+    const MeshAssemblyContainer& assembly, std::vector<glm::mat4> locals)
+{
+    MeshAssemblyLocals frame;
+    frame.world = assembly.world_transforms(locals);
+    frame.matrices = std::move(locals);
+    return frame;
+}
 
 /**
  * @class MeshAssemblyMotionFrames

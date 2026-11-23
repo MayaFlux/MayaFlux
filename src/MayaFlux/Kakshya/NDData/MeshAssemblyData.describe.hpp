@@ -88,6 +88,7 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblySource> {
         return std::tuple {
             Member<&::MayaFlux::Kakshya::MeshAssemblySource::geometry> { "geometry" },
             Member<&::MayaFlux::Kakshya::MeshAssemblySource::name> { "name" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySource::origin> { "origin" },
             Member<&::MayaFlux::Kakshya::MeshAssemblySource::time> { "time" },
             Member<&::MayaFlux::Kakshya::MeshAssemblySource::variance> { "variance" },
             Member<&::MayaFlux::Kakshya::MeshAssemblySource::facets> { "facets" },

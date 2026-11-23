@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/CompositeForest.hpp"
+#include "MayaFlux/Kakshya/FrameSource.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
 #include "MayaFlux/Kakshya/SemanticContainer.hpp"
 
@@ -92,6 +93,35 @@ public:
      *         channels target the same row.
      */
     [[nodiscard]] std::optional<size_t> add_motion(MeshAssemblyMotion motion);
+
+    /**
+     * @brief Say where the frames of a source that changes over time come from.
+     * @param source Index of a source that holds a mesh.
+     * @param frames Its frames, which need not match the source's first shot in size or
+     *        connectivity. Null clears the reference.
+     * @return false when source is out of range or does not hold a mesh.
+     *
+     * The source's own geometry stays the first shot; the frames are read by whoever plays
+     * them, never held here. A copy of the assembly made by get_region_data does not carry them.
+     */
+    bool set_mesh_frames(size_t source, std::shared_ptr<const FrameSource<MeshData>> frames);
+
+    /**
+     * @brief As set_mesh_frames, for a source that holds points or curves.
+     * @param max_vertices The most vertices any frame holds, when the source knows it, so a
+     *        buffer made for the frames can be sized for the largest.
+     */
+    bool set_spatial_frames(size_t source, std::shared_ptr<const FrameSource<SpatialData>> frames,
+        std::optional<uint32_t> max_vertices = std::nullopt);
+
+    /** @brief The frames of a mesh source, or nullptr when it has none. */
+    [[nodiscard]] std::shared_ptr<const FrameSource<MeshData>> mesh_frames(size_t source) const;
+
+    /** @brief The frames of a points or curves source, or nullptr when it has none. */
+    [[nodiscard]] std::shared_ptr<const FrameSource<SpatialData>> spatial_frames(size_t source) const;
+
+    /** @brief The most vertices a points or curves source's frames hold, when it was told. */
+    [[nodiscard]] std::optional<uint32_t> spatial_max_vertices(size_t source) const;
 
     /** @brief Replace the facets that describe the whole assembly. */
     void set_facets(Facets facets) { m_data.facets = std::move(facets); }
@@ -226,6 +256,9 @@ public:
 
 private:
     MeshAssemblyData m_data;
+    std::vector<std::shared_ptr<const FrameSource<MeshData>>> m_mesh_frames;
+    std::vector<std::shared_ptr<const FrameSource<SpatialData>>> m_spatial_frames;
+    std::vector<std::optional<uint32_t>> m_spatial_max;
 };
 
 }

@@ -227,4 +227,58 @@ private:
 [[nodiscard]] MAYAFLUX_API std::shared_ptr<MeshNetwork> make_mesh_network(
     const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly);
 
+/**
+ * @enum MeshPartPlacement
+ * @brief How a part of an assembly keeps the placement of its rows.
+ */
+enum class MeshPartPlacement : uint8_t {
+    /**
+     * Every row that shows a mesh is a root slot and is given its world placement, so the part
+     * needs nothing of the hierarchy, joints and rows shown elsewhere are not in it, and
+     * any subset of an assembly can be a part.
+     */
+    Flat,
+
+    /**
+     * The part keeps the parent chain. Every ancestor of a row it shows is in it as a joint, and
+     * each slot is given its local placement, so an operator that moves a slot moves its children.
+     */
+    Chained
+};
+
+/**
+ * @struct MeshNetworkPart
+ * @brief A network that shows some rows of an assembly, and which rows.
+ *
+ * rows[i] is the row slot i shows, in ascending row order, so a placement is written to a
+ * slot through this table. A chained part's rows include the joints it had to add.
+ */
+struct MeshNetworkPart {
+    std::shared_ptr<MeshNetwork> network;
+    std::vector<uint64_t> rows;
+
+    /** @brief The slot that shows a row, or nullopt when the part does not hold it. */
+    [[nodiscard]] std::optional<uint32_t> slot_of(uint64_t row) const
+    {
+        const auto it = std::ranges::lower_bound(rows, row);
+        return it != rows.end() && *it == row ? std::optional<uint32_t> { static_cast<uint32_t>(it - rows.begin()) } : std::nullopt;
+    }
+};
+
+/**
+ * @brief Build a network that shows some rows of an assembly.
+ * @param assembly The assembly. Null gives nullopt.
+ * @param rows The rows to show, in any order. A row that shows no mesh is not shown.
+ * @param placement Whether the part is flat or keeps the hierarchy.
+ * @return The part, or nullopt when a row is out of range or none of them shows a mesh.
+ *
+ * Each row's mesh is copied into the slot of its own, as make_mesh_network(assembly) does, with
+ * its submeshes and polygon faces. The material is not applied. A flat part starts at the rows'
+ * rest world placement and a chained one at their rest local placement.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<MeshNetworkPart> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    std::span<const uint64_t> rows,
+    MeshPartPlacement placement = MeshPartPlacement::Flat);
+
 } // namespace MayaFlux::Nodes::Network

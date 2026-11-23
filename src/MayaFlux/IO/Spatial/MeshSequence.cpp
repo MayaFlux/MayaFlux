@@ -15,11 +15,17 @@ namespace {
 
 std::shared_ptr<const MeshFileFrames> MeshFileFrames::create(const std::string& path, std::string mesh)
 {
-    SpatialReader reader;
-    if (!reader.open(path)) {
+    return create(SpatialArchive::open(path), std::move(mesh));
+}
+
+std::shared_ptr<const MeshFileFrames> MeshFileFrames::create(
+    const std::shared_ptr<SpatialArchive>& archive, std::string mesh)
+{
+    if (!archive) {
         return nullptr;
     }
 
+    return archive->read([&](SpatialReader& reader) -> std::shared_ptr<const MeshFileFrames> {
     if (mesh.empty()) {
         const auto& names = reader.get_mesh_names();
         if (names.size() != 1) {
@@ -56,12 +62,13 @@ std::shared_ptr<const MeshFileFrames> MeshFileFrames::create(const std::string& 
     }
 
     return std::shared_ptr<const MeshFileFrames>(new MeshFileFrames(
-        std::move(reader), std::move(mesh), std::move(*sampling), count, *variance));
+        archive, std::move(mesh), std::move(*sampling), count, *variance));
+    });
 }
 
-MeshFileFrames::MeshFileFrames(SpatialReader reader, std::string mesh, Kinesis::TimeSampling times,
+MeshFileFrames::MeshFileFrames(std::shared_ptr<SpatialArchive> archive, std::string mesh, Kinesis::TimeSampling times,
     size_t count, Kakshya::TopologyVariance variance)
-    : m_reader(std::move(reader))
+    : m_archive(std::move(archive))
     , m_mesh(std::move(mesh))
     , m_times(std::move(times))
     , m_count(count)
@@ -85,13 +92,17 @@ std::shared_ptr<const Kakshya::MeshData> MeshFileFrames::read(size_t index) cons
         }
     }
 
-    auto mesh = m_reader.read_mesh(m_mesh, index);
-    if (!mesh) {
-        fail("sample " + std::to_string(index) + " of '" + m_mesh + "': " + m_reader.get_last_error());
+    auto frame = m_archive->read([&](SpatialReader& reader) -> std::shared_ptr<const Kakshya::MeshData> {
+        auto mesh = reader.read_mesh(m_mesh, index);
+        if (!mesh) {
+            fail("sample " + std::to_string(index) + " of '" + m_mesh + "': " + reader.get_last_error());
+            return nullptr;
+        }
+        return std::make_shared<const Kakshya::MeshData>(std::move(*mesh));
+    });
+    if (!frame) {
         return nullptr;
     }
-
-    auto frame = std::make_shared<const Kakshya::MeshData>(std::move(*mesh));
     std::erase_if(m_live, [](const auto& entry) { return entry.second.expired(); });
     m_live[index] = frame;
     return frame;

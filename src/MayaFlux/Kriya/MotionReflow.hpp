@@ -5,6 +5,12 @@
 
 namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
+class InstanceNetwork;
+enum class MeshPartPlacement : uint8_t;
+}
+
+namespace MayaFlux::Buffers {
+class RecordedGeometryBuffer;
 }
 
 namespace MayaFlux::Kriya {
@@ -32,5 +38,44 @@ using MotionReflowBuilder = ReflowBuilder<Kakshya::MeshAssemblyLocals>;
  * @param network The network to move.
  */
 [[nodiscard]] MAYAFLUX_API MotionReflow::Sink slot_sink(const std::shared_ptr<Nodes::Network::MeshNetwork>& network);
+
+/**
+ * @brief A sink that writes the placements of some rows into the slots of a network that shows them.
+ * @param network The network, such as the one of a Nodes::Network::MeshNetworkPart.
+ * @param rows rows[i] is the row slot i shows, as MeshNetworkPart::rows gives it.
+ * @param placement Flat reads each row's world placement (MeshAssemblyLocals::world) and writes it
+ *        as the slot's transform. Chained reads the local placement (matrices) and leaves the
+ *        network to propagate the hierarchy.
+ *
+ * A slot is marked dirty only when its transform changes. A frame that does not have the
+ * placements the part needs, or too few of them, writes the rows it has and says so once. The
+ * network is held weakly, as for slot_sink, and a flat part's slots are written again by any
+ * operator that binds them, so an operator on a flat part moves that slot alone.
+ */
+[[nodiscard]] MAYAFLUX_API MotionReflow::Sink slot_sink(
+    const std::shared_ptr<Nodes::Network::MeshNetwork>& network, std::vector<uint64_t> rows,
+    Nodes::Network::MeshPartPlacement placement);
+
+/**
+ * @brief A sink that places the instances of an InstanceNetwork at the world placements of their rows.
+ * @param instances The network, such as one made by Nodes::Network::make_instance_network.
+ * @param rows rows[i] is the row instance slot i shows, in the order of the group the network was made from.
+ *
+ * Marks an instance dirty only when its transform changes. The network is held weakly.
+ */
+[[nodiscard]] MAYAFLUX_API MotionReflow::Sink instance_sink(
+    const std::shared_ptr<Nodes::Network::InstanceNetwork>& instances, std::vector<uint64_t> rows);
+
+/**
+ * @brief A sink that places a buffer that shows points or curves at the world placement of a row.
+ * @param buffer The buffer. Its render processor is given a geometry transform source the first
+ *        time a frame arrives after rendering is set up, which replaces any placement it had.
+ * @param row The row the buffer shows.
+ *
+ * The placement is held in a cell the draw reads, so the sink may run on any thread. The buffer is
+ * held weakly.
+ */
+[[nodiscard]] MAYAFLUX_API MotionReflow::Sink placement_sink(
+    const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer, uint64_t row);
 
 } // namespace MayaFlux::Kriya

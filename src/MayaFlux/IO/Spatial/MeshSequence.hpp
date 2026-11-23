@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SpatialReader.hpp"
+#include "SpatialArchive.hpp"
 
 #include "MayaFlux/Kakshya/FrameSource.hpp"
 
@@ -13,9 +13,10 @@ namespace MayaFlux::IO {
  *
  * Frame i is sample i of the object, read as SpatialReader::read_mesh reads it: triangles,
  * wound counter clockwise, normals and texture coordinates as the file has them or derived. The
- * archive is read by one SpatialReader, which is not thread safe, so reads take turns behind a
- * lock, and any number of threads may call read(). A frame that something still holds is
- * shared by later reads of the same index; a frame nobody holds is read again.
+ * archive is read through a SpatialArchive, whose reader is not thread safe, so reads take turns
+ * behind its lock, and any number of threads may call read(). Sources made over the same archive
+ * share that one reader. A frame that something still holds is shared by later reads of the same
+ * index; a frame nobody holds is read again.
  *
  * Every frame is timed by the archive. A sample that cannot be read gives nullptr from read()
  * and one logged error.
@@ -37,6 +38,13 @@ public:
     [[nodiscard]] static std::shared_ptr<const MeshFileFrames> create(
         const std::string& path, std::string mesh = {});
 
+    /**
+     * @brief Open one mesh object of an archive that is already open, sharing its reader.
+     * @return nullptr as for a path, and for a null archive.
+     */
+    [[nodiscard]] static std::shared_ptr<const MeshFileFrames> create(
+        const std::shared_ptr<SpatialArchive>& archive, std::string mesh = {});
+
     ~MeshFileFrames() override;
 
     [[nodiscard]] size_t count() const override { return m_count; }
@@ -52,10 +60,10 @@ public:
     [[nodiscard]] Kakshya::TopologyVariance variance() const noexcept { return m_variance; }
 
 private:
-    MeshFileFrames(SpatialReader reader, std::string mesh, Kinesis::TimeSampling times,
+    MeshFileFrames(std::shared_ptr<SpatialArchive> archive, std::string mesh, Kinesis::TimeSampling times,
         size_t count, Kakshya::TopologyVariance variance);
 
-    mutable SpatialReader m_reader;
+    std::shared_ptr<SpatialArchive> m_archive;
     std::string m_mesh;
     Kinesis::TimeSampling m_times;
     size_t m_count;

@@ -392,4 +392,86 @@ std::shared_ptr<MeshNetwork> make_mesh_network(
     return network;
 }
 
+std::optional<MeshNetworkPart> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    std::span<const uint64_t> rows,
+    MeshPartPlacement placement)
+{
+    if (!assembly || rows.empty()) {
+        return std::nullopt;
+    }
+
+    const size_t total = assembly->get_total_elements();
+    std::vector<uint64_t> selected(rows.begin(), rows.end());
+    std::ranges::sort(selected);
+    selected.erase(std::ranges::unique(selected).begin(), selected.end());
+    if (selected.back() >= total) {
+        return std::nullopt;
+    }
+
+    std::vector<bool> shown(total, false);
+    for (const uint64_t row : selected) {
+        shown[row] = true;
+    }
+
+    std::vector<bool> included = shown;
+    if (placement == MeshPartPlacement::Chained) {
+        std::vector<bool> walked(total, false);
+        for (const uint64_t row : selected) {
+            auto parent = assembly->placement(row)->parent;
+            while (parent && !walked[*parent]) {
+                walked[*parent] = true;
+                included[*parent] = true;
+                parent = assembly->placement(*parent)->parent;
+            }
+        }
+    }
+
+    const auto world = assembly->world_transforms();
+    MeshNetworkPart part { .network = std::make_shared<MeshNetwork>(), .rows = {} };
+    std::vector<std::optional<uint32_t>> slot_of(total);
+    bool any_mesh = false;
+
+    for (size_t row = 0; row < total; ++row) {
+        if (!included[row]) {
+            continue;
+        }
+        const auto held = assembly->placement(row);
+        if (!held) {
+            return std::nullopt;
+        }
+
+        std::shared_ptr<GpuSync::MeshWriterNode> node;
+        if (shown[row] && held->source) {
+            if (const auto* mesh = assembly->mesh(*held->source)) {
+                node = std::make_shared<GpuSync::MeshWriterNode>(mesh->vertex_count());
+                node->set_mesh(*mesh);
+            }
+        }
+
+        const bool flat = placement == MeshPartPlacement::Flat;
+        if (flat && !node) {
+            continue;
+        }
+        any_mesh = any_mesh || node != nullptr;
+
+        std::optional<uint32_t> parent;
+        if (!flat && held->parent) {
+            parent = slot_of[*held->parent];
+        }
+
+        const auto index = part.network->add_slot(held->name, std::move(node), parent);
+        auto& slot = part.network->get_slot(index);
+        slot.local_transform = flat ? world[row] : held->local;
+        slot.world_transform = world[row];
+        slot_of[row] = index;
+        part.rows.push_back(row);
+    }
+
+    if (!any_mesh) {
+        return std::nullopt;
+    }
+    return part;
+}
+
 } // namespace MayaFlux::Nodes::Network

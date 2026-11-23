@@ -1068,6 +1068,7 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assem
         Kakshya::MeshAssemblySource source;
         source.geometry = sample->to_data();
         source.name = last_segment(key);
+        source.origin = stream;
 
         std::vector<double> times;
         times.reserve(record->second.sample_count);
@@ -1129,6 +1130,7 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assem
         Kakshya::MeshAssemblySource source;
         source.geometry = std::move(*mesh);
         source.name = last_segment(key);
+        source.origin = mesh_name;
 
         std::vector<double> times;
         times.reserve(record->second.sample_count);

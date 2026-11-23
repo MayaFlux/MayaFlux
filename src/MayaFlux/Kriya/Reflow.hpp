@@ -20,6 +20,24 @@ template <typename Frame>
 using FrameSink = std::function<void(const std::shared_ptr<const Frame>&, const FrameContext&)>;
 
 /**
+ * @brief One sink that hands every frame to each of several, in order.
+ *
+ * For a frame that has to reach several targets, such as the parts of a realized assembly.
+ * An empty sink in the list is skipped.
+ */
+template <typename Frame>
+[[nodiscard]] FrameSink<Frame> fan_out(std::vector<FrameSink<Frame>> sinks)
+{
+    return [sinks = std::move(sinks)](const std::shared_ptr<const Frame>& frame, const FrameContext& context) {
+        for (const auto& sink : sinks) {
+            if (sink) {
+                sink(frame, context);
+            }
+        }
+    };
+}
+
+/**
  * @struct CourseRoute
  * @brief A course together with what it reads, what is done to its frames and where they go.
  *

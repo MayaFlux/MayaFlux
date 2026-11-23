@@ -15,11 +15,17 @@ namespace {
 
 std::shared_ptr<const SpatialFileFrames> SpatialFileFrames::create(const std::string& path, std::string stream)
 {
-    SpatialReader reader;
-    if (!reader.open(path)) {
+    return create(SpatialArchive::open(path), std::move(stream));
+}
+
+std::shared_ptr<const SpatialFileFrames> SpatialFileFrames::create(
+    const std::shared_ptr<SpatialArchive>& archive, std::string stream)
+{
+    if (!archive) {
         return nullptr;
     }
 
+    return archive->read([&](SpatialReader& reader) -> std::shared_ptr<const SpatialFileFrames> {
     if (stream.empty()) {
         const auto& names = reader.get_stream_names();
         if (names.size() != 1) {
@@ -56,12 +62,13 @@ std::shared_ptr<const SpatialFileFrames> SpatialFileFrames::create(const std::st
     }
 
     return std::shared_ptr<const SpatialFileFrames>(new SpatialFileFrames(
-        std::move(reader), std::move(stream), std::move(*sampling), count, *topology));
+        archive, std::move(stream), std::move(*sampling), count, *topology));
+    });
 }
 
-SpatialFileFrames::SpatialFileFrames(SpatialReader reader, std::string stream, Kinesis::TimeSampling times,
+SpatialFileFrames::SpatialFileFrames(std::shared_ptr<SpatialArchive> archive, std::string stream, Kinesis::TimeSampling times,
     size_t count, Portal::Graphics::PrimitiveTopology topology)
-    : m_reader(std::move(reader))
+    : m_archive(std::move(archive))
     , m_stream(std::move(stream))
     , m_times(std::move(times))
     , m_count(count)
@@ -85,13 +92,17 @@ std::shared_ptr<const Kakshya::SpatialData> SpatialFileFrames::read(size_t index
         }
     }
 
-    const auto sample = m_reader.read_sample(m_stream, index);
-    if (!sample) {
-        fail("sample " + std::to_string(index) + " of '" + m_stream + "': " + m_reader.get_last_error());
+    auto frame = m_archive->read([&](SpatialReader& reader) -> std::shared_ptr<const Kakshya::SpatialData> {
+        const auto sample = reader.read_sample(m_stream, index);
+        if (!sample) {
+            fail("sample " + std::to_string(index) + " of '" + m_stream + "': " + reader.get_last_error());
+            return nullptr;
+        }
+        return std::make_shared<const Kakshya::SpatialData>(sample->to_data());
+    });
+    if (!frame) {
         return nullptr;
     }
-
-    auto frame = std::make_shared<const Kakshya::SpatialData>(sample->to_data());
     std::erase_if(m_live, [](const auto& entry) { return entry.second.expired(); });
     m_live[index] = frame;
     return frame;
@@ -106,13 +117,19 @@ std::optional<uint32_t> SpatialFileFrames::max_vertex_count() const
     }
 
     size_t most = 0;
-    for (size_t i = 0; i < m_count; ++i) {
-        const auto vertices = m_reader.get_vertex_count(m_stream, i);
-        if (!vertices) {
-            fail("the size of sample " + std::to_string(i) + " of '" + m_stream + "' could not be read");
-            return std::nullopt;
+    const bool read_all = m_archive->read([&](SpatialReader& reader) {
+        for (size_t i = 0; i < m_count; ++i) {
+            const auto vertices = reader.get_vertex_count(m_stream, i);
+            if (!vertices) {
+                fail("the size of sample " + std::to_string(i) + " of '" + m_stream + "' could not be read");
+                return false;
+            }
+            most = std::max(most, *vertices);
         }
-        most = std::max(most, *vertices);
+        return true;
+    });
+    if (!read_all) {
+        return std::nullopt;
     }
 
     m_max_vertices = static_cast<uint32_t>(most);
