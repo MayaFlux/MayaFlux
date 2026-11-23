@@ -276,6 +276,24 @@ const MeshData* MeshAssemblyContainer::mesh(size_t source) const noexcept
     return source < m_data.sources.size() ? std::get_if<MeshData>(&m_data.sources[source].geometry) : nullptr;
 }
 
+bool MeshAssemblyContainer::set_source_facets(size_t source, Facets facets)
+{
+    if (source >= m_data.sources.size()) {
+        return false;
+    }
+    m_data.sources[source].facets = std::move(facets);
+    return true;
+}
+
+std::shared_ptr<const MeshSkin> MeshAssemblyContainer::skin(size_t source) const
+{
+    if (source >= m_data.sources.size()) {
+        return nullptr;
+    }
+    const auto* held = m_data.sources[source].facets.get<std::shared_ptr<const MeshSkin>>();
+    return held ? *held : nullptr;
+}
+
 const SpatialData* MeshAssemblyContainer::spatial(size_t source) const noexcept
 {
     return source < m_data.sources.size() ? std::get_if<SpatialData>(&m_data.sources[source].geometry) : nullptr;

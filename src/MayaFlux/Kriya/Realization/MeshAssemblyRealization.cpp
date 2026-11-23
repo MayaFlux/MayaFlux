@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 
 namespace MayaFlux::Kriya {
@@ -104,6 +105,14 @@ std::shared_ptr<MeshAssemblyRealization> MeshAssemblyRealization::create(
             made.placement = placement;
             made.rows = std::move(built->rows);
             made.network_buffer = std::make_shared<Buffers::MeshNetworkBuffer>(built->network);
+            for (size_t slot = 0; slot < made.rows.size(); ++slot) {
+                const auto shown = assembly->placement(made.rows[slot]);
+                const auto skin = shown && shown->source ? assembly->skin(*shown->source) : nullptr;
+                if (skin) {
+                    made.network_buffer->set_slot_skin(static_cast<uint32_t>(slot), skin);
+                    made.skinned.push_back({ .slot = static_cast<uint32_t>(slot), .row = made.rows[slot], .skin = skin });
+                }
+            }
             made.network = std::move(built->network);
             realization->m_parts.push_back(std::move(made));
             continue;
@@ -151,7 +160,34 @@ MotionReflow::Sink MeshAssemblyRealization::placement_sink(size_t part) const
 
     const auto& held = m_parts[part];
     if (held.network) {
-        return slot_sink(held.network, held.rows, held.placement);
+        auto placed = slot_sink(held.network, held.rows, held.placement);
+        if (held.skinned.empty()) {
+            return placed;
+        }
+
+        MotionReflow::Sink skinning = [buffer = held.network_buffer, skinned = held.skinned](
+                                          const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame, const FrameContext&) {
+            if (!frame) {
+                return;
+            }
+            for (const auto& entry : skinned) {
+                if (entry.row >= frame->world.size()) {
+                    continue;
+                }
+                std::vector<glm::mat4> joints;
+                joints.reserve(entry.skin->joints.size());
+                for (const uint64_t joint : entry.skin->joints) {
+                    if (joint < frame->world.size()) {
+                        joints.push_back(frame->world[joint]);
+                    }
+                }
+                auto palette = Kinesis::skin_palette(frame->world[entry.row], joints, entry.skin->inverse_bind);
+                if (!palette.empty()) {
+                    buffer->set_slot_palette(entry.slot, std::move(palette));
+                }
+            }
+        };
+        return fan_out<Kakshya::MeshAssemblyLocals>(std::vector<MotionReflow::Sink> { std::move(placed), std::move(skinning) });
     }
     if (held.instances) {
         return instance_sink(held.instances, held.rows);

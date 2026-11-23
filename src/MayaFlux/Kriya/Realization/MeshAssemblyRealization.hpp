@@ -62,10 +62,21 @@ struct MeshAssemblyRealizeOptions {
 using MeshAssemblyMaterialResolver = std::function<std::shared_ptr<Core::VKImage>(const Kakshya::MeshAssemblyMaterial&)>;
 
 /**
+ * @struct MeshAssemblySkinnedSlot
+ * @brief A slot of a network part whose mesh is skinned, the row it shows and the skin it follows.
+ */
+struct MeshAssemblySkinnedSlot {
+    uint32_t slot {};
+    uint64_t row {};
+    std::shared_ptr<const Kakshya::MeshSkin> skin;
+};
+
+/**
  * @struct MeshAssemblyRealizedPart
  * @brief One target of a realized assembly and the rows it shows.
  *
- * A part is one of: a network of meshes (network and network_buffer), the instances of one mesh
+ * A part is one of: a network of meshes (network and network_buffer, with the slots whose mesh is skinned in
+ * skinned, each given its palette by the placement sink), the instances of one mesh
  * (instances and instance_buffer), or points or curves (one entry of spatial_buffers for each
  * row, nullptr for a row whose geometry is empty). rows[i] is the row slot, instance or buffer i
  * shows. The buffers are made and not registered, set up or drawn: that is the caller's.
@@ -78,6 +89,7 @@ struct MeshAssemblyRealizedPart {
 
     std::shared_ptr<Nodes::Network::MeshNetwork> network;
     std::shared_ptr<Buffers::MeshNetworkBuffer> network_buffer;
+    std::vector<MeshAssemblySkinnedSlot> skinned;
 
     std::shared_ptr<Nodes::Network::InstanceNetwork> instances;
     std::shared_ptr<Buffers::InstanceNetworkBuffer> instance_buffer;

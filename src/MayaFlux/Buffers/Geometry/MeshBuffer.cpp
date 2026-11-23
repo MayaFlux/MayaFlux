@@ -8,6 +8,7 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Network/SpatialFieldWiring.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
@@ -174,6 +175,7 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
             0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
     }
 
+    wire_skin_pass();
     wire_field_pass();
 
     apply_render_config(m_render_config, sc);
@@ -299,6 +301,52 @@ std::shared_ptr<const Kakshya::MeshData> MeshBuffer::current_frame() const
         return *held;
     }
     return nullptr;
+}
+
+void MeshBuffer::set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin)
+{
+    if (m_render_processor) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer::set_skin: rendering is already set up, the skin pass is wired there");
+        return;
+    }
+    m_skin = std::move(skin);
+}
+
+bool MeshBuffer::set_palette(std::vector<glm::mat4> palette)
+{
+    const auto processor = m_skin_processor;
+    return processor && processor->set_palette(std::move(palette));
+}
+
+void MeshBuffer::wire_skin_pass()
+{
+    if (!m_skin) {
+        return;
+    }
+
+    const auto* bytes = std::get_if<std::vector<uint8_t>>(&m_mesh_data.vertex_variant);
+    const size_t record_bytes = m_mesh_data.layout.stride_bytes > 0
+        ? m_mesh_data.layout.stride_bytes
+        : sizeof(Kakshya::MeshVertex);
+    if (!bytes || record_bytes != sizeof(Kakshya::MeshVertex)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer: the skin pass needs MeshVertex records as bytes, so no skin pass is wired");
+        return;
+    }
+
+    try {
+        m_skin_processor = std::make_shared<SkinProcessor>(m_skin, std::span<const uint8_t>(*bytes));
+    } catch (const std::invalid_argument& e) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer: the skin does not fit the mesh, so no skin pass is wired: {}", e.what());
+        return;
+    }
+
+    get_processing_chain()->add_processor(m_skin_processor, shared_from_this());
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "MeshBuffer: skin pass wired, {} joints", m_skin->joints.size());
 }
 
 void MeshBuffer::set_field_operator(std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op)

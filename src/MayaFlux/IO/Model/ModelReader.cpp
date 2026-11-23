@@ -479,6 +479,82 @@ ModelReader::create_mesh_assembly() const
         }
     }
 
+    for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
+        const aiMesh* ai_mesh = s->mMeshes[i];
+        if (!source_of[i] || ai_mesh->mNumBones == 0) {
+            continue;
+        }
+
+        Kakshya::MeshSkin skin;
+        skin.influence_joints.assign(ai_mesh->mNumVertices, glm::uvec4(0));
+        skin.influence_weights.assign(ai_mesh->mNumVertices, glm::vec4(0.0F));
+        std::vector<unsigned int> used(ai_mesh->mNumVertices, 0U);
+        bool resolved = true;
+
+        for (unsigned int b = 0; resolved && b < ai_mesh->mNumBones; ++b) {
+            const aiBone* bone = ai_mesh->mBones[b];
+            const auto row = rows_by_name.find(bone->mName.C_Str());
+            if (row == rows_by_name.end() || row->second.size() != 1) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_assembly: mesh '{}' is skinned by '{}', which matches {} rows, so the mesh is left unskinned",
+                    source_name[i], bone->mName.C_Str(), row == rows_by_name.end() ? 0U : row->second.size());
+                resolved = false;
+                break;
+            }
+
+            const auto joint = static_cast<uint32_t>(skin.joints.size());
+            skin.joints.push_back(row->second.front());
+            skin.inverse_bind.push_back(to_glm(bone->mOffsetMatrix));
+
+            for (unsigned int w = 0; w < bone->mNumWeights; ++w) {
+                const aiVertexWeight& weight = bone->mWeights[w];
+                if (weight.mVertexId >= ai_mesh->mNumVertices || weight.mWeight <= 0.0F) {
+                    continue;
+                }
+                auto& slots = used[weight.mVertexId];
+                if (slots < 4U) {
+                    skin.influence_joints[weight.mVertexId][static_cast<glm::length_t>(slots)] = joint;
+                    skin.influence_weights[weight.mVertexId][static_cast<glm::length_t>(slots)] = weight.mWeight;
+                    ++slots;
+                    continue;
+                }
+                auto& weights = skin.influence_weights[weight.mVertexId];
+                glm::length_t smallest = 0;
+                for (glm::length_t c = 1; c < 4; ++c) {
+                    if (weights[c] < weights[smallest]) {
+                        smallest = c;
+                    }
+                }
+                if (weight.mWeight > weights[smallest]) {
+                    skin.influence_joints[weight.mVertexId][smallest] = joint;
+                    weights[smallest] = weight.mWeight;
+                }
+            }
+        }
+
+        if (!resolved) {
+            continue;
+        }
+
+        for (auto& weights : skin.influence_weights) {
+            const float total = weights.x + weights.y + weights.z + weights.w;
+            if (total > 0.0F) {
+                weights /= total;
+            }
+        }
+
+        if (!skin.valid(ai_mesh->mNumVertices)) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "ModelReader::create_mesh_assembly: the skin of mesh '{}' is inconsistent, so the mesh is left unskinned",
+                source_name[i]);
+            continue;
+        }
+
+        Facets facets = assembly->get_data().sources[*source_of[i]].facets;
+        facets.set(std::make_shared<const Kakshya::MeshSkin>(std::move(skin)));
+        assembly->set_source_facets(*source_of[i], std::move(facets));
+    }
+
     for (unsigned int a = 0; a < s->mNumAnimations; ++a) {
         const aiAnimation* animation = s->mAnimations[a];
         const double ticks_per_second = animation->mTicksPerSecond > 0.0 ? animation->mTicksPerSecond : 1.0;
@@ -588,9 +664,11 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
         | aiProcess_CalcTangentSpace
         | aiProcess_FlipUVs
         | aiProcess_JoinIdenticalVertices
+        | aiProcess_LimitBoneWeights
         | aiProcess_SortByPType;
     constexpr unsigned int polygons = aiProcess_FlipUVs
-        | aiProcess_JoinIdenticalVertices;
+        | aiProcess_JoinIdenticalVertices
+        | aiProcess_LimitBoneWeights;
 
     const unsigned int flags = (m_keep_polygons ? polygons : triangles_only)
         | (m_flatten ? static_cast<unsigned int>(aiProcess_PreTransformVertices) : 0U);

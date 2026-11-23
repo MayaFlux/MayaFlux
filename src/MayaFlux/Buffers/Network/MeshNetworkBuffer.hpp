@@ -3,6 +3,7 @@
 #include "MeshNetworkProcessor.hpp"
 
 #include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshSkin.hpp"
 
 namespace MayaFlux::Core {
 class VKImage;
@@ -15,6 +16,7 @@ class MeshNetwork;
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
+class SkinProcessor;
 
 /**
  * @class MeshNetworkBuffer
@@ -115,6 +117,29 @@ public:
     }
 
     // -------------------------------------------------------------------------
+    // Skinning
+    // -------------------------------------------------------------------------
+
+    /**
+     * @brief Skin a slot's vertices on the GPU from a palette of joint matrices.
+     * @param slot Index of the slot, whose node holds the skin's rest pose and keeps its vertex count.
+     * @param skin Joints and per vertex weights covering the slot's vertices, or null to remove it.
+     *
+     * Call before setup_rendering, which wires one skin pass for every skinned slot ahead of the
+     * field pass. Each pass finds its slot's range among the concatenated vertices every cycle, so
+     * slots may be added, removed or reordered.
+     */
+    void set_slot_skin(uint32_t slot, std::shared_ptr<const Kakshya::MeshSkin> skin);
+
+    /**
+     * @brief Publish the palette of a skinned slot, one matrix for each joint, in the space of the slot's mesh.
+     * @return False when the slot has no skin pass wired yet or the count is not its skin's joint count.
+     *
+     * Safe from any thread (see Kinesis::skin_palette).
+     */
+    bool set_slot_palette(uint32_t slot, std::vector<glm::mat4> palette);
+
+    // -------------------------------------------------------------------------
     // Accessors
     // -------------------------------------------------------------------------
 
@@ -138,6 +163,14 @@ private:
     RenderConfig m_render_config;
 
     void wire_field_pass(size_t record_bytes);
+    void wire_skin_passes(size_t record_bytes);
+
+    struct SkinEntry {
+        uint32_t slot {};
+        std::shared_ptr<const Kakshya::MeshSkin> skin;
+        std::shared_ptr<SkinProcessor> processor;
+    };
+    std::vector<SkinEntry> m_skins;
 
     static size_t estimate_vertex_bytes(
         const std::shared_ptr<Nodes::Network::MeshNetwork>& network,

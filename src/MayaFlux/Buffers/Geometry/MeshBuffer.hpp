@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshSkin.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
@@ -21,6 +22,7 @@ namespace MayaFlux::Buffers {
 
 class MeshProcessor;
 class RenderProcessor;
+class SkinProcessor;
 
 /**
  * @class MeshBuffer
@@ -207,6 +209,25 @@ public:
      */
     void set_field_operator(std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op);
 
+    /**
+     * @brief Skin the vertices on the GPU from a palette of joint matrices.
+     * @param skin Joints and per vertex weights covering the buffer's vertices, or null for none.
+     *
+     * Call before setup_rendering, which wires the pass ahead of the field pass, so a field
+     * displaces the skinned surface. The mesh the buffer holds is the rest pose. Frames written
+     * with write_frame are not skinned from, since the pass writes position, normal and tangent
+     * from the rest pose, so a skinned buffer is driven by its palette.
+     */
+    void set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin);
+
+    /**
+     * @brief Publish the palette the skin pass reads, one matrix for each joint, in the space of the mesh.
+     * @return False when no skin pass is wired yet or the count is not the skin's joint count.
+     *
+     * Safe from any thread (see Kinesis::skin_palette).
+     */
+    bool set_palette(std::vector<glm::mat4> palette);
+
     /** @brief Whether a wired field pass displaces the vertices in place every cycle. */
     [[nodiscard]] bool restores_vertices() const;
 
@@ -265,11 +286,14 @@ private:
     friend class MeshProcessor;
 
     void wire_field_pass();
+    void wire_skin_pass();
 
     Kakshya::MeshData m_mesh_data;
     std::shared_ptr<Nodes::GpuSync::MeshWriterNode> m_node;
     std::shared_ptr<Nodes::Network::GpuFieldOperator> m_field_op;
     bool m_field_wired {};
+    std::shared_ptr<const Kakshya::MeshSkin> m_skin;
+    std::shared_ptr<SkinProcessor> m_skin_processor;
     Memory::SnapshotCell<std::shared_ptr<const Kakshya::MeshData>> m_pending;
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
     std::string m_diffuse_binding { "diffuseTex" };

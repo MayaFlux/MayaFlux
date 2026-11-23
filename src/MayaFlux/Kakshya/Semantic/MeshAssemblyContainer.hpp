@@ -73,6 +73,12 @@ public:
     /** @brief Add a source and return its index. */
     size_t add_source(MeshAssemblySource source);
 
+    /**
+     * @brief Replace the facets of a source, as the reader that learns of them after the rows exist does.
+     * @return false when source is out of range.
+     */
+    bool set_source_facets(size_t source, Facets facets);
+
     /** @brief Add a material and return its index. */
     size_t add_material(MeshAssemblyMaterial material);
 
@@ -143,6 +149,9 @@ public:
 
     /** @brief The points or curves of a source, or nullptr when it is not those or out of range. */
     [[nodiscard]] const SpatialData* spatial(size_t source) const noexcept;
+
+    /** @brief The skin a mesh source keeps in its facets, or nullptr when it has none or is out of range. */
+    [[nodiscard]] std::shared_ptr<const MeshSkin> skin(size_t source) const;
 
     /**
      * @brief Index the parent links of the placement rows.

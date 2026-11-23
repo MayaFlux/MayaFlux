@@ -47,6 +47,9 @@
  * the first maximum of each segment of word-pair doubles and its index, one
  * workgroup per segment, comparing by the library order key with NaN smallest.
  *
+ * KernelTemplate::Skin: emit_skin (AsmSkin.cpp) blends a palette of joint matrices for each
+ * vertex of a MeshVertex buffer, one thread per vertex, and writes position, normal and tangent.
+ *
  * GLSL kernel path (emit_glsl_kernel) handles all three binding modalities
  * when spec.kernel is set via MF_KERNEL.
  */
@@ -1941,6 +1944,9 @@ std::string emit_spirv_asm(const ShaderSpec& spec)
         break;
     case KernelTemplate::SegmentedArgMax:
         src += emit_segmented_argmax(spec);
+        break;
+    case KernelTemplate::Skin:
+        src += emit_skin(spec);
         break;
     case KernelTemplate::BitonicSort:
         src += emit_bitonic_body(spec);

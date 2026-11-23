@@ -61,6 +61,15 @@ enum class KernelTemplate : uint8_t {
                      ///< Values compare by the library order key with every NaN smallest, so a
                      ///< NaN never wins. A segment with no non-NaN value yields a NaN and the
                      ///< index 0xFFFFFFFF.
+    Skin, ///< Skins the vertices of a MeshVertex buffer, one thread per vertex, from rest
+          ///< records, joint indices and weights and a palette of affine joint matrices.
+          ///< Bindings in order: rest (FLOAT32, ten words per vertex: position, normal, tangent),
+          ///< joints (UINT32, four per vertex), weights (FLOAT32, four per vertex), palette
+          ///< (FLOAT32, sixteen per joint, column major) and vertices (FLOAT32, the buffer that is
+          ///< drawn). Four UINT32 push constants: first_vertex (record of the buffer the first
+          ///< thread writes), vertex_count, stride_words (words of one record of the buffer) and
+          ///< palette_base (the first joint of the skin in the palette). Position, normal and
+          ///< tangent are written and every other word of a record is left alone.
 };
 
 /**
@@ -857,6 +866,15 @@ namespace detail {
      * workgroup size from 2 to 1024.
      */
     [[nodiscard]] std::string emit_segmented_argmax(const ShaderSpec& spec);
+
+    /**
+     * @brief Emit the constants and entry point of the Skin template.
+     *
+     * Returns an empty string when the spec does not have the template's shape: bindings of
+     * the formats FLOAT32, UINT32, FLOAT32, FLOAT32 and FLOAT32, four UINT32 push constants and
+     * a workgroup size from 1 to 1024.
+     */
+    [[nodiscard]] std::string emit_skin(const ShaderSpec& spec);
 
 } // namespace detail
 

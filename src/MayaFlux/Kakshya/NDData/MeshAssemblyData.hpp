@@ -2,6 +2,7 @@
 
 #include "Composite.hpp"
 #include "MeshData.hpp"
+#include "MeshSkin.hpp"
 #include "SpatialData.hpp"
 
 #include "MayaFlux/Kinesis/Temporal/TimedValues.hpp"
@@ -30,7 +31,7 @@ enum class TopologyVariance : uint8_t {
  *        or curves, or a camera's lens.
  *
  * A camera is shown the way geometry is: a row whose source is a lens places the camera, so its
- * world placement comes from the hierarchy and its motion from the row's channels, and the lens
+ * placement comes from the hierarchy and its motion from the row's channels, and the lens
  * itself (focal length, film back, clip planes) is the source.
  *
  * geometry is the first shot of the source, or its only one. time and variance
