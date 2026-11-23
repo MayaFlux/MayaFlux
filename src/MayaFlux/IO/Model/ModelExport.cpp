@@ -96,6 +96,7 @@ namespace {
         Kakshya::MeshSubrange sub;
         sub.index_start = 0;
         sub.index_count = mesh_data.face_count() * 3;
+        sub.vertex_count = mesh_data.vertex_count();
         sub.name = name;
 
         Kakshya::RegionGroup rg("submeshes");
@@ -131,6 +132,7 @@ namespace {
         Kakshya::MeshSubrange sub;
         sub.index_start = 0;
         sub.index_count = static_cast<uint32_t>(index_count);
+        sub.vertex_count = mesh_data->vertex_count();
         sub.name = name;
         sub.diffuse_path = diffuse_path;
         Kakshya::RegionGroup rg("submeshes");

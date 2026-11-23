@@ -230,10 +230,14 @@ void MeshBuffer::set_vertex_data(std::span<const uint8_t> bytes)
         return;
     }
 
+    const uint32_t previous_count = m_mesh_data.vertex_count();
     m_mesh_data.vertex_variant = std::vector<uint8_t>(bytes.begin(), bytes.end());
     m_mesh_data.layout.vertex_count = m_mesh_data.layout.stride_bytes > 0
         ? static_cast<uint32_t>(bytes.size() / m_mesh_data.layout.stride_bytes)
         : 0;
+    if (m_mesh_data.layout.vertex_count != previous_count) {
+        m_mesh_data.faces.reset();
+    }
 
     m_vertices_dirty.store(true, std::memory_order_release);
 }
@@ -248,6 +252,7 @@ void MeshBuffer::set_index_data(std::span<const uint32_t> indices)
     }
 
     m_mesh_data.index_variant = std::vector<uint32_t>(indices.begin(), indices.end());
+    m_mesh_data.faces.reset();
     m_indices_dirty.store(true, std::memory_order_release);
 }
 

@@ -96,6 +96,7 @@ void MeshProcessor::processing_function(const std::shared_ptr<Buffer>& /*buffer*
                 reinterpret_cast<const uint8_t*>(verts.data()),
                 reinterpret_cast<const uint8_t*>(verts.data() + verts.size()));
             m_mesh_buffer->m_mesh_data.index_variant = indices;
+            m_mesh_buffer->m_mesh_data.faces.reset();
             m_mesh_buffer->m_mesh_data.layout.vertex_count = static_cast<uint32_t>(verts.size());
             m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
             m_mesh_buffer->m_indices_dirty.store(true, std::memory_order_release);

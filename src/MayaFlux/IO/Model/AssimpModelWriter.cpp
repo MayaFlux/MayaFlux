@@ -195,17 +195,37 @@ bool AssimpModelWriter::write(
             mesh->mColors[0][v] = aiColor4D(mv.color.x, mv.color.y, mv.color.z, mv.color.w);
         }
 
-        const size_t face_count = ib->size() / 3;
-        mesh->mNumFaces = static_cast<unsigned int>(face_count);
-        mesh->mFaces = new aiFace[face_count];
-        for (size_t f = 0; f < face_count; ++f) {
-            auto& face = mesh->mFaces[f];
-            face.mNumIndices = 3;
-            face.mIndices = new unsigned int[3] {
-                (*ib)[(f * 3) + 0],
-                (*ib)[(f * 3) + 1],
-                (*ib)[(f * 3) + 2],
-            };
+        if (mesh_data.faces) {
+            const auto& polygons = *mesh_data.faces;
+            const size_t polygon_count = polygons.sizes.size();
+            mesh->mNumFaces = static_cast<unsigned int>(polygon_count);
+            mesh->mFaces = new aiFace[polygon_count];
+
+            unsigned int primitive_types = 0;
+            size_t cursor = 0;
+            for (size_t f = 0; f < polygon_count; ++f) {
+                const uint32_t corner_count = polygons.sizes[f];
+                auto& face = mesh->mFaces[f];
+                face.mNumIndices = corner_count;
+                face.mIndices = new unsigned int[corner_count];
+                std::copy_n(polygons.corners.begin() + static_cast<std::ptrdiff_t>(cursor), corner_count, face.mIndices);
+                cursor += corner_count;
+                primitive_types |= corner_count == 3 ? aiPrimitiveType_TRIANGLE : aiPrimitiveType_POLYGON;
+            }
+            mesh->mPrimitiveTypes = primitive_types;
+        } else {
+            const size_t face_count = ib->size() / 3;
+            mesh->mNumFaces = static_cast<unsigned int>(face_count);
+            mesh->mFaces = new aiFace[face_count];
+            for (size_t f = 0; f < face_count; ++f) {
+                auto& face = mesh->mFaces[f];
+                face.mNumIndices = 3;
+                face.mIndices = new unsigned int[3] {
+                    (*ib)[(f * 3) + 0],
+                    (*ib)[(f * 3) + 1],
+                    (*ib)[(f * 3) + 2],
+                };
+            }
         }
 
         scene.mMeshes[mi] = mesh;

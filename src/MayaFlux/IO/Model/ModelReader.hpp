@@ -65,6 +65,14 @@ using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::
  * - aiProcess_JoinIdenticalVertices: deduplicate vertices
  * - aiProcess_SortByPType: isolate TRIANGLE primitives
  *
+ * set_keep_polygons(true) before open() changes that. Faces of any size reach the
+ * MeshData as its polygons (MeshData::faces) with the triangles derived from them,
+ * instead of being triangulated by Assimp, and a mesh is no longer split by primitive
+ * type, so triangles and polygons of one source mesh stay one MeshData. Faces of fewer
+ * than three indices are left out. Normals and tangents the file does not carry are
+ * derived from the polygons by Kinesis (write_vertex_normals and write_vertex_tangents,
+ * which leave any the file does carry alone) in place of the two generation steps.
+ *
  * FileReader contract:
  * create_container() and load_into_container() are no-ops for this reader;
  * mesh data does not go through the SignalSourceContainer streaming path.
@@ -74,6 +82,14 @@ class MAYAFLUX_API ModelReader : public FileReader {
 public:
     ModelReader();
     ~ModelReader() override;
+
+    /**
+     * @brief Keep polygons as they are in the file instead of triangulating them.
+     *
+     * Applies to the next open(). Off by default. See the class description for what
+     * changes.
+     */
+    void set_keep_polygons(bool keep) noexcept { m_keep_polygons = keep; }
 
     // -------------------------------------------------------------------------
     // Primary API — use these
@@ -206,6 +222,8 @@ private:
     std::unique_ptr<Impl> m_impl;
 
     bool m_is_open { false };
+    bool m_keep_polygons { false };
+    bool m_polygons_imported { false };
     mutable std::string m_last_error;
 
     [[nodiscard]] Kakshya::MeshData extract_single_mesh(

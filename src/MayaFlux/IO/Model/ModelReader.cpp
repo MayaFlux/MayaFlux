@@ -1,6 +1,6 @@
 #include "ModelReader.hpp"
 
-#include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/VertexRecords.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 
@@ -361,14 +361,17 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
         return false;
     }
 
-    constexpr unsigned int flags = aiProcess_Triangulate
+    constexpr unsigned int triangles_only = aiProcess_Triangulate
         | aiProcess_GenSmoothNormals
         | aiProcess_CalcTangentSpace
         | aiProcess_FlipUVs
         | aiProcess_JoinIdenticalVertices
         | aiProcess_SortByPType;
+    constexpr unsigned int polygons = aiProcess_FlipUVs
+        | aiProcess_JoinIdenticalVertices;
 
-    m_impl->scene = m_impl->importer.ReadFile(resolved, flags);
+    m_impl->scene = m_impl->importer.ReadFile(resolved, m_keep_polygons ? polygons : triangles_only);
+    m_polygons_imported = m_keep_polygons;
 
     if (!m_impl->scene
         || (m_impl->scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE)
@@ -510,7 +513,7 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
                 mesh->mNormals[v].z
             };
         } else {
-            vert.normal = { 0.0F, 1.0F, 0.0F };
+            vert.normal = m_polygons_imported ? glm::vec3(0.0F, 0.0F, 1.0F) : glm::vec3(0.0F, 1.0F, 0.0F);
         }
 
         if (mesh->HasTangentsAndBitangents()) {
@@ -546,43 +549,65 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
         verts.push_back(vert);
     }
 
-    std::vector<uint32_t> indices;
-    indices.reserve(static_cast<size_t>(mesh->mNumFaces) * 3);
+    Kakshya::MeshData data;
 
-    for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
-        const aiFace& face = mesh->mFaces[f];
-        if (face.mNumIndices != 3) {
-            continue;
+    if (m_polygons_imported) {
+        Kakshya::FaceList polygons;
+        for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
+            const aiFace& face = mesh->mFaces[f];
+            if (face.mNumIndices < 3) {
+                continue;
+            }
+            polygons.sizes.push_back(face.mNumIndices);
+            polygons.corners.insert(polygons.corners.end(), face.mIndices, face.mIndices + face.mNumIndices);
         }
-        indices.push_back(face.mIndices[0]);
-        indices.push_back(face.mIndices[1]);
-        indices.push_back(face.mIndices[2]);
+
+        if (verts.empty() || polygons.sizes.empty()) {
+            set_error("Mesh has no usable geometry after extraction");
+            return {};
+        }
+
+        auto built = Kakshya::MeshData::from_vertices(verts, std::move(polygons));
+        if (!built) {
+            set_error("MeshData::from_vertices failed for the polygons");
+            return {};
+        }
+        data = std::move(*built);
+
+        (void)Kinesis::write_vertex_normals(data);
+        (void)Kinesis::write_vertex_tangents(data);
+    } else {
+        std::vector<uint32_t> indices;
+        indices.reserve(static_cast<size_t>(mesh->mNumFaces) * 3);
+
+        for (unsigned int f = 0; f < mesh->mNumFaces; ++f) {
+            const aiFace& face = mesh->mFaces[f];
+            if (face.mNumIndices != 3) {
+                continue;
+            }
+            indices.push_back(face.mIndices[0]);
+            indices.push_back(face.mIndices[1]);
+            indices.push_back(face.mIndices[2]);
+        }
+
+        if (verts.empty() || indices.empty()) {
+            set_error("Mesh has no usable geometry after extraction");
+            return {};
+        }
+
+        auto built = Kakshya::MeshData::from_vertices(verts, indices);
+        if (!built) {
+            set_error("MeshData::from_vertices failed");
+            return {};
+        }
+        data = std::move(*built);
     }
 
-    if (verts.empty() || indices.empty()) {
-        set_error("Mesh has no usable geometry after extraction");
-        return {};
-    }
-
-    auto data = Kakshya::MeshData::empty();
-    Kakshya::MeshInsertion ins(data.vertex_variant, data.index_variant);
-    ins.insert_flat(
-        std::span<const uint8_t>(
-            reinterpret_cast<const uint8_t*>(verts.data()),
-            verts.size() * sizeof(V)),
-        std::span<const uint32_t>(indices),
-        Kakshya::VertexLayout::for_meshes(sizeof(V)));
-
-    auto access = ins.build();
-    if (!access) {
-        set_error("MeshInsertion::build() failed");
-        return {};
-    }
-    data.layout = access->layout;
+    const auto index_count = static_cast<uint32_t>(std::get<std::vector<uint32_t>>(data.index_variant).size());
 
     Kakshya::MeshSubrange sub;
     sub.index_start = 0;
-    sub.index_count = static_cast<uint32_t>(indices.size());
+    sub.index_count = index_count;
     sub.vertex_offset = 0;
     sub.vertex_count = static_cast<uint32_t>(verts.size());
     sub.name = std::string(mesh_name);
@@ -614,7 +639,7 @@ Kakshya::MeshData ModelReader::extract_single_mesh(
         "ModelReader: extracted mesh '{}' mat='{}' — {} verts, {} indices",
         mesh_name.empty() ? "<unnamed>" : mesh_name,
         material_name.empty() ? "<none>" : material_name,
-        verts.size(), indices.size());
+        verts.size(), index_count);
 
     return data;
 }
