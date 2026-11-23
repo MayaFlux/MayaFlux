@@ -516,9 +516,11 @@ MAYAFLUX_API Kriya::MeshReflowBuilder create_mesh_reflow(
 MAYAFLUX_API std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow();
 
 /**
- * @brief Register the buffers of a realized assembly, set up their rendering and show their first shots.
+ * @brief Register the buffers and networks of a realized assembly, set up their rendering and show their first shots.
  *
- * Every buffer of every part is added to the graphics buffers, then given the RenderConfig the
+ * The network of every part of meshes and every part of instances is registered with the visual rate
+ * node graph, since it is the network's own processing that composes the placements a sink writes into
+ * the slots and instances. Every buffer of every part is added to the graphics buffers, then given the RenderConfig the
  * callable answers for it, then the sources of points and curves show their first shot (show_rest).
  * What a reflow plays afterwards, the placement sink and the lanes, is yours to start.
  *

@@ -17,6 +17,7 @@
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
 #include "MayaFlux/Kriya/Realization/MeshAssemblyRealization.hpp"
+#include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
 #include "MayaFlux/Yantra/Workflows/Vision/VisionWorkflow.hpp"
@@ -375,6 +376,12 @@ size_t present_realization(
     size_t shown = 0;
 
     for (const auto& part : realization->parts()) {
+        if (part.network) {
+            register_node_network(part.network, Nodes::ProcessingToken::VISUAL_RATE);
+        }
+        if (part.instances) {
+            register_node_network(part.instances, Nodes::ProcessingToken::VISUAL_RATE);
+        }
         if (part.network_buffer) {
             buffers->add_buffer(part.network_buffer, token);
             part.network_buffer->setup_rendering(config(part, 0));
