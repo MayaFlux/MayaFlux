@@ -2,6 +2,9 @@
 
 #include "SpatialCache.hpp"
 
+#include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshData.hpp"
+
 namespace MayaFlux::Kakshya {
 class MeshAssemblyContainer;
 }
@@ -60,7 +63,8 @@ struct SpatialObject {
  * top level stream keeps its plain name, which is everything SpatialCache
  * writes. The rest of the hierarchy is listed by get_objects(), and transform
  * objects are read by read_transform(). Polygon and subdivision meshes are
- * listed but their geometry is not read; they are skipped with a warning.
+ * meshes, not streams of points: get_mesh_names() lists them and read_mesh()
+ * reads one sample as a MeshData.
  * Attributes of types SpatialCache does not write are skipped with a
  * warning. A curves stream is reported as LINE_STRIP: a file does not tell a
  * list of pairs from curves of two vertices. Not safe to call from several
@@ -166,6 +170,50 @@ public:
         const std::string& stream_name, size_t index) const;
 
     /**
+     * @brief Paths of the polygon and subdivision mesh objects, in file order.
+     */
+    [[nodiscard]] const std::vector<std::string>& get_mesh_names() const;
+
+    /**
+     * @brief Number of samples of a mesh object, 0 for an unknown one.
+     */
+    [[nodiscard]] size_t get_mesh_sample_count(const std::string& mesh_name) const;
+
+    /**
+     * @brief How a mesh object's topology changes over its samples, as the file reports it.
+     * @return nullopt for an unknown mesh.
+     */
+    [[nodiscard]] std::optional<Kakshya::TopologyVariance> get_mesh_variance(
+        const std::string& mesh_name) const;
+
+    /**
+     * @brief Time in seconds the archive assigns to a sample of a mesh object.
+     * @return The time, or nullopt if the mesh or index is invalid.
+     */
+    [[nodiscard]] std::optional<double> mesh_time(const std::string& mesh_name, size_t index) const;
+
+    /**
+     * @brief Read one sample of a mesh object as triangles.
+     *
+     * Alembic winds polygons clockwise in a right handed system, so the corners of every face
+     * are reversed to give the counter clockwise winding the engine's meshes use. Faces of any
+     * size are triangulated. A subdivision surface is read as its control cage and is not
+     * subdivided.
+     *
+     * Normals and texture coordinates are taken when the sample has them per vertex or per
+     * face corner. A mesh that has any per corner values becomes one vertex per corner; other
+     * scopes are skipped with a warning. Normals the file lacks are derived from the faces, and
+     * tangents from the texture coordinates when there are some. The result owns its data.
+     *
+     * @param mesh_name Path from get_mesh_names().
+     * @param index Sample index, below get_mesh_sample_count().
+     * @return The mesh, or nullopt for an unknown mesh, an index out of range, a sample whose
+     *         faces do not fit its vertices or a read failure; the reason is in get_last_error().
+     */
+    [[nodiscard]] std::optional<Kakshya::MeshData> read_mesh(
+        const std::string& mesh_name, size_t index) const;
+
+    /**
      * @brief Every object of the archive in file order, parents before children.
      */
     [[nodiscard]] const std::vector<SpatialObject>& get_objects() const;
@@ -192,15 +240,14 @@ public:
      * @brief Build a MeshAssemblyContainer from the archive's hierarchy.
      *
      * Transform objects and groups become placement rows, parented as the archive is; a
-     * transform that does not inherit its parent's transform becomes a root. Each points
-     * or curves object becomes a source holding its first sample, with its sample times
-     * and its topology variance, and a row that shows it. An instance shares the sources
-     * of the object it instances instead of reading them again. A transform that changes
-     * over time becomes a channel of one clip named for the file.
+     * transform that does not inherit its parent's transform becomes a root. Each points,
+     * curves, polygon or subdivision mesh object becomes a source holding its first sample,
+     * with its sample times and its topology variance, and a row that shows it. An instance
+     * shares the sources of the object it instances instead of reading them again. A
+     * transform that changes over time becomes a channel of one clip named for the file.
      *
-     * Polygon and subdivision meshes are not read, and the objects below them are placed
-     * under their parent. The variance of a points object is Constant for one sample and
-     * Heterogeneous for more, since the point count may change.
+     * The variance of a mesh or curves object is the file's; that of a points object is
+     * Constant for one sample and Heterogeneous for more, since the point count may change.
      *
      * @return The assembly, or nullptr when no archive is open.
      */
