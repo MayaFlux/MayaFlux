@@ -21,19 +21,22 @@ MeshWriterNode::MeshWriterNode(size_t initial_vertex_capacity)
 
 void MeshWriterNode::set_mesh(const Kakshya::MeshData& data)
 {
-    const auto* vb = std::get_if<std::vector<uint8_t>>(&data.vertex_variant);
-    const auto* ib = std::get_if<std::vector<uint32_t>>(&data.index_variant);
-
-    if (!vb || !ib || vb->empty() || ib->empty() || data.layout.stride_bytes == 0) {
+    if (!data.is_valid()) {
         MF_ERROR(Journal::Component::Nodes, Journal::Context::NodeProcessing,
             "MeshWriterNode::set_mesh: invalid MeshData");
         return;
     }
 
-    const auto n = vb->size() / data.layout.stride_bytes;
+    const auto& vb = std::get<std::vector<uint8_t>>(data.vertex_variant);
+    const auto& ib = std::get<std::vector<uint32_t>>(data.index_variant);
+
+    const auto n = vb.size() / data.layout.stride_bytes;
     set_mesh(
-        std::span { reinterpret_cast<const MeshVertex*>(vb->data()), n },
-        std::span { ib->data(), ib->size() });
+        std::span { reinterpret_cast<const MeshVertex*>(vb.data()), n },
+        std::span { ib.data(), ib.size() });
+
+    m_submeshes = data.submeshes;
+    m_faces = data.faces;
 }
 
 std::optional<Kakshya::MeshData> MeshWriterNode::get_mesh_data() const
@@ -56,6 +59,8 @@ std::optional<Kakshya::MeshData> MeshWriterNode::get_mesh_data() const
         return std::nullopt;
     }
     mesh_data.layout = access->layout;
+    mesh_data.submeshes = m_submeshes;
+    mesh_data.faces = m_faces;
 
     return mesh_data;
 }
@@ -66,6 +71,8 @@ void MeshWriterNode::set_mesh(
 {
     m_vertices.assign(vertices.begin(), vertices.end());
     m_indices.assign(indices.begin(), indices.end());
+    m_submeshes.reset();
+    m_faces.reset();
     m_mesh_dirty = true;
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;
@@ -73,6 +80,10 @@ void MeshWriterNode::set_mesh(
 
 void MeshWriterNode::set_mesh_vertices(std::span<const MeshVertex> vertices)
 {
+    if (vertices.size() != m_vertices.size()) {
+        m_submeshes.reset();
+        m_faces.reset();
+    }
     m_vertices.assign(vertices.begin(), vertices.end());
     m_mesh_dirty = true;
     m_vertex_data_dirty = true;
@@ -82,6 +93,8 @@ void MeshWriterNode::set_mesh_vertices(std::span<const MeshVertex> vertices)
 void MeshWriterNode::set_mesh_indices(std::span<const uint32_t> indices)
 {
     m_indices.assign(indices.begin(), indices.end());
+    m_submeshes.reset();
+    m_faces.reset();
     m_mesh_dirty = true;
     m_vertex_data_dirty = true;
 }
@@ -90,6 +103,8 @@ void MeshWriterNode::clear_mesh()
 {
     m_vertices.clear();
     m_indices.clear();
+    m_submeshes.reset();
+    m_faces.reset();
     m_mesh_dirty = true;
     m_vertex_data_dirty = true;
     m_needs_layout_update = true;

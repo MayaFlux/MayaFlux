@@ -268,15 +268,10 @@ ModelReader::create_mesh_network(const TextureResolver& resolver) const
                                  std::optional<uint32_t> parent,
                                  const glm::mat4& local, const glm::mat4& parent_world) {
         const auto& vb = std::get<std::vector<uint8_t>>(e.data.vertex_variant);
-        const auto& ib = std::get<std::vector<uint32_t>>(e.data.index_variant);
 
         const size_t vertex_count = vb.size() / sizeof(Kakshya::MeshVertex);
         auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>(vertex_count);
-        node->set_mesh(
-            std::span<const Kakshya::MeshVertex>(
-                reinterpret_cast<const Kakshya::MeshVertex*>(vb.data()),
-                vertex_count),
-            std::span<const uint32_t>(ib.data(), ib.size()));
+        node->set_mesh(e.data);
 
         const auto slot_idx = net->add_slot(std::move(slot_name), node, parent);
         auto& slot = net->get_slot(slot_idx);
