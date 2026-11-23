@@ -6,6 +6,7 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
@@ -342,6 +343,14 @@ Kriya::SpatialReflowBuilder create_spatial_reflow(
 {
     return Kriya::SpatialReflowBuilder(
         std::move(source), buffer ? Kriya::spatial_sink(buffer) : Kriya::SpatialReflow::Sink {}, 0.0, get_scheduler());
+}
+
+Kriya::MeshReflowBuilder create_mesh_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::MeshData>> source,
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer)
+{
+    return Kriya::MeshReflowBuilder(
+        std::move(source), buffer ? Kriya::mesh_sink(buffer) : Kriya::MeshReflow::Sink {}, 0.0, get_scheduler());
 }
 
 std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()

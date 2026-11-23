@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kinesis/VertexSampler.hpp"
+#include "MayaFlux/Kriya/MeshReflow.hpp"
 #include "MayaFlux/Kriya/SpatialReflow.hpp"
 #include "MayaFlux/Kriya/VolumeReflow.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
@@ -467,6 +468,32 @@ MAYAFLUX_API std::shared_ptr<Buffers::RecordedGeometryBuffer> create_recorded_ge
 MAYAFLUX_API Kriya::SpatialReflowBuilder create_spatial_reflow(
     std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>> source,
     const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer);
+
+/**
+ * @brief Begin a reflow that plays mesh frames into a mesh buffer.
+ *
+ * Each frame replaces the buffer's geometry (mesh_sink), on the engine's frame clock once
+ * start() runs. Frames may differ in size and connectivity; the buffer uploads indices only
+ * when they change, and starts empty if made from MeshData::empty(). The builder takes the
+ * rest of its description from ReflowBuilder: courses, selection, frame operations. Keep the
+ * Reflow start() returns alive for as long as it should play, and steer it through its courses.
+ *
+ * @code{.cpp}
+ * auto frames = Kakshya::ResidentFrames<Kakshya::MeshData>::create(times, std::move(meshes));
+ * auto buffer = std::make_shared<Buffers::MeshBuffer>(Kakshya::MeshData::empty()) | Graphics;
+ * buffer->setup_rendering({ .target_window = window });
+ * auto reflow = MayaFlux::create_mesh_reflow(frames, buffer)
+ *                   .course({ .edge = Kriya::CourseEdge::Loop })
+ *                   .start();
+ * @endcode
+ *
+ * @param source The frames to play, such as a ResidentFrames of MeshData.
+ * @param buffer The buffer to show them in.
+ * @return Builder. A null source makes build() and start() return nullptr.
+ */
+MAYAFLUX_API Kriya::MeshReflowBuilder create_mesh_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::MeshData>> source,
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer);
 
 /**
  * @brief A vision workflow running on the engine's managers.

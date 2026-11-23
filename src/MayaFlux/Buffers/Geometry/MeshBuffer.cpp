@@ -6,33 +6,43 @@
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
+#include "MayaFlux/Buffers/Network/SpatialFieldWiring.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
+
+namespace {
+
+    size_t initial_vertex_bytes(size_t bytes)
+    {
+        return std::max(bytes, sizeof(Kakshya::MeshVertex));
+    }
+
+}
 
 // =============================================================================
 // Construction
 // =============================================================================
 
 MeshBuffer::MeshBuffer(Kakshya::MeshData data)
-    : VKBuffer(
+    : StateFieldBuffer(
           [&data]() -> size_t {
               const auto* vb = std::get_if<std::vector<uint8_t>>(
                   &data.vertex_variant);
-              return vb ? vb->size() : 0;
+              return initial_vertex_bytes(vb ? vb->size() : 0);
           }(),
           Usage::VERTEX,
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
     , m_mesh_data(std::move(data))
 {
     if (!m_mesh_data.is_valid()) {
-        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
-            "MeshBuffer constructed with invalid MeshData — "
-            "GPU upload will be skipped until valid data is provided");
+        MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer constructed without geometry; nothing is drawn until a frame or mesh arrives");
     }
 
     RenderConfig defaults;
@@ -51,8 +61,8 @@ MeshBuffer::MeshBuffer(Kakshya::MeshData data)
 }
 
 MeshBuffer::MeshBuffer(std::shared_ptr<Nodes::GpuSync::MeshWriterNode> node)
-    : VKBuffer(
-          node ? node->get_mesh_vertex_count() * sizeof(Kakshya::MeshVertex) : 0,
+    : StateFieldBuffer(
+          initial_vertex_bytes(node ? node->get_mesh_vertex_count() * sizeof(Kakshya::MeshVertex) : 0),
           Usage::VERTEX,
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
     , m_node(std::move(node))
@@ -164,6 +174,8 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
             0, binding_index++, vk::DescriptorType::eCombinedImageSampler);
     }
 
+    wire_field_pass();
+
     apply_render_config(m_render_config, sc);
 
     if (m_render_config.triangulate
@@ -270,6 +282,72 @@ void MeshBuffer::set_mesh_data(Kakshya::MeshData data)
     m_mesh_data = std::move(data);
     m_vertices_dirty.store(true, std::memory_order_release);
     m_indices_dirty.store(true, std::memory_order_release);
+}
+
+// =============================================================================
+// Replay and field pass
+// =============================================================================
+
+void MeshBuffer::write_frame(std::shared_ptr<const Kakshya::MeshData> frame)
+{
+    m_pending.publish(std::move(frame));
+}
+
+std::shared_ptr<const Kakshya::MeshData> MeshBuffer::current_frame() const
+{
+    if (auto held = m_pending.read()) {
+        return *held;
+    }
+    return nullptr;
+}
+
+void MeshBuffer::set_field_operator(std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op)
+{
+    if (m_render_processor) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer::set_field_operator: rendering is already set up, the field pass is wired there");
+        return;
+    }
+    m_field_op = std::move(field_op);
+}
+
+bool MeshBuffer::restores_vertices() const
+{
+    return m_field_wired && m_field_op && m_field_op->demands_full_vertex_restore();
+}
+
+void MeshBuffer::wire_field_pass()
+{
+    if (!m_field_op) {
+        return;
+    }
+
+    const size_t record_bytes = m_mesh_data.layout.stride_bytes > 0
+        ? m_mesh_data.layout.stride_bytes
+        : sizeof(Kakshya::MeshVertex);
+
+    if (m_field_op->get_layout().stride_bytes != record_bytes) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer: the field operator's layout is {} bytes per vertex, the buffer's "
+            "records are {}; no field pass is wired",
+            m_field_op->get_layout().stride_bytes, record_bytes);
+        return;
+    }
+
+    if (wants_spatial_stages(m_field_op->get_field_config())) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer: the hash, claim, density and population stages are not wired for a "
+            "MeshBuffer; only the field pass is");
+    }
+
+    wire_field_stages(
+        std::dynamic_pointer_cast<StateFieldBuffer>(shared_from_this()),
+        m_field_op, std::nullopt, {}, nullptr);
+    m_field_wired = true;
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "MeshBuffer: field pass wired, {} bound fields, {} bytes per vertex",
+        m_field_op->binding_count(), record_bytes);
 }
 
 } // namespace MayaFlux::Buffers

@@ -1,11 +1,16 @@
 #pragma once
 
-#include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 
 namespace MayaFlux::Nodes::GpuSync {
 class MeshWriterNode;
+}
+
+namespace MayaFlux::Nodes::Network {
+class GpuFieldOperator;
 }
 
 namespace MayaFlux::Core {
@@ -19,7 +24,7 @@ class RenderProcessor;
 
 /**
  * @class MeshBuffer
- * @brief VKBuffer subclass that owns a MeshData and manages its GPU upload.
+ * @brief StateFieldBuffer subclass that owns a MeshData and manages its GPU upload.
  *
  * MeshBuffer is to indexed triangle geometry what TextureBuffer is to pixel
  * data: it owns the CPU-side storage, creates a dedicated processor for
@@ -46,16 +51,29 @@ class RenderProcessor;
  * buf->set_vertex_data(new_bytes);  // marks vertices dirty
  * // MeshProcessor re-uploads vertex buffer on next graphics cycle.
  * @endcode
+ *
+ * Replay: write_frame hands the buffer a shared MeshData from any thread, such as a
+ * Reflow sink. The newest frame replaces the geometry on the next graphics cycle, and
+ * the indices are uploaded only when they differ from the ones already on the GPU. The
+ * buffer may start with no geometry (MeshData::empty()) and draws nothing until the
+ * first frame, and a frame with no triangles hides it. The set_* mutators below are for
+ * the thread that owns the buffer; write_frame is the any-thread path.
+ *
+ * Field pass: with a GpuFieldOperator set before setup_rendering, the field deforms the
+ * vertices on the GPU and the buffer restores them every cycle, so each frame is the
+ * field applied to the stored mesh and not an accumulation. The hash, claim, density and
+ * population stages are not wired.
  */
-class MAYAFLUX_API MeshBuffer : public VKBuffer {
+class MAYAFLUX_API MeshBuffer : public StateFieldBuffer {
 public:
     /**
      * @brief Construct from an owning MeshData.
      *
-     * The VKBuffer base is sized to vertex_bytes. MeshProcessor allocates
-     * the index buffer separately on on_attach.
+     * The VKBuffer base is sized to vertex_bytes, at least one vertex. MeshProcessor
+     * allocates the index buffer separately, when the first valid geometry arrives.
      *
-     * @param data Loaded or generated mesh. Must be valid (is_valid() == true).
+     * @param data Loaded or generated mesh, or MeshData::empty() for a buffer that
+     *        waits for write_frame.
      */
     explicit MeshBuffer(Kakshya::MeshData data);
 
@@ -169,6 +187,29 @@ public:
      */
     void set_mesh_data(Kakshya::MeshData data);
 
+    /**
+     * @brief Replace the geometry with a frame.
+     * @param frame Frame to show from the next graphics cycle. Null shows nothing.
+     *
+     * May be called from any thread and never blocks. Only the newest frame is kept.
+     */
+    void write_frame(std::shared_ptr<const Kakshya::MeshData> frame);
+
+    /** @brief The newest frame written, or null before the first. */
+    [[nodiscard]] std::shared_ptr<const Kakshya::MeshData> current_frame() const;
+
+    /**
+     * @brief Deform the vertices on the GPU with a field operator.
+     * @param field_op Operator whose bindings select the field pass, or null for none.
+     *
+     * Call before setup_rendering, which wires the pass. The operator's layout must be
+     * the buffer's vertex record.
+     */
+    void set_field_operator(std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op);
+
+    /** @brief Whether a wired field pass displaces the vertices in place every cycle. */
+    [[nodiscard]] bool restores_vertices() const;
+
     // -------------------------------------------------------------------------
     // Dirty flag queries (read by MeshProcessor)
     // -------------------------------------------------------------------------
@@ -223,8 +264,13 @@ public:
 private:
     friend class MeshProcessor;
 
+    void wire_field_pass();
+
     Kakshya::MeshData m_mesh_data;
     std::shared_ptr<Nodes::GpuSync::MeshWriterNode> m_node;
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> m_field_op;
+    bool m_field_wired {};
+    Memory::SnapshotCell<std::shared_ptr<const Kakshya::MeshData>> m_pending;
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
     std::string m_diffuse_binding { "diffuseTex" };
 
