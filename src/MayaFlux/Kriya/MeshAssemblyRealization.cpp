@@ -25,6 +25,22 @@ namespace {
         return setting;
     }
 
+    Kinesis::SamplerBounds bounds_of(const Kakshya::SpatialData& shot)
+    {
+        glm::vec3 low(std::numeric_limits<float>::max());
+        glm::vec3 high(std::numeric_limits<float>::lowest());
+        for (const auto& position : shot.positions) {
+            low = glm::min(low, position);
+            high = glm::max(high, position);
+        }
+        if (shot.positions.empty()) {
+            return {};
+        }
+
+        const glm::vec3 pad = glm::max((high - low) * 0.05F, glm::vec3(1.0e-3F));
+        return { .min = low - pad, .max = high + pad };
+    }
+
     bool drawable(Portal::Graphics::PrimitiveTopology topology)
     {
         using Portal::Graphics::PrimitiveTopology;
@@ -107,7 +123,9 @@ std::shared_ptr<MeshAssemblyRealization> MeshAssemblyRealization::create(
                 continue;
             }
             made.spatial_buffers.push_back(std::make_shared<Buffers::RecordedGeometryBuffer>(
-                static_cast<uint32_t>(capacity), spatial->topology, options.bounds));
+                static_cast<uint32_t>(capacity), spatial->topology,
+                options.bounds.value_or(bounds_of(*spatial)),
+                options.spatial_field ? options.spatial_field(part, row) : nullptr));
             any = true;
         }
         if (any) {
@@ -219,6 +237,52 @@ std::vector<CourseRoute<Kakshya::SpatialData>> MeshAssemblyRealization::spatial_
         routes.push_back(std::move(route));
     }
     return routes;
+}
+
+size_t MeshAssemblyRealization::bind_materials(const MeshAssemblyMaterialResolver& resolver) const
+{
+    if (!resolver) {
+        return 0;
+    }
+
+    const auto& materials = m_assembly->get_data().materials;
+    std::map<uint64_t, std::shared_ptr<Core::VKImage>> images;
+    const auto image_of = [&](uint64_t material) -> std::shared_ptr<Core::VKImage> {
+        if (material >= materials.size()) {
+            return nullptr;
+        }
+        const auto it = images.find(material);
+        if (it != images.end()) {
+            return it->second;
+        }
+        return images.emplace(material, resolver(materials[material])).first->second;
+    };
+
+    size_t bound = 0;
+    for (const auto& part : m_parts) {
+        if (part.network) {
+            for (size_t slot = 0; slot < part.rows.size(); ++slot) {
+                const auto held = m_assembly->placement(part.rows[slot]);
+                if (!held->material || !part.network->get_slot(static_cast<uint32_t>(slot)).node) {
+                    continue;
+                }
+                if (auto image = image_of(*held->material)) {
+                    part.network->set_slot_texture(static_cast<uint32_t>(slot), std::move(image));
+                    ++bound;
+                }
+            }
+        } else if (part.instances && part.instance_buffer) {
+            const auto held = m_assembly->placement(part.rows.front());
+            if (!held->material) {
+                continue;
+            }
+            if (auto image = image_of(*held->material)) {
+                part.instance_buffer->bind_instance_textures({ std::move(image) });
+                ++bound;
+            }
+        }
+    }
+    return bound;
 }
 
 void MeshAssemblyRealization::show_rest() const

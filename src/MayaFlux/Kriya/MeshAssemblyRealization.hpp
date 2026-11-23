@@ -15,6 +15,11 @@ class RecordedGeometryBuffer;
 
 namespace MayaFlux::Nodes::Network {
 class InstanceNetwork;
+class GpuFieldOperator;
+}
+
+namespace MayaFlux::Core {
+class VKImage;
 }
 
 namespace MayaFlux::Kriya {
@@ -30,9 +35,31 @@ struct MeshAssemblyRealizeOptions {
     /** Whether a part of meshes is flat or keeps the hierarchy. Empty makes every part flat. */
     std::function<Nodes::Network::MeshPartPlacement(const Kakshya::MeshAssemblyPart&)> placement;
 
-    /** The box the buffers of points and curves cover, for the spatial stages a caller adds to them. */
-    Kinesis::SamplerBounds bounds;
+    /**
+     * The operator a buffer of points or curves runs, for the spatial stages (hash, density
+     * colour, claims) and fields its SpatialFieldConfig and bindings ask for, or null for a
+     * buffer that only draws. Called with the part and the row of each buffer, so every
+     * row can have an operator of its own.
+     */
+    std::function<std::shared_ptr<Nodes::Network::GpuFieldOperator>(const Kakshya::MeshAssemblyPart&, uint64_t)> spatial_field;
+
+    /**
+     * The box the spatial hash of every buffer of points or curves covers, in the source's own
+     * coordinates. Empty takes the box of each source's first shot, padded a little, so a
+     * stage has bounds without anyone measuring the geometry.
+     */
+    std::optional<Kinesis::SamplerBounds> bounds;
 };
+
+/**
+ * @brief Gives the image a material shows, or null for none.
+ *
+ * Called once for each material a part uses, with the material as the file wrote it, so the
+ * resolver sees the path and whether it points into the file (diffuse_embedded). The images
+ * follow TextureLoom's holders: the part that binds one retains it, and the caller releases
+ * the hold its resolver took.
+ */
+using MeshAssemblyMaterialResolver = std::function<std::shared_ptr<Core::VKImage>(const Kakshya::MeshAssemblyMaterial&)>;
 
 /**
  * @struct MeshAssemblyRealizedPart
@@ -121,6 +148,18 @@ public:
      * the lane that plays them.
      */
     void show_rest() const;
+
+    /**
+     * @brief Give every part the images its materials name.
+     * @param resolver Finds the image of a material. A null image leaves what the part had.
+     * @return How many images were bound.
+     *
+     * A network gives each slot the image of its row's material (MeshNetwork::set_slot_texture)
+     * and an instanced part the one image its group shares (InstanceNetworkBuffer::bind_instance_textures).
+     * Points and curves have no surface to texture and are left alone. Call it before the buffers
+     * are set up when the textured shaders are wanted, as the buffers read their textures at setup.
+     */
+    size_t bind_materials(const MeshAssemblyMaterialResolver& resolver) const;
 
 private:
     MeshAssemblyRealization() = default;
