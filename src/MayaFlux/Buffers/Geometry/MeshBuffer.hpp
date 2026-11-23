@@ -68,7 +68,7 @@ public:
      */
     MeshBuffer(std::shared_ptr<Nodes::GpuSync::MeshWriterNode> node);
 
-    ~MeshBuffer() override = default;
+    ~MeshBuffer() override;
 
     /**
      * @brief Create and attach MeshProcessor as the default processor.
@@ -207,7 +207,8 @@ public:
      *
      * The binding name must match a descriptor slot in the shader. If the
      * render processor is not yet created, the texture will be bound on
-     * creation if the default_texture_binding matches.
+     * creation if the default_texture_binding matches. The buffer holds the
+     * image until it is replaced or the buffer ends.
      */
     void bind_diffuse_texture(
         std::shared_ptr<Core::VKImage> image,

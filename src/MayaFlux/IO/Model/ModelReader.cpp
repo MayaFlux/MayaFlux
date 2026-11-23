@@ -288,7 +288,7 @@ ModelReader::create_mesh_network(const TextureResolver& resolver) const
             if (!raw.empty()) {
                 auto image = resolver(raw);
                 if (image) {
-                    slot.diffuse_texture = std::move(image);
+                    net->set_slot_texture(slot_idx, std::move(image));
                 } else {
                     MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                         "ModelReader::create_mesh_network: resolver returned null for '{}' (slot '{}')",

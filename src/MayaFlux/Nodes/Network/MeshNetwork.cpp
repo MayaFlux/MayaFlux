@@ -4,6 +4,7 @@
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
 #include "MayaFlux/Nodes/Network/Operators/MeshOperator.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -17,9 +18,32 @@ MeshNetwork::MeshNetwork()
     set_topology(Topology::CUSTOM);
 }
 
+MeshNetwork::~MeshNetwork()
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& [index, image] : m_held_textures) {
+        loom.release_image(image);
+    }
+}
+
 // =============================================================================
 // Slot management
 // =============================================================================
+
+void MeshNetwork::set_slot_texture(uint32_t index, std::shared_ptr<Core::VKImage> image)
+{
+    auto& slot = get_slot(index);
+    auto& loom = Portal::Graphics::get_texture_manager();
+
+    loom.retain_image(image);
+    if (const auto held = m_held_textures.find(index); held != m_held_textures.end()) {
+        loom.release_image(held->second);
+        held->second = image;
+    } else if (image) {
+        m_held_textures.emplace(index, image);
+    }
+    slot.diffuse_texture = std::move(image);
+}
 
 uint32_t MeshNetwork::add_slot(
     std::string name,

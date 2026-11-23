@@ -60,7 +60,7 @@ struct MeshSlot {
     /// @brief Set when local_transform or slot config changes since last upload.
     bool dirty { true };
 
-    /// @brief Optional diffuse texture. Null means untextured for this slot.
+    /// @brief Optional diffuse texture. Null means untextured. Set it with MeshNetwork::set_slot_texture so the network holds it.
     std::shared_ptr<Core::VKImage> diffuse_texture;
 };
 

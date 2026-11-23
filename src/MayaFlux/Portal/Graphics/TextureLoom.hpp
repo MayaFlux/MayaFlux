@@ -441,6 +441,22 @@ public:
      */
     void clear_image_residency(const std::shared_ptr<Core::VKImage>& image);
 
+    /**
+     * @brief Add a holder to an image created by the Loom.
+     *
+     * A created image starts with one holder, the creator. Each receiver that
+     * keeps the image retains it and releases it when it replaces or drops it.
+     * Images the Loom did not create are ignored.
+     */
+    void retain_image(const std::shared_ptr<Core::VKImage>& image);
+
+    /**
+     * @brief Drop one holder; the last release clears the image's residency.
+     *
+     * Null and untracked images are ignored.
+     */
+    void release_image(const std::shared_ptr<Core::VKImage>& image);
+
     //==========================================================================
     // Utilities
     //==========================================================================
@@ -518,8 +534,11 @@ private:
     std::shared_ptr<Core::VulkanBackend> m_backend;
     Core::BackendResourceManager* m_resource_manager = nullptr;
 
+    void track(const std::shared_ptr<Core::VKImage>& image);
+
     // Managed textures (for cleanup)
     std::vector<std::shared_ptr<Core::VKImage>> m_textures;
+    std::unordered_map<const Core::VKImage*, uint32_t> m_holders;
 
     static bool s_initialized;
 };

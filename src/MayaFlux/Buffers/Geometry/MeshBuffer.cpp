@@ -10,6 +10,7 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -193,6 +194,11 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
         textured);
 }
 
+MeshBuffer::~MeshBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_diffuse_texture);
+}
+
 // =============================================================================
 // bind_diffuse_texture
 // =============================================================================
@@ -201,6 +207,9 @@ void MeshBuffer::bind_diffuse_texture(
     std::shared_ptr<Core::VKImage> image,
     std::string_view binding_name)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(image);
+    loom.release_image(m_diffuse_texture);
     m_diffuse_texture = std::move(image);
     m_diffuse_binding = std::string(binding_name);
 

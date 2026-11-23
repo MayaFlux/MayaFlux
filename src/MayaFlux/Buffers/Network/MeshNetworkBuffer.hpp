@@ -54,7 +54,7 @@ public:
         std::shared_ptr<Nodes::Network::MeshNetwork> network,
         float over_allocate_factor = 1.5F);
 
-    ~MeshNetworkBuffer() override = default;
+    ~MeshNetworkBuffer() override;
 
     /**
      * @brief Create and attach MeshNetworkProcessor as the default processor.
@@ -96,7 +96,8 @@ public:
      * Must be called before setup_rendering() for the ShaderConfig to include
      * the descriptor slot. Calling after setup_rendering() updates the binding
      * on the existing RenderProcessor but will warn if the pipeline was
-     * compiled without the binding.
+     * compiled without the binding. The buffer holds the image until it is
+     * replaced or the buffer ends.
      */
     void bind_diffuse_texture(
         std::shared_ptr<Core::VKImage> image,

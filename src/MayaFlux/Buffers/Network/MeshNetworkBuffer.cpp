@@ -12,6 +12,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -233,6 +234,11 @@ void MeshNetworkBuffer::wire_field_pass(size_t record_bytes)
         field_op->binding_count(), record_bytes);
 }
 
+MeshNetworkBuffer::~MeshNetworkBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_diffuse_texture);
+}
+
 // =============================================================================
 // bind_diffuse_texture
 // =============================================================================
@@ -241,6 +247,9 @@ void MeshNetworkBuffer::bind_diffuse_texture(
     std::shared_ptr<Core::VKImage> image,
     std::string_view binding_name)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(image);
+    loom.release_image(m_diffuse_texture);
     m_diffuse_texture = std::move(image);
     m_diffuse_binding = std::string(binding_name);
 

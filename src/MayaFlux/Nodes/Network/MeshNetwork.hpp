@@ -44,7 +44,7 @@ namespace MayaFlux::Nodes::Network {
 class MAYAFLUX_API MeshNetwork : public NodeNetwork {
 public:
     MeshNetwork();
-    ~MeshNetwork() override = default;
+    ~MeshNetwork() override;
 
     // -------------------------------------------------------------------------
     // Slot management
@@ -69,6 +69,13 @@ public:
      */
     [[nodiscard]] MeshSlot& get_slot(uint32_t index);
     [[nodiscard]] const MeshSlot& get_slot(uint32_t index) const;
+
+    /**
+     * @brief Set a slot's diffuse texture and hold it until replaced or the network ends.
+     * @param index Slot index as returned by add_slot().
+     * @param image Texture for the slot, or null to clear it.
+     */
+    void set_slot_texture(uint32_t index, std::shared_ptr<Core::VKImage> image);
 
     /**
      * @brief Find a slot by name.
@@ -181,6 +188,7 @@ public:
 
 private:
     std::vector<MeshSlot> m_slots;
+    std::map<uint32_t, std::shared_ptr<Core::VKImage>> m_held_textures;
 
     /// @brief Processing order: indices into m_slots, parents before children.
     std::vector<uint32_t> m_sorted_indices;
