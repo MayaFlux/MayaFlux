@@ -748,6 +748,19 @@ bool TextureLoom::blit_layer(
 }
 
 //==============================================================================
+// Cleanup
+//==============================================================================
+
+void TextureLoom::clear_image_residency(const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!is_initialized() || !image)
+        return;
+
+    m_resource_manager->cleanup_image(image);
+    std::erase(m_textures, image);
+}
+
+//==============================================================================
 // Utilities
 //==============================================================================
 
