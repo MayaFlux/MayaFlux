@@ -9,6 +9,21 @@
 
 namespace MayaFlux::Kriya {
 
+FrameOperation<Kakshya::MeshAssemblyLocals> placement_edit(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly, PlacementEdit edit)
+{
+    return FrameOperation<Kakshya::MeshAssemblyLocals>::transform(
+        [assembly, edit = std::move(edit)](const FrameContext& context, std::shared_ptr<const Kakshya::MeshAssemblyLocals> frame)
+            -> std::shared_ptr<const Kakshya::MeshAssemblyLocals> {
+            if (!frame || !assembly || !edit) {
+                return frame;
+            }
+            std::vector<glm::mat4> locals = frame->matrices;
+            edit(std::span<glm::mat4>(locals), context);
+            return std::make_shared<const Kakshya::MeshAssemblyLocals>(Kakshya::resolve_world(*assembly, std::move(locals)));
+        });
+}
+
 MotionReflow::Sink slot_sink(const std::shared_ptr<Nodes::Network::MeshNetwork>& network)
 {
     return [target = std::weak_ptr<Nodes::Network::MeshNetwork>(network), warned = std::make_shared<bool>(false)](

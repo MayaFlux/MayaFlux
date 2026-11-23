@@ -63,6 +63,21 @@ struct MeshAssemblyMaterial {
 MF_DESCRIBE(MeshAssemblyMaterial)
 
 /**
+ * @struct MeshAssemblySurface
+ * @brief The colour and factors a material names, kept in its facets by the readers that know them.
+ *
+ * base_color is the diffuse or base colour with its opacity in the alpha. A reader that finds none of
+ * them leaves the facet out, and a consumer reads it with facets.get<MeshAssemblySurface>().
+ */
+struct MeshAssemblySurface {
+    glm::vec4 base_color { 1.0F };
+    float metallic { 0.0F };
+    float roughness { 1.0F };
+};
+
+MF_DESCRIBE(MeshAssemblySurface)
+
+/**
  * @struct MeshAssemblyChannel
  * @brief Keyed motion of one placement row. A missing component leaves that part of the
  *        row's rest transform as it is.

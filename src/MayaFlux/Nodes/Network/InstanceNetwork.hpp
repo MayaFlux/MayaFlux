@@ -87,7 +87,7 @@ private:
  * @param group A group from assembly.groups().
  * @return A network with one slot per row, named from the row, all sharing one template
  *         node made from the group's mesh, each slot's transform the row's world
- *         placement. Nullptr when the group's source is not a mesh (points and curves
+ *         placement. Nullptr when the group's source is neither a mesh nor a set of points (curves
  *         sources are not instanced) or a row is out of range.
  *
  * The material is not applied: a MeshAssemblyMaterial holds a path, and loading and

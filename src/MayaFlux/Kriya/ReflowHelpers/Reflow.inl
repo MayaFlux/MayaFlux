@@ -62,23 +62,25 @@ std::shared_ptr<Course> Reflow<Frame>::add_route(const CourseRoute<Frame>& route
     }
 
     auto lane = std::make_shared<Lane>();
-    lane->selector = route.selector;
+    Input input;
+    input.selector = route.selector;
     if (!route.selector) {
         if (route.sampled) {
-            lane->sampled = route.sampled;
+            input.sampled = route.sampled;
         } else if (route.source) {
-            lane->source = route.source;
+            input.source = route.source;
         } else {
-            lane->sampled = m_sampled;
-            lane->source = m_source;
+            input.sampled = m_sampled;
+            input.source = m_source;
         }
-        if (!lane->source && !lane->sampled) {
+        if (!input.source && !input.sampled) {
             return nullptr;
         }
-        if (lane->source && lane->source->count() == 0) {
+        if (input.source && input.source->count() == 0) {
             return nullptr;
         }
     }
+    lane->input.publish(std::move(input));
 
     lane->sink = route.sink ? route.sink : Sink {};
     if (!lane->sink && !m_sink) {
@@ -118,6 +120,49 @@ bool Reflow<Frame>::remove_course(const std::shared_ptr<Course>& course)
         return removed;
     });
     return removed;
+}
+
+template <typename Frame>
+bool Reflow<Frame>::replace_input(const std::shared_ptr<Course>& course, Input input)
+{
+    const auto pinned = m_lanes.read();
+    if (!pinned) {
+        return false;
+    }
+    for (const auto& lane : *pinned) {
+        if (lane->course == course) {
+            lane->input.publish(std::move(input));
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename Frame>
+bool Reflow<Frame>::set_source(const std::shared_ptr<Course>& course, std::shared_ptr<const Kakshya::FrameSource<Frame>> source)
+{
+    if (!source || source->count() == 0) {
+        return false;
+    }
+    return replace_input(course, Input { .source = std::move(source), .sampled = nullptr, .selector = {} });
+}
+
+template <typename Frame>
+bool Reflow<Frame>::set_sampled(const std::shared_ptr<Course>& course, std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled)
+{
+    if (!sampled) {
+        return false;
+    }
+    return replace_input(course, Input { .source = nullptr, .sampled = std::move(sampled), .selector = {} });
+}
+
+template <typename Frame>
+bool Reflow<Frame>::set_selector(const std::shared_ptr<Course>& course, FrameSelector<Frame> selector)
+{
+    if (!selector) {
+        return false;
+    }
+    return replace_input(course, Input { .source = nullptr, .sampled = nullptr, .selector = std::move(selector) });
 }
 
 template <typename Frame>
@@ -224,13 +269,18 @@ bool Reflow<Frame>::read_lane(Lane& lane, const FrameContext& context, const Cou
     FrameSelection selection, std::vector<WeightedFrame<Frame>>& into)
 {
     const double weight = lane.course->weight();
+    const auto pinned = lane.input.read();
+    if (!pinned) {
+        return false;
+    }
+    const Input& input = *pinned;
 
-    if (lane.selector) {
+    if (input.selector) {
         if (!(weight > 0.0)) {
             return false;
         }
         const size_t before = into.size();
-        lane.selector(context, into);
+        input.selector(context, into);
 
         auto kept = into.begin() + static_cast<std::ptrdiff_t>(before);
         for (auto it = kept; it != into.end(); ++it) {
@@ -256,11 +306,11 @@ bool Reflow<Frame>::read_lane(Lane& lane, const FrameContext& context, const Cou
 
     const double time = step.time;
 
-    if (lane.sampled) {
+    if (input.sampled) {
         if (!(weight > 0.0)) {
             return false;
         }
-        auto frame = lane.sampled->sample(time);
+        auto frame = input.sampled->sample(time);
         if (!frame) {
             lane.course->report_miss(0);
             return false;
@@ -269,7 +319,10 @@ bool Reflow<Frame>::read_lane(Lane& lane, const FrameContext& context, const Cou
         return true;
     }
 
-    const auto location = lane.source->locate(time);
+    if (!input.source) {
+        return false;
+    }
+    const auto location = input.source->locate(time);
     if (!location) {
         lane.course->report_miss(0);
         return false;
@@ -279,7 +332,7 @@ bool Reflow<Frame>::read_lane(Lane& lane, const FrameContext& context, const Cou
     bool read_any = false;
     for (size_t i = 0; i < picks.count; ++i) {
         const auto& pick = picks.items[i];
-        auto frame = lane.source->read(pick.index);
+        auto frame = input.source->read(pick.index);
         if (!frame) {
             lane.course->report_miss(pick.index);
             continue;
@@ -307,11 +360,36 @@ std::shared_ptr<const Frame> Reflow<Frame>::reduce(
 }
 
 template <typename Frame>
+void Reflow<Frame>::run_actions(uint64_t cycle) noexcept
+{
+    for (const auto& action : m_actions) {
+        if (cycle == 0 || cycle % action.cycles != 0) {
+            continue;
+        }
+        try {
+            action.run(*this);
+        } catch (const std::exception& error) {
+            MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                "Reflow: an action threw: {}", error.what());
+        } catch (...) {
+            MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
+                "Reflow: an action threw");
+        }
+    }
+}
+
+template <typename Frame>
 void Reflow<Frame>::advance()
 {
     if (m_controls.enabled.has_value() && m_controls.enabled.value() == 0.0) {
         return;
     }
+
+    struct AfterCycle {
+        Reflow& reflow;
+        uint64_t cycle;
+        ~AfterCycle() { reflow.run_actions(cycle); }
+    } after { *this, m_cycle };
     const FrameSelection selection = m_controls.selection.has_value()
         ? m_controls.selection.value<FrameSelection>()
         : m_selection;
@@ -511,6 +589,13 @@ ReflowBuilder<Frame>& ReflowBuilder<Frame>::operation(FrameOperation<Frame> oper
 }
 
 template <typename Frame>
+ReflowBuilder<Frame>& ReflowBuilder<Frame>::every(double seconds, std::function<void(Reflow<Frame>&)> action)
+{
+    m_actions.push_back({ .seconds = seconds, .run = std::move(action) });
+    return *this;
+}
+
+template <typename Frame>
 ReflowBuilder<Frame>& ReflowBuilder<Frame>::selection(FrameSelection selection)
 {
     m_selection = selection;
@@ -606,6 +691,13 @@ std::shared_ptr<Reflow<Frame>> ReflowBuilder<Frame>::build()
         if (!reflow->add_route(route)) {
             return refuse("a route is unusable: its course, its source, its operations, its entry or its cadence");
         }
+    }
+    for (const auto& action : m_actions) {
+        if (!action.run || !std::isfinite(action.seconds)) {
+            return refuse("an action has no callable or no finite interval");
+        }
+        const auto cycles = static_cast<uint64_t>(std::max(std::round(action.seconds * m_cycle_rate), 1.0));
+        reflow->m_actions.push_back({ .cycles = cycles, .run = action.run });
     }
     return reflow;
 }

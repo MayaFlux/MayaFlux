@@ -64,7 +64,7 @@ std::shared_ptr<MeshAssemblyRealization> MeshAssemblyRealization::create(
     for (const auto& part : Kakshya::partition_assembly(*assembly, options.partition)) {
         const auto placement = options.placement ? options.placement(part) : Nodes::Network::MeshPartPlacement::Flat;
 
-        if (part.kind == Kakshya::MeshAssemblyRowKind::Mesh && part.key.instanced) {
+        if (part.key.instanced && (part.kind == Kakshya::MeshAssemblyRowKind::Mesh || part.kind == Kakshya::MeshAssemblyRowKind::Points)) {
             std::map<std::pair<uint64_t, std::optional<uint64_t>>, size_t> found;
             std::vector<Kakshya::MeshAssemblyGroup> groups;
             for (const uint64_t row : part.rows) {
@@ -283,6 +283,32 @@ size_t MeshAssemblyRealization::bind_materials(const MeshAssemblyMaterialResolve
         }
     }
     return bound;
+}
+
+size_t MeshAssemblyRealization::apply_surfaces() const
+{
+    const auto& materials = m_assembly->get_data().materials;
+    size_t tinted = 0;
+    for (const auto& part : m_parts) {
+        if (!part.instances) {
+            continue;
+        }
+        for (size_t slot = 0; slot < part.rows.size(); ++slot) {
+            const auto held = m_assembly->placement(part.rows[slot]);
+            if (!held->material || *held->material >= materials.size()) {
+                continue;
+            }
+            const auto* surface = materials[*held->material].facets.get<Kakshya::MeshAssemblySurface>();
+            if (!surface) {
+                continue;
+            }
+            auto& target = part.instances->get_slot(static_cast<uint32_t>(slot));
+            target.tint = glm::vec3(surface->base_color);
+            target.dirty = true;
+            ++tinted;
+        }
+    }
+    return tinted;
 }
 
 void MeshAssemblyRealization::show_rest() const

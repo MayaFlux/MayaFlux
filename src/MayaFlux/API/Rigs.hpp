@@ -24,6 +24,8 @@
 namespace MayaFlux {
 
 namespace Kriya {
+    class MeshAssemblyRealization;
+    struct MeshAssemblyRealizedPart;
     class SamplingPipeline;
     class TapSetBuilder;
     class ChimeraBuilder;
@@ -512,5 +514,32 @@ MAYAFLUX_API Kriya::MeshReflowBuilder create_mesh_reflow(
  * @endcode
  */
 MAYAFLUX_API std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow();
+
+/**
+ * @brief Register the buffers of a realized assembly, set up their rendering and show their first shots.
+ *
+ * Every buffer of every part is added to the graphics buffers, then given the RenderConfig the
+ * callable answers for it, then the sources of points and curves show their first shot (show_rest).
+ * What a reflow plays afterwards, the placement sink and the lanes, is yours to start.
+ *
+ * Bind materials (MeshAssemblyRealization::bind_materials) before this, so the textured shaders find
+ * their images when the buffers are set up.
+ *
+ * @code{.cpp}
+ * auto level = Kriya::MeshAssemblyRealization::create(assembly, { .partition = Kakshya::Partitions::instanced(4) });
+ * MayaFlux::present_realization(level, [window](const Kriya::MeshAssemblyRealizedPart&, size_t) {
+ *     return Portal::Graphics::RenderConfig { .target_window = window };
+ * });
+ * @endcode
+ *
+ * @param realization The realization to show. Null does nothing.
+ * @param config The RenderConfig for a part, and for a part of points or curves also the index of the
+ *        buffer in the part (the slot, or the row's place in the part's rows), so every one can draw
+ *        its own way. Called once for each buffer.
+ * @return How many buffers were shown.
+ */
+MAYAFLUX_API size_t present_realization(
+    const std::shared_ptr<Kriya::MeshAssemblyRealization>& realization,
+    const std::function<Portal::Graphics::RenderConfig(const Kriya::MeshAssemblyRealizedPart&, size_t)>& config);
 
 } // namespace MayaFlux

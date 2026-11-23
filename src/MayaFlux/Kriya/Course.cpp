@@ -37,6 +37,7 @@ CourseControls& Course::open(CourseStore& store)
 
 Course::Course(CourseTime time, const CourseSetting& setting, bool paused)
     : m_listeners(std::vector<Detail::CourseListener> {})
+    , m_markers(std::vector<CourseMarker> {})
     , m_clock(time)
     , m_paused(paused)
 {
@@ -200,6 +201,64 @@ bool Course::nudge(double seconds)
     return std::isfinite(seconds) && push(Kind::Nudge, seconds);
 }
 
+bool Course::follow(const std::shared_ptr<const Course>& other, double offset)
+{
+    if (!other || other.get() == this || !std::isfinite(offset)) {
+        return false;
+    }
+    time_map(Kinesis::TimeMap { .fn = [leader = std::weak_ptr<const Course>(other), offset,
+                                    last = std::make_shared<double>(other->time() + offset)](const double&) {
+        if (const auto held = leader.lock()) {
+            *last = held->time() + offset;
+        }
+        return *last;
+    } });
+    return true;
+}
+
+void Course::unfollow()
+{
+    clear_time_map();
+}
+
+std::optional<uint64_t> Course::add_marker(std::string name, double source_time)
+{
+    if (!std::isfinite(source_time)) {
+        return std::nullopt;
+    }
+    const uint64_t id = m_next_marker.fetch_add(1, std::memory_order_relaxed);
+    m_markers.update([&](std::vector<CourseMarker>& all) {
+        all.push_back({ .id = id, .name = name, .time = source_time });
+    });
+    return id;
+}
+
+bool Course::remove_marker(uint64_t id)
+{
+    bool removed = false;
+    m_markers.update([&](std::vector<CourseMarker>& all) {
+        removed = std::erase_if(all, [id](const CourseMarker& marker) { return marker.id == id; }) > 0;
+        return removed;
+    });
+    return removed;
+}
+
+std::vector<CourseMarker> Course::markers() const
+{
+    const auto held = m_markers.read();
+    return held ? *held : std::vector<CourseMarker> {};
+}
+
+bool Course::jump(std::string_view name)
+{
+    const auto held = m_markers.read();
+    if (!held) {
+        return false;
+    }
+    const auto it = std::ranges::find(*held, name, &CourseMarker::name);
+    return it != held->end() && seek(it->time);
+}
+
 std::optional<uint64_t> Course::frame() const noexcept
 {
     if (!m_has_frame_cell.load(std::memory_order_acquire)) {
@@ -239,6 +298,7 @@ void Course::refuse()
 void Course::apply(const Detail::CourseCommand& command, const CourseSetting& setting)
 {
     bool applied = true;
+    m_jumped = m_jumped || (command.kind != Kind::Start && command.kind != Kind::Pause);
     switch (command.kind) {
     case Kind::Start:
         m_paused = false;
@@ -288,9 +348,66 @@ void Course::publish(const CourseSetting& setting, const CourseStep& step)
     m_paused_cell.store(m_paused, std::memory_order_relaxed);
 }
 
+void Course::scan_markers(double before, const CourseStep& step, const CourseSetting& setting) const
+{
+    const auto markers = m_markers.read();
+    if (!markers || markers->empty()) {
+        return;
+    }
+
+    const auto passed = [&](double from, double to) {
+        for (const auto& marker : *markers) {
+            const bool hit = to >= from ? (marker.time > from && marker.time <= to)
+                                        : (marker.time >= to && marker.time < from);
+            if (hit) {
+                announce(CourseEventKind::Marked, marker.time, marker.id);
+            }
+        }
+    };
+
+    if (step.crossings == 0) {
+        passed(before, step.time);
+        return;
+    }
+
+    if (step.crossings > 1) {
+        for (const auto& marker : *markers) {
+            if (marker.time >= setting.in && marker.time <= setting.out) {
+                announce(CourseEventKind::Marked, marker.time, marker.id);
+            }
+        }
+        return;
+    }
+
+    const bool forward = (setting.speed >= 0.0) != m_last_reversed;
+    switch (setting.edge) {
+    case CourseEdge::Loop:
+        if (forward) {
+            passed(before, setting.out);
+            passed(setting.in, step.time);
+        } else {
+            passed(before, setting.in);
+            passed(setting.out, step.time);
+        }
+        break;
+    case CourseEdge::PingPong: {
+        const double end = forward ? setting.out : setting.in;
+        passed(before, end);
+        passed(end, step.time);
+        break;
+    }
+    default:
+        passed(before, step.time);
+        break;
+    }
+}
+
 std::optional<CourseStep> Course::advance(bool advance)
 {
     const CourseSetting setting = compose();
+    const bool had_advanced = m_advanced;
+    const double before = m_time_cell.load(std::memory_order_relaxed);
+    m_jumped = false;
 
     std::optional<CourseStep> step;
     try {
@@ -339,7 +456,11 @@ std::optional<CourseStep> Course::advance(bool advance)
         if (step->finished && !m_was_finished) {
             announce(CourseEventKind::Finished, step->time, 0);
         }
+        if (had_advanced && !m_jumped && step->passes == passes_before) {
+            scan_markers(before, *step, setting);
+        }
     }
+    m_last_reversed = step->reversed;
     m_was_finished = step->finished;
     return step;
 }
@@ -364,6 +485,18 @@ void Course::report_miss(uint64_t index)
 {
     m_misses_cell.fetch_add(1, std::memory_order_relaxed);
     announce(CourseEventKind::Missed, time(), index);
+}
+
+size_t lock_step(const std::shared_ptr<const Course>& leader,
+    std::span<const std::shared_ptr<Course>> followers, double offset)
+{
+    size_t count = 0;
+    for (const auto& follower : followers) {
+        if (follower && follower->follow(leader, offset)) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 } // namespace MayaFlux::Kriya

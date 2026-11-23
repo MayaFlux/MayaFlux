@@ -49,4 +49,14 @@ std::shared_ptr<const MeshAssemblyLocals> MeshAssemblyMotionFrames::sample(doubl
     return std::make_shared<const MeshAssemblyLocals>(resolve_world(*m_assembly, std::move(*matrices)));
 }
 
+std::shared_ptr<const MeshAssemblyRestFrames> MeshAssemblyRestFrames::create(
+    const std::shared_ptr<const MeshAssemblyContainer>& assembly)
+{
+    if (!assembly || assembly->get_total_elements() == 0) {
+        return nullptr;
+    }
+    return std::shared_ptr<const MeshAssemblyRestFrames>(new MeshAssemblyRestFrames(
+        std::make_shared<const MeshAssemblyLocals>(resolve_world(*assembly, assembly->local_transforms()))));
+}
+
 } // namespace MayaFlux::Kakshya

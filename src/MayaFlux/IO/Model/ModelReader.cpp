@@ -344,6 +344,26 @@ ModelReader::create_mesh_assembly() const
                 material.diffuse_path = std::filesystem::path(path.C_Str()).generic_string();
                 material.diffuse_embedded = !material.diffuse_path.empty() && material.diffuse_path[0] == '*';
             }
+            Kakshya::MeshAssemblySurface surface;
+            bool known = false;
+            aiColor4D color;
+            if (ai_material->Get(AI_MATKEY_BASE_COLOR, color) == AI_SUCCESS
+                || ai_material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
+                surface.base_color = { color.r, color.g, color.b, color.a };
+                known = true;
+            }
+            float factor {};
+            if (ai_material->Get(AI_MATKEY_METALLIC_FACTOR, factor) == AI_SUCCESS) {
+                surface.metallic = factor;
+                known = true;
+            }
+            if (ai_material->Get(AI_MATKEY_ROUGHNESS_FACTOR, factor) == AI_SUCCESS) {
+                surface.roughness = factor;
+                known = true;
+            }
+            if (known) {
+                material.facets.set(surface);
+            }
             material_of[index] = assembly->add_material(std::move(material));
         }
         return material_of[index];

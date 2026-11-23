@@ -13,7 +13,10 @@
 #include "MayaFlux/IO/IOManager.hpp"
 #include "MayaFlux/IO/Spatial/SpatialSequence.hpp"
 #include "MayaFlux/IO/Volume/VolumeTransfer.hpp"
+#include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
+#include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
+#include "MayaFlux/Kriya/MeshAssemblyRealization.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
 #include "MayaFlux/Yantra/Workflows/Vision/VisionWorkflow.hpp"
@@ -357,6 +360,42 @@ std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()
 {
     return std::make_shared<Yantra::Vision::VisionWorkflow>(
         get_scheduler(), get_event_manager(), get_io_manager(), get_buffer_manager());
+}
+
+size_t present_realization(
+    const std::shared_ptr<Kriya::MeshAssemblyRealization>& realization,
+    const std::function<Portal::Graphics::RenderConfig(const Kriya::MeshAssemblyRealizedPart&, size_t)>& config)
+{
+    if (!realization || !config) {
+        return 0;
+    }
+
+    auto buffers = get_buffer_manager();
+    constexpr auto token = Buffers::ProcessingToken::GRAPHICS_BACKEND;
+    size_t shown = 0;
+
+    for (const auto& part : realization->parts()) {
+        if (part.network_buffer) {
+            buffers->add_buffer(part.network_buffer, token);
+            part.network_buffer->setup_rendering(config(part, 0));
+            ++shown;
+        }
+        if (part.instance_buffer) {
+            buffers->add_buffer(part.instance_buffer, token);
+            part.instance_buffer->setup_rendering(config(part, 0));
+            ++shown;
+        }
+        for (size_t i = 0; i < part.spatial_buffers.size(); ++i) {
+            if (const auto& buffer = part.spatial_buffers[i]) {
+                buffers->add_buffer(buffer, token);
+                buffer->setup_rendering(config(part, i));
+                ++shown;
+            }
+        }
+    }
+
+    realization->show_rest();
+    return shown;
 }
 
 } // namespace MayaFlux

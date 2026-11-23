@@ -22,6 +22,26 @@ using MotionReflow = Reflow<Kakshya::MeshAssemblyLocals>;
 using MotionReflowBuilder = ReflowBuilder<Kakshya::MeshAssemblyLocals>;
 
 /**
+ * @brief Edits the local placements of a frame, one matrix per row, before the world is resolved from them.
+ *
+ * Changes the matrices in place. The edit is called every cycle with the reflow's context, so it may
+ * read a field of space or time, a cell a Nexus influence writes, or another course.
+ */
+using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const FrameContext& context)>;
+
+/**
+ * @brief An operation that applies an edit to the local placements of every frame and resolves the
+ *        world placements again through the assembly's parents.
+ *
+ * This is the additive layer on a motion: the motion places the rows, the edit adds a wind, a ripple,
+ * an attractor or a hand's reach on top, and every part, flat or chained, sees the one result, since a
+ * moved joint moves its children. Over a MeshAssemblyRestFrames the edit alone places the assembly.
+ * An empty edit or a null assembly returns a frame unchanged.
+ */
+[[nodiscard]] MAYAFLUX_API FrameOperation<Kakshya::MeshAssemblyLocals> placement_edit(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly, PlacementEdit edit);
+
+/**
  * @brief A sink that writes each frame's placements into the slots of a MeshNetwork.
  *
  * Matrix i of a frame becomes the local transform of slot i and the slot is marked dirty, so

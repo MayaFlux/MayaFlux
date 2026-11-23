@@ -22,9 +22,9 @@ enum class MeshAssemblyRowKind : uint8_t {
  * @struct MeshAssemblyPartKey
  * @brief Which part a row belongs to, as a partition decides it.
  *
- * Rows of one kind with one key make one part. A part of meshes marked instanced is drawn once
- * and placed many times, so it is split further by source and material, and a part of anything
- * but meshes ignores the mark.
+ * Rows of one kind with one key make one part. A part of meshes or points marked instanced is
+ * drawn once and placed many times, so it is split further by source and material, and a part of
+ * curves ignores the mark.
  */
 struct MeshAssemblyPartKey {
     uint64_t key {};
@@ -114,7 +114,7 @@ namespace Partitions {
     }
 
     /**
-     * @brief Meshes shown in at least @p min_rows places go to an instanced part each.
+     * @brief Meshes and points shown in at least @p min_rows places go to an instanced part each.
      * @param min_rows Rows of one source and material at which they are instanced.
      */
     [[nodiscard]] inline MeshAssemblyPartition instanced(size_t min_rows = 2)

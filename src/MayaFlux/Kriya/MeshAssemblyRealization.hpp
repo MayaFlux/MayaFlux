@@ -161,6 +161,18 @@ public:
      */
     size_t bind_materials(const MeshAssemblyMaterialResolver& resolver) const;
 
+    /**
+     * @brief Tint every instance with the colour of its row's material.
+     * @return How many instances were tinted.
+     *
+     * Reads the MeshAssemblySurface a reader kept in the material's facets and sets the instance's tint
+     * to its base colour, which the instance shaders multiply into the template's colour. Only instanced
+     * parts have a tint of their own: a network's slots and the buffers of points and curves are drawn
+     * with the colour of their vertices, which a field or the frames themselves set. Call it when the
+     * parts are made, or again after the facets change.
+     */
+    size_t apply_surfaces() const;
+
 private:
     MeshAssemblyRealization() = default;
 

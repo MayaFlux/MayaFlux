@@ -83,4 +83,32 @@ private:
     double m_last;
 };
 
+/**
+ * @class MeshAssemblyRestFrames
+ * @brief The rest placement of an assembly as a SampledFrames of MeshAssemblyLocals: one frame,
+ *        the same at every time.
+ *
+ * For an assembly with no motion, so a reflow has frames to place its parts with, and so the frame
+ * can be edited every cycle (Kriya::placement_edit) by a field, a cell or a Nexus influence. The range
+ * is 0 to 1 second, and every time answers with the one shared frame. Holds the assembly.
+ */
+class MAYAFLUX_API MeshAssemblyRestFrames final : public SampledFrames<MeshAssemblyLocals> {
+public:
+    /** @return nullptr for a null assembly or one with no rows. */
+    [[nodiscard]] static std::shared_ptr<const MeshAssemblyRestFrames> create(
+        const std::shared_ptr<const MeshAssemblyContainer>& assembly);
+
+    [[nodiscard]] std::pair<double, double> extent() const override { return { 0.0, 1.0 }; }
+
+    [[nodiscard]] std::shared_ptr<const MeshAssemblyLocals> sample(double) const override { return m_frame; }
+
+private:
+    explicit MeshAssemblyRestFrames(std::shared_ptr<const MeshAssemblyLocals> frame)
+        : m_frame(std::move(frame))
+    {
+    }
+
+    std::shared_ptr<const MeshAssemblyLocals> m_frame;
+};
+
 } // namespace MayaFlux::Kakshya

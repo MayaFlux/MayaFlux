@@ -145,6 +145,23 @@ public:
     /** @brief Stop a course taking part. It keeps its own state. */
     bool remove_course(const std::shared_ptr<Course>& course);
 
+    /**
+     * @brief Make a course's lane read a listed source from the next cycle on.
+     * @return false, changing nothing, when the course is not one of the reflow's or the source is null or has no frames.
+     *
+     * Replaces whatever the lane read, a source, a sampled source or a selector. Safe from any
+     * thread while the reflow runs: the lane reads its input once per cycle, so a cycle sees the
+     * old input or the new one, never a mix. The course keeps its time, so a source of another
+     * length is read at the time the course is at.
+     */
+    bool set_source(const std::shared_ptr<Course>& course, std::shared_ptr<const Kakshya::FrameSource<Frame>> source);
+
+    /** @brief As set_source, for a source that answers for any time. A null source changes nothing. */
+    bool set_sampled(const std::shared_ptr<Course>& course, std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled);
+
+    /** @brief As set_source, for a selector. An empty selector changes nothing. */
+    bool set_selector(const std::shared_ptr<Course>& course, FrameSelector<Frame> selector);
+
     /** @brief The courses taking part now. */
     [[nodiscard]] std::vector<std::shared_ptr<Course>> courses() const;
 
@@ -241,11 +258,20 @@ public:
 private:
     friend class ReflowBuilder<Frame>;
 
-    struct Lane {
-        std::shared_ptr<Course> course;
+    struct Input {
         std::shared_ptr<const Kakshya::FrameSource<Frame>> source;
         std::shared_ptr<const Kakshya::SampledFrames<Frame>> sampled;
         FrameSelector<Frame> selector;
+    };
+
+    struct Action {
+        uint64_t cycles {};
+        std::function<void(Reflow&)> run;
+    };
+
+    struct Lane {
+        std::shared_ptr<Course> course;
+        Memory::SnapshotCell<Input> input;
         std::vector<FrameOperation<Frame>> operations;
         Sink sink;
         uint64_t enter_cycle {};
@@ -255,7 +281,8 @@ private:
         Memory::SnapshotCell<std::shared_ptr<const Frame>> shown;
 
         Lane()
-            : shown(std::shared_ptr<const Frame> {})
+            : input(Input {})
+            , shown(std::shared_ptr<const Frame> {})
         {
         }
     };
@@ -275,6 +302,8 @@ private:
     [[nodiscard]] bool read_lane(Lane& lane, const FrameContext& context, const CourseStep& step,
         FrameSelection selection, std::vector<WeightedFrame<Frame>>& into);
     void announce(ReflowEventKind kind, uint64_t cycle, uint64_t value) const;
+    void run_actions(uint64_t cycle) noexcept;
+    bool replace_input(const std::shared_ptr<Course>& course, Input input);
     [[nodiscard]] std::shared_ptr<const Frame> reduce(
         const FrameContext& context, const std::vector<WeightedFrame<Frame>>& frames) const;
 
@@ -286,6 +315,8 @@ private:
     FrameSelection m_selection;
     Rewrite m_rewrite;
     double m_cycle_rate;
+
+    std::vector<Action> m_actions;
 
     ReflowStore m_store;
     ReflowControls& m_controls { m_store.template declare<ReflowControls>() };
@@ -387,6 +418,18 @@ public:
     /** @brief Add an operation, run after the earlier ones. At most one mix. */
     ReflowBuilder& operation(FrameOperation<Frame> operation);
 
+    /**
+     * @brief Call an action on the running reflow every this many seconds.
+     *
+     * Runs at the end of a cycle, on the thread that advances, the first time one interval after the
+     * start. The action may call any control of the reflow, such as set_source, a course's seek or
+     * speed, or set. One that throws is logged and skipped.
+     *
+     * @param seconds Interval, at least one cycle.
+     * @param action Called with the running reflow.
+     */
+    ReflowBuilder& every(double seconds, std::function<void(Reflow<Frame>&)> action);
+
     ReflowBuilder& selection(FrameSelection selection);
 
     ReflowBuilder& rewrite(Rewrite rewrite);
@@ -420,6 +463,12 @@ private:
     std::vector<FrameOperation<Frame>> m_operations;
     FrameSelection m_selection { FrameSelection::Floor };
     Rewrite m_rewrite { Rewrite::OnChange };
+
+    struct PlannedAction {
+        double seconds {};
+        std::function<void(Reflow<Frame>&)> run;
+    };
+    std::vector<PlannedAction> m_actions;
 };
 
 } // namespace MayaFlux::Kriya

@@ -3,7 +3,10 @@
 #include "Operators/InstanceOperator.hpp"
 
 #include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Kakshya/NDData/SpatialAccess.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+#include "MayaFlux/Nodes/Graphics/PointCollectionNode.hpp"
 
 #include "MayaFlux/Transitive/Reflect/TypeInfo.hpp"
 
@@ -118,7 +121,8 @@ std::shared_ptr<InstanceNetwork> make_instance_network(
     }
 
     const auto* mesh = assembly->mesh(group.source);
-    if (!mesh) {
+    const auto* points = assembly->spatial(group.source);
+    if (!mesh && (!points || points->topology != Portal::Graphics::PrimitiveTopology::POINT_LIST)) {
         return nullptr;
     }
 
@@ -127,8 +131,20 @@ std::shared_ptr<InstanceNetwork> make_instance_network(
         return nullptr;
     }
 
-    auto node = std::make_shared<GpuSync::MeshWriterNode>();
-    node->set_mesh(*mesh);
+    std::shared_ptr<GpuSync::GeometryWriterNode> node;
+    if (mesh) {
+        auto mesh_node = std::make_shared<GpuSync::MeshWriterNode>();
+        mesh_node->set_mesh(*mesh);
+        node = std::move(mesh_node);
+    } else {
+        const auto access = Kakshya::as_spatial_vertex_access(*points);
+        if (!access || access->byte_count % sizeof(Kakshya::PointVertex) != 0) {
+            return nullptr;
+        }
+        std::vector<Kakshya::PointVertex> vertices(access->byte_count / sizeof(Kakshya::PointVertex));
+        std::memcpy(vertices.data(), access->data_ptr, access->byte_count);
+        node = std::make_shared<GpuSync::PointCollectionNode>(std::move(vertices));
+    }
 
     auto network = std::make_shared<InstanceNetwork>();
     for (const uint64_t row : group.rows) {

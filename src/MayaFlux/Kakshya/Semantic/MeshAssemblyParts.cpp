@@ -45,7 +45,7 @@ std::vector<MeshAssemblyPart> partition_assembly(
         }
 
         MeshAssemblyPartKey key = partition ? partition(context, row) : MeshAssemblyPartKey {};
-        if (kind != MeshAssemblyRowKind::Mesh) {
+        if (kind != MeshAssemblyRowKind::Mesh && kind != MeshAssemblyRowKind::Points) {
             key.instanced = false;
         }
 

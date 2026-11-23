@@ -20,7 +20,8 @@ enum class CourseEventKind : uint8_t {
     Crossed, ///< A Loop or PingPong course crossed an end. value is the crossings this advance.
     Repeated, ///< A repeat began. value is the number of repeats begun.
     Frame, ///< A new frame index was reported. value is the index.
-    Missed ///< A frame could not be produced. value is the index.
+    Missed, ///< A frame could not be produced. value is the index.
+    Marked ///< A marker was passed. value is the marker's id and time its time.
 };
 
 /**
@@ -31,6 +32,16 @@ struct CourseEvent {
     CourseEventKind kind {};
     double time {}; ///< Source seconds when it happened.
     uint64_t value {}; ///< Crossings or frame index, by kind.
+};
+
+/**
+ * @struct CourseMarker
+ * @brief A named moment of source time that announces itself when the course passes it.
+ */
+struct CourseMarker {
+    uint64_t id {}; ///< Stable for the life of the course, and what a Marked event carries.
+    std::string name;
+    double time {}; ///< Source seconds.
 };
 
 /** @brief A stream of a course's events, awaited by one coroutine. */
@@ -248,6 +259,45 @@ public:
     /** @brief Move by seconds of source time from where the course is, as seek does. */
     bool nudge(double seconds);
 
+    // Following and markers
+
+    /**
+     * @brief Follow another course: this course's source time becomes the other's, plus an offset.
+     * @param other The course to follow. Held weakly; when it is gone this course holds where it was.
+     * @param offset Source seconds added to the other's time, negative to trail it.
+     * @return false for a null course, itself, or an offset that is not finite.
+     *
+     * Sets the time map, so seek is refused until unfollow() and the range and edge still fold the
+     * time. The offset is in source seconds, not clock seconds: the lag is exact while the
+     * other course runs straight and means the same place after it loops. Two courses over sources
+     * that share a timeline, such as the objects of one Alembic archive, stay in step this way.
+     */
+    bool follow(const std::shared_ptr<const Course>& other, double offset = 0.0);
+
+    /** @brief Stop following. Source time runs with the clock again, from where the course is. */
+    void unfollow();
+
+    /**
+     * @brief Add a marker at a source time.
+     * @return Its id, or nothing for a time that is not finite.
+     *
+     * A step that passes the marker announces CourseEventKind::Marked, forward or backward, in a
+     * Loop or a PingPong too: a step that crosses one end announces what it passes before and after
+     * the end, and a step that crosses more than once announces every marker once. A seek, a restart
+     * and a repeat are jumps and announce nothing. A subscriber holds only the latest event, so
+     * markers passed in one step reach it as the last of them.
+     */
+    std::optional<uint64_t> add_marker(std::string name, double source_time);
+
+    /** @brief Remove a marker. false when no marker has the id. */
+    bool remove_marker(uint64_t id);
+
+    /** @brief The markers, in the order they were added. */
+    [[nodiscard]] std::vector<CourseMarker> markers() const;
+
+    /** @brief Seek to the first marker of this name, as seek does. false for no such marker or when the seek is not queued. */
+    bool jump(std::string_view name);
+
     // State
 
     /** @brief Source seconds after the last advance. */
@@ -328,18 +378,23 @@ private:
     void apply(const Detail::CourseCommand& command, const CourseSetting& setting);
     void publish(const CourseSetting& setting, const CourseStep& step);
     void announce(CourseEventKind kind, double time, uint64_t value) const;
+    void scan_markers(double before, const CourseStep& step, const CourseSetting& setting) const;
     void refuse();
 
     CourseStore m_store;
     CourseControls& m_controls { open(m_store) };
     Memory::PendingQueue<Detail::CourseCommand, 64> m_commands;
     Memory::SnapshotCell<std::vector<Detail::CourseListener>> m_listeners;
+    Memory::SnapshotCell<std::vector<CourseMarker>> m_markers;
+    std::atomic<uint64_t> m_next_marker { 1 };
 
     CourseTime m_clock;
     bool m_paused;
     bool m_was_finished {};
     bool m_refusing {};
     bool m_advanced {};
+    bool m_jumped {};
+    bool m_last_reversed {};
     uint64_t m_passes_seen {};
     std::optional<uint64_t> m_last_frame;
 
@@ -354,6 +409,19 @@ private:
     std::atomic<bool> m_finished_cell { false };
     std::atomic<bool> m_paused_cell { false };
 };
+
+/**
+ * @brief Make several courses follow one, so lanes and reflows over one timeline stay in step.
+ * @param leader The course the others follow.
+ * @param followers The courses that take its time, as Course::follow does.
+ * @param offset Source seconds each follower is set from the leader.
+ * @return How many followed. A null, a leader among the followers or an offset that is not finite is left out.
+ *
+ * Steer the leader, with its speed, its seeks, its markers and its edge, and every follower moves
+ * with it, whichever reflow it is in. The followers keep their own range and edge.
+ */
+MAYAFLUX_API size_t lock_step(const std::shared_ptr<const Course>& leader,
+    std::span<const std::shared_ptr<Course>> followers, double offset = 0.0);
 
 } // namespace MayaFlux::Kriya
 

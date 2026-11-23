@@ -96,6 +96,20 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblySource> {
     }
 };
 
+template <>
+struct Description<::MayaFlux::Kakshya::MeshAssemblySurface> {
+    static constexpr std::string_view name = "MayaFlux::Kakshya::MeshAssemblySurface";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::base_color> { "base_color" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::metallic> { "metallic" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::roughness> { "roughness" },
+        };
+    }
+};
+
 }
 
 #endif
