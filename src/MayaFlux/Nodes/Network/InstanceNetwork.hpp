@@ -3,6 +3,11 @@
 #include "GeometrySlot.hpp"
 #include "NodeNetwork.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+struct MeshAssemblyGroup;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -74,5 +79,23 @@ private:
     std::vector<GeometrySlot> m_slots;
     std::shared_ptr<NetworkOperator> m_operator;
 };
+
+/**
+ * @brief Build an InstanceNetwork from one group of a MeshAssembly: every row that shows
+ *        the same mesh with the same material.
+ * @param assembly The assembly the group came from.
+ * @param group A group from assembly.groups().
+ * @return A network with one slot per row, named from the row, all sharing one template
+ *         node made from the group's mesh, each slot's transform the row's world
+ *         placement. Nullptr when the group's source is not a mesh (points and curves
+ *         sources are not instanced) or a row is out of range.
+ *
+ * The material is not applied: a MeshAssemblyMaterial holds a path, and loading and
+ * binding the texture is the caller's, with InstanceNetworkBuffer::bind_instance_textures.
+ * Every slot keeps the default payload.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<InstanceNetwork> make_instance_network(
+    const Kakshya::MeshAssemblyContainer& assembly,
+    const Kakshya::MeshAssemblyGroup& group);
 
 } // namespace MayaFlux::Nodes::Network

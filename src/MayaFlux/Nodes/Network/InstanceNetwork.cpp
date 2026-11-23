@@ -2,6 +2,9 @@
 
 #include "Operators/InstanceOperator.hpp"
 
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+
 #include "MayaFlux/Transitive/Reflect/TypeInfo.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -104,6 +107,32 @@ std::unordered_map<std::string, std::string> InstanceNetwork::get_metadata() con
         ? std::to_string(m_operator_chain->size())
         : "0";
     return meta;
+}
+
+std::shared_ptr<InstanceNetwork> make_instance_network(
+    const Kakshya::MeshAssemblyContainer& assembly,
+    const Kakshya::MeshAssemblyGroup& group)
+{
+    const auto* mesh = assembly.mesh(group.source);
+    if (!mesh) {
+        return nullptr;
+    }
+
+    const auto world = assembly.world_transforms();
+    if (std::ranges::any_of(group.rows, [&world](uint64_t row) { return row >= world.size(); })) {
+        return nullptr;
+    }
+
+    auto node = std::make_shared<GpuSync::MeshWriterNode>();
+    node->set_mesh(*mesh);
+
+    auto network = std::make_shared<InstanceNetwork>();
+    for (const uint64_t row : group.rows) {
+        const auto placement = assembly.placement(row);
+        const auto index = network->add_slot(placement ? placement->name : std::string {}, node);
+        network->get_slot(index).transform = world[row];
+    }
+    return network;
 }
 
 } // namespace MayaFlux::Nodes::Network
