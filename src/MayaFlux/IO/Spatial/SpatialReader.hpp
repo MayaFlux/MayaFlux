@@ -2,7 +2,45 @@
 
 #include "SpatialCache.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::IO {
+
+/**
+ * @enum SpatialObjectKind
+ * @brief What an object in an Alembic archive is. Group is an object with no schema,
+ *        which only holds children; Other is a schema this reader does not know.
+ */
+enum class SpatialObjectKind : uint8_t {
+    Group,
+    Xform,
+    Points,
+    Curves,
+    PolyMesh,
+    SubD,
+    Other
+};
+
+/**
+ * @struct SpatialObject
+ * @brief One object of an archive's hierarchy.
+ *
+ * path joins the names from the root with '/', without a leading slash, so a top level
+ * object's path is its name. parent indexes get_objects(); a top level object has none.
+ * instance_source is the path of the object this one instances, empty when it is not an
+ * instance root; instance_descendant is true under an instance root, where the file holds
+ * no objects of its own.
+ */
+struct SpatialObject {
+    std::string path;
+    std::optional<size_t> parent;
+    SpatialObjectKind kind {};
+    size_t sample_count {};
+    std::string instance_source;
+    bool instance_descendant {};
+};
 
 /**
  * @class SpatialReader
@@ -18,9 +56,12 @@ namespace MayaFlux::IO {
  * stream or close(); copy what must outlive that. Samples of different
  * streams do not invalidate each other.
  *
- * Only top level points and curves streams are read, which is everything
- * SpatialCache writes. Any other object in the file is skipped with a
- * warning. Attributes of types SpatialCache does not write are skipped with a
+ * Points and curves objects at any depth are streams, named by their path, so a
+ * top level stream keeps its plain name, which is everything SpatialCache
+ * writes. The rest of the hierarchy is listed by get_objects(), and transform
+ * objects are read by read_transform(). Polygon and subdivision meshes are
+ * listed but their geometry is not read; they are skipped with a warning.
+ * Attributes of types SpatialCache does not write are skipped with a
  * warning. A curves stream is reported as LINE_STRIP: a file does not tell a
  * list of pairs from curves of two vertices. Not safe to call from several
  * threads at once.
@@ -123,6 +164,47 @@ public:
      */
     [[nodiscard]] std::optional<size_t> get_vertex_count(
         const std::string& stream_name, size_t index) const;
+
+    /**
+     * @brief Every object of the archive in file order, parents before children.
+     */
+    [[nodiscard]] const std::vector<SpatialObject>& get_objects() const;
+
+    /**
+     * @brief The matrix of a transform object at a sample, in the convention of the
+     *        MeshAssembly: it places the object's children relative to its parent.
+     * @param path Path of an object of kind Xform.
+     * @param index Sample index, below the object's sample_count.
+     * @return The matrix, or nullopt for an unknown path, a path that is not a transform,
+     *         an index out of range or a read failure.
+     */
+    [[nodiscard]] std::optional<glm::mat4> read_transform(
+        const std::string& path, size_t index) const;
+
+    /**
+     * @brief Time in seconds the archive assigns to a sample of a transform object.
+     * @return The time, or nullopt for a path that is not a transform or an index out of range.
+     */
+    [[nodiscard]] std::optional<double> transform_time(
+        const std::string& path, size_t index) const;
+
+    /**
+     * @brief Build a MeshAssemblyContainer from the archive's hierarchy.
+     *
+     * Transform objects and groups become placement rows, parented as the archive is; a
+     * transform that does not inherit its parent's transform becomes a root. Each points
+     * or curves object becomes a source holding its first sample, with its sample times
+     * and its topology variance, and a row that shows it. An instance shares the sources
+     * of the object it instances instead of reading them again. A transform that changes
+     * over time becomes a channel of one clip named for the file.
+     *
+     * Polygon and subdivision meshes are not read, and the objects below them are placed
+     * under their parent. The variance of a points object is Constant for one sample and
+     * Heterogeneous for more, since the point count may change.
+     *
+     * @return The assembly, or nullptr when no archive is open.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::MeshAssemblyContainer> create_mesh_assembly() const;
 
     [[nodiscard]] std::string get_last_error() const { return m_last_error; }
 

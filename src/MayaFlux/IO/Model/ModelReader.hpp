@@ -16,6 +16,10 @@ namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
 }
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -76,7 +80,7 @@ using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::
  * FileReader contract:
  * create_container() and load_into_container() are no-ops for this reader;
  * mesh data does not go through the SignalSourceContainer streaming path.
- * Use load() or the IOManager::load_mesh() convenience wrapper instead.
+ * Use load(), create_mesh_assembly() or the IOManager::load_mesh() convenience wrapper instead.
  */
 class MAYAFLUX_API ModelReader : public FileReader {
 public:
@@ -159,6 +163,31 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Nodes::Network::MeshNetwork>
     create_mesh_network(const TextureResolver& resolver = nullptr) const;
+
+    /**
+     * @brief Build a MeshAssemblyContainer from the scene.
+     *
+     * Every valid mesh becomes one source, stored once, so a mesh several nodes use
+     * stays shared. Every material becomes a MeshAssemblyMaterial (name, diffuse path,
+     * whether the path points into the file). The node tree becomes the placement rows
+     * with the same rules as create_mesh_network(): one row per node, parented as the
+     * tree is, a node with no mesh a joint, the first mesh of a node on the node's own
+     * row and each further mesh a child row, an identity scene root with no row unless
+     * an animation targets it, and meshes no node references as root rows.
+     *
+     * Each Assimp animation becomes a clip. A channel is resolved by node name; a name
+     * that matches no row or more than one row, a node with no row, and a node an
+     * animation keys twice are skipped with a warning. Times are seconds: key time over
+     * mTicksPerSecond, with 0 ticks per second read as 1. A key's interpolation is Step
+     * or Linear (rotations spherical); cubic spline keys arrive as Linear, as Assimp
+     * drops their tangents. The scene's ModelInfo is kept in the assembly's facets.
+     *
+     * Requires open(). Does not call close(). Textures are not resolved: the assembly
+     * holds the paths.
+     *
+     * @return The assembly, or nullptr if no scene is loaded.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::MeshAssemblyContainer> create_mesh_assembly() const;
 
     // -------------------------------------------------------------------------
     // FileReader interface

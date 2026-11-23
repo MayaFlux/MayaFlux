@@ -1,5 +1,6 @@
 #include "ModelReader.hpp"
 
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
 #include "MayaFlux/Kinesis/Polyhedral/VertexRecords.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
@@ -48,6 +49,51 @@ namespace {
             }
         }
         return true;
+    }
+
+    Kinesis::KeyInterpolation key_interpolation(aiAnimInterpolation mode)
+    {
+        return mode == aiAnimInterpolation_Step ? Kinesis::KeyInterpolation::Step : Kinesis::KeyInterpolation::Linear;
+    }
+
+    template <typename Key, typename Convert>
+    auto timed_values(const Key* keys, unsigned int count, double ticks_per_second,
+        Kinesis::ValueKind kind, Convert convert)
+        -> std::optional<Kinesis::TimedValues<decltype(convert(keys[0]))>>
+    {
+        using Value = decltype(convert(keys[0]));
+        if (count == 0) {
+            return std::nullopt;
+        }
+
+        std::vector<double> times;
+        std::vector<Value> values;
+        std::vector<Kinesis::KeyInterpolation> modes;
+        times.reserve(count);
+        values.reserve(count);
+        modes.reserve(count);
+        for (unsigned int i = 0; i < count; ++i) {
+            times.push_back(keys[i].mTime / ticks_per_second);
+            values.push_back(convert(keys[i]));
+            modes.push_back(key_interpolation(keys[i].mInterpolation));
+        }
+
+        auto sampling = Kinesis::TimeSampling::acyclic(std::move(times));
+        if (!sampling) {
+            return std::nullopt;
+        }
+        return Kinesis::TimedValues<Value>::create(
+            { .times = std::move(*sampling), .values = std::move(values), .modes = std::move(modes), .kind = kind });
+    }
+
+    glm::vec3 to_vec3(const aiVectorKey& key)
+    {
+        return { key.mValue.x, key.mValue.y, key.mValue.z };
+    }
+
+    glm::vec4 to_rotation(const aiQuatKey& key)
+    {
+        return { key.mValue.x, key.mValue.y, key.mValue.z, key.mValue.w };
     }
 }
 
@@ -324,6 +370,222 @@ ModelReader::create_mesh_network(const TextureResolver& resolver) const
     return net;
 }
 
+std::shared_ptr<Kakshya::MeshAssemblyContainer>
+ModelReader::create_mesh_assembly() const
+{
+    if (!m_impl->scene) {
+        set_error("No scene loaded");
+        return nullptr;
+    }
+
+    const aiScene* s = m_impl->scene;
+    auto assembly = std::make_shared<Kakshya::MeshAssemblyContainer>();
+
+    std::vector<std::optional<uint64_t>> source_of(s->mNumMeshes);
+    std::vector<bool> tried(s->mNumMeshes, false);
+    std::vector<std::string> source_name(s->mNumMeshes);
+    std::vector<std::optional<uint64_t>> material_of(s->mNumMaterials);
+    std::vector<bool> placed(s->mNumMeshes, false);
+    std::unordered_map<std::string, std::vector<uint64_t>> rows_by_name;
+
+    const auto material_index = [&](unsigned int index) -> std::optional<uint64_t> {
+        if (index >= s->mNumMaterials) {
+            return std::nullopt;
+        }
+        if (!material_of[index]) {
+            const aiMaterial* ai_material = s->mMaterials[index];
+            Kakshya::MeshAssemblyMaterial material;
+            aiString name;
+            if (ai_material->Get(AI_MATKEY_NAME, name) == AI_SUCCESS) {
+                material.name = name.C_Str();
+            }
+            aiString path;
+            if (ai_material->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS) {
+                material.diffuse_path = std::filesystem::path(path.C_Str()).generic_string();
+                material.diffuse_embedded = !material.diffuse_path.empty() && material.diffuse_path[0] == '*';
+            }
+            material_of[index] = assembly->add_material(std::move(material));
+        }
+        return material_of[index];
+    };
+
+    const auto source_index = [&](unsigned int index) -> std::optional<uint64_t> {
+        if (!tried[index]) {
+            tried[index] = true;
+            const aiMesh* ai_mesh = s->mMeshes[index];
+            std::string name = ai_mesh->mName.C_Str();
+            if (name.empty()) {
+                name = "mesh_" + std::to_string(index);
+            }
+
+            std::string material_name;
+            if (ai_mesh->mMaterialIndex < s->mNumMaterials) {
+                aiString ai_material_name;
+                s->mMaterials[ai_mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, ai_material_name);
+                material_name = ai_material_name.C_Str();
+            }
+
+            auto data = extract_single_mesh(ai_mesh, s, name, material_name);
+            if (data.is_valid() && std::get_if<std::vector<uint8_t>>(&data.vertex_variant)
+                && std::get_if<std::vector<uint32_t>>(&data.index_variant)) {
+                source_name[index] = name;
+                source_of[index] = assembly->add_source({ .geometry = std::move(data), .name = std::move(name) });
+            } else {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_assembly: skipping invalid mesh '{}'", name);
+            }
+        }
+        return source_of[index];
+    };
+
+    const auto add_row = [&](std::string name, std::optional<uint64_t> parent,
+                             std::optional<uint64_t> source, unsigned int mesh_index,
+                             const glm::mat4& local) {
+        std::optional<uint64_t> material;
+        if (source) {
+            material = material_index(s->mMeshes[mesh_index]->mMaterialIndex);
+        }
+        return assembly->add_placement({ .name = std::move(name),
+            .parent = parent,
+            .source = source,
+            .material = material,
+            .local = local });
+    };
+
+    std::unordered_set<std::string> animated;
+    for (unsigned int a = 0; a < s->mNumAnimations; ++a) {
+        for (unsigned int c = 0; c < s->mAnimations[a]->mNumChannels; ++c) {
+            animated.insert(s->mAnimations[a]->mChannels[c]->mNodeName.C_Str());
+        }
+    }
+
+    std::function<void(const aiNode*, std::optional<uint64_t>, bool)> visit;
+    visit = [&](const aiNode* ai_node, std::optional<uint64_t> parent, bool is_scene_root) {
+        const glm::mat4 local = to_glm(ai_node->mTransformation);
+
+        std::vector<std::pair<unsigned int, uint64_t>> meshes;
+        for (unsigned int m = 0; m < ai_node->mNumMeshes; ++m) {
+            const unsigned int mesh_index = ai_node->mMeshes[m];
+            if (mesh_index >= s->mNumMeshes) {
+                continue;
+            }
+            placed[mesh_index] = true;
+            if (const auto source = source_index(mesh_index)) {
+                meshes.emplace_back(mesh_index, *source);
+            }
+        }
+
+        if (is_scene_root && is_identity(local) && !animated.contains(ai_node->mName.C_Str())) {
+            for (const auto& [mesh_index, source] : meshes) {
+                add_row(source_name[mesh_index], std::nullopt, source, mesh_index, glm::mat4(1.0F));
+            }
+            for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
+                visit(ai_node->mChildren[c], std::nullopt, false);
+            }
+            return;
+        }
+
+        const std::string node_name = ai_node->mName.C_Str();
+        std::optional<size_t> own;
+        if (meshes.empty()) {
+            own = add_row(node_name.empty() ? "node_" + std::to_string(assembly->get_total_elements()) : node_name,
+                parent, std::nullopt, 0, local);
+        } else {
+            own = add_row(node_name.empty() ? source_name[meshes.front().first] : node_name,
+                parent, meshes.front().second, meshes.front().first, local);
+            for (size_t m = 1; own && m < meshes.size(); ++m) {
+                add_row(source_name[meshes[m].first], own, meshes[m].second, meshes[m].first, glm::mat4(1.0F));
+            }
+        }
+        if (!own) {
+            return;
+        }
+        if (!node_name.empty()) {
+            rows_by_name[node_name].push_back(*own);
+        }
+
+        for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
+            visit(ai_node->mChildren[c], *own, false);
+        }
+    };
+
+    visit(s->mRootNode, std::nullopt, true);
+
+    for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
+        if (!placed[i]) {
+            if (const auto source = source_index(i)) {
+                add_row(source_name[i], std::nullopt, source, i, glm::mat4(1.0F));
+            }
+        }
+    }
+
+    for (unsigned int a = 0; a < s->mNumAnimations; ++a) {
+        const aiAnimation* animation = s->mAnimations[a];
+        const double ticks_per_second = animation->mTicksPerSecond > 0.0 ? animation->mTicksPerSecond : 1.0;
+        Kakshya::MeshAssemblyClip clip { .name = animation->mName.C_Str(), .channels = {} };
+        if (clip.name.empty()) {
+            clip.name = "animation_" + std::to_string(a);
+        }
+
+        std::unordered_set<uint64_t> targeted;
+        for (unsigned int c = 0; c < animation->mNumChannels; ++c) {
+            const aiNodeAnim* channel = animation->mChannels[c];
+            const std::string target = channel->mNodeName.C_Str();
+
+            const auto rows = rows_by_name.find(target);
+            if (rows == rows_by_name.end() || rows->second.size() != 1) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_assembly: animation '{}' channel targets '{}', which matches {} rows, skipped",
+                    clip.name, target, rows == rows_by_name.end() ? 0 : rows->second.size());
+                continue;
+            }
+            const uint64_t row = rows->second.front();
+            if (!targeted.insert(row).second) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_assembly: animation '{}' keys '{}' twice, the later channel skipped",
+                    clip.name, target);
+                continue;
+            }
+
+            Kakshya::MeshAssemblyChannel keyed { .row = row };
+            keyed.translation = timed_values(channel->mPositionKeys, channel->mNumPositionKeys,
+                ticks_per_second, Kinesis::ValueKind::Plain, to_vec3);
+            keyed.rotation = timed_values(channel->mRotationKeys, channel->mNumRotationKeys,
+                ticks_per_second, Kinesis::ValueKind::Rotation, to_rotation);
+            keyed.scale = timed_values(channel->mScalingKeys, channel->mNumScalingKeys,
+                ticks_per_second, Kinesis::ValueKind::Plain, to_vec3);
+
+            if (keyed.translation || keyed.rotation || keyed.scale) {
+                clip.channels.push_back(std::move(keyed));
+            } else {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "ModelReader::create_mesh_assembly: animation '{}' channel '{}' has no usable keys, skipped",
+                    clip.name, target);
+            }
+        }
+
+        if (!clip.channels.empty()) {
+            std::ignore = assembly->add_clip(std::move(clip));
+        }
+    }
+
+    Facets facets;
+    facets.set(ModelInfo {
+        .mesh_count = static_cast<uint64_t>(s->mNumMeshes),
+        .material_count = static_cast<uint64_t>(s->mNumMaterials),
+        .animation_count = static_cast<uint64_t>(s->mNumAnimations),
+        .texture_count = static_cast<uint64_t>(s->mNumTextures),
+    });
+    assembly->set_facets(std::move(facets));
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "ModelReader::create_mesh_assembly: {} rows, {} sources, {} clips",
+        assembly->get_total_elements(), assembly->get_data().sources.size(),
+        assembly->get_data().clips.size());
+
+    return assembly;
+}
+
 // =============================================================================
 // FileReader interface
 // =============================================================================
@@ -444,14 +706,14 @@ std::vector<Kakshya::DataVariant> ModelReader::read_region(const FileRegion& /*r
 
 std::shared_ptr<Kakshya::SignalSourceContainer> ModelReader::create_container()
 {
-    m_last_error = "Mesh data does not use SignalSourceContainer. Use load() instead.";
+    m_last_error = "Mesh data does not use SignalSourceContainer. Use load() or create_mesh_assembly() instead.";
     return nullptr;
 }
 
 bool ModelReader::load_into_container(
     std::shared_ptr<Kakshya::SignalSourceContainer> /*container*/)
 {
-    m_last_error = "Mesh data does not use SignalSourceContainer. Use load() instead.";
+    m_last_error = "Mesh data does not use SignalSourceContainer. Use load() or create_mesh_assembly() instead.";
     return false;
 }
 

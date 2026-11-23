@@ -2,6 +2,9 @@
 
 #include "MayaFlux/IO/FileReader.hpp"
 
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Kinesis/MatrixTransforms.hpp"
+
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -272,55 +275,133 @@ namespace {
 } // namespace
 
 struct SpatialReader::Impl {
+    static constexpr size_t max_depth = 256;
+
+    struct XformRecord {
+        IXform object;
+        size_t sample_count { 0 };
+        Alembic::AbcCoreAbstract::TimeSamplingPtr time_sampling;
+        bool constant { true };
+        bool inherits { true };
+    };
+
     IArchive archive;
+    std::string path;
     std::vector<std::string> names;
+    std::vector<SpatialObject> objects;
     std::unordered_map<std::string, StreamRecord> records;
+    std::unordered_map<std::string, XformRecord> xforms;
 
     void index_streams();
+    void index_children(const IObject& parent, std::optional<size_t> parent_index,
+        const std::string& parent_path, size_t depth);
 };
 
 void SpatialReader::Impl::index_streams()
 {
     names.clear();
+    objects.clear();
     records.clear();
+    xforms.clear();
 
-    const IObject top = archive.getTop();
+    index_children(archive.getTop(), std::nullopt, {}, 0);
+}
 
-    for (size_t i = 0; i < top.getNumChildren(); ++i) {
-        const auto& header = top.getChildHeader(i);
+void SpatialReader::Impl::index_children(const IObject& parent, std::optional<size_t> parent_index,
+    const std::string& parent_path, size_t depth)
+{
+    if (depth >= max_depth) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader: the hierarchy is deeper than {} levels, the rest below '{}' is skipped",
+            max_depth, parent_path);
+        return;
+    }
+
+    for (size_t i = 0; i < parent.getNumChildren(); ++i) {
+        const IObject child = parent.getChild(i);
+        const auto& header = parent.getChildHeader(i);
         const std::string& name = header.getName();
+        const std::string path = parent_path.empty() ? name : parent_path + "/" + name;
+
+        SpatialObject entry;
+        entry.path = path;
+        entry.parent = parent_index;
+        entry.instance_descendant = child.isInstanceDescendant();
+        if (child.isInstanceRoot()) {
+            entry.instance_source = child.instanceSourcePath();
+            if (!entry.instance_source.empty() && entry.instance_source.front() == '/') {
+                entry.instance_source.erase(0, 1);
+            }
+        }
 
         StreamRecord record;
         record.metadata = user_metadata(header.getMetaData());
-
         ICompoundProperty arb;
+        bool is_stream = false;
+        bool descend = false;
 
         if (IPoints::matches(header)) {
-            IPoints points(top, name);
+            IPoints points(child, kWrapExisting);
             auto& schema = points.getSchema();
             record.topology = PrimitiveTopology::POINT_LIST;
             record.sample_count = schema.getNumSamples();
             record.time_sampling = schema.getTimeSampling();
             arb = schema.getArbGeomParams();
             record.object = std::move(points);
+            entry.kind = SpatialObjectKind::Points;
+            entry.sample_count = record.sample_count;
+            is_stream = true;
         } else if (ICurves::matches(header)) {
-            ICurves curves(top, name);
+            ICurves curves(child, kWrapExisting);
             auto& schema = curves.getSchema();
             record.topology = PrimitiveTopology::LINE_STRIP;
             record.sample_count = schema.getNumSamples();
             record.time_sampling = schema.getTimeSampling();
             arb = schema.getArbGeomParams();
             record.object = std::move(curves);
-        } else {
+            entry.kind = SpatialObjectKind::Curves;
+            entry.sample_count = record.sample_count;
+            is_stream = true;
+        } else if (IXform::matches(header)) {
+            IXform xform(child, kWrapExisting);
+            auto& schema = xform.getSchema();
+            XformRecord xform_record;
+            xform_record.sample_count = schema.getNumSamples();
+            xform_record.time_sampling = schema.getTimeSampling();
+            xform_record.constant = schema.isConstant();
+            if (xform_record.sample_count > 0) {
+                xform_record.inherits = schema.getInheritsXforms(ISampleSelector(static_cast<index_t>(0)));
+            }
+            xform_record.object = std::move(xform);
+            entry.kind = SpatialObjectKind::Xform;
+            entry.sample_count = xform_record.sample_count;
+            xforms.emplace(path, std::move(xform_record));
+            descend = true;
+        } else if (IPolyMesh::matches(header) || ISubD::matches(header)) {
+            entry.kind = IPolyMesh::matches(header) ? SpatialObjectKind::PolyMesh : SpatialObjectKind::SubD;
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "SpatialReader: object '{}' is neither points nor curves, skipped", name);
-            continue;
+                "SpatialReader: object '{}' is neither points nor curves, listed but its geometry is not read", path);
+        } else if (header.getMetaData().get("schema").empty()) {
+            entry.kind = SpatialObjectKind::Group;
+            descend = true;
+        } else {
+            entry.kind = SpatialObjectKind::Other;
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "SpatialReader: object '{}' is neither points nor curves, listed but not read", path);
         }
 
-        record.attributes = declare_attributes(arb, name);
+        const size_t index = objects.size();
+        objects.push_back(std::move(entry));
 
-        names.push_back(name);
-        records.emplace(name, std::move(record));
+        if (is_stream) {
+            record.attributes = declare_attributes(arb, path);
+            names.push_back(path);
+            records.emplace(path, std::move(record));
+        }
+
+        if (descend) {
+            index_children(child, index, path, depth + 1);
+        }
     }
 }
 
@@ -367,6 +448,7 @@ bool SpatialReader::open(const std::string& filepath)
         }
 
         m_impl->archive = archive;
+        m_impl->path = resolved;
         m_impl->index_streams();
     } catch (const std::exception& e) {
         close();
@@ -384,7 +466,10 @@ bool SpatialReader::open(const std::string& filepath)
 void SpatialReader::close()
 {
     m_impl->records.clear();
+    m_impl->xforms.clear();
+    m_impl->objects.clear();
     m_impl->names.clear();
+    m_impl->path.clear();
     m_impl->archive = IArchive();
 }
 
@@ -552,6 +637,240 @@ std::optional<double> SpatialReader::sample_time(
 
     return static_cast<double>(
         it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
+}
+
+const std::vector<SpatialObject>& SpatialReader::get_objects() const
+{
+    return m_impl->objects;
+}
+
+std::optional<glm::mat4> SpatialReader::read_transform(const std::string& path, size_t index) const
+{
+    const auto it = m_impl->xforms.find(path);
+    if (it == m_impl->xforms.end()) {
+        set_error("read_transform: no transform object at '" + path + "'");
+        return std::nullopt;
+    }
+    if (index >= it->second.sample_count) {
+        set_error("read_transform: index " + std::to_string(index) + " out of range for '" + path + "'");
+        return std::nullopt;
+    }
+
+    try {
+        XformSample sample;
+        it->second.object.getSchema().get(sample, ISampleSelector(static_cast<index_t>(index)));
+        const auto matrix = sample.getMatrix();
+        glm::mat4 result;
+        for (int column = 0; column < 4; ++column) {
+            for (int row = 0; row < 4; ++row) {
+                result[column][row] = static_cast<float>(matrix[column][row]);
+            }
+        }
+        return result;
+    } catch (const std::exception& e) {
+        set_error(std::string("read_transform: ") + e.what());
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader::read_transform: '{}' sample {}: {}", path, index, e.what());
+        return std::nullopt;
+    }
+}
+
+std::optional<double> SpatialReader::transform_time(const std::string& path, size_t index) const
+{
+    const auto it = m_impl->xforms.find(path);
+    if (it == m_impl->xforms.end() || index >= it->second.sample_count || !it->second.time_sampling) {
+        return std::nullopt;
+    }
+    return static_cast<double>(it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
+}
+
+std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assembly() const
+{
+    if (!m_impl->archive.valid()) {
+        set_error("create_mesh_assembly: no archive open");
+        return nullptr;
+    }
+
+    const auto& objects = m_impl->objects;
+    auto assembly = std::make_shared<Kakshya::MeshAssemblyContainer>();
+
+    std::unordered_map<std::string, size_t> object_index;
+    for (size_t i = 0; i < objects.size(); ++i) {
+        object_index.emplace(objects[i].path, i);
+    }
+
+    const auto last_segment = [](const std::string& path) {
+        const auto slash = path.rfind('/');
+        return slash == std::string::npos ? path : path.substr(slash + 1);
+    };
+
+    const auto canonical = [&](std::string path) {
+        constexpr int max_redirects = 16;
+        for (int redirects = 0; redirects < max_redirects; ++redirects) {
+            std::string probe = path;
+            bool redirected = false;
+            while (true) {
+                const auto found = object_index.find(probe);
+                if (found != object_index.end() && !objects[found->second].instance_source.empty()) {
+                    path = objects[found->second].instance_source + path.substr(probe.size());
+                    redirected = true;
+                    break;
+                }
+                const auto slash = probe.rfind('/');
+                if (slash == std::string::npos) {
+                    break;
+                }
+                probe.erase(slash);
+            }
+            if (!redirected) {
+                break;
+            }
+        }
+        return path;
+    };
+
+    std::unordered_map<std::string, std::optional<uint64_t>> source_by_path;
+    const auto source_for = [&](const SpatialObject& object) -> std::optional<uint64_t> {
+        const std::string key = canonical(object.path);
+        if (const auto known = source_by_path.find(key); known != source_by_path.end()) {
+            return known->second;
+        }
+
+        const std::string& stream = m_impl->records.contains(key) ? key : object.path;
+        const auto record = m_impl->records.find(stream);
+        auto sample = read_sample(stream, 0);
+        if (record == m_impl->records.end() || !sample) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "SpatialReader::create_mesh_assembly: '{}' has no readable first sample, skipped", stream);
+            source_by_path.emplace(key, std::nullopt);
+            return std::nullopt;
+        }
+
+        Kakshya::MeshAssemblySource source;
+        source.geometry = sample->to_data();
+        source.name = last_segment(key);
+
+        std::vector<double> times;
+        times.reserve(record->second.sample_count);
+        for (size_t i = 0; i < record->second.sample_count; ++i) {
+            if (const auto time = sample_time(stream, i)) {
+                times.push_back(*time);
+            }
+        }
+        if (times.size() == record->second.sample_count) {
+            source.time = Kinesis::TimeSampling::acyclic(std::move(times));
+        }
+
+        source.variance = record->second.sample_count > 1 ? Kakshya::TopologyVariance::Heterogeneous : Kakshya::TopologyVariance::Constant;
+        if (const auto* curves = std::get_if<ICurves>(&record->second.object); curves && record->second.sample_count > 1) {
+            switch (curves->getSchema().getTopologyVariance()) {
+            case kConstantTopology:
+                source.variance = Kakshya::TopologyVariance::Constant;
+                break;
+            case kHomogenousTopology:
+                source.variance = Kakshya::TopologyVariance::Homogeneous;
+                break;
+            default:
+                break;
+            }
+        }
+        source.facets.set(record->second.metadata);
+
+        const auto index = assembly->add_source(std::move(source));
+        source_by_path.emplace(key, index);
+        return index;
+    };
+
+    std::vector<std::optional<uint64_t>> row_of(objects.size());
+    Kakshya::MeshAssemblyClip clip { .name = std::filesystem::path(m_impl->path).stem().string(), .channels = {} };
+
+    for (size_t i = 0; i < objects.size(); ++i) {
+        const auto& object = objects[i];
+        const std::optional<uint64_t> parent_row = object.parent ? row_of[*object.parent] : std::nullopt;
+        const std::string name = last_segment(object.path);
+
+        switch (object.kind) {
+        case SpatialObjectKind::Group: {
+            const auto row = assembly->add_placement({ .name = name, .parent = parent_row });
+            row_of[i] = row;
+            break;
+        }
+        case SpatialObjectKind::Xform: {
+            const auto& xform = m_impl->xforms.at(object.path);
+            const auto local = read_transform(object.path, 0).value_or(glm::mat4(1.0F));
+            const auto row = assembly->add_placement({ .name = name,
+                .parent = xform.inherits ? parent_row : std::nullopt,
+                .local = local });
+            row_of[i] = row;
+
+            if (!row || xform.constant || xform.sample_count < 2) {
+                break;
+            }
+
+            std::vector<double> times;
+            std::vector<glm::vec3> translations;
+            std::vector<glm::vec4> rotations;
+            std::vector<glm::vec3> scales;
+            bool usable = true;
+            for (size_t s = 0; s < xform.sample_count && usable; ++s) {
+                const auto time = transform_time(object.path, s);
+                const auto matrix = read_transform(object.path, s);
+                const auto parts = matrix ? Kinesis::decompose_transform(*matrix) : std::nullopt;
+                if (!time || !parts) {
+                    usable = false;
+                    break;
+                }
+                const auto& [translation, rotation, scale] = *parts;
+                times.push_back(*time);
+                translations.push_back(translation);
+                rotations.emplace_back(rotation.x, rotation.y, rotation.z, rotation.w);
+                scales.push_back(scale);
+            }
+
+            auto sampling = usable ? Kinesis::TimeSampling::acyclic(std::move(times)) : std::nullopt;
+            if (!sampling) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "SpatialReader::create_mesh_assembly: transform '{}' cannot be decomposed or its times do not increase, kept at its first sample",
+                    object.path);
+                break;
+            }
+
+            Kakshya::MeshAssemblyChannel channel { .row = *row };
+            channel.translation = Kinesis::TimedValues<glm::vec3>::create(
+                { .times = *sampling, .values = std::move(translations), .default_mode = Kinesis::KeyInterpolation::Linear });
+            channel.rotation = Kinesis::TimedValues<glm::vec4>::create(
+                { .times = *sampling, .values = std::move(rotations), .kind = Kinesis::ValueKind::Rotation });
+            channel.scale = Kinesis::TimedValues<glm::vec3>::create(
+                { .times = std::move(*sampling), .values = std::move(scales) });
+            clip.channels.push_back(std::move(channel));
+            break;
+        }
+        case SpatialObjectKind::Points:
+        case SpatialObjectKind::Curves: {
+            const auto source = source_for(object);
+            if (source) {
+                row_of[i] = assembly->add_placement({ .name = name, .parent = parent_row, .source = source });
+            } else {
+                row_of[i] = parent_row;
+            }
+            break;
+        }
+        default:
+            row_of[i] = parent_row;
+            break;
+        }
+    }
+
+    if (!clip.channels.empty()) {
+        std::ignore = assembly->add_clip(std::move(clip));
+    }
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "SpatialReader::create_mesh_assembly: {} rows, {} sources, {} clips",
+        assembly->get_total_elements(), assembly->get_data().sources.size(),
+        assembly->get_data().clips.size());
+
+    return assembly;
 }
 
 } // namespace MayaFlux::IO

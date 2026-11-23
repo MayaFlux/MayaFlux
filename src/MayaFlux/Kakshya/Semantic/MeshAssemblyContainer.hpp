@@ -93,6 +93,9 @@ public:
      */
     [[nodiscard]] std::optional<size_t> add_clip(MeshAssemblyClip clip);
 
+    /** @brief Replace the facets that describe the whole assembly. */
+    void set_facets(Facets facets) { m_data.facets = std::move(facets); }
+
     /** @brief The mesh of a source, or nullptr when it is not a mesh or out of range. */
     [[nodiscard]] const MeshData* mesh(size_t source) const noexcept;
 
