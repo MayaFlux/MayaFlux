@@ -122,6 +122,9 @@ set_target_properties(tinyvdb PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON
 )
 target_compile_definitions(tinyvdb PRIVATE TVDB_NO_MMAP)
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(tinyvdb PRIVATE $<$<COMPILE_LANGUAGE:C>:/experimental:c11atomics>)
+endif()
 target_include_directories(tinyvdb PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyvdb>
     $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyvdb>
