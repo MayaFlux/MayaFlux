@@ -30,6 +30,14 @@ namespace {
         dependency.pImageMemoryBarriers = &barrier;
         cmd.pipelineBarrier2(dependency);
     }
+
+    /** @brief Host image copy takes one aspect: color, or depth for a depth-only format. */
+    bool host_copy_aspect(const VKImage& image)
+    {
+        const auto aspect = image.get_aspect_flags();
+        return aspect == vk::ImageAspectFlagBits::eColor
+            || aspect == vk::ImageAspectFlagBits::eDepth;
+    }
 }
 
 BackendResourceManager::BackendResourceManager(VKContext& context, VKCommandManager& command_manager)
@@ -893,7 +901,7 @@ void BackendResourceManager::upload_image_host(
     const bool valid_image = image
         && image->is_initialized()
         && image->supports_host_transfer()
-        && image->get_aspect_flags() == vk::ImageAspectFlagBits::eColor;
+        && host_copy_aspect(*image);
 
     const bool valid_layers = valid_image
         && layer_count > 0
@@ -905,7 +913,7 @@ void BackendResourceManager::upload_image_host(
             Journal::Component::Core,
             Journal::Context::GraphicsBackend,
             std::source_location::current(),
-            "Host image upload requires an initialized host-transfer color image and valid layers");
+            "Host image upload requires an initialized host-transfer color or depth image and valid layers");
     }
 
     const size_t layer_bytes = image->get_base_level_size_bytes();
@@ -994,7 +1002,7 @@ void BackendResourceManager::download_image_host(
     const bool valid_image = image
         && image->is_initialized()
         && image->supports_host_transfer()
-        && image->get_aspect_flags() == vk::ImageAspectFlagBits::eColor
+        && host_copy_aspect(*image)
         && image->get_current_layout() != vk::ImageLayout::eUndefined;
 
     if (!valid_image || !data) {
@@ -1002,7 +1010,7 @@ void BackendResourceManager::download_image_host(
             Journal::Component::Core,
             Journal::Context::GraphicsBackend,
             std::source_location::current(),
-            "Host image download requires an initialized host-transfer color image with defined layout");
+            "Host image download requires an initialized host-transfer color or depth image with defined layout");
     }
 
     const size_t layer_bytes = image->get_base_level_size_bytes();
