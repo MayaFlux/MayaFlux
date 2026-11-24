@@ -91,6 +91,28 @@ bool write_depfile(const std::filesystem::path& path, const std::string& target,
 
 bool write_generated(const std::filesystem::path& path, const std::string& content, std::string& error)
 {
+#ifdef _WIN32
+    if (auto have = read_text(path)) {
+        const bool crlf = have->find("\r\n") != std::string::npos;
+        for (auto at = have->find("\r\n"); at != std::string::npos; at = have->find("\r\n", at + 1)) {
+            have->erase(at, 1);
+        }
+        if (*have == content) {
+            return true;
+        }
+        if (crlf) {
+            std::string output;
+            output.reserve(content.size());
+            for (std::size_t i = 0; i < content.size(); ++i) {
+                if (content[i] == '\n' && (i == 0 || content[i - 1] != '\r')) {
+                    output += '\r';
+                }
+                output += content[i];
+            }
+            return write_if_changed(path, output, error);
+        }
+    }
+#endif
     return write_if_changed(path, content, error);
 }
 
