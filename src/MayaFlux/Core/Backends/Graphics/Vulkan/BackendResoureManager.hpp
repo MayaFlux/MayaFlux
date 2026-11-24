@@ -250,6 +250,27 @@ public:
         vk::Filter filter,
         SubmitMode mode = SubmitMode::IMMEDIATE);
 
+    /**
+     * @brief Fill every mip level below the first by repeated blits of the level above.
+     *
+     * Level zero must already hold the contents. The other levels are overwritten.
+     * Each level is blitted from the one before it, over every array layer or depth
+     * slice, so the barriers move one level at a time. The image returns to the layout it
+     * held, or shader read when that was transient.
+     *
+     * @param image  Initialized color image with more than one mip level.
+     * @param filter Nearest or linear.
+     * @param mode   IMMEDIATE waits, DEFERRED records into the batch a flush submits,
+     *               ASYNC submits at once without waiting.
+     * @return True if the chain was recorded, executed or submitted. False for an image
+     *         with one level, a depth or stencil format, or a format that cannot blit
+     *         with the filter.
+     */
+    bool generate_mip_chain(
+        const std::shared_ptr<VKImage>& image,
+        vk::Filter filter = vk::Filter::eLinear,
+        SubmitMode mode = SubmitMode::IMMEDIATE);
+
     // ========================================================================
     // Sampler management
     // ========================================================================

@@ -1675,6 +1675,113 @@ bool BackendResourceManager::blit_image(
     return true;
 }
 
+bool BackendResourceManager::generate_mip_chain(
+    const std::shared_ptr<VKImage>& image,
+    vk::Filter filter,
+    SubmitMode mode)
+{
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: image is null or not initialized");
+        return false;
+    }
+
+    const uint32_t levels = image->get_mip_levels();
+    if (levels < 2) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: image has one mip level");
+        return false;
+    }
+
+    if (image->get_aspect_flags() != vk::ImageAspectFlagBits::eColor) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: only color images have a mip chain to generate");
+        return false;
+    }
+
+    if (!supports_blit(image->get_format(), image->get_format(), filter)) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: format {} does not support a {} blit",
+            vk::to_string(image->get_format()), vk::to_string(filter));
+        return false;
+    }
+
+    const vk::ImageLayout old_layout = image->get_current_layout();
+    const auto old_access = image_access_of(old_layout);
+    const bool transient = !old_access
+        || *old_access == ImageAccess::UNDEFINED
+        || *old_access == ImageAccess::TRANSFER_SRC
+        || *old_access == ImageAccess::TRANSFER_DST;
+    const ImageAccess settled = transient ? ImageAccess::SHADER_READ : *old_access;
+
+    auto record_command = [&](vk::CommandBuffer cmd) {
+        const vk::Image handle = image->get_image();
+        const vk::ImageAspectFlags aspect = image->get_aspect_flags();
+        const uint32_t layers = image->get_array_layers();
+        const auto level_range = [aspect, layers](uint32_t base, uint32_t count) {
+            return vk::ImageSubresourceRange { aspect, base, count, 0, layers };
+        };
+
+        record_layout_transition(cmd, handle, level_range(0, 1),
+            old_layout, vk::ImageLayout::eTransferSrcOptimal);
+        record_access_barrier(cmd, handle, level_range(1, levels - 1),
+            ImageAccess::UNDEFINED, ImageAccess::TRANSFER_DST);
+
+        auto width = static_cast<int32_t>(image->get_width());
+        auto height = static_cast<int32_t>(image->get_height());
+        auto depth = static_cast<int32_t>(image->get_depth());
+
+        for (uint32_t level = 1; level < levels; ++level) {
+            const int32_t next_width = std::max(1, width / 2);
+            const int32_t next_height = std::max(1, height / 2);
+            const int32_t next_depth = std::max(1, depth / 2);
+
+            vk::ImageBlit region {};
+            region.srcSubresource = { aspect, level - 1, 0, layers };
+            region.srcOffsets = std::array<vk::Offset3D, 2> { vk::Offset3D { 0, 0, 0 }, vk::Offset3D { width, height, depth } };
+            region.dstSubresource = { aspect, level, 0, layers };
+            region.dstOffsets = std::array<vk::Offset3D, 2> { vk::Offset3D { 0, 0, 0 }, vk::Offset3D { next_width, next_height, next_depth } };
+
+            cmd.blitImage(
+                handle, vk::ImageLayout::eTransferSrcOptimal,
+                handle, vk::ImageLayout::eTransferDstOptimal,
+                1, &region, filter);
+
+            record_access_barrier(cmd, handle, level_range(level - 1, 1),
+                ImageAccess::TRANSFER_SRC, settled);
+            if (level + 1 < levels) {
+                record_access_barrier(cmd, handle, level_range(level, 1),
+                    ImageAccess::TRANSFER_DST, ImageAccess::TRANSFER_SRC);
+            }
+
+            width = next_width;
+            height = next_height;
+            depth = next_depth;
+        }
+
+        record_access_barrier(cmd, handle, level_range(levels - 1, 1),
+            ImageAccess::TRANSFER_DST, settled);
+    };
+
+    switch (mode) {
+    case SubmitMode::DEFERRED:
+        record_deferred_commands(record_command, { image });
+        break;
+    case SubmitMode::ASYNC:
+        if (!execute_async(record_command, { image })) {
+            return false;
+        }
+        break;
+    case SubmitMode::IMMEDIATE:
+        execute_immediate_commands(record_command);
+        break;
+    }
+
+    image->set_current_layout(image_access_info(settled).layout);
+
+    return true;
+}
+
 vk::Sampler BackendResourceManager::create_sampler(
     vk::Filter filter,
     vk::SamplerAddressMode address_mode,

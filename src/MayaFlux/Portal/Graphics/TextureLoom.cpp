@@ -127,6 +127,9 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
     if (data) {
         size_t data_size = calculate_image_size(width, height, 1, format);
         upload_data(image, data, data_size);
+        if (mip_levels > 1) {
+            generate_mipmaps(image);
+        }
     } else {
         m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
@@ -690,6 +693,24 @@ bool TextureLoom::can_blit(
 
     return m_resource_manager->supports_blit(
         src->get_format(), dst->get_format(), to_blit_filter(filter));
+}
+
+bool TextureLoom::generate_mipmaps(
+    const std::shared_ptr<Core::VKImage>& image,
+    FilterMode filter,
+    SubmitMode mode)
+{
+    if (!is_initialized() || !image) {
+        return false;
+    }
+
+    if (filter == FilterMode::CUBIC) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "generate_mipmaps: cubic filtering is not available, using linear");
+        filter = FilterMode::LINEAR;
+    }
+
+    return m_resource_manager->generate_mip_chain(image, to_blit_filter(filter), mode);
 }
 
 bool TextureLoom::blit_layer(

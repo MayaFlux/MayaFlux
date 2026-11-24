@@ -153,6 +153,9 @@ public:
      *
      * Creates device-local texture optimized for shader sampling.
      * If data provided, uploads immediately and transitions to shader read layout.
+     * With data and more than one mip level, the lower levels are generated from the
+     * data, as generate_mipmaps does. Without data they hold nothing until the caller
+     * fills the first level and calls generate_mipmaps.
      */
     std::shared_ptr<Core::VKImage> create_2d(
         uint32_t width,
@@ -426,6 +429,25 @@ public:
         const std::shared_ptr<Core::VKImage>& src,
         const std::shared_ptr<Core::VKImage>& dst,
         FilterMode filter = FilterMode::LINEAR) const;
+
+    /**
+     * @brief Fill every mip level below the first from the level above it.
+     *
+     * The first level must already hold the picture, whether uploaded or drawn
+     * into. The other levels are overwritten. Use it after rendering into an image
+     * created with more than one mip level, since nothing generates them on its own.
+     *
+     * @param image  Color image created with more than one mip level.
+     * @param filter Nearest or linear; a cubic filter is not available and falls back to linear.
+     * @param mode   IMMEDIATE waits for the chain. DEFERRED records it for the next flush
+     *               or present submit. ASYNC submits it at once without waiting.
+     * @return True if the chain was recorded, executed or submitted. False for an image
+     *         with one level, a depth format, or a format that cannot blit with the filter.
+     */
+    bool generate_mipmaps(
+        const std::shared_ptr<Core::VKImage>& image,
+        FilterMode filter = FilterMode::LINEAR,
+        SubmitMode mode = SubmitMode::IMMEDIATE);
 
     //==========================================================================
     // Cleanup

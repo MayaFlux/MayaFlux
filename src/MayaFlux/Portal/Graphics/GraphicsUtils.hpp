@@ -296,6 +296,9 @@ struct SamplerConfig {
     float max_anisotropy = 1.0F; // 1.0 = disabled, 16.0 = max quality
     bool enable_mipmaps = false;
     BorderColor border_color = BorderColor::DEFAULT;
+    float lod_bias = 0.0F; ///< Added to the computed level; positive blurs, negative sharpens
+    float min_lod = 0.0F; ///< Lowest level the sampler reads
+    float max_lod = 1000.0F; ///< Highest level it reads; 1000 or more leaves it unclamped
 
     bool operator==(const SamplerConfig& other) const = default;
 };

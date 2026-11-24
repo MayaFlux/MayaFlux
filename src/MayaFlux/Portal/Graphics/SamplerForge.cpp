@@ -180,9 +180,10 @@ vk::Sampler SamplerForge::create_sampler(const SamplerConfig& config)
         sampler_info.mipmapMode = (config.min_filter == FilterMode::LINEAR)
             ? vk::SamplerMipmapMode::eLinear
             : vk::SamplerMipmapMode::eNearest;
-        sampler_info.minLod = 0.0F;
-        sampler_info.maxLod = VK_LOD_CLAMP_NONE;
-        sampler_info.mipLodBias = 0.0F;
+        const float max_bias = physical_device.getProperties().limits.maxSamplerLodBias;
+        sampler_info.minLod = config.min_lod;
+        sampler_info.maxLod = std::max(config.max_lod, config.min_lod);
+        sampler_info.mipLodBias = std::clamp(config.lod_bias, -max_bias, max_bias);
     } else {
         sampler_info.mipmapMode = vk::SamplerMipmapMode::eNearest;
         sampler_info.minLod = 0.0F;
@@ -220,6 +221,9 @@ size_t SamplerForge::ConfigHash::operator()(const SamplerConfig& config) const
     mix(std::hash<float> {}(config.max_anisotropy));
     mix(static_cast<size_t>(config.enable_mipmaps));
     mix(static_cast<size_t>(config.border_color));
+    mix(std::hash<float> {}(config.lod_bias));
+    mix(std::hash<float> {}(config.min_lod));
+    mix(std::hash<float> {}(config.max_lod));
     return seed;
 }
 
@@ -232,7 +236,10 @@ bool SamplerForge::ConfigEqual::operator()(const SamplerConfig& a, const Sampler
         && a.address_mode_w == b.address_mode_w
         && a.max_anisotropy == b.max_anisotropy
         && a.enable_mipmaps == b.enable_mipmaps
-        && a.border_color == b.border_color;
+        && a.border_color == b.border_color
+        && a.lod_bias == b.lod_bias
+        && a.min_lod == b.min_lod
+        && a.max_lod == b.max_lod;
 }
 
 vk::Filter SamplerForge::to_vk_filter(FilterMode mode) const
