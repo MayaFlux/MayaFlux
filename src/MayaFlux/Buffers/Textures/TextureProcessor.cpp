@@ -198,6 +198,12 @@ void TextureProcessor::update_pixels_if_dirty()
 
         if (!m_texture_buffer->has_texture()) {
             m_texture_buffer->m_gpu_texture = create_gpu_texture();
+
+            if (auto rp = m_texture_buffer->get_render_processor()) {
+                rp->bind_texture(
+                    m_texture_buffer->get_render_config().default_texture_binding,
+                    m_texture_buffer->get_texture());
+            }
         }
 
         auto& loom = Portal::Graphics::get_texture_manager();
