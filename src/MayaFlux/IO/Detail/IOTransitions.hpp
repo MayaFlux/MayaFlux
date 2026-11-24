@@ -53,7 +53,7 @@ void configure_audio_container(
 void configure_camera_container(
     const std::shared_ptr<Kakshya::CameraContainer>& container, uint64_t reader_id);
 
-TextureResolver make_default_resolver(const std::string& filepath);
+MAYAFLUX_API TextureResolver make_default_resolver(const std::string& filepath);
 
 std::shared_ptr<Buffers::VideoContainerBuffer> create_video_container_buffer(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,

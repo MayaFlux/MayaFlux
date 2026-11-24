@@ -24,7 +24,7 @@ namespace MayaFlux::IO {
  * variance() says what the file reports about how the connectivity changes, so a consumer
  * knows whether the indices of every frame are the same.
  */
-class MAYAFLUX_API MeshFileFrames final : public Kakshya::FrameSource<Kakshya::MeshData> {
+class MeshFileFrames final : public Kakshya::FrameSource<Kakshya::MeshData> {
 public:
     /**
      * @brief Open one mesh object of an archive.
@@ -35,23 +35,23 @@ public:
      * missing or has no samples, a file with several meshes when none is named, or sample times
      * that do not strictly increase.
      */
-    [[nodiscard]] static std::shared_ptr<const MeshFileFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const MeshFileFrames> create(
         const std::string& path, std::string mesh = {});
 
     /**
      * @brief Open one mesh object of an archive that is already open, sharing its reader.
      * @return nullptr as for a path, and for a null archive.
      */
-    [[nodiscard]] static std::shared_ptr<const MeshFileFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const MeshFileFrames> create(
         const std::shared_ptr<SpatialArchive>& archive, std::string mesh = {});
 
-    ~MeshFileFrames() override;
+    MAYAFLUX_API ~MeshFileFrames() override;
 
     [[nodiscard]] size_t count() const override { return m_count; }
 
     [[nodiscard]] const Kinesis::TimeSampling& time_sampling() const override { return m_times; }
 
-    [[nodiscard]] std::shared_ptr<const Kakshya::MeshData> read(size_t index) const override;
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const Kakshya::MeshData> read(size_t index) const override;
 
     /** @brief The mesh object's path. */
     [[nodiscard]] const std::string& mesh() const noexcept { return m_mesh; }
@@ -60,7 +60,7 @@ public:
     [[nodiscard]] Kakshya::TopologyVariance variance() const noexcept { return m_variance; }
 
 private:
-    MeshFileFrames(std::shared_ptr<SpatialArchive> archive, std::string mesh, Kinesis::TimeSampling times,
+    MAYAFLUX_API MeshFileFrames(std::shared_ptr<SpatialArchive> archive, std::string mesh, Kinesis::TimeSampling times,
         size_t count, Kakshya::TopologyVariance variance);
 
     std::shared_ptr<SpatialArchive> m_archive;

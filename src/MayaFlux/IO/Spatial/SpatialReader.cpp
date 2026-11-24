@@ -25,6 +25,12 @@
 #ifdef ERROR
 #undef ERROR
 #endif
+#ifdef near
+#undef near
+#endif
+#ifdef far
+#undef far
+#endif
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
 namespace MayaFlux::IO {

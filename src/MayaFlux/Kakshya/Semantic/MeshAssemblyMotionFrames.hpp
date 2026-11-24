@@ -48,7 +48,7 @@ struct MeshAssemblyLocals {
  * Holds the assembly, so the motion stays readable for as long as the source lives. The assembly
  * must not be changed while the source is read.
  */
-class MAYAFLUX_API MeshAssemblyMotionFrames final : public SampledFrames<MeshAssemblyLocals> {
+class MeshAssemblyMotionFrames final : public SampledFrames<MeshAssemblyLocals> {
 public:
     /**
      * @brief Make the source for one motion.
@@ -57,13 +57,13 @@ public:
      * @param policy What a channel answers outside its own keys.
      * @return nullptr for a null assembly, a motion out of range or a motion with no keyed component.
      */
-    [[nodiscard]] static std::shared_ptr<const MeshAssemblyMotionFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const MeshAssemblyMotionFrames> create(
         const std::shared_ptr<const MeshAssemblyContainer>& assembly, size_t motion,
         Kinesis::OutOfRange policy = Kinesis::OutOfRange::Hold);
 
     [[nodiscard]] std::pair<double, double> extent() const override { return { m_first, m_last }; }
 
-    [[nodiscard]] std::shared_ptr<const MeshAssemblyLocals> sample(double time) const override;
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const MeshAssemblyLocals> sample(double time) const override;
 
 private:
     MeshAssemblyMotionFrames(const std::shared_ptr<const MeshAssemblyContainer>& assembly, size_t motion,
@@ -92,10 +92,10 @@ private:
  * can be edited every cycle (Kriya::placement_edit) by a field, a cell or a Nexus influence. The range
  * is 0 to 1 second, and every time answers with the one shared frame. Holds the assembly.
  */
-class MAYAFLUX_API MeshAssemblyRestFrames final : public SampledFrames<MeshAssemblyLocals> {
+class MeshAssemblyRestFrames final : public SampledFrames<MeshAssemblyLocals> {
 public:
     /** @return nullptr for a null assembly or one with no rows. */
-    [[nodiscard]] static std::shared_ptr<const MeshAssemblyRestFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const MeshAssemblyRestFrames> create(
         const std::shared_ptr<const MeshAssemblyContainer>& assembly);
 
     [[nodiscard]] std::pair<double, double> extent() const override { return { 0.0, 1.0 }; }

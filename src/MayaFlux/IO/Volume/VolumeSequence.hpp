@@ -57,7 +57,7 @@ struct VolumeSequenceOptions {
  * A file that differs, or is missing or unreadable, gives nullptr from read() and one
  * logged error.
  */
-class MAYAFLUX_API VolumeFileSequence final : public Kakshya::FrameSource<Kakshya::VolumeData> {
+class VolumeFileSequence final : public Kakshya::FrameSource<Kakshya::VolumeData> {
 public:
     /**
      * @brief Open a sequence.
@@ -69,22 +69,22 @@ public:
      * file cannot be read, a LatticeSource::Union pre-pass meets an unreadable file or files
      * that disagree on voxel size or fields, or a given lattice has a zero axis.
      */
-    [[nodiscard]] static std::shared_ptr<const VolumeFileSequence> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const VolumeFileSequence> create(
         VolumeSequenceOptions options, Kinesis::TimeSampling times, VolumeSequenceLattice lattice);
 
-    ~VolumeFileSequence() override;
+    MAYAFLUX_API ~VolumeFileSequence() override;
 
     [[nodiscard]] size_t count() const override { return m_options.count; }
 
     [[nodiscard]] const Kinesis::TimeSampling& time_sampling() const override { return m_times; }
 
-    [[nodiscard]] std::shared_ptr<const Kakshya::VolumeData> read(size_t index) const override;
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const Kakshya::VolumeData> read(size_t index) const override;
 
     /** @brief The lattice every frame is read onto. */
     [[nodiscard]] const Kinesis::Lattice3D& lattice() const noexcept { return m_lattice; }
 
     /** @brief The path of a frame, as the pattern names it, or empty past the end. */
-    [[nodiscard]] std::string path(size_t index) const;
+    [[nodiscard]] MAYAFLUX_API std::string path(size_t index) const;
 
 private:
     struct Signature {
@@ -92,7 +92,7 @@ private:
         bool vector {};
     };
 
-    VolumeFileSequence(VolumeSequenceOptions options, Kinesis::TimeSampling times,
+    MAYAFLUX_API VolumeFileSequence(VolumeSequenceOptions options, Kinesis::TimeSampling times,
         Kinesis::Lattice3D lattice, std::vector<Signature> signature);
 
     VolumeSequenceOptions m_options;

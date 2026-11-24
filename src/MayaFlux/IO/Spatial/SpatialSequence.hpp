@@ -22,7 +22,7 @@ namespace MayaFlux::IO {
  * SpatialCache wrote gives as the sample index in seconds. A sample that cannot be read
  * gives nullptr from read() and one logged error.
  */
-class MAYAFLUX_API SpatialFileFrames final : public Kakshya::FrameSource<Kakshya::SpatialData> {
+class SpatialFileFrames final : public Kakshya::FrameSource<Kakshya::SpatialData> {
 public:
     /**
      * @brief Open one stream of an archive.
@@ -32,23 +32,23 @@ public:
      * is missing or has no samples, a file with several streams when none is named, or sample
      * times that do not strictly increase.
      */
-    [[nodiscard]] static std::shared_ptr<const SpatialFileFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const SpatialFileFrames> create(
         const std::string& path, std::string stream = {});
 
     /**
      * @brief Open one stream of an archive that is already open, sharing its reader.
      * @return nullptr as for a path, and for a null archive.
      */
-    [[nodiscard]] static std::shared_ptr<const SpatialFileFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const SpatialFileFrames> create(
         const std::shared_ptr<SpatialArchive>& archive, std::string stream = {});
 
-    ~SpatialFileFrames() override;
+    MAYAFLUX_API ~SpatialFileFrames() override;
 
     [[nodiscard]] size_t count() const override { return m_count; }
 
     [[nodiscard]] const Kinesis::TimeSampling& time_sampling() const override { return m_times; }
 
-    [[nodiscard]] std::shared_ptr<const Kakshya::SpatialData> read(size_t index) const override;
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const Kakshya::SpatialData> read(size_t index) const override;
 
     /** @brief The stream's name. */
     [[nodiscard]] const std::string& stream() const noexcept { return m_stream; }
@@ -64,10 +64,10 @@ public:
      *
      * @return The count, or nullopt, with the reason logged, when a sample's size cannot be read.
      */
-    [[nodiscard]] std::optional<uint32_t> max_vertex_count() const;
+    [[nodiscard]] MAYAFLUX_API std::optional<uint32_t> max_vertex_count() const;
 
 private:
-    SpatialFileFrames(std::shared_ptr<SpatialArchive> archive, std::string stream, Kinesis::TimeSampling times,
+    MAYAFLUX_API SpatialFileFrames(std::shared_ptr<SpatialArchive> archive, std::string stream, Kinesis::TimeSampling times,
         size_t count, Portal::Graphics::PrimitiveTopology topology);
 
     std::shared_ptr<SpatialArchive> m_archive;

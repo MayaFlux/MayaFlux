@@ -20,7 +20,7 @@ namespace MayaFlux::Kakshya {
  * @tparam T The NDData struct the container serves, such as TensorData.
  */
 template <typename T>
-class MAYAFLUX_API SemanticContainer : public NDDataContainer<T> {
+class SemanticContainer : public NDDataContainer<T> {
 public:
     /**
      * @brief Copy the regions of a group into separate values.

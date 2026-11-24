@@ -31,7 +31,7 @@ namespace MayaFlux::Kakshya {
  * @tparam Frame The NDData struct one frame is, such as VolumeData.
  */
 template <typename Frame>
-class MAYAFLUX_API SequenceContainer final : public SemanticContainer<Frame>, public FrameSource<Frame> {
+class SequenceContainer final : public SemanticContainer<Frame>, public FrameSource<Frame> {
 public:
     /**
      * @brief Wrap a source.

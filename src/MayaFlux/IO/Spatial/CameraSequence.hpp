@@ -17,7 +17,7 @@ namespace MayaFlux::IO {
  * any number of threads may call read(). Every frame is timed by the archive, and a sample that
  * cannot be read gives nullptr and one logged error.
  */
-class MAYAFLUX_API CameraFileFrames final : public Kakshya::FrameSource<Kinesis::Lens> {
+class CameraFileFrames final : public Kakshya::FrameSource<Kinesis::Lens> {
 public:
     /**
      * @brief Open one camera object of an archive.
@@ -27,26 +27,26 @@ public:
      * missing or has no samples, a file with several cameras when none is named, or sample times
      * that do not strictly increase.
      */
-    [[nodiscard]] static std::shared_ptr<const CameraFileFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const CameraFileFrames> create(
         const std::string& path, std::string camera = {});
 
     /** @brief Open one camera object of an archive that is already open, sharing its reader. */
-    [[nodiscard]] static std::shared_ptr<const CameraFileFrames> create(
+    [[nodiscard]] static MAYAFLUX_API std::shared_ptr<const CameraFileFrames> create(
         const std::shared_ptr<SpatialArchive>& archive, std::string camera = {});
 
-    ~CameraFileFrames() override;
+    MAYAFLUX_API ~CameraFileFrames() override;
 
     [[nodiscard]] size_t count() const override { return m_count; }
 
     [[nodiscard]] const Kinesis::TimeSampling& time_sampling() const override { return m_times; }
 
-    [[nodiscard]] std::shared_ptr<const Kinesis::Lens> read(size_t index) const override;
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const Kinesis::Lens> read(size_t index) const override;
 
     /** @brief The camera object's path. */
     [[nodiscard]] const std::string& camera() const noexcept { return m_camera; }
 
 private:
-    CameraFileFrames(std::shared_ptr<SpatialArchive> archive, std::string camera,
+    MAYAFLUX_API CameraFileFrames(std::shared_ptr<SpatialArchive> archive, std::string camera,
         Kinesis::TimeSampling times, size_t count);
 
     std::shared_ptr<SpatialArchive> m_archive;
