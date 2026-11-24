@@ -52,9 +52,9 @@ InspectResult& Inspector::event_manager(
     const std::vector<EntrySpec> root_entrys {
         EntrySpec {
             .label = "events",
-            .reader = [&m_event_mgr = m_event_mgr] {
-                return std::to_string(m_event_mgr.get_all_events().size());
-            },
+            .reader = reader_over(m_event_mgr, [](Vruta::EventManager& events) {
+                return std::to_string(events.get_all_events().size());
+            }),
         },
     };
 
@@ -67,15 +67,15 @@ InspectResult& Inspector::event_manager(
     InspectResult& result = m_event_result.emplace();
     result.group = std::move(root_group);
 
-    const auto names = m_event_mgr.get_event_names();
+    const auto names = m_event_mgr->get_event_names();
 
-    for (const auto& ev : m_event_mgr.get_all_events()) {
+    for (const auto& ev : m_event_mgr->get_all_events()) {
         if (!ev)
             continue;
 
         std::string header_label = "(unnamed)";
         for (const auto& n : names) {
-            if (m_event_mgr.get_event(n) == ev) {
+            if (m_event_mgr->get_event(n) == ev) {
                 header_label = n;
                 break;
             }

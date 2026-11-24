@@ -48,9 +48,9 @@ bool Atelier::initialize(
     m_event_manager = std::move(event_manager);
     m_window_manager = std::move(window_manager);
 
-    m_bridge = std::make_unique<Bridge>(*m_scheduler, *m_buffer_manager);
+    m_bridge = std::make_unique<Bridge>(m_scheduler, m_buffer_manager);
     m_inspect = std::make_unique<Inspector>(
-        *m_node_graph_manager, *m_buffer_manager, *m_scheduler, *m_event_manager);
+        m_node_graph_manager, m_buffer_manager, m_scheduler, m_event_manager);
 
     m_initialized = true;
 
@@ -200,7 +200,7 @@ std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
 Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string name)
 {
     auto layer = std::make_shared<Layer>();
-    auto ctx = std::make_shared<Context>(layer, window, *m_event_manager, std::move(name));
+    auto ctx = std::make_shared<Context>(layer, window, m_event_manager, std::move(name));
 
     MayaFlux::store(ctx);
 
@@ -212,7 +212,7 @@ Surface Atelier::create_surface(SurfaceConfig config)
     if (!config.layer && config.ctx) {
         config.layer = config.ctx->layer();
     } else if (config.layer && !config.ctx) {
-        config.ctx = std::make_shared<Context>(config.layer, config.window, *m_event_manager, config.name);
+        config.ctx = std::make_shared<Context>(config.layer, config.window, m_event_manager, config.name);
         MayaFlux::store(config.ctx);
     } else if (!config.layer) {
         auto [layer, ctx] = create_layer(config.window, config.name);

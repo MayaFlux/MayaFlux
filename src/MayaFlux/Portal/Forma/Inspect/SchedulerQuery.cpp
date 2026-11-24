@@ -64,9 +64,9 @@ InspectResult& Inspector::scheduler(
     const std::vector<EntrySpec> root_entrys {
         EntrySpec {
             .label = "tasks",
-            .reader = [&m_sched = m_sched] {
-                return std::to_string(m_sched.get_all_tasks().size());
-            },
+            .reader = reader_over(m_sched, [](Vruta::TaskScheduler& scheduler) {
+                return std::to_string(scheduler.get_all_tasks().size());
+            }),
         },
     };
 
@@ -78,7 +78,7 @@ InspectResult& Inspector::scheduler(
     InspectResult& result = m_scheduler_result.emplace();
     result.group = std::move(root_group);
 
-    const auto tasks = m_sched.get_all_tasks();
+    const auto tasks = m_sched->get_all_tasks();
     for (const auto& entry : tasks) {
         if (!entry.routine)
             continue;
@@ -110,7 +110,7 @@ InspectResult Inspector::tasks(
     InspectResult result;
     result.group = std::move(root_group);
 
-    const auto all = m_sched.get_all_tasks();
+    const auto all = m_sched->get_all_tasks();
     for (const auto& entry : all) {
         if (!entry.routine)
             continue;

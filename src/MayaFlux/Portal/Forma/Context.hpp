@@ -62,13 +62,15 @@ public:
      * @brief Construct and immediately register event coroutines.
      * @param layer         Layer to hit-test against. Must outlive Context.
      * @param window        Window whose surface the layer lives on.
-     * @param event_manager Engine EventManager for coroutine registration.
+     * @param event_manager Engine EventManager for coroutine registration. Shared,
+     *                      so it outlives the cancellations made on destruction.
      * @param name          Unique name scoping all registered event handlers.
      *                      Must be unique across all live Contexts.
+     * @throws std::invalid_argument If event_manager is null.
      */
     Context(std::shared_ptr<Layer> layer,
         std::shared_ptr<Core::Window> window,
-        Vruta::EventManager& event_manager,
+        const std::shared_ptr<Vruta::EventManager>& event_manager,
         std::string name);
 
     /**
@@ -464,7 +466,7 @@ private:
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
-    Vruta::EventManager& m_event_manager;
+    std::shared_ptr<Vruta::EventManager> m_event_manager;
     std::string m_name;
     std::optional<uint32_t> m_hovered;
 
