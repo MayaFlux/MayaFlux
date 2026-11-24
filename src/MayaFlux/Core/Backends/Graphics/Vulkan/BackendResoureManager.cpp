@@ -82,6 +82,39 @@ namespace {
             vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eAllCommands);
     }
 
+    /**
+     * @brief The use an image in @p layout was last put to, as a barrier source.
+     *
+     * A host readback or upload waits for the work submitted so far before it
+     * records, so the source names that last use and no more. A layout no
+     * ImageAccess describes waits for every access.
+     */
+    ImageAccessInfo last_use(vk::ImageLayout layout)
+    {
+        if (const auto access = image_access_of(layout)) {
+            return image_access_info(*access);
+        }
+        return { layout,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite };
+    }
+
+    /**
+     * @brief The use an image restored to @p layout is put to next, as a barrier destination.
+     *
+     * The caller's @p stage joins the stages of the layout's own use, for a
+     * consumer that reads the image in a stage the layout does not name.
+     */
+    ImageAccessInfo restored_use(vk::ImageLayout layout, vk::PipelineStageFlags2 stage)
+    {
+        if (const auto access = image_access_of(layout)) {
+            ImageAccessInfo info = image_access_info(*access);
+            info.stages |= stage;
+            return info;
+        }
+        return { layout, stage, vk::AccessFlagBits2::eMemoryRead };
+    }
+
     /** @brief The subresource range of @p range inside @p image, or none if it lies outside. */
     std::optional<vk::ImageSubresourceRange> resolve_range(const VKImage& image, const ImageRange& range)
     {
@@ -927,39 +960,15 @@ void BackendResourceManager::transition_host_image(
         return;
     }
 
-    vk::AccessFlags2 source_access {};
-    vk::PipelineStageFlags2 source_stage = vk::PipelineStageFlagBits2::eNone;
+    const ImageAccessInfo source = old_layout == vk::ImageLayout::eGeneral
+        ? image_access_info(ImageAccess::HOST)
+        : last_use(old_layout);
+    const ImageAccessInfo destination = new_layout == vk::ImageLayout::eGeneral
+        ? image_access_info(ImageAccess::HOST)
+        : restored_use(new_layout, restore_stage);
 
-    if (old_layout == vk::ImageLayout::eGeneral) {
-        source_access = vk::AccessFlagBits2::eHostWrite;
-        source_stage = vk::PipelineStageFlagBits2::eHost;
-    } else if (old_layout != vk::ImageLayout::eUndefined) {
-        source_access = vk::AccessFlagBits2::eMemoryRead
-            | vk::AccessFlagBits2::eMemoryWrite;
-        source_stage = vk::PipelineStageFlagBits2::eAllCommands;
-    }
-
-    const bool needs_host_access = new_layout == vk::ImageLayout::eGeneral;
-    const vk::AccessFlags2 destination_access = needs_host_access
-        ? vk::AccessFlagBits2::eHostRead | vk::AccessFlagBits2::eHostWrite
-        : vk::AccessFlags2(vk::AccessFlagBits2::eMemoryRead);
-    const vk::PipelineStageFlags2 destination_stage = needs_host_access
-        ? vk::PipelineStageFlags2(vk::PipelineStageFlagBits2::eHost)
-        : restore_stage;
-
-    const auto record_command = [handle = image->get_image(), old_layout, new_layout, range,
-                                    source_access, destination_access, source_stage, destination_stage](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.image = handle;
-        barrier.oldLayout = old_layout;
-        barrier.newLayout = new_layout;
-        barrier.subresourceRange = range;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.srcAccessMask = source_access;
-        barrier.dstAccessMask = destination_access;
-
-        record_barrier(cmd, barrier, source_stage, destination_stage);
+    const auto record_command = [handle = image->get_image(), range, source, destination](vk::CommandBuffer cmd) {
+        record_image_barrier(cmd, handle, range, source, destination);
     };
 
     switch (mode) {
@@ -1143,20 +1152,11 @@ void BackendResourceManager::download_image_host(
         ? old_layout
         : vk::ImageLayout::eGeneral;
 
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.image = image->get_image();
-        barrier.oldLayout = old_layout;
-        barrier.newLayout = copy_layout;
-        barrier.subresourceRange = range;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eHostRead;
+    ImageAccessInfo readable = image_access_info(ImageAccess::HOST);
+    readable.layout = copy_layout;
 
-        record_barrier(cmd, barrier,
-            vk::PipelineStageFlagBits2::eAllCommands,
-            vk::PipelineStageFlagBits2::eHost);
+    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+        record_image_barrier(cmd, image->get_image(), range, last_use(old_layout), readable);
     });
 
     vk::ImageToMemoryCopy region {};
@@ -1492,17 +1492,8 @@ void BackendResourceManager::download_image_data(
             staging->get_buffer(),
             1, &region);
 
-        vk::ImageMemoryBarrier2 restore {};
-        restore.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-        restore.newLayout = restore_layout;
-        restore.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        restore.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        restore.image = image->get_image();
-        restore.subresourceRange = full_range(*image);
-        restore.srcAccessMask = vk::AccessFlagBits2::eTransferRead;
-        restore.dstAccessMask = vk::AccessFlagBits2::eMemoryRead;
-
-        record_barrier(cmd, restore, vk::PipelineStageFlagBits2::eTransfer, restore_stage);
+        record_image_barrier(cmd, image->get_image(), full_range(*image),
+            image_access_info(ImageAccess::TRANSFER_SRC), restored_use(restore_layout, restore_stage));
     };
 
     auto device = m_context.get_device();
@@ -1588,6 +1579,28 @@ bool BackendResourceManager::supports_blit(
 
     return filter != vk::Filter::eLinear
         || static_cast<bool>(src_features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
+}
+
+bool BackendResourceManager::supports_render_target(vk::Format format, bool storage) const
+{
+    const auto features = m_context.get_physical_device().getFormatProperties(format).optimalTilingFeatures;
+    vk::FormatFeatureFlags required = vk::FormatFeatureFlagBits::eColorAttachment
+        | vk::FormatFeatureFlagBits::eSampledImage;
+    if (storage) {
+        required |= vk::FormatFeatureFlagBits::eStorageImage;
+    }
+    return (features & required) == required;
+}
+
+bool BackendResourceManager::supports_color_blend(vk::Format format) const
+{
+    const auto features = m_context.get_physical_device().getFormatProperties(format).optimalTilingFeatures;
+    return static_cast<bool>(features & vk::FormatFeatureFlagBits::eColorAttachmentBlend);
+}
+
+bool BackendResourceManager::supports_independent_blend() const
+{
+    return m_context.get_physical_device().getFeatures().independentBlend == VK_TRUE;
 }
 
 bool BackendResourceManager::blit_image(

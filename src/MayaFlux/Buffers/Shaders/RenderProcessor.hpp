@@ -2,16 +2,13 @@
 
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 #include "ShaderProcessor.hpp"
 
 namespace MayaFlux::Core {
 class VKImage;
-}
-
-namespace MayaFlux::Portal::Graphics {
-class ImageTarget;
 }
 
 namespace MayaFlux::Buffers {
@@ -48,11 +45,13 @@ public:
      * @brief Make an image target the only destination of this processor.
      *
      * Every other destination is dropped, and the pipeline is rebuilt for the
-     * image's formats. The target redraws.
+     * image's formats. The target redraws. @p area picks the layer and the part
+     * of it that is drawn.
      */
     void set_target_image(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
-        const std::shared_ptr<VKBuffer>& buffer);
+        const std::shared_ptr<VKBuffer>& buffer,
+        const Portal::Graphics::TargetArea& area = {});
 
     /**
      * @brief Make a window and image targets the destinations of this processor.
@@ -69,10 +68,29 @@ public:
     /** @brief Also draw into a window. Ignored when the window is already a destination. */
     void add_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
 
-    /** @brief Also draw into an image target. Ignored when the target is already a destination. */
+    /**
+     * @brief Also draw into an image target, into the layer and part of it @p area names.
+     *
+     * When the target is already a destination only its area changes.
+     */
     void add_target_image(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
-        const std::shared_ptr<VKBuffer>& buffer);
+        const std::shared_ptr<VKBuffer>& buffer,
+        const Portal::Graphics::TargetArea& area = {});
+
+    /**
+     * @brief Change the layer and part of an image target this processor draws into.
+     *
+     * The target redraws. Does nothing for a target that is not a destination,
+     * or a layer the target does not have.
+     */
+    void set_target_area(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const Portal::Graphics::TargetArea& area);
+
+    /** @brief Where this processor draws into an image target. The whole first layer when it is not a destination. */
+    [[nodiscard]] Portal::Graphics::TargetArea get_target_area(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const;
 
     /** @brief Stop drawing into a window and release its pipeline. */
     void remove_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
@@ -455,6 +473,10 @@ protected:
     /** @brief Resolve the active scissor against a live framebuffer size. Full framebuffer when unset. */
     [[nodiscard]] vk::Rect2D resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept;
 
+    /** @brief The pixel rect of a destination's area inside a target of the given size. The whole target when the area is unset. */
+    [[nodiscard]] static vk::Rect2D resolve_area_rect(
+        const Portal::Graphics::TargetArea& area, uint32_t width, uint32_t height) noexcept;
+
 private:
     struct BufferState {
         Kakshya::VertexLayout semantic_layout;
@@ -485,6 +507,7 @@ private:
     struct Lane {
         std::shared_ptr<Core::Window> window;
         std::shared_ptr<Portal::Graphics::ImageTarget> image;
+        Portal::Graphics::TargetArea area;
         Portal::Graphics::RenderPipelineID pipeline { Portal::Graphics::INVALID_RENDER_PIPELINE };
         Portal::Graphics::SlotArena transform_arena;
         size_t transform_slot {};
@@ -539,7 +562,7 @@ private:
 
     /** @brief What the pipeline and the viewport need to know about the destination. */
     struct DestinationInfo {
-        vk::Format color {};
+        std::vector<vk::Format> colors;
         vk::Format depth {};
         uint32_t width {};
         uint32_t height {};

@@ -20,7 +20,8 @@ enum class ImageAccess : uint8_t {
     STORAGE, ///< Read and written by shaders as a storage image
     TRANSFER_SRC, ///< Source of a copy or blit
     TRANSFER_DST, ///< Destination of a copy, blit or clear
-    PRESENT ///< Handed to the presentation engine
+    PRESENT, ///< Handed to the presentation engine
+    HOST ///< Read or written by the host, through a host image copy or mapped memory
 };
 
 /**
@@ -69,10 +70,25 @@ struct ImageAccessInfo {
         return { Layout::eTransferDstOptimal, Stage::eAllTransfer, Access::eTransferWrite };
     case ImageAccess::PRESENT:
         return { Layout::ePresentSrcKHR, Stage::eNone, Access::eNone };
+    case ImageAccess::HOST:
+        return { Layout::eGeneral, Stage::eHost, Access::eHostRead | Access::eHostWrite };
     case ImageAccess::UNDEFINED:
         break;
     }
     return { Layout::eUndefined, Stage::eNone, Access::eNone };
+}
+
+/**
+ * @brief What an image leaving the presentation layout waited on.
+ *
+ * Presenting hands the image over with no stages and no access, so a barrier
+ * that reads it afterwards, such as a capture, names the last thing that wrote
+ * it: the color attachment. The layout is the presentation layout.
+ */
+[[nodiscard]] inline ImageAccessInfo presented_image_access() noexcept
+{
+    const ImageAccessInfo written = image_access_info(ImageAccess::COLOR_ATTACHMENT);
+    return { vk::ImageLayout::ePresentSrcKHR, written.stages, vk::AccessFlagBits2::eColorAttachmentWrite };
 }
 
 /**
@@ -104,21 +120,18 @@ struct ImageAccessInfo {
 }
 
 /**
- * @brief Record a barrier moving a subresource range between two uses of an image.
+ * @brief Record a barrier between two described uses of a subresource range.
  *
- * Source and destination masks and layouts come from image_access_info(). Records
- * only; it does not track the image's layout.
+ * For a use the table describes with a different source than destination, such
+ * as presented_image_access(). Records only; it does not track the image's layout.
  */
 inline void record_image_barrier(
     vk::CommandBuffer cmd,
     vk::Image image,
     const vk::ImageSubresourceRange& range,
-    ImageAccess from,
-    ImageAccess to)
+    const ImageAccessInfo& source,
+    const ImageAccessInfo& destination)
 {
-    const ImageAccessInfo source = image_access_info(from);
-    const ImageAccessInfo destination = image_access_info(to);
-
     vk::ImageMemoryBarrier2 barrier {};
     barrier.srcStageMask = source.stages;
     barrier.srcAccessMask = source.access;
@@ -135,6 +148,22 @@ inline void record_image_barrier(
     dependency.imageMemoryBarrierCount = 1;
     dependency.pImageMemoryBarriers = &barrier;
     cmd.pipelineBarrier2(dependency);
+}
+
+/**
+ * @brief Record a barrier moving a subresource range between two uses of an image.
+ *
+ * Source and destination masks and layouts come from image_access_info(). Records
+ * only; it does not track the image's layout.
+ */
+inline void record_image_barrier(
+    vk::CommandBuffer cmd,
+    vk::Image image,
+    const vk::ImageSubresourceRange& range,
+    ImageAccess from,
+    ImageAccess to)
+{
+    record_image_barrier(cmd, image, range, image_access_info(from), image_access_info(to));
 }
 
 /**

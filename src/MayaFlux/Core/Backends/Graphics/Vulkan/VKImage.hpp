@@ -174,7 +174,15 @@ public:
     //==========================================================================
 
     /**
-     * @brief Get appropriate VkImageUsageFlags based on Usage
+     * @brief Let the image be used in ways its Usage does not name, such as a render target that is also a storage image.
+     *
+     * Must be called before the backend creates the image. The format has to
+     * support every use added.
+     */
+    void add_usage_flags(vk::ImageUsageFlags flags) { m_extra_usage |= flags; }
+
+    /**
+     * @brief Get appropriate VkImageUsageFlags based on Usage and any added with add_usage_flags()
      * @return VkImageUsageFlags to use when creating VkImage
      */
     [[nodiscard]] vk::ImageUsageFlags get_usage_flags() const;
@@ -206,6 +214,7 @@ private:
 
     vk::ImageLayout m_current_layout { vk::ImageLayout::eUndefined };
     bool m_host_transfer {};
+    vk::ImageUsageFlags m_extra_usage {};
 
     Kakshya::DataModality m_modality;
     std::vector<Kakshya::DataDimension> m_dimensions;

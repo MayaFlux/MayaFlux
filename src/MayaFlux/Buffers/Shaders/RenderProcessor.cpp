@@ -204,7 +204,8 @@ void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& win
 
 void RenderProcessor::set_target_image(
     const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
-    const std::shared_ptr<VKBuffer>& buffer)
+    const std::shared_ptr<VKBuffer>& buffer,
+    const Portal::Graphics::TargetArea& area)
 {
     if (!image) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -212,13 +213,26 @@ void RenderProcessor::set_target_image(
         return;
     }
 
+    if (area.layer >= image->layers()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_target_image: layer {} of a target with {}", area.layer, image->layers());
+        return;
+    }
+
     if (m_lanes.size() == 1 && m_lanes.front()->image == image) {
-        image->request_redraw();
+        const bool moved = !(m_lanes.front()->area == area);
+        m_lanes.front()->area = area;
+        if (moved) {
+            image->request_clear();
+        } else {
+            image->request_redraw();
+        }
         return;
     }
 
     clear_destinations(buffer);
     m_lane->image = image;
+    m_lane->area = area;
     image->request_clear();
 }
 
@@ -262,7 +276,8 @@ void RenderProcessor::add_target_window(const std::shared_ptr<Core::Window>& win
 
 void RenderProcessor::add_target_image(
     const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
-    const std::shared_ptr<VKBuffer>& /*buffer*/)
+    const std::shared_ptr<VKBuffer>& /*buffer*/,
+    const Portal::Graphics::TargetArea& area)
 {
     if (!image) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -270,10 +285,39 @@ void RenderProcessor::add_target_image(
         return;
     }
 
-    if (!find_lane(image)) {
-        claim_lane().image = image;
+    if (area.layer >= image->layers()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "add_target_image: layer {} of a target with {}", area.layer, image->layers());
+        return;
+    }
+
+    if (auto* existing = find_lane(image)) {
+        existing->area = area;
+    } else {
+        auto& lane = claim_lane();
+        lane.image = image;
+        lane.area = area;
     }
     image->request_clear();
+}
+
+void RenderProcessor::set_target_area(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const Portal::Graphics::TargetArea& area)
+{
+    auto* lane = find_lane(image);
+    if (!lane || area.layer >= image->layers()) {
+        return;
+    }
+    lane->area = area;
+    image->request_clear();
+}
+
+Portal::Graphics::TargetArea RenderProcessor::get_target_area(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const
+{
+    const auto* lane = find_lane(image);
+    return lane ? lane->area : Portal::Graphics::TargetArea {};
 }
 
 void RenderProcessor::remove_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
@@ -375,15 +419,16 @@ RenderProcessor::DestinationInfo RenderProcessor::describe() const
     DestinationInfo info;
 
     if (m_lane->image) {
-        info.color = m_lane->image->color_format();
+        info.colors = m_lane->image->color_formats();
         info.width = m_lane->image->width();
         info.height = m_lane->image->height();
         info.depth = m_depth_enabled ? m_lane->image->depth_format() : vk::Format::eUndefined;
         return info;
     }
 
+    info.colors = { vk::Format {} };
     if (m_lane->window && m_display_service) {
-        info.color = static_cast<vk::Format>(m_display_service->get_swapchain_format(m_lane->window));
+        info.colors.front() = static_cast<vk::Format>(m_display_service->get_swapchain_format(m_lane->window));
         m_display_service->get_swapchain_extent(m_lane->window, info.width, info.height);
     }
     info.depth = m_depth_enabled ? vk::Format::eD32Sfloat : vk::Format::eUndefined;
@@ -413,7 +458,7 @@ void RenderProcessor::request_refresh(const std::shared_ptr<VKBuffer>& buffer) c
 void RenderProcessor::register_pipeline(const std::shared_ptr<VKBuffer>& buffer) const
 {
     if (m_lane->image) {
-        buffer->set_pipeline_image(m_lane->pipeline, m_lane->image);
+        buffer->set_pipeline_image(m_lane->pipeline, m_lane->image, m_lane->area.layer);
         return;
     }
     buffer->set_pipeline_window(m_lane->pipeline, m_lane->window);
@@ -598,8 +643,18 @@ bool RenderProcessor::samples(const std::shared_ptr<Portal::Graphics::ImageTarge
         return true;
     }
 
-    return std::ranges::any_of(m_texture_bindings,
-        [&target](const auto& entry) { return entry.second.texture == target->image(); });
+    return std::ranges::any_of(m_texture_bindings, [&target](const auto& entry) {
+        const auto& bound = entry.second.texture;
+        if (bound == target->depth_image()) {
+            return static_cast<bool>(bound);
+        }
+        for (size_t index = 0; index < target->attachment_count(); ++index) {
+            if (bound == target->image(index)) {
+                return true;
+            }
+        }
+        return false;
+    });
 }
 
 void RenderProcessor::follow_target_images()
@@ -739,6 +794,10 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     } else {
         pipeline_config.blend_attachments.emplace_back();
     }
+    const size_t attachment_count = describe().colors.size();
+    for (size_t extra = 1; extra < attachment_count; ++extra) {
+        pipeline_config.blend_attachments.emplace_back();
+    }
 
     pipeline_config.depth_stencil = m_depth_stencil;
 
@@ -842,12 +901,11 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     }
 
     const DestinationInfo destination = describe();
-    const vk::Format swapchain_format = destination.color;
     const vk::Format depth_format = destination.depth;
 
     retire_current_pipeline();
 
-    m_lane->pipeline = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U,
+    m_lane->pipeline = flow.create_pipeline(pipeline_config, destination.colors, depth_format, 0U,
         { { 0U, m_triangulate ? 1U : 0U },
             { 1U, m_triangulate && m_mill_spec.billboard_instances
                     && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
@@ -1030,13 +1088,33 @@ void RenderProcessor::set_triangulate(bool enabled)
     invalidate_all_mills();
 }
 
+namespace {
+
+    vk::Rect2D pixel_rect(const Kinesis::AABB2D& bounds, uint32_t width, uint32_t height) noexcept;
+
+}
+
+vk::Rect2D RenderProcessor::resolve_area_rect(
+    const Portal::Graphics::TargetArea& area, uint32_t width, uint32_t height) noexcept
+{
+    if (!area.area) {
+        return { { 0, 0 }, { width, height } };
+    }
+    return pixel_rect(area.area->bounds, width, height);
+}
+
 vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept
 {
     if (!m_scissor) {
         return { { 0, 0 }, { width, height } };
     }
+    return pixel_rect(m_scissor->bounds, width, height);
+}
 
-    const auto& bounds = m_scissor->bounds;
+namespace {
+
+vk::Rect2D pixel_rect(const Kinesis::AABB2D& bounds, uint32_t width, uint32_t height) noexcept
+{
     const auto fw = static_cast<float>(width);
     const auto fh = static_cast<float>(height);
 
@@ -1051,6 +1129,8 @@ vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height
     const auto ph = static_cast<uint32_t>(y1 - y0);
 
     return { { px, py }, { pw, ph } };
+}
+
 }
 
 void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
@@ -1454,10 +1534,9 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     register_pipeline(buffer);
 
     const DestinationInfo destination = describe();
-    const vk::Format color_format = destination.color;
     const vk::Format depth_format = destination.depth;
 
-    auto cmd_id = foundry.begin_secondary_commands(color_format, depth_format);
+    auto cmd_id = foundry.begin_secondary_commands(std::span<const vk::Format> { destination.colors }, depth_format);
     auto cmd = foundry.get_command_buffer(cmd_id);
 
     for (const auto& [binding, texture] : m_texture_bindings) {
@@ -1467,20 +1546,23 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     const uint32_t width = destination.width;
     const uint32_t height = destination.height;
 
-    if (width > 0 && height > 0) {
+    const vk::Rect2D region = resolve_area_rect(m_lane->area, width, height);
+    if (region.extent.width > 0 && region.extent.height > 0) {
         auto cmd = foundry.get_command_buffer(cmd_id);
 
         vk::Viewport viewport {
-            0.0F,
-            static_cast<float>(height),
-            static_cast<float>(width),
-            -static_cast<float>(height),
+            static_cast<float>(region.offset.x),
+            static_cast<float>(region.offset.y) + static_cast<float>(region.extent.height),
+            static_cast<float>(region.extent.width),
+            -static_cast<float>(region.extent.height),
             0.0F,
             1.0F
         };
         cmd.setViewport(0, 1, &viewport);
 
-        const vk::Rect2D scissor = resolve_scissor_rect(width, height);
+        vk::Rect2D scissor = resolve_scissor_rect(region.extent.width, region.extent.height);
+        scissor.offset.x += region.offset.x;
+        scissor.offset.y += region.offset.y;
         cmd.setScissor(0, 1, &scissor);
     }
 

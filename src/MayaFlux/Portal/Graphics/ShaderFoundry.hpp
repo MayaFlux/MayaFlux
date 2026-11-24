@@ -536,6 +536,15 @@ public:
         vk::Format depth_format = vk::Format::eUndefined);
 
     /**
+     * @brief Begin a secondary command buffer for a pass with several color attachments
+     * @param color_formats The format of each color attachment, in output order
+     * @param depth_format Depth format of the pass, or undefined for none
+     */
+    CommandBufferID begin_secondary_commands(
+        std::span<const vk::Format> color_formats,
+        vk::Format depth_format = vk::Format::eUndefined);
+
+    /**
      * @brief Get Vulkan command buffer handle from CommandBufferID
      * @param cmd_id Command buffer ID
      */

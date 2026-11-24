@@ -374,6 +374,7 @@ void VKBuffer::remove_pipeline_image(RenderPipelineID id)
         it->second->request_redraw();
     }
     m_image_pipelines.erase(it);
+    m_image_pipeline_layers.erase(id);
 }
 
 std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)

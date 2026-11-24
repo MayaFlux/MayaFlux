@@ -1108,6 +1108,13 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(
     vk::Format color_format,
     vk::Format depth_format)
 {
+    return begin_secondary_commands(std::span<const vk::Format> { &color_format, 1 }, depth_format);
+}
+
+CommandBufferID ShaderFoundry::begin_secondary_commands(
+    std::span<const vk::Format> color_formats,
+    vk::Format depth_format)
+{
     auto& cmd_manager = m_backend->get_command_manager();
 
     collect_retired_commands();
@@ -1117,8 +1124,8 @@ CommandBufferID ShaderFoundry::begin_secondary_commands(
     vk::CommandBuffer cmd = cmd_manager.allocate_command_buffer(vk::CommandBufferLevel::eSecondary);
 
     vk::CommandBufferInheritanceRenderingInfo inheritance_rendering;
-    inheritance_rendering.colorAttachmentCount = 1;
-    inheritance_rendering.pColorAttachmentFormats = &color_format;
+    inheritance_rendering.colorAttachmentCount = static_cast<uint32_t>(color_formats.size());
+    inheritance_rendering.pColorAttachmentFormats = color_formats.data();
     inheritance_rendering.depthAttachmentFormat = depth_format;
     inheritance_rendering.rasterizationSamples = vk::SampleCountFlagBits::e1;
 

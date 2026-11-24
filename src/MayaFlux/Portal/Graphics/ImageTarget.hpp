@@ -27,6 +27,12 @@ struct ImageKey {
     ImageFormat format {};
     Kind kind { Kind::SAMPLED_2D };
 
+    /** @brief A render target that compute passes can also write. */
+    bool storage {};
+
+    /** @brief A render target of six square faces that samples as a cube. */
+    bool cube {};
+
     [[nodiscard]] bool operator==(const ImageKey&) const = default;
 };
 
@@ -42,6 +48,28 @@ struct ImageCacheEntry {
 };
 
 /**
+ * @struct TargetArea
+ * @brief Where in an image target one destination draws.
+ *
+ * The layer is the array layer or cube face drawn into. The area is the part of
+ * that layer the destination's view fills, in the NDC convention of
+ * Kinesis::Scissor, so it stays right when the target is resized. Unset is the
+ * whole layer. The viewport maps clip space onto the area and the draw is
+ * clipped to it, together with the processor's own scissor, which is resolved
+ * against the area.
+ */
+struct TargetArea {
+    uint32_t layer {};
+    std::optional<Kinesis::Scissor> area;
+
+    [[nodiscard]] bool operator==(const TargetArea& other) const noexcept
+    {
+        return layer == other.layer && area.has_value() == other.area.has_value()
+            && (!area || *area == *other.area);
+    }
+};
+
+/**
  * @class ImageTarget
  * @brief An image that draws land in instead of a window.
  *
@@ -50,8 +78,11 @@ struct ImageCacheEntry {
  * the optional depth image and when the image redraws belong to the target, so
  * buffers drawing into it cannot disagree.
  *
- * The image rests in shader read layout, so it can be bound as a texture by any
- * buffer, including one drawn into a window or another target.
+ * The images rest in shader read layout, so they can be bound as textures by
+ * any buffer, including one drawn into a window or another target. A target
+ * can have several color images drawn by one pass, layers or cube faces that
+ * destinations draw into one at a time, color images that compute passes also
+ * write, and a depth image that stays sampleable after the pass.
  */
 class MAYAFLUX_API ImageTarget {
 public:
@@ -70,6 +101,27 @@ public:
         /** @brief Levels of the color image, 0 for a full chain. Levels below the first are regenerated after every draw. */
         uint32_t mip_levels { 1 };
         FilterMode mip_filter { FilterMode::LINEAR };
+
+        /**
+         * @brief Formats of further color images drawn by the same pass, as outputs 1, 2 and so on.
+         *
+         * Each is cleared to zero. They are drawn with blending off and need
+         * the device's independent blend. Refused when a format cannot be drawn
+         * into and sampled, or the device cannot blend independently.
+         */
+        std::vector<ImageFormat> extra_formats;
+
+        /** @brief Layers of every color image. One is a plain 2D image. Not combined with mip levels. */
+        uint32_t layers { 1 };
+
+        /** @brief Six square faces that sample as a cube. Takes the place of layers. Not combined with mip levels. */
+        bool cube { false };
+
+        /** @brief Let compute passes write the color images as storage images. The format has to allow it. */
+        bool storage { false };
+
+        /** @brief Keep the depth image after each pass, in shader read layout, so it can be sampled. Needs depth. */
+        bool sample_depth { false };
     };
 
     ~ImageTarget();
@@ -79,11 +131,34 @@ public:
     ImageTarget(ImageTarget&&) = delete;
     ImageTarget& operator=(ImageTarget&&) = delete;
 
-    /** @brief The color image. Bind it as a texture to show what was drawn. */
+    /** @brief The first color image. Bind it as a texture to show what was drawn. */
     [[nodiscard]] const std::shared_ptr<Core::VKImage>& image() const noexcept { return m_image; }
+
+    /** @brief Color image @p index: 0 is image(), the others follow Config::extra_formats. Null past the last. */
+    [[nodiscard]] const std::shared_ptr<Core::VKImage>& image(size_t index) const noexcept
+    {
+        static const std::shared_ptr<Core::VKImage> none;
+        if (index == 0)
+            return m_image;
+        return index - 1 < m_extra.size() ? m_extra[index - 1] : none;
+    }
+
+    /** @brief How many color images the pass draws. */
+    [[nodiscard]] size_t attachment_count() const noexcept { return 1 + m_extra.size(); }
 
     /** @brief The depth image, or null when the target was made without one. */
     [[nodiscard]] const std::shared_ptr<Core::VKImage>& depth_image() const noexcept { return m_depth; }
+
+    /** @brief Layers of every color image. A cube has six. */
+    [[nodiscard]] uint32_t layers() const noexcept { return m_layers; }
+
+    [[nodiscard]] bool cube() const noexcept { return m_cube; }
+
+    /** @brief Whether compute passes can write the color images. */
+    [[nodiscard]] bool storage() const noexcept { return m_storage; }
+
+    /** @brief Whether the depth image stays sampleable after each pass. */
+    [[nodiscard]] bool sample_depth() const noexcept { return m_sample_depth; }
 
     [[nodiscard]] uint32_t width() const noexcept { return m_width.load(std::memory_order_relaxed); }
     [[nodiscard]] uint32_t height() const noexcept { return m_height.load(std::memory_order_relaxed); }
@@ -106,8 +181,16 @@ public:
 
     [[nodiscard]] FilterMode mip_filter() const noexcept { return m_mip_filter; }
 
-    /** @brief Color format of the image, as a pipeline drawing into it declares it. */
+    /** @brief Color format of the first image, as a pipeline drawing into it declares it. */
     [[nodiscard]] vk::Format color_format() const noexcept { return m_color_format; }
+
+    /** @brief Color formats of every image the pass draws, in output order. */
+    [[nodiscard]] std::vector<vk::Format> color_formats() const
+    {
+        std::vector<vk::Format> formats { m_color_format };
+        formats.insert(formats.end(), m_extra_formats.begin(), m_extra_formats.end());
+        return formats;
+    }
 
     /** @brief Depth format, or undefined when there is no depth image. */
     [[nodiscard]] vk::Format depth_format() const noexcept { return m_depth_format; }
@@ -165,17 +248,24 @@ private:
 
     ImageTarget(
         std::shared_ptr<Core::VKImage> image,
+        std::vector<std::shared_ptr<Core::VKImage>> extra,
         std::shared_ptr<Core::VKImage> depth,
         const Config& config);
 
     std::shared_ptr<Core::VKImage> m_image;
+    std::vector<std::shared_ptr<Core::VKImage>> m_extra;
     std::shared_ptr<Core::VKImage> m_depth;
     std::atomic<uint32_t> m_width {};
     std::atomic<uint32_t> m_height {};
     std::atomic<uint64_t> m_generation { 0 };
     FilterMode m_mip_filter { FilterMode::LINEAR };
     bool m_full_chain {};
+    uint32_t m_layers { 1 };
+    bool m_cube {};
+    bool m_storage {};
+    bool m_sample_depth {};
     vk::Format m_color_format {};
+    std::vector<vk::Format> m_extra_formats;
     vk::Format m_depth_format { vk::Format::eUndefined };
 
     std::array<std::atomic<float>, 4> m_clear;

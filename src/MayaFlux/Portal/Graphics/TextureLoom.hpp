@@ -226,12 +226,20 @@ public:
      *
      * Creates image suitable for use as framebuffer color attachment.
      * Can also be sampled in shaders after rendering.
+     *
+     * @param storage Also let compute passes write it as a storage image. The format has to allow it.
+     * @param layers Array layers. More than one makes a 2D array, and cannot have mip levels.
+     * @param cube Six square faces that sample as a cube, in place of layers. Cannot have mip levels.
+     * @return The image, or nullptr when it cannot be made as asked.
      */
     std::shared_ptr<Core::VKImage> create_render_target(
         uint32_t width,
         uint32_t height,
         ImageFormat format = ImageFormat::RGBA8,
-        uint32_t mip_levels = 1);
+        uint32_t mip_levels = 1,
+        bool storage = false,
+        uint32_t layers = 1,
+        bool cube = false);
 
     /**
      * @brief Create a depth buffer
@@ -268,10 +276,10 @@ public:
     [[nodiscard]] std::shared_ptr<ImageTarget> create_image_target(const ImageTarget::Config& config);
 
     /**
-     * @brief A view of the first mip level of an image, as a draw attachment takes it
+     * @brief A 2D view of the first mip level of one layer of an image, as a draw attachment takes it
      * @return The view, or a null handle when the image is not managed by this Loom
      */
-    [[nodiscard]] vk::ImageView attachment_view(const std::shared_ptr<Core::VKImage>& image) const;
+    [[nodiscard]] vk::ImageView attachment_view(const std::shared_ptr<Core::VKImage>& image, uint32_t layer = 0) const;
 
     /**
      * @brief Reuse a matching image in an owner-held entry or create it once.

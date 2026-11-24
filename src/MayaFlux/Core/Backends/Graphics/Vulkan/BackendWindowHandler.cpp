@@ -14,33 +14,7 @@ namespace MayaFlux::Core {
 
 namespace {
 
-    void transition_color_image(
-        const vk::CommandBuffer& cmd,
-        vk::Image image,
-        vk::ImageLayout old_layout,
-        vk::ImageLayout new_layout,
-        vk::PipelineStageFlags2 src_stage,
-        vk::AccessFlags2 src_access,
-        vk::PipelineStageFlags2 dst_stage,
-        vk::AccessFlags2 dst_access)
-    {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.srcStageMask = src_stage;
-        barrier.srcAccessMask = src_access;
-        barrier.dstStageMask = dst_stage;
-        barrier.dstAccessMask = dst_access;
-        barrier.oldLayout = old_layout;
-        barrier.newLayout = new_layout;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image;
-        barrier.subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
-
-        vk::DependencyInfo dependency {};
-        dependency.imageMemoryBarrierCount = 1;
-        dependency.pImageMemoryBarriers = &barrier;
-        cmd.pipelineBarrier2(dependency);
-    }
+    const vk::ImageSubresourceRange k_color_range { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
 
 }
 
@@ -686,18 +660,14 @@ void BackendWindowHandler::render_empty_window(WindowRenderContext& ctx)
 
         const vk::Image swapchain_image = ctx.swapchain->get_images()[ctx.current_image_index];
 
-        transition_color_image(cmd_buffer, swapchain_image,
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
-            vk::PipelineStageFlagBits2::eNone, vk::AccessFlagBits2::eNone,
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::AccessFlagBits2::eColorAttachmentWrite);
+        record_image_barrier(cmd_buffer, swapchain_image, k_color_range,
+            ImageAccess::UNDEFINED, ImageAccess::COLOR_ATTACHMENT);
 
         cmd_buffer.beginRendering(rendering_info);
         cmd_buffer.endRendering();
 
-        transition_color_image(cmd_buffer, swapchain_image,
-            vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput, vk::AccessFlagBits2::eColorAttachmentWrite,
-            vk::PipelineStageFlagBits2::eNone, vk::AccessFlagBits2::eNone);
+        record_image_barrier(cmd_buffer, swapchain_image, k_color_range,
+            ImageAccess::COLOR_ATTACHMENT, ImageAccess::PRESENT);
 
         cmd_buffer.end();
 
@@ -796,15 +766,11 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     bi.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
     slot.cmd.begin(bi);
 
-    transition_color_image(slot.cmd, slot.image,
-        vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eNone,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite);
+    record_image_barrier(slot.cmd, slot.image, k_color_range,
+        ImageAccess::UNDEFINED, ImageAccess::TRANSFER_DST);
 
-    transition_color_image(slot.cmd, src,
-        vk::ImageLayout::ePresentSrcKHR, vk::ImageLayout::eTransferSrcOptimal,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead);
+    record_image_barrier(slot.cmd, src, k_color_range,
+        presented_image_access(), image_access_info(ImageAccess::TRANSFER_SRC));
 
     vk::ImageCopy copy {};
     copy.srcSubresource = { vk::ImageAspectFlagBits::eColor, 0, 0, 1 };
@@ -813,15 +779,11 @@ void BackendWindowHandler::capture_frame(WindowRenderContext& ctx)
     slot.cmd.copyImage(src, vk::ImageLayout::eTransferSrcOptimal,
         slot.image, vk::ImageLayout::eTransferDstOptimal, 1, &copy);
 
-    transition_color_image(slot.cmd, slot.image,
-        vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eGeneral,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferWrite,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead);
+    record_image_barrier(slot.cmd, slot.image, k_color_range,
+        ImageAccess::TRANSFER_DST, ImageAccess::HOST);
 
-    transition_color_image(slot.cmd, src,
-        vk::ImageLayout::eTransferSrcOptimal, vk::ImageLayout::ePresentSrcKHR,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eTransferRead,
-        vk::PipelineStageFlagBits2::eTransfer, vk::AccessFlagBits2::eMemoryRead);
+    record_image_barrier(slot.cmd, src, k_color_range,
+        ImageAccess::TRANSFER_SRC, ImageAccess::PRESENT);
 
     slot.cmd.end();
 

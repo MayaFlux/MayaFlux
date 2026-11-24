@@ -229,6 +229,27 @@ public:
         vk::Filter filter = vk::Filter::eNearest) const;
 
     /**
+     * @brief Whether a format can be drawn into and sampled, and written as a storage image when asked.
+     *
+     * Checks optimal tiling features for a color attachment and a sampled image,
+     * and a storage image when @p storage is set.
+     */
+    [[nodiscard]] bool supports_render_target(vk::Format format, bool storage = false) const;
+
+    /**
+     * @brief Whether a format can be blended as a color attachment.
+     */
+    [[nodiscard]] bool supports_color_blend(vk::Format format) const;
+
+    /**
+     * @brief Whether one draw can give each color attachment its own blend state.
+     *
+     * True when the device has independentBlend, which the backend enables
+     * whenever it is there.
+     */
+    [[nodiscard]] bool supports_independent_blend() const;
+
+    /**
      * @brief Blit a region of one image into a region of another.
      *
      * Scales with @p filter and converts between supported formats. The

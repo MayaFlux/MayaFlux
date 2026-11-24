@@ -171,6 +171,7 @@ std::vector<RenderableInfo> record_image_targets(const Children& children)
                     RenderableInfo info;
                     info.buffer = child;
                     info.target_image = image;
+                    info.target_layer = child->get_pipeline_layer(id);
                     info.pipeline_id = id;
                     info.command_buffer_id = command;
                     info.needs_depth = child->needs_depth_attachment();
@@ -190,8 +191,9 @@ std::vector<RenderableInfo> record_image_targets(const Children& children)
 }
 
 /**
- * One scope per image target that has something recorded. A target whose image
- * another target's buffers bind as a texture draws first.
+ * One scope per layer of each image target that has something recorded. A
+ * target whose image another target's buffers bind as a texture draws first.
+ * A pending clear applies to every layer drawn this cycle.
  */
 void draw_image_targets(const std::vector<RenderableInfo>& renderables)
 {
@@ -212,18 +214,25 @@ void draw_image_targets(const std::vector<RenderableInfo>& renderables)
 
     for (const auto& target : order_image_targets(targets, groups)) {
         const auto& infos = groups.at(target);
+        const bool clear = target->take_clear();
 
-        std::vector<Portal::Graphics::CommandBufferID> secondaries;
+        std::map<uint32_t, std::vector<const RenderableInfo*>> by_layer;
         for (const auto* info : infos)
-            secondaries.push_back(info->command_buffer_id);
+            by_layer[info->target_layer].push_back(info);
 
-        const bool use_depth = std::ranges::any_of(infos, [](const RenderableInfo* info) {
-            return info->needs_depth;
-        });
+        for (const auto& [layer, layer_infos] : by_layer) {
+            std::vector<Portal::Graphics::CommandBufferID> secondaries;
+            for (const auto* info : layer_infos)
+                secondaries.push_back(info->command_buffer_id);
 
-        if (const auto point = flow.draw_image_target(*target, secondaries, use_depth)) {
-            for (const auto* info : infos)
-                info->buffer->note_use(point.timeline, point.value);
+            const bool use_depth = std::ranges::any_of(layer_infos, [](const RenderableInfo* info) {
+                return info->needs_depth;
+            });
+
+            if (const auto point = flow.draw_image_target(*target, secondaries, use_depth, layer, clear)) {
+                for (const auto* info : layer_infos)
+                    info->buffer->note_use(point.timeline, point.value);
+            }
         }
 
         for (const auto* info : infos)

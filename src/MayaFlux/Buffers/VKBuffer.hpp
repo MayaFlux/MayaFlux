@@ -446,10 +446,18 @@ public:
         m_pipeline_commands.erase(id);
     }
 
-    /** @brief Associate a pipeline of this buffer with an image target it draws into. */
-    void set_pipeline_image(RenderPipelineID id, const std::shared_ptr<Portal::Graphics::ImageTarget>& image)
+    /** @brief Associate a pipeline of this buffer with an image target it draws into, and the layer of it. */
+    void set_pipeline_image(RenderPipelineID id, const std::shared_ptr<Portal::Graphics::ImageTarget>& image, uint32_t layer = 0)
     {
         m_image_pipelines[id] = image;
+        m_image_pipeline_layers[id] = layer;
+    }
+
+    /** @brief The layer of its image target a pipeline of this buffer draws into. Zero when it has none. */
+    [[nodiscard]] uint32_t get_pipeline_layer(RenderPipelineID id) const
+    {
+        const auto it = m_image_pipeline_layers.find(id);
+        return it != m_image_pipeline_layers.end() ? it->second : 0U;
     }
 
     /** @brief Withdraw one pipeline's image association and ask its target to redraw. */
@@ -736,6 +744,7 @@ private:
 
     std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
     std::unordered_map<RenderPipelineID, std::shared_ptr<Portal::Graphics::ImageTarget>> m_image_pipelines;
+    std::unordered_map<RenderPipelineID, uint32_t> m_image_pipeline_layers;
     std::atomic<bool> m_content_dirty { true };
     std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;
     std::unordered_set<std::shared_ptr<Core::Window>> m_pending_presentation_refreshes;
