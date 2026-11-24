@@ -1,12 +1,16 @@
 #pragma once
 
 #include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 #include "MayaFlux/Kakshya/NDData/NDData.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexAccess.hpp"
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
 #include "MayaFlux/Kakshya/StreamContainer.hpp"
 #include "MayaFlux/Kinesis/MotionCurves.hpp"
+#include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
 #include "MayaFlux/Kinesis/Spatial/ProximityGraphs.hpp"
 #include "MayaFlux/Kinesis/Stochastic/Stochastic.hpp"
 #include "MayaFlux/Kinesis/Tendency/Tendency.hpp"

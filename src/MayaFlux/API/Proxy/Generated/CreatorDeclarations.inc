@@ -82,3 +82,7 @@
     std::shared_ptr<Buffers::NetworkTextureBuffer> NetworkTextureBuffer(std::shared_ptr<Nodes::Network::NodeNetwork> network, std::shared_ptr<Core::VKImage> texture = nullptr, const std::string & binding_name = "network_texture_geometry", float over_allocate_factor = 2.0F);
     std::shared_ptr<Buffers::InstanceNetworkBuffer> InstanceNetworkBuffer(std::shared_ptr<Nodes::Network::InstanceNetwork> network, float over_allocate_factor = 1.5F);
     std::shared_ptr<Buffers::NetworkAudioBuffer> NetworkAudioBuffer(uint32_t channel_id, uint32_t num_samples, std::shared_ptr<Nodes::Network::NodeNetwork> network, bool clear_before_process = true);
+    std::shared_ptr<Buffers::RecordedGeometryBuffer> RecordedGeometryBuffer(uint32_t capacity, Portal::Graphics::PrimitiveTopology topology, Kinesis::SamplerBounds bounds, std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op = nullptr, Kakshya::VertexAccessConfig access = {});
+    std::shared_ptr<Buffers::VolumeGridBuffer> VolumeGridBuffer(Kinesis::Lattice3D lattice, std::initializer_list<Buffers::VolumeGridBuffer::FieldDecl> fields, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface = std::nullopt);
+    std::shared_ptr<Buffers::VolumeGridBuffer> VolumeGridBuffer(Kinesis::Lattice3D lattice, std::vector<Buffers::VolumeGridBuffer::FieldDecl> fields, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface = std::nullopt);
+    std::shared_ptr<Buffers::VolumeGridBuffer> VolumeGridBuffer(Kinesis::Lattice3D lattice, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface = std::nullopt);

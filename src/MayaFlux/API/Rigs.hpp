@@ -44,14 +44,6 @@ namespace Buffers {
     class VolumeGridBuffer;
 }
 
-namespace IO {
-    class SpatialFileFrames;
-}
-
-namespace Nodes::Network {
-    class GpuFieldOperator;
-}
-
 namespace Yantra::Vision {
     class VisionWorkflow;
 }
@@ -382,22 +374,6 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
     uint32_t input_channel, double seconds, std::optional<uint32_t> monitor = std::nullopt, uint32_t channel = 0);
 
 /**
- * @brief Make a volume buffer that can hold the frames of a volume sequence.
- *
- * The buffer is made over the lattice of the first frame, with the fields it carries
- * (IO::volume_field_decls), and is in the graphics buffers. It draws nothing and
- * simulates nothing until it is given a renderer or processors, such as a RaymarchBuffer
- * that reads one of its fields. Every frame of a sequence made by IO::open_volume_sequence
- * has that lattice and those fields.
- *
- * @param source The sequence, such as a SequenceContainer<VolumeData>. Its first frame is
- * read here, on the calling thread.
- * @return The buffer, or nullptr for a null source or when the first frame cannot be read.
- */
-MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
-    const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& source);
-
-/**
  * @brief Begin a reflow that plays a volume sequence into a volume buffer.
  *
  * Every field of each frame replaces the buffer's field (volume_sink), on the engine's
@@ -409,7 +385,8 @@ MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
  * auto sequence = IO::open_volume_sequence(
  *     { .pattern = "smoke.{:04}.vdb", .count = 96 }, *Kinesis::TimeSampling::uniform(1.0 / 24.0),
  *     IO::LatticeSource::Union);
- * auto volume = MayaFlux::create_volume_buffer(sequence);
+ * auto first = sequence->read(0);
+ * auto volume = vega.VolumeGridBuffer(first->lattice, IO::volume_field_decls(*first)) | Graphics;
  * auto reflow = MayaFlux::create_volume_reflow(sequence, volume)
  *                   .course({ .in = 0.0, .out = 4.0, .edge = Kriya::CourseEdge::Loop })
  *                   .start();
@@ -417,34 +394,12 @@ MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
  * @endcode
  *
  * @param source The frames to play, such as a SequenceContainer<VolumeData>.
- * @param volume The buffer to write, made for those frames (create_volume_buffer).
+ * @param volume The buffer to write, made for those frames (vega.VolumeGridBuffer).
  * @return Builder. A null source or buffer makes build() and start() return nullptr.
  */
 MAYAFLUX_API Kriya::VolumeReflowBuilder create_volume_reflow(
     std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>> source,
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume);
-
-/**
- * @brief Make a buffer that can show the frames of an Alembic stream and run them through
- *        the spatial stages.
- *
- * The buffer holds as many vertices as the largest frame of the stream (read from the
- * archive without decoding any frame), takes the stream's topology, and is in the graphics
- * buffers. It draws nothing until setup_rendering is called. With a field operator it wires
- * what the operator's SpatialFieldConfig asks for, as a NetworkGeometryBuffer does: the
- * config must name its cell_size, and the layout must be the 68-byte vertex record.
- *
- * @param source The stream, from IO::SpatialFileFrames::create.
- * @param bounds Box the spatial hash covers. Unused without stages to wire.
- * @param field_op Operator whose bindings and config select the stages, or null.
- * @param capacity Vertices to hold, in place of the largest frame of the stream.
- * @return The buffer, or nullptr for a null source or when no capacity is known.
- */
-MAYAFLUX_API std::shared_ptr<Buffers::RecordedGeometryBuffer> create_recorded_geometry_buffer(
-    const std::shared_ptr<const IO::SpatialFileFrames>& source,
-    Kinesis::SamplerBounds bounds,
-    std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op = nullptr,
-    std::optional<uint32_t> capacity = std::nullopt);
 
 /**
  * @brief Begin a reflow that plays an Alembic stream into a recorded geometry buffer.
@@ -456,7 +411,8 @@ MAYAFLUX_API std::shared_ptr<Buffers::RecordedGeometryBuffer> create_recorded_ge
  *
  * @code{.cpp}
  * auto frames = IO::SpatialFileFrames::create("swarm.abc");
- * auto buffer = MayaFlux::create_recorded_geometry_buffer(frames, { .min = glm::vec3(-4.0F), .max = glm::vec3(4.0F) });
+ * auto buffer = vega.RecordedGeometryBuffer(*frames->max_vertex_count(), frames->topology(),
+ *     Kinesis::SamplerBounds { .min = glm::vec3(-4.0F), .max = glm::vec3(4.0F) }) | Graphics;
  * buffer->setup_rendering({ .target_window = window });
  * auto reflow = MayaFlux::create_spatial_reflow(frames, buffer)
  *                   .course({ .edge = Kriya::CourseEdge::Loop })
@@ -464,7 +420,7 @@ MAYAFLUX_API std::shared_ptr<Buffers::RecordedGeometryBuffer> create_recorded_ge
  * @endcode
  *
  * @param source The frames to play, such as an IO::SpatialFileFrames or a SequenceContainer<SpatialData>.
- * @param buffer The buffer to show them in, made for those frames (create_recorded_geometry_buffer).
+ * @param buffer The buffer to show them in, made for those frames (vega.RecordedGeometryBuffer).
  * @return Builder. A null source makes build() and start() return nullptr.
  */
 MAYAFLUX_API Kriya::SpatialReflowBuilder create_spatial_reflow(

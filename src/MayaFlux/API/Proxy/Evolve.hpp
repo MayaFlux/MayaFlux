@@ -271,8 +271,8 @@ public:
      * which wires its stages, rendering is attached, and the reflow is started on the
      * engine's frame clock. Each frame replaces the buffer's geometry (Kriya::spatial_sink).
      * The proxy holds the reflow, so it keeps playing if the caller lets go, until stop() is
-     * called on it. A buffer made by MayaFlux::create_recorded_geometry_buffer is already
-     * registered: play that one with MayaFlux::create_spatial_reflow instead.
+     * called on it. A buffer made by vega.RecordedGeometryBuffer and piped to Graphics is
+     * already registered: play that one with MayaFlux::create_spatial_reflow instead.
      */
     auto operator()(
         const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,

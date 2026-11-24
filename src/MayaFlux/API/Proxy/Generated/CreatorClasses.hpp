@@ -46,3 +46,5 @@
 #include "MayaFlux/Buffers/Network/NetworkTextureBuffer.hpp"
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/NetworkAudioBuffer.hpp"
+#include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"

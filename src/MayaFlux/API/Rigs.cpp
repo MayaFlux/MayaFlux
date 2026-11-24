@@ -295,50 +295,12 @@ std::shared_ptr<Kriya::BufferPipeline> record_into(
         std::max<uint64_t>(1, static_cast<uint64_t>(std::ceil(blocks))), monitor, channel);
 }
 
-std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_buffer(
-    const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& source)
-{
-    const auto first = source ? source->read(0) : nullptr;
-    if (!first) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "create_volume_buffer: the first frame could not be read");
-        return nullptr;
-    }
-
-    return get_buffer_manager()->create_graphics_buffer<Buffers::VolumeGridBuffer>(
-        Buffers::ProcessingToken::GRAPHICS_BACKEND, first->lattice, IO::volume_field_decls(*first));
-}
-
 Kriya::VolumeReflowBuilder create_volume_reflow(
     std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>> source,
     const std::shared_ptr<Buffers::VolumeGridBuffer>& volume)
 {
     return Kriya::VolumeReflowBuilder(
         std::move(source), volume ? Kriya::volume_sink(volume) : Kriya::VolumeReflow::Sink {}, 0.0, get_scheduler());
-}
-
-std::shared_ptr<Buffers::RecordedGeometryBuffer> create_recorded_geometry_buffer(
-    const std::shared_ptr<const IO::SpatialFileFrames>& source,
-    Kinesis::SamplerBounds bounds,
-    std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op,
-    std::optional<uint32_t> capacity)
-{
-    if (!source) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "create_recorded_geometry_buffer: no source");
-        return nullptr;
-    }
-
-    const auto vertices = capacity ? capacity : source->max_vertex_count();
-    if (!vertices || *vertices == 0) {
-        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
-            "create_recorded_geometry_buffer: no frame of '{}' holds a vertex, or the sizes could not be read",
-            source->stream());
-        return nullptr;
-    }
-
-    return get_buffer_manager()->create_graphics_buffer<Buffers::RecordedGeometryBuffer>(
-        Buffers::ProcessingToken::GRAPHICS_BACKEND, *vertices, source->topology(), bounds, std::move(field_op));
 }
 
 Kriya::SpatialReflowBuilder create_spatial_reflow(
