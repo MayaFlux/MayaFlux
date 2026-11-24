@@ -10,6 +10,10 @@ namespace MayaFlux::Core {
 class VKImage;
 }
 
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
+}
+
 namespace MayaFlux::Buffers {
 
 /**
@@ -36,6 +40,22 @@ public:
 
     /** @brief Get the window targeted by this processor. */
     std::shared_ptr<Core::Window> get_target_window() const { return m_target_window; }
+
+    /**
+     * @brief Draw into an image target instead of a window.
+     *
+     * A processor has one destination. Setting an image drops a window target, and
+     * the pipeline is rebuilt for the image's formats. The target redraws.
+     */
+    void set_target_image(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Get the image target of this processor, or null when it draws into a window. */
+    std::shared_ptr<Portal::Graphics::ImageTarget> get_target_image() const { return m_target_image; }
+
+    /** @brief Images bound as textures by this processor, so the root can draw their producers first. */
+    [[nodiscard]] std::vector<std::shared_ptr<Core::VKImage>> bound_textures() const;
 
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
 
@@ -417,6 +437,22 @@ private:
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
     std::shared_ptr<Core::Window> m_target_window;
+    std::shared_ptr<Portal::Graphics::ImageTarget> m_target_image;
+
+    /** @brief What the pipeline and the viewport need to know about the destination. */
+    struct DestinationInfo {
+        vk::Format color {};
+        vk::Format depth {};
+        uint32_t width {};
+        uint32_t height {};
+    };
+
+    [[nodiscard]] bool has_destination() const noexcept { return m_target_window || m_target_image; }
+    [[nodiscard]] bool destination_ready() const;
+    [[nodiscard]] DestinationInfo describe() const;
+    [[nodiscard]] std::string destination_name() const;
+    void request_refresh(const std::shared_ptr<VKBuffer>& buffer) const;
+    void register_pipeline(const std::shared_ptr<VKBuffer>& buffer) const;
 
     std::unordered_map<std::shared_ptr<VKBuffer>, BufferState> m_buffer_info;
     /** @brief Non-owning exceptions to default visibility, removed on detach. */

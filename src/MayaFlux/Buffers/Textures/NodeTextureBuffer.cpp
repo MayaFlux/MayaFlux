@@ -115,6 +115,7 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& user_config)
         }
     }
     m_render_config.target_window = user_config.target_window;
+    m_render_config.target_images = user_config.target_images;
     m_render_config.default_sampler = user_config.default_sampler;
 
     if (!user_config.additional_textures.empty()) {

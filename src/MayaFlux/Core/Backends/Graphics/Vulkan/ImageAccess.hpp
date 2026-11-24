@@ -104,6 +104,40 @@ struct ImageAccessInfo {
 }
 
 /**
+ * @brief Record a barrier moving a subresource range between two uses of an image.
+ *
+ * Source and destination masks and layouts come from image_access_info(). Records
+ * only; it does not track the image's layout.
+ */
+inline void record_image_barrier(
+    vk::CommandBuffer cmd,
+    vk::Image image,
+    const vk::ImageSubresourceRange& range,
+    ImageAccess from,
+    ImageAccess to)
+{
+    const ImageAccessInfo source = image_access_info(from);
+    const ImageAccessInfo destination = image_access_info(to);
+
+    vk::ImageMemoryBarrier2 barrier {};
+    barrier.srcStageMask = source.stages;
+    barrier.srcAccessMask = source.access;
+    barrier.dstStageMask = destination.stages;
+    barrier.dstAccessMask = destination.access;
+    barrier.oldLayout = source.layout;
+    barrier.newLayout = destination.layout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange = range;
+
+    vk::DependencyInfo dependency {};
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &barrier;
+    cmd.pipelineBarrier2(dependency);
+}
+
+/**
  * @struct ImageRange
  * @brief A range of mip levels and array layers of one image.
  *

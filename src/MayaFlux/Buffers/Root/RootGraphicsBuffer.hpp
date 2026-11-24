@@ -5,6 +5,10 @@
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "RootBuffer.hpp"
 
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
+}
+
 namespace MayaFlux::Buffers {
 
 class BufferProcessingChain;
@@ -41,6 +45,7 @@ public:
     struct RenderableBufferInfo {
         std::shared_ptr<VKBuffer> buffer;
         std::shared_ptr<Core::Window> target_window;
+        std::shared_ptr<Portal::Graphics::ImageTarget> target_image;
         RenderPipelineID pipeline_id;
         CommandBufferID command_buffer_id;
         bool needs_depth {};

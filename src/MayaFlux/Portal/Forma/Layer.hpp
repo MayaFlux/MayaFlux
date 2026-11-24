@@ -2,6 +2,10 @@
 
 #include "Element.hpp"
 
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
+}
+
 namespace MayaFlux::Portal::Forma {
 
 namespace internal {
@@ -187,6 +191,19 @@ public:
      */
     [[nodiscard]] const std::shared_ptr<Buffers::FormaBuffer>& batch() const noexcept { return m_batch; }
 
+    /**
+     * @brief The buffer elements placed for @p target draw into, or null before
+     *        the first one. Made and replaced by Forma.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> batch(const std::shared_ptr<Graphics::ImageTarget>& target) const
+    {
+        for (const auto& [image, buffer] : m_image_batches) {
+            if (image == target)
+                return buffer;
+        }
+        return nullptr;
+    }
+
     // =========================================================================
     // Element mutation
     // =========================================================================
@@ -340,6 +357,7 @@ private:
     int64_t m_next_back_priority {};
 
     std::shared_ptr<Buffers::FormaBuffer> m_batch;
+    std::vector<std::pair<std::shared_ptr<Graphics::ImageTarget>, std::shared_ptr<Buffers::FormaBuffer>>> m_image_batches;
 
     [[nodiscard]] int64_t claim_front_priority() noexcept { return ++m_next_front_priority; }
 

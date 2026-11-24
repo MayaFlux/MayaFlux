@@ -8,6 +8,7 @@
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
@@ -126,10 +127,10 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
             "Portal::Forma not initialized - cannot create buffer");
     }
 
-    if (!render.target_window) {
+    if (!render.target_window && render.target_images.empty()) {
         error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
             std::source_location::current(),
-            "Portal::Forma create_buffer requires a target window");
+            "Portal::Forma create_buffer requires a target window or image target");
     }
 
     render.topology = Graphics::PrimitiveTopology::TRIANGLE_LIST;
@@ -138,7 +139,10 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
     auto buf = std::make_shared<Buffers::FormaBuffer>(k_capacity_bytes, render.topology);
     m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
-    const auto height = std::max(render.target_window->get_create_info().height, 1U);
+    const auto height = std::max(render.target_window
+            ? render.target_window->get_create_info().height
+            : render.target_images.front()->height(),
+        1U);
     buf->setup_rendering(render);
 
     if (auto processor = buf->get_render_processor()) {
@@ -170,7 +174,11 @@ std::shared_ptr<Core::VKImage> Atelier::text_image()
 
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface, int64_t priority)
 {
-    Graphics::RenderConfig render = surface.render_config();
+    return create_batch(surface.render_config(), priority);
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(Graphics::RenderConfig render, int64_t priority)
+{
     render.fragment_shader = "forma_plot.frag.spv";
     render.additional_textures.push_back({ .name = "text", .image = text_image() });
     render.draw_priority = priority;
@@ -189,6 +197,38 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(Surface& surface)
 FormaTarget Atelier::batch_slice(Surface& surface, Graphics::PrimitiveTopology topology)
 {
     return FormaTarget::slice_of(surface_batch(surface), topology);
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(
+    Surface& surface, const std::shared_ptr<Graphics::ImageTarget>& target)
+{
+    if (!target) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(),
+            "Portal::Forma surface_batch requires an image target");
+    }
+
+    auto& layer = surface.layer();
+    for (auto& [image, buffer] : layer.m_image_batches) {
+        if (image != target)
+            continue;
+        if (!buffer || buffer->needs_removal()) {
+            buffer = create_batch(surface.image_config(target));
+        }
+        return buffer;
+    }
+
+    auto buffer = create_batch(surface.image_config(target));
+    layer.m_image_batches.emplace_back(target, buffer);
+    return buffer;
+}
+
+FormaTarget Atelier::batch_slice(
+    Surface& surface,
+    const std::shared_ptr<Graphics::ImageTarget>& target,
+    Graphics::PrimitiveTopology topology)
+{
+    return FormaTarget::slice_of(surface_batch(surface, target), topology);
 }
 
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_scroll_batch(Surface& surface)

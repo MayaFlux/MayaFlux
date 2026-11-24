@@ -331,6 +331,8 @@ struct SampledTexture {
     bool operator==(const SampledTexture& other) const = default;
 };
 
+class ImageTarget;
+
 /**
  * @struct RenderConfig
  * @brief Unified rendering configuration for graphics buffers
@@ -348,6 +350,15 @@ struct SampledTexture {
  */
 struct RenderConfig {
     std::shared_ptr<Core::Window> target_window;
+
+    /**
+     * @brief Images to draw into instead of, or besides, a window.
+     *
+     * A buffer's primary render processor takes the window when there is one,
+     * otherwise the first image. A buffer takes one destination from this config,
+     * so more than one in total is refused.
+     */
+    std::vector<std::shared_ptr<ImageTarget>> target_images;
     std::string vertex_shader;
     std::string fragment_shader;
     std::string geometry_shader;

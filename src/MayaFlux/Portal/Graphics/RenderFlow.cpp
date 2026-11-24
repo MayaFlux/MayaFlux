@@ -1,5 +1,10 @@
 #include "RenderFlow.hpp"
 
+#include "ImageTarget.hpp"
+
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/ImageAccess.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+
 #include "LayoutTranslator.hpp"
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
@@ -911,6 +916,91 @@ void RenderFlow::end_rendering(
     MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
         "Ended dynamic rendering for window '{}'",
         window->get_create_info().title);
+}
+
+void RenderFlow::begin_rendering(CommandBufferID cmd_id, ImageTarget& target, bool use_depth)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    const auto& image = target.image();
+    if (!image || !image->is_initialized() || !image->get_image_view()) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering into an image target without an initialized image");
+        return;
+    }
+
+    const vk::ImageSubresourceRange color_range { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+    Core::record_image_barrier(cmd, image->get_image(), color_range,
+        Core::ImageAccess::SHADER_READ, Core::ImageAccess::COLOR_ATTACHMENT);
+
+    vk::RenderingAttachmentInfo color_attachment {};
+    color_attachment.imageView = image->get_image_view();
+    color_attachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+    color_attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+    color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+    color_attachment.storeOp = vk::AttachmentStoreOp::eStore;
+    color_attachment.clearValue.color = vk::ClearColorValue(target.clear_color());
+
+    const auto& depth = target.depth_image();
+    vk::RenderingAttachmentInfo depth_attachment {};
+    if (use_depth && depth && depth->is_initialized() && depth->get_image_view()) {
+        const vk::ImageSubresourceRange depth_range { vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1 };
+        Core::record_image_barrier(cmd, depth->get_image(), depth_range,
+            Core::ImageAccess::UNDEFINED, Core::ImageAccess::DEPTH_ATTACHMENT);
+
+        depth_attachment.imageView = depth->get_image_view();
+        depth_attachment.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        depth_attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+        depth_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+        depth_attachment.storeOp = vk::AttachmentStoreOp::eDontCare;
+        depth_attachment.clearValue.depthStencil = vk::ClearDepthStencilValue { 1.0F, 0 };
+    }
+
+    vk::RenderingInfo rendering_info {};
+    rendering_info.flags = vk::RenderingFlagBits::eContentsSecondaryCommandBuffers;
+    rendering_info.renderArea.offset = vk::Offset2D { 0, 0 };
+    rendering_info.renderArea.extent = vk::Extent2D { target.width(), target.height() };
+    rendering_info.layerCount = 1;
+    rendering_info.colorAttachmentCount = 1;
+    rendering_info.pColorAttachments = &color_attachment;
+    rendering_info.pDepthAttachment = depth_attachment.imageView ? &depth_attachment : nullptr;
+
+    cmd.beginRendering(rendering_info);
+
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Began dynamic rendering into an image target ({}x{}, depth: {})",
+        target.width(), target.height(), depth_attachment.imageView ? "yes" : "no");
+}
+
+void RenderFlow::end_rendering(CommandBufferID cmd_id, ImageTarget& target)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    cmd.endRendering();
+
+    release_draw_inputs(cmd_id);
+
+    const auto& image = target.image();
+    if (!image || !image->is_initialized()) {
+        return;
+    }
+
+    const vk::ImageSubresourceRange color_range { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
+    Core::record_image_barrier(cmd, image->get_image(), color_range,
+        Core::ImageAccess::COLOR_ATTACHMENT, Core::ImageAccess::SHADER_READ);
+
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Ended dynamic rendering into an image target");
 }
 
 //==============================================================================

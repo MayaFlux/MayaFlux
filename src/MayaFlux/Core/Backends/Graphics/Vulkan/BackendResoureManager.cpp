@@ -38,25 +38,7 @@ namespace {
         ImageAccess from,
         ImageAccess to)
     {
-        const ImageAccessInfo source = image_access_info(from);
-        const ImageAccessInfo destination = image_access_info(to);
-
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.srcStageMask = source.stages;
-        barrier.srcAccessMask = source.access;
-        barrier.dstStageMask = destination.stages;
-        barrier.dstAccessMask = destination.access;
-        barrier.oldLayout = source.layout;
-        barrier.newLayout = destination.layout;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image;
-        barrier.subresourceRange = range;
-
-        vk::DependencyInfo dependency {};
-        dependency.imageMemoryBarrierCount = 1;
-        dependency.pImageMemoryBarriers = &barrier;
-        cmd.pipelineBarrier2(dependency);
+        record_image_barrier(cmd, image, range, from, to);
     }
 
     vk::ImageSubresourceRange full_range(const VKImage& image)

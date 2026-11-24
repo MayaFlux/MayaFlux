@@ -231,6 +231,20 @@ public:
         return base;
     }
 
+    /**
+     * @brief @p base targeting @p target instead of this Surface's window.
+     *
+     * Every other field of @p base is kept.
+     */
+    [[nodiscard]] Portal::Graphics::RenderConfig image_config(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& target,
+        Portal::Graphics::RenderConfig base = {}) const
+    {
+        base.target_window = nullptr;
+        base.target_images = { target };
+        return base;
+    }
+
     // =========================================================================
     // Named regions
     // =========================================================================

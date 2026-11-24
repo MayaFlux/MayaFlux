@@ -6,6 +6,7 @@
 #include "Shaders/RenderProcessor.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
@@ -363,6 +364,18 @@ void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfi
     apply_render_config(m_render_processor, config, shader_config);
 }
 
+void VKBuffer::remove_pipeline_image(RenderPipelineID id)
+{
+    const auto it = m_image_pipelines.find(id);
+    if (it == m_image_pipelines.end()) {
+        return;
+    }
+    if (it->second) {
+        it->second->request_redraw();
+    }
+    m_image_pipelines.erase(it);
+}
+
 std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)
 {
     auto default_render = std::dynamic_pointer_cast<RenderProcessor>(m_default_processor);
@@ -424,14 +437,25 @@ void VKBuffer::apply_render_config(
     const RenderConfig& config,
     const ShaderConfig& shader_config)
 {
+    const size_t destinations = (config.target_window ? 1U : 0U) + config.target_images.size();
+    if (destinations > 1) {
+        error<std::invalid_argument>(
+            Journal::Component::Buffers, Journal::Context::Init,
+            std::source_location::current(),
+            "A buffer takes one destination from its RenderConfig, got {}", destinations);
+    }
+
     if (!render_processor)
         render_processor = std::make_shared<RenderProcessor>(shader_config);
 
     render_processor->set_fragment_shader(config.fragment_shader);
 
-    render_processor->set_target_window(
-        config.target_window,
-        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
+    const auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
+    if (!config.target_window && !config.target_images.empty()) {
+        render_processor->set_target_image(config.target_images.front(), self);
+    } else {
+        render_processor->set_target_window(config.target_window, self);
+    }
 
     render_processor->set_primitive_topology(config.topology);
     render_processor->set_triangulate(config.triangulate);
@@ -445,6 +469,7 @@ void VKBuffer::apply_render_config(
 
 void VKBuffer::mark_dirty_range(size_t offset, size_t size)
 {
+    m_content_dirty.store(true, std::memory_order_release);
     if (is_host_visible()) {
         m_dirty_ranges.emplace_back(offset, size);
     }

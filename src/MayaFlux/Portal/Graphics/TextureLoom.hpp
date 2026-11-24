@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "GraphicsUtils.hpp"
+#include "ImageTarget.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKTimeline.hpp"
 
@@ -283,6 +284,16 @@ public:
         uint32_t width,
         uint32_t height,
         ImageFormat format = ImageFormat::RGBA8);
+
+    /**
+     * @brief Create an image that draws land in instead of a window
+     * @param config Size, format, clear color, optional depth and redraw policy
+     * @return The target, or nullptr if Loom is not initialized or the size is zero
+     *
+     * The color image rests in shader read layout, so a buffer can bind it as a
+     * texture. The target releases its images when its last holder lets go.
+     */
+    [[nodiscard]] std::shared_ptr<ImageTarget> create_image_target(const ImageTarget::Config& config);
 
     /**
      * @brief Reuse a matching image in an owner-held entry or create it once.

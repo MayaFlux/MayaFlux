@@ -136,6 +136,7 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
     }
 
     m_render_config.target_window = config.target_window;
+    m_render_config.target_images = config.target_images;
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     m_render_config.polygon_mode = config.polygon_mode;
     m_render_config.triangulate = config.triangulate;

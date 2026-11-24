@@ -47,6 +47,7 @@ void Layer::clear()
             el.buffer.retire();
     }
     m_batch.reset();
+    m_image_batches.clear();
     m_elements.clear();
     m_index.clear();
     m_index_stale = false;

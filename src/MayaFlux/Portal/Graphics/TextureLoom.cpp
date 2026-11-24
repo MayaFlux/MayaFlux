@@ -331,6 +331,42 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
     return image;
 }
 
+std::shared_ptr<ImageTarget> TextureLoom::create_image_target(const ImageTarget::Config& config)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "TextureLoom not initialized");
+        return nullptr;
+    }
+
+    if (config.width == 0 || config.height == 0) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: {}x{} has no pixels", config.width, config.height);
+        return nullptr;
+    }
+
+    auto color = create_render_target(config.width, config.height, config.format);
+    if (!color) {
+        return nullptr;
+    }
+    transition_layout(color, vk::ImageLayout::eShaderReadOnlyOptimal, SubmitMode::IMMEDIATE);
+
+    std::shared_ptr<Core::VKImage> depth;
+    if (config.depth) {
+        depth = create_depth_buffer(config.width, config.height);
+        if (!depth) {
+            release_image(color);
+            return nullptr;
+        }
+    }
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
+        "Created image target: {}x{}, format: {}, depth: {}",
+        config.width, config.height, vk::to_string(color->get_format()), depth ? "yes" : "no");
+
+    return std::shared_ptr<ImageTarget>(new ImageTarget(std::move(color), std::move(depth), config));
+}
+
 std::shared_ptr<Core::VKImage> TextureLoom::create_depth_buffer(
     uint32_t width, uint32_t height, bool with_stencil)
 {

@@ -5,6 +5,7 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -62,8 +63,115 @@ void RenderProcessor::set_tess_eval_shader(const std::string& tess_eval_path)
 
 void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
 {
+    if (!window) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_target_window: window is null");
+        return;
+    }
+
+    if (m_target_image) {
+        m_target_image->request_redraw();
+        m_target_image.reset();
+        m_needs_pipeline_rebuild = true;
+    }
+
     m_target_window = window;
     window->register_rendering_buffer(buffer);
+}
+
+void RenderProcessor::set_target_image(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!image) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_target_image: image target is null");
+        return;
+    }
+
+    if (m_target_window) {
+        if (buffer) {
+            m_target_window->unregister_rendering_buffer(buffer);
+            buffer->request_presentation_refresh(m_target_window);
+        }
+        m_target_window.reset();
+        m_needs_pipeline_rebuild = true;
+    }
+
+    if (m_target_image != image) {
+        if (m_target_image) {
+            m_target_image->request_redraw();
+        }
+        m_target_image = image;
+        m_needs_pipeline_rebuild = true;
+    }
+    image->request_redraw();
+}
+
+bool RenderProcessor::destination_ready() const
+{
+    if (m_target_window) {
+        return m_target_window->is_graphics_registered();
+    }
+    return m_target_image && m_target_image->active();
+}
+
+RenderProcessor::DestinationInfo RenderProcessor::describe() const
+{
+    DestinationInfo info;
+
+    if (m_target_image) {
+        info.color = m_target_image->color_format();
+        info.width = m_target_image->width();
+        info.height = m_target_image->height();
+        info.depth = m_depth_enabled ? m_target_image->depth_format() : vk::Format::eUndefined;
+        return info;
+    }
+
+    if (m_target_window && m_display_service) {
+        info.color = static_cast<vk::Format>(m_display_service->get_swapchain_format(m_target_window));
+        m_display_service->get_swapchain_extent(m_target_window, info.width, info.height);
+    }
+    info.depth = m_depth_enabled ? vk::Format::eD32Sfloat : vk::Format::eUndefined;
+    return info;
+}
+
+std::string RenderProcessor::destination_name() const
+{
+    if (m_target_window) {
+        return "window '" + m_target_window->get_create_info().title + "'";
+    }
+    return "an image target";
+}
+
+void RenderProcessor::request_refresh(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    if (m_target_image) {
+        m_target_image->request_redraw();
+        return;
+    }
+    buffer->request_presentation_refresh(m_target_window);
+}
+
+void RenderProcessor::register_pipeline(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    if (m_target_image) {
+        buffer->set_pipeline_image(m_pipeline_id, m_target_image);
+        return;
+    }
+    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
+}
+
+std::vector<std::shared_ptr<Core::VKImage>> RenderProcessor::bound_textures() const
+{
+    std::vector<std::shared_ptr<Core::VKImage>> textures;
+    textures.reserve(m_texture_bindings.size());
+    for (const auto& [binding, texture] : m_texture_bindings) {
+        if (texture.texture) {
+            textures.push_back(texture.texture);
+        }
+    }
+    return textures;
 }
 
 void RenderProcessor::set_visible(bool visible, const std::shared_ptr<VKBuffer>& buffer)
@@ -81,7 +189,7 @@ void RenderProcessor::set_visible(bool visible, const std::shared_ptr<VKBuffer>&
             return;
         m_hidden_buffers.push_back(buffer.get());
     }
-    buffer->request_presentation_refresh(m_target_window);
+    request_refresh(buffer);
 }
 
 bool RenderProcessor::is_visible(const std::shared_ptr<VKBuffer>& buffer) const
@@ -320,9 +428,9 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
-    if (!m_target_window) {
+    if (!has_destination()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Target window not set");
+            "Target window or image not set");
         return;
     }
 
@@ -336,7 +444,9 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     auto& flow = Portal::Graphics::get_render_flow();
 
-    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window);
+    if (m_target_window) {
+        flow.register_window_for_rendering(m_target_window);
+    }
 
     Portal::Graphics::RenderPipelineConfig pipeline_config;
     pipeline_config.vertex_shader = m_shader_id;
@@ -461,12 +571,9 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         pipeline_config.descriptor_sets.push_back(set_bindings);
     }
 
-    vk::Format swapchain_format = static_cast<vk::Format>(
-        m_display_service->get_swapchain_format(m_target_window));
-
-    vk::Format depth_format = m_depth_enabled
-        ? vk::Format::eD32Sfloat
-        : vk::Format::eUndefined;
+    const DestinationInfo destination = describe();
+    const vk::Format swapchain_format = destination.color;
+    const vk::Format depth_format = destination.depth;
 
     retire_current_pipeline();
 
@@ -846,20 +953,19 @@ bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_
     if (!is_visible(buffer))
         return false;
 
-    if (!m_target_window) {
+    if (!has_destination()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Target window not set");
+            "Target window or image not set");
         return false;
     }
-    return m_target_window->is_graphics_registered();
+    return destination_ready();
 }
 
 void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     collect_retired_pipelines();
 
-    if (!is_visible(buffer) || !m_target_window
-        || !m_target_window->is_graphics_registered()) {
+    if (!is_visible(buffer) || !destination_ready()) {
         return;
     }
 
@@ -887,6 +993,20 @@ void RenderProcessor::retire_current_pipeline()
 
     for (const auto& entry : m_buffer_info) {
         entry.first->remove_pipeline_window(m_pipeline_id);
+    }
+
+    if (!m_target_window) {
+        auto retired = std::make_shared<RetiredPipeline>(RetiredPipeline {
+            .pipeline = m_pipeline_id,
+            .window = nullptr,
+            .transform_ubo = m_render_transform_arena.detach(),
+            .after_frame = 0 });
+        Portal::Graphics::get_shader_foundry().release_after_submit([retired] {
+            Portal::Graphics::get_render_flow().destroy_pipeline(retired->pipeline);
+        });
+        m_written_render_transform.reset();
+        m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+        return;
     }
 
     uint64_t after_frame = std::numeric_limits<uint64_t>::max();
@@ -922,8 +1042,7 @@ void RenderProcessor::collect_retired_pipelines()
 
 void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (!m_initialized || !is_visible(buffer) || !m_target_window
-        || !m_target_window->is_graphics_registered()
+    if (!m_initialized || !is_visible(buffer) || !destination_ready()
         || m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE)
         return;
 
@@ -1020,14 +1139,11 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         return;
     }
 
-    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
+    register_pipeline(buffer);
 
-    vk::Format color_format = static_cast<vk::Format>(
-        m_display_service->get_swapchain_format(m_target_window));
-
-    vk::Format depth_format = m_depth_enabled
-        ? vk::Format::eD32Sfloat
-        : vk::Format::eUndefined;
+    const DestinationInfo destination = describe();
+    const vk::Format color_format = destination.color;
+    const vk::Format depth_format = destination.depth;
 
     auto cmd_id = foundry.begin_secondary_commands(color_format, depth_format);
     auto cmd = foundry.get_command_buffer(cmd_id);
@@ -1036,8 +1152,8 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         foundry.hold_image(cmd_id, texture.texture);
     }
 
-    uint32_t width = 0, height = 0;
-    m_display_service->get_swapchain_extent(m_target_window, width, height);
+    const uint32_t width = destination.width;
+    const uint32_t height = destination.height;
 
     if (width > 0 && height > 0) {
         auto cmd = foundry.get_command_buffer(cmd_id);
@@ -1118,11 +1234,13 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     foundry.end_commands(cmd_id);
 
     buffer->set_pipeline_command(m_pipeline_id, cmd_id);
-    m_target_window->track_frame_command(cmd_id);
+    if (m_target_window) {
+        m_target_window->track_frame_command(cmd_id);
+    }
 
     MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Recorded secondary command buffer {} for window '{}'",
-        cmd_id, m_target_window->get_create_info().title);
+        "Recorded secondary command buffer {} for {}",
+        cmd_id, destination_name());
 }
 
 void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
@@ -1260,6 +1378,7 @@ void RenderProcessor::cleanup()
         flow.unregister_window(m_target_window);
         m_target_window.reset();
     }
+    m_target_image.reset();
 
     ShaderProcessor::cleanup();
 

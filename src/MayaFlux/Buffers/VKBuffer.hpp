@@ -15,6 +15,10 @@ namespace MayaFlux::Core {
 class Window;
 }
 
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
+}
+
 namespace MayaFlux::Buffers {
 
 class RenderProcessor;
@@ -400,6 +404,14 @@ public:
     /** Mark a range as invalid (needs download) */
     void mark_invalid_range(size_t offset, size_t size);
 
+    /**
+     * @brief Whether content was written since the last call, clearing the flag.
+     *
+     * Set whenever a range is marked dirty, whether or not the buffer is host visible.
+     * The root uses it to redraw an on demand image target.
+     */
+    [[nodiscard]] bool take_content_dirty() noexcept { return m_content_dirty.exchange(false, std::memory_order_acq_rel); }
+
     /** Retrieve and clear all dirty ranges */
     std::vector<std::pair<size_t, size_t>> get_and_clear_dirty_ranges();
 
@@ -424,13 +436,36 @@ public:
         m_window_pipelines[id] = window;
     }
 
-    /** @brief Withdraw one pipeline and request presentation of its former window. */
+    /** @brief Withdraw one pipeline and request presentation of its former window or image. */
     void remove_pipeline_window(RenderPipelineID id)
     {
         if (auto window = get_pipeline_window(id))
             request_presentation_refresh(window);
         m_window_pipelines.erase(id);
+        remove_pipeline_image(id);
         m_pipeline_commands.erase(id);
+    }
+
+    /** @brief Associate a pipeline of this buffer with an image target it draws into. */
+    void set_pipeline_image(RenderPipelineID id, const std::shared_ptr<Portal::Graphics::ImageTarget>& image)
+    {
+        m_image_pipelines[id] = image;
+    }
+
+    /** @brief Withdraw one pipeline's image association and ask its target to redraw. */
+    void remove_pipeline_image(RenderPipelineID id);
+
+    /** @brief The image target a pipeline of this buffer draws into, or null. */
+    [[nodiscard]] std::shared_ptr<Portal::Graphics::ImageTarget> get_pipeline_image(RenderPipelineID id) const
+    {
+        const auto it = m_image_pipelines.find(id);
+        return it != m_image_pipelines.end() ? it->second : nullptr;
+    }
+
+    /** @brief Every pipeline of this buffer that draws into an image target. */
+    [[nodiscard]] std::unordered_map<RenderPipelineID, std::shared_ptr<Portal::Graphics::ImageTarget>> get_image_pipelines() const
+    {
+        return m_image_pipelines;
     }
 
     /** @brief Queue a composition change independently of buffer processing. */
@@ -464,7 +499,7 @@ public:
      */
     bool has_render_pipeline() const
     {
-        return !m_window_pipelines.empty();
+        return !m_window_pipelines.empty() || !m_image_pipelines.empty();
     }
 
     /**
@@ -700,6 +735,8 @@ private:
     EngineContext m_engine_context;
 
     std::unordered_map<RenderPipelineID, std::shared_ptr<Core::Window>> m_window_pipelines;
+    std::unordered_map<RenderPipelineID, std::shared_ptr<Portal::Graphics::ImageTarget>> m_image_pipelines;
+    std::atomic<bool> m_content_dirty { true };
     std::unordered_map<RenderPipelineID, CommandBufferID> m_pipeline_commands;
     std::unordered_set<std::shared_ptr<Core::Window>> m_pending_presentation_refreshes;
 

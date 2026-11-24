@@ -82,6 +82,7 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_config.fragment_shader = config.fragment_shader;
 
     m_render_config.target_window = config.target_window;
+    m_render_config.target_images = config.target_images;
     m_render_config.polygon_mode = config.polygon_mode;
     m_render_config.cull_mode = config.cull_mode;
     m_render_config.triangulate = config.triangulate;

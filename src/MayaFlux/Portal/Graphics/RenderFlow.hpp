@@ -150,6 +150,28 @@ public:
      */
     void end_rendering(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
 
+    /**
+     * @brief Begin dynamic rendering into an image target
+     * @param cmd_id Primary command buffer ID
+     * @param target Target to draw into
+     * @param use_depth Attach the target's depth image. Pass false when no buffer drawn
+     *        in this scope enables depth, so the scope matches the formats they recorded.
+     *
+     * Moves the color image from shader read to color attachment and clears it to the
+     * target's clear color. A depth image, when the target has one, is cleared to 1.0 and
+     * not kept. Secondary command buffers recorded for the target's formats execute inside.
+     */
+    void begin_rendering(CommandBufferID cmd_id, ImageTarget& target, bool use_depth = true);
+
+    /**
+     * @brief End dynamic rendering into an image target
+     * @param cmd_id Primary command buffer ID
+     * @param target Target begun with begin_rendering
+     *
+     * Returns the color image to shader read, so a later pass can sample it.
+     */
+    void end_rendering(CommandBufferID cmd_id, ImageTarget& target);
+
     //==========================================================================
     // Command Recording
     //==========================================================================
