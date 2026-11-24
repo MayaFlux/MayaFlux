@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
+#include <typeindex>
+
 namespace MayaFlux {
 
 /**
@@ -37,10 +39,6 @@ concept NumericControlSlot = ControlSlot<S> && requires(S slot, double number) {
     S(number);
 };
 
-/** @brief An address that is the same for every use of one type C and differs between types. */
-template <typename C>
-inline constexpr char k_control_tag {};
-
 /**
  * @class ControlHeld
  * @brief A frozen copy of the structs a ControlValueStore holds, read back by type.
@@ -52,7 +50,7 @@ inline constexpr char k_control_tag {};
 class ControlHeld {
 public:
     struct Part {
-        const void* tag {};
+        std::type_index tag { typeid(void) };
         std::shared_ptr<const void> data;
     };
 
@@ -72,7 +70,7 @@ public:
     {
         static const C none {};
         for (const Part& part : m_parts) {
-            if (part.tag == &k_control_tag<C> && part.data) {
+            if (part.tag == std::type_index(typeid(C)) && part.data) {
                 return *static_cast<const C*>(part.data.get());
             }
         }
@@ -380,15 +378,15 @@ private:
     using SnapshotFn = std::shared_ptr<const void> (*)(const void*);
 
     struct Extension {
-        const void* tag {};
+        std::type_index tag { typeid(void) };
         std::shared_ptr<void> storage;
         SnapshotFn snapshot {};
     };
 
     template <typename C>
-    [[nodiscard]] static const void* tag() noexcept
+    [[nodiscard]] static std::type_index tag() noexcept
     {
-        return &k_control_tag<C>;
+        return std::type_index(typeid(C));
     }
 
     template <typename C>
@@ -514,7 +512,7 @@ private:
     }
 
     std::shared_ptr<void> m_storage;
-    const void* m_tag = nullptr;
+    std::type_index m_tag { typeid(void) };
     std::vector<Entry> m_slots;
     std::vector<Other> m_others;
     std::vector<Extension> m_extensions;
