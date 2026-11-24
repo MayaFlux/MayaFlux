@@ -9,11 +9,7 @@ namespace MayaFlux::Kakshya {
 /**
  * @brief Key for a cached TensorData held by a RegionSegment.
  */
-inline const Facet<TensorData>& tensor_cache()
-{
-    static const Facet<TensorData> key;
-    return key;
-}
+MAYAFLUX_API const Facet<TensorData>& tensor_cache();
 
 /**
  * @class TensorContainer

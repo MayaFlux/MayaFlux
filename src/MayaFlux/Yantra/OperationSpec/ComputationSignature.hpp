@@ -1,5 +1,7 @@
 #pragma once
 
+#include <typeindex>
+
 namespace MayaFlux::Yantra {
 
 template <typename E>
@@ -86,17 +88,16 @@ public:
 
 private:
     struct Selection {
-        const void* type;
+        std::type_index type { typeid(void) };
         uint64_t value;
 
         bool operator==(const Selection&) const = default;
     };
 
     template <typename E>
-    static const void* enum_identity()
+    static std::type_index enum_identity()
     {
-        static const char identity {};
-        return &identity;
+        return std::type_index(typeid(E));
     }
 
     std::vector<Selection> m_selections;

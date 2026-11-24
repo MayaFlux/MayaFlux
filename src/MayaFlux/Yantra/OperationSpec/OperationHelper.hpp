@@ -870,7 +870,7 @@ private:
     static DataStructureInfo reconcile_structure(
         const std::vector<std::vector<double>>& channels, const DataStructureInfo& source);
 
-    static inline Kakshya::ComplexConversionStrategy s_complex_strategy = Kakshya::ComplexConversionStrategy::MAGNITUDE;
+    static Kakshya::ComplexConversionStrategy s_complex_strategy;
 
     /**
      * @brief Create DataVariant from Eigen matrix/vector

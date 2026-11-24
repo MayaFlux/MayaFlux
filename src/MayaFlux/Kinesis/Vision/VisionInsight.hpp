@@ -197,11 +197,7 @@ MF_DESCRIBE(VisionAnalysis)
  * @brief Facet key for the frame a VisionAnalysis applies to, carried in a
  *        Datum's facets beside the analysis.
  */
-inline const Facet<std::shared_ptr<Core::VKImage>>& vision_frame()
-{
-    static const Facet<std::shared_ptr<Core::VKImage>> key;
-    return key;
-}
+MAYAFLUX_API const Facet<std::shared_ptr<Core::VKImage>>& vision_frame();
 
 } // namespace MayaFlux::Kinesis::Vision
 #include "VisionInsight.describe.hpp"

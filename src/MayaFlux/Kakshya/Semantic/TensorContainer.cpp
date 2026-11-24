@@ -5,6 +5,18 @@
 
 namespace MayaFlux::Kakshya {
 
+const Facet<std::vector<DataVariant>>& variant_cache()
+{
+    static const Facet<std::vector<DataVariant>> key;
+    return key;
+}
+
+const Facet<TensorData>& tensor_cache()
+{
+    static const Facet<TensorData> key;
+    return key;
+}
+
 namespace {
 
     std::vector<int64_t> column_major_strides(const std::vector<uint64_t>& shape)

@@ -8,6 +8,8 @@
 
 namespace MayaFlux::Yantra {
 
+Kakshya::ComplexConversionStrategy OperationHelper::s_complex_strategy = Kakshya::ComplexConversionStrategy::MAGNITUDE;
+
 namespace detail {
 
     std::pair<uint64_t, uint64_t> matrix_shape(const DataStructureInfo& info)

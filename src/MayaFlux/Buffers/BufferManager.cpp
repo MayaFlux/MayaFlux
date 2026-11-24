@@ -14,6 +14,10 @@
 
 namespace MayaFlux::Buffers {
 
+uint64_t s_registered_sample_rate { 48000 };
+uint32_t s_preferred_buffer_size { 512 };
+uint32_t s_preferred_frame_rate { 60 };
+
 BufferManager::BufferManager(
     uint32_t default_out_channels,
     uint32_t default_in_channels,
