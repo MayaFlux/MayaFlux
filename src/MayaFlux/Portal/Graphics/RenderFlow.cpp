@@ -1,6 +1,7 @@
 #include "RenderFlow.hpp"
 
 #include "ImageTarget.hpp"
+#include "TextureLoom.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/ImageAccess.hpp"
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
@@ -934,15 +935,24 @@ void RenderFlow::begin_rendering(CommandBufferID cmd_id, ImageTarget& target, bo
         return;
     }
 
+    const vk::ImageView color_view = get_texture_manager().attachment_view(image);
+    if (!color_view) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering into an image target without a view of its first level");
+        return;
+    }
+
     const vk::ImageSubresourceRange color_range { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1 };
     Core::record_image_barrier(cmd, image->get_image(), color_range,
         Core::ImageAccess::SHADER_READ, Core::ImageAccess::COLOR_ATTACHMENT);
 
     vk::RenderingAttachmentInfo color_attachment {};
-    color_attachment.imageView = image->get_image_view();
+    color_attachment.imageView = color_view;
     color_attachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
     color_attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
-    color_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+    color_attachment.loadOp = target.take_clear()
+        ? vk::AttachmentLoadOp::eClear
+        : vk::AttachmentLoadOp::eLoad;
     color_attachment.storeOp = vk::AttachmentStoreOp::eStore;
     color_attachment.clearValue.color = vk::ClearColorValue(target.clear_color());
 

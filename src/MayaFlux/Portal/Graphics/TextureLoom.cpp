@@ -13,23 +13,6 @@
 
 namespace MayaFlux::Portal::Graphics {
 
-size_t ImageKeyHash::operator()(const ImageKey& key) const noexcept
-{
-    uint64_t hash = 14695981039346656037ULL;
-    const auto mix = [&hash](uint64_t value) {
-        hash = (hash ^ value) * 1099511628211ULL;
-    };
-
-    mix(key.width);
-    mix(key.height);
-    mix(key.layers);
-    mix(key.mip_levels);
-    mix(static_cast<uint64_t>(key.format));
-    mix(static_cast<uint64_t>(key.kind));
-
-    return static_cast<size_t>(hash);
-}
-
 bool TextureLoom::s_initialized = false;
 
 bool TextureLoom::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
@@ -299,7 +282,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d_array(
 }
 
 std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
-    uint32_t width, uint32_t height, ImageFormat format)
+    uint32_t width, uint32_t height, ImageFormat format, uint32_t mip_levels)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -307,12 +290,16 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
         return nullptr;
     }
 
+    const uint32_t levels = mip_levels == 0
+        ? static_cast<uint32_t>(std::bit_width(std::max(width, height)))
+        : mip_levels;
+
     auto vk_format = to_vulkan_format(format);
     auto image = std::make_shared<Core::VKImage>(
         width, height, 1, vk_format,
         Core::VKImage::Usage::RENDER_TARGET,
         Core::VKImage::Type::TYPE_2D,
-        1, 1, Kakshya::DataModality::IMAGE_COLOR);
+        levels, 1, Kakshya::DataModality::IMAGE_COLOR);
 
     m_resource_manager->initialize_image(image);
 
@@ -326,8 +313,8 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
 
     track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "Created render target: {}x{}, format: {}",
-        width, height, vk::to_string(vk_format));
+        "Created render target: {}x{}, format: {}, mips: {}",
+        width, height, vk::to_string(vk_format), levels);
     return image;
 }
 
@@ -345,8 +332,16 @@ std::shared_ptr<ImageTarget> TextureLoom::create_image_target(const ImageTarget:
         return nullptr;
     }
 
-    auto color = create_render_target(config.width, config.height, config.format);
+    auto color = create_render_target(config.width, config.height, config.format, config.mip_levels);
     if (!color) {
+        return nullptr;
+    }
+
+    if (color->get_mip_levels() > 1 && !can_blit(color, color, config.mip_filter)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: format {} cannot make a mip chain with that filter",
+            vk::to_string(color->get_format()));
+        release_image(color);
         return nullptr;
     }
     transition_layout(color, vk::ImageLayout::eShaderReadOnlyOptimal, SubmitMode::IMMEDIATE);
@@ -365,6 +360,16 @@ std::shared_ptr<ImageTarget> TextureLoom::create_image_target(const ImageTarget:
         config.width, config.height, vk::to_string(color->get_format()), depth ? "yes" : "no");
 
     return std::shared_ptr<ImageTarget>(new ImageTarget(std::move(color), std::move(depth), config));
+}
+
+vk::ImageView TextureLoom::attachment_view(const std::shared_ptr<Core::VKImage>& image) const
+{
+    if (!is_initialized() || !image) {
+        return {};
+    }
+
+    return m_resource_manager->get_image_view(image,
+        Core::ImageViewKey { .range = { .base_mip = 0, .mip_count = 1 } });
 }
 
 std::shared_ptr<Core::VKImage> TextureLoom::create_depth_buffer(
@@ -443,15 +448,21 @@ std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
         || key.mip_levels == 0)
         return nullptr;
 
-    const auto usage = key.kind == ImageKey::Kind::STORAGE_2D
-        ? Core::VKImage::Usage::STORAGE
-        : Core::VKImage::Usage::TEXTURE_2D;
+    Core::VKImage::Usage usage = Core::VKImage::Usage::TEXTURE_2D;
+    if (key.kind == ImageKey::Kind::STORAGE_2D)
+        usage = Core::VKImage::Usage::STORAGE;
+    else if (key.kind == ImageKey::Kind::RENDER_TARGET)
+        usage = Core::VKImage::Usage::RENDER_TARGET;
+    else if (key.kind == ImageKey::Kind::DEPTH)
+        usage = Core::VKImage::Usage::DEPTH_STENCIL;
+
     if (entry.image && entry.key == key && entry.image->is_initialized()
         && entry.image->get_width() == key.width
         && entry.image->get_height() == key.height
         && entry.image->get_array_layers() == key.layers
         && entry.image->get_mip_levels() == key.mip_levels
-        && entry.image->get_format() == to_vulkan_format(key.format)
+        && (key.kind == ImageKey::Kind::DEPTH
+            || entry.image->get_format() == to_vulkan_format(key.format))
         && entry.image->get_usage() == usage) {
         return entry.image;
     }
@@ -473,6 +484,16 @@ std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
             return nullptr;
         image = create_storage_image(key.width, key.height, key.format);
         break;
+    case ImageKey::Kind::RENDER_TARGET:
+        if (key.layers != 1)
+            return nullptr;
+        image = create_render_target(key.width, key.height, key.format, key.mip_levels);
+        break;
+    case ImageKey::Kind::DEPTH:
+        if (key.layers != 1 || key.mip_levels != 1)
+            return nullptr;
+        image = create_depth_buffer(key.width, key.height);
+        break;
     }
 
     if (image) {
@@ -487,8 +508,9 @@ std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
     const ImageKey& key,
     std::span<const uint8_t> pixels)
 {
-    if (key.kind == ImageKey::Kind::STORAGE_2D || key.width == 0
-        || key.height == 0 || key.layers == 0)
+    if (key.kind != ImageKey::Kind::SAMPLED_2D && key.kind != ImageKey::Kind::SAMPLED_ARRAY)
+        return nullptr;
+    if (key.width == 0 || key.height == 0 || key.layers == 0)
         return nullptr;
 
     const size_t required = calculate_image_size(key.width, key.height, 1, key.format)

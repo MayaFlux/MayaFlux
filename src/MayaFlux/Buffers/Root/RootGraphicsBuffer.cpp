@@ -3,12 +3,14 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/DisplayService.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -95,7 +97,7 @@ void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& 
                 try {
                     auto command = child->get_pipeline_command(id);
                     if (command == Portal::Graphics::INVALID_COMMAND_BUFFER) {
-                        render->record_draw(child);
+                        render->record_draw(child, id);
                         command = child->get_pipeline_command(id);
                     }
                     if (command == Portal::Graphics::INVALID_COMMAND_BUFFER)
@@ -162,7 +164,7 @@ void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& 
                 try {
                     auto command = child->get_pipeline_command(id);
                     if (command == Portal::Graphics::INVALID_COMMAND_BUFFER) {
-                        render->record_draw(child);
+                        render->record_draw(child, id);
                         command = child->get_pipeline_command(id);
                     }
                     if (command == Portal::Graphics::INVALID_COMMAND_BUFFER)
@@ -429,6 +431,11 @@ namespace {
                 }
                 foundry.release_fence(fence);
 
+                if (target->image()->get_mip_levels() > 1) {
+                    Portal::Graphics::get_texture_manager().generate_mipmaps(
+                        target->image(), target->mip_filter(), Portal::Graphics::SubmitMode::ASYNC);
+                }
+
                 MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                     "Drew {} buffers into an image target", secondary_buffers.size());
             } catch (const std::exception& e) {
@@ -626,7 +633,7 @@ void RootGraphicsBuffer::cleanup_marked_buffers()
                 request_presentation_refresh(window);
             for (const auto& [id, image] : buf->get_image_pipelines()) {
                 if (image)
-                    image->request_redraw();
+                    image->request_clear();
             }
             for (const auto& window : buf->take_presentation_refreshes())
                 request_presentation_refresh(window);
@@ -687,8 +694,13 @@ void RootGraphicsBuffer::detach_window(const std::shared_ptr<Core::Window>& wind
 
         auto chain = buffer->get_processing_chain();
         auto remove_render = [&buffer, &chain, &window](const std::shared_ptr<RenderProcessor>& render) {
-            if (!render || render->get_target_window() != window)
+            if (!render || !render->targets_window(window))
                 return;
+
+            if (render->destination_count() > 1) {
+                render->remove_target_window(window, buffer);
+                return;
+            }
 
             if (buffer->get_default_processor() == render) {
                 buffer->set_default_processor(nullptr);

@@ -22,35 +22,6 @@ namespace MayaFlux::Portal::Graphics {
 
 using SubmitMode = Core::SubmitMode;
 
-/** @brief Immutable properties that determine whether an image can be reused. */
-struct ImageKey {
-    enum class Kind : uint8_t {
-        SAMPLED_2D,
-        SAMPLED_ARRAY,
-        STORAGE_2D
-    };
-
-    uint32_t width {};
-    uint32_t height {};
-    uint32_t layers { 1 };
-    uint32_t mip_levels { 1 };
-    ImageFormat format {};
-    Kind kind { Kind::SAMPLED_2D };
-
-    [[nodiscard]] bool operator==(const ImageKey&) const = default;
-};
-
-/** @brief Hash image allocation properties for keyed reuse. */
-struct MAYAFLUX_API ImageKeyHash {
-    [[nodiscard]] size_t operator()(const ImageKey& key) const noexcept;
-};
-
-/** @brief Image retained by the producing owner. */
-struct ImageCacheEntry {
-    ImageKey key;
-    std::shared_ptr<Core::VKImage> image;
-};
-
 /**
  * @brief One layer to layer copy that scales and converts format.
  *
@@ -259,7 +230,8 @@ public:
     std::shared_ptr<Core::VKImage> create_render_target(
         uint32_t width,
         uint32_t height,
-        ImageFormat format = ImageFormat::RGBA8);
+        ImageFormat format = ImageFormat::RGBA8,
+        uint32_t mip_levels = 1);
 
     /**
      * @brief Create a depth buffer
@@ -294,6 +266,12 @@ public:
      * texture. The target releases its images when its last holder lets go.
      */
     [[nodiscard]] std::shared_ptr<ImageTarget> create_image_target(const ImageTarget::Config& config);
+
+    /**
+     * @brief A view of the first mip level of an image, as a draw attachment takes it
+     * @return The view, or a null handle when the image is not managed by this Loom
+     */
+    [[nodiscard]] vk::ImageView attachment_view(const std::shared_ptr<Core::VKImage>& image) const;
 
     /**
      * @brief Reuse a matching image in an owner-held entry or create it once.

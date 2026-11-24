@@ -379,7 +379,7 @@ void VKBuffer::remove_pipeline_image(RenderPipelineID id)
 std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)
 {
     auto default_render = std::dynamic_pointer_cast<RenderProcessor>(m_default_processor);
-    if (default_render && default_render->get_render_pipeline_id() == id)
+    if (default_render && default_render->owns_pipeline(id))
         return default_render;
 
     if (!m_processing_chain)
@@ -388,7 +388,7 @@ std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID
     auto buffer = shared_from_this();
     for (const auto& processor : m_processing_chain->get_processors(buffer)) {
         auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
-        if (render && render->get_render_pipeline_id() == id)
+        if (render && render->owns_pipeline(id))
             return render;
     }
 
@@ -397,7 +397,7 @@ std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID
              m_processing_chain->get_postprocessor(buffer),
              m_processing_chain->get_final_processor(buffer) }) {
         auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
-        if (render && render->get_render_pipeline_id() == id)
+        if (render && render->owns_pipeline(id))
             return render;
     }
     return nullptr;
@@ -437,22 +437,22 @@ void VKBuffer::apply_render_config(
     const RenderConfig& config,
     const ShaderConfig& shader_config)
 {
-    const size_t destinations = (config.target_window ? 1U : 0U) + config.target_images.size();
-    if (destinations > 1) {
-        error<std::invalid_argument>(
-            Journal::Component::Buffers, Journal::Context::Init,
-            std::source_location::current(),
-            "A buffer takes one destination from its RenderConfig, got {}", destinations);
-    }
-
     if (!render_processor)
         render_processor = std::make_shared<RenderProcessor>(shader_config);
 
     render_processor->set_fragment_shader(config.fragment_shader);
 
     const auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
-    if (!config.target_window && !config.target_images.empty()) {
+    if (config.target_window) {
+        render_processor->set_target_window(config.target_window, self);
+        for (const auto& image : config.target_images) {
+            render_processor->add_target_image(image, self);
+        }
+    } else if (!config.target_images.empty()) {
         render_processor->set_target_image(config.target_images.front(), self);
+        for (size_t i = 1; i < config.target_images.size(); ++i) {
+            render_processor->add_target_image(config.target_images[i], self);
+        }
     } else {
         render_processor->set_target_window(config.target_window, self);
     }

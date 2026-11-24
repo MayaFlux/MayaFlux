@@ -36,28 +36,72 @@ public:
     void set_tess_control_shader(const std::string& tess_control_path);
     void set_tess_eval_shader(const std::string& tess_eval_path);
     void set_fragment_shader(const std::string& fragment_path);
+    /**
+     * @brief Make a window the only destination of this processor.
+     *
+     * Every other destination is dropped, and the pipeline is rebuilt for the
+     * window's formats.
+     */
     void set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
 
-    /** @brief Get the window targeted by this processor. */
-    std::shared_ptr<Core::Window> get_target_window() const { return m_target_window; }
-
     /**
-     * @brief Draw into an image target instead of a window.
+     * @brief Make an image target the only destination of this processor.
      *
-     * A processor has one destination. Setting an image drops a window target, and
-     * the pipeline is rebuilt for the image's formats. The target redraws.
+     * Every other destination is dropped, and the pipeline is rebuilt for the
+     * image's formats. The target redraws.
      */
     void set_target_image(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
         const std::shared_ptr<VKBuffer>& buffer);
 
-    /** @brief Get the image target of this processor, or null when it draws into a window. */
-    std::shared_ptr<Portal::Graphics::ImageTarget> get_target_image() const { return m_target_image; }
+    /** @brief Also draw into a window. Ignored when the window is already a destination. */
+    void add_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Also draw into an image target. Ignored when the target is already a destination. */
+    void add_target_image(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Stop drawing into a window and release its pipeline. */
+    void remove_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Stop drawing into an image target and release its pipeline. The target redraws. */
+    void remove_target_image(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Draw into the window, or keep its pipeline and skip it, without changing the other destinations. */
+    void set_window_enabled(bool enabled);
+
+    /** @brief Draw into an image target, or keep its pipeline and skip it, without changing the other destinations. */
+    void set_target_enabled(const std::shared_ptr<Portal::Graphics::ImageTarget>& image, bool enabled);
+
+    /** @brief The window this processor draws into, or null. */
+    [[nodiscard]] std::shared_ptr<Core::Window> get_target_window() const;
+
+    /** @brief The first image target this processor draws into, or null. */
+    [[nodiscard]] std::shared_ptr<Portal::Graphics::ImageTarget> get_target_image() const;
+
+    /** @brief Every image target this processor draws into. */
+    [[nodiscard]] std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> get_target_images() const;
 
     /** @brief Images bound as textures by this processor, so the root can draw their producers first. */
     [[nodiscard]] std::vector<std::shared_ptr<Core::VKImage>> bound_textures() const;
 
-    Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
+    /** @brief The pipeline of the first destination. */
+    Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_lanes.front()->pipeline; }
+
+    /** @brief Whether a pipeline belongs to one of this processor's destinations. */
+    [[nodiscard]] bool owns_pipeline(Portal::Graphics::RenderPipelineID id) const;
+
+    /** @brief Whether this processor draws into the window. */
+    [[nodiscard]] bool targets_window(const std::shared_ptr<Core::Window>& window) const { return find_lane(window) != nullptr; }
+
+    /** @brief How many places this processor draws into. */
+    [[nodiscard]] size_t destination_count() const noexcept
+    {
+        return static_cast<size_t>(std::ranges::count_if(m_lanes, [](const auto& lane) { return lane->window || lane->image; }));
+    }
 
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
@@ -76,12 +120,13 @@ public:
 
     /**
      * @brief Record the buffer's prepared geometry into a fresh secondary command buffer.
+     * @param pipeline The destination to record for, one of this processor's pipelines.
      *
      * Does not advance feeds, upload geometry, or dispatch milling. Both normal
      * processing and presentation refreshes use this operation. A buffer that has
      * not prepared geometry yet records nothing.
      */
-    void record_draw(const std::shared_ptr<VKBuffer>& buffer);
+    void record_draw(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::RenderPipelineID pipeline);
 
     /// Set primitive topology (e.g., triangle list, line list, point list)
     inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
@@ -90,7 +135,7 @@ public:
             return;
         }
         m_primitive_topology = topology;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
         invalidate_all_mills();
     }
 
@@ -101,7 +146,7 @@ public:
             return;
         }
         m_polygon_mode = mode;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
         invalidate_all_mills();
     }
 
@@ -112,7 +157,7 @@ public:
             return;
         }
         m_cull_mode = mode;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
     }
 
     /**
@@ -171,7 +216,7 @@ public:
     /**
      * @brief Check if pipeline is created
      */
-    bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE; }
+    bool is_pipeline_ready() const { return m_lanes.front()->pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE; }
 
     /**
      * @brief Set vertex range for drawing subset of buffer
@@ -209,7 +254,7 @@ public:
             return;
         }
         m_blend_attachment = config;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
     }
 
     /** @brief Enable standard alpha blending (src_alpha, one_minus_src_alpha). Does not touch depth state. */
@@ -408,6 +453,12 @@ protected:
      */
     const Kinesis::RenderTransform& publish_render_transform();
 
+    /** @brief Resolve the view and geometry transforms without writing them anywhere. */
+    const Kinesis::RenderTransform& resolve_render_transform();
+
+    /** @brief Write the resolved transform to the current destination's UBO when it changed. */
+    void write_render_transform();
+
     /** @brief Transform published for this frame by publish_render_transform(). */
     [[nodiscard]] const Kinesis::RenderTransform& published_render_transform() const
     {
@@ -431,13 +482,73 @@ private:
         uint32_t milled_count {};
     };
 
-    Portal::Graphics::RenderPipelineID m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     Portal::Graphics::ShaderID m_geometry_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
-    std::shared_ptr<Core::Window> m_target_window;
-    std::shared_ptr<Portal::Graphics::ImageTarget> m_target_image;
+
+    /**
+     * @brief One place this processor draws into, with everything that belongs to it alone.
+     *
+     * Shaders, geometry, bindings and draw runs are shared by every lane. The
+     * first lane keeps its shader processor state in ShaderProcessor, as a
+     * processor with one destination always did. The others hold theirs here and
+     * trade it with ShaderProcessor while they run.
+     */
+    struct Lane {
+        std::shared_ptr<Core::Window> window;
+        std::shared_ptr<Portal::Graphics::ImageTarget> image;
+        Portal::Graphics::RenderPipelineID pipeline { Portal::Graphics::INVALID_RENDER_PIPELINE };
+        Portal::Graphics::SlotArena transform_arena;
+        size_t transform_slot {};
+        std::optional<Kinesis::RenderTransform> written_transform;
+        bool enabled { true };
+
+        std::vector<Portal::Graphics::DescriptorSetID> descriptor_sets;
+        std::optional<uint64_t> created_layout;
+        bool initialized {};
+        bool descriptors_ready {};
+        bool needs_pipeline { true };
+        bool needs_descriptors { true };
+    };
+
+    std::vector<std::unique_ptr<Lane>> m_lanes;
+    Lane* m_lane { nullptr };
+
+    /** @brief Runs a lane as the current one, trading its shader processor state in and out. */
+    class ActiveLane {
+    public:
+        ActiveLane(RenderProcessor& owner, Lane& lane);
+        ~ActiveLane();
+        ActiveLane(const ActiveLane&) = delete;
+        ActiveLane& operator=(const ActiveLane&) = delete;
+
+    private:
+        RenderProcessor& m_owner;
+        Lane* m_previous;
+        bool m_swapped;
+    };
+
+    void exchange_shader_state(Lane& lane);
+
+    template <typename Destination>
+    [[nodiscard]] Lane* find_lane(const std::shared_ptr<Destination>& destination) const
+    {
+        const auto found = std::ranges::find_if(m_lanes, [&destination](const auto& lane) {
+            if constexpr (std::is_same_v<Destination, Core::Window>) {
+                return lane->window && lane->window == destination;
+            } else {
+                return lane->image && lane->image == destination;
+            }
+        });
+        return found == m_lanes.end() ? nullptr : found->get();
+    }
+
+    [[nodiscard]] Lane& claim_lane();
+    void clear_destinations(const std::shared_ptr<VKBuffer>& buffer);
+    void drop_lane(Lane& lane, const std::shared_ptr<VKBuffer>& buffer);
+    void release_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
+    void invalidate_pipelines();
 
     /** @brief What the pipeline and the viewport need to know about the destination. */
     struct DestinationInfo {
@@ -447,8 +558,8 @@ private:
         uint32_t height {};
     };
 
-    [[nodiscard]] bool has_destination() const noexcept { return m_target_window || m_target_image; }
-    [[nodiscard]] bool destination_ready() const;
+    [[nodiscard]] bool has_destination() const noexcept { return m_lane->window || m_lane->image; }
+    [[nodiscard]] bool destination_ready(const Lane& lane) const;
     [[nodiscard]] DestinationInfo describe() const;
     [[nodiscard]] std::string destination_name() const;
     void request_refresh(const std::shared_ptr<VKBuffer>& buffer) const;
@@ -476,9 +587,6 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    Portal::Graphics::SlotArena m_render_transform_arena;
-    size_t m_render_transform_slot {};
-    std::optional<Kinesis::RenderTransform> m_written_render_transform;
 
     /**
      * @brief A replaced pipeline kept alive until the frames that may still use it finish
