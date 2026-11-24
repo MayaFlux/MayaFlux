@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ImageAccess.hpp"
 #include "VKCommandManager.hpp"
 
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
@@ -144,6 +145,42 @@ public:
         const std::shared_ptr<VKImage>& image,
         vk::ImageLayout new_layout,
         SubmitMode mode = SubmitMode::DEFERRED);
+
+    /**
+     * @brief Record a barrier between two uses of an image into a command buffer being recorded
+     * @param cmd Command buffer in the recording state, outside any dynamic rendering scope
+     * @param image Initialized image
+     * @param from The use the range leaves
+     * @param to The use the range enters
+     * @param range Mip levels and layers to move; the whole image by default
+     *
+     * The caller names the use being left, since the tracked layout is one value for
+     * the whole image and cannot describe a range. Moving the whole image sets the
+     * tracked layout to the layout of @p to when the barrier is recorded. Moving a range
+     * leaves the tracked layout alone, so whoever transitions ranges owns their layouts.
+     * A pass recorded elsewhere reports where it left an image with
+     * VKImage::set_current_layout.
+     */
+    void record_image_transition(
+        vk::CommandBuffer cmd,
+        const std::shared_ptr<VKImage>& image,
+        ImageAccess from,
+        ImageAccess to,
+        const ImageRange& range = {});
+
+    /**
+     * @brief A view of part of a managed image, created on first request
+     * @param image Image created through this manager
+     * @param key What the view covers; a default key covers the whole image
+     * @return The view, or a null handle if the image is not managed or the key lies outside it
+     *
+     * Views are cached on the image's allocation and destroyed with it, so one stays
+     * valid as long as a command that retained the allocation through
+     * retain_image_allocation. The whole-image view is VKImage::get_image_view().
+     */
+    [[nodiscard]] vk::ImageView get_image_view(
+        const std::shared_ptr<VKImage>& image,
+        const ImageViewKey& key = {});
 
     /**
      * @brief Upload a whole color image from host memory.
@@ -309,6 +346,7 @@ private:
         vk::Image image;
         vk::ImageView view;
         vk::DeviceMemory memory;
+        std::vector<std::pair<ImageViewKey, vk::ImageView>> sub_views;
 
         ~ImageAllocation();
     };
