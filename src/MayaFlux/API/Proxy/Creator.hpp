@@ -121,7 +121,7 @@ public:
      * volume, or SpatialFieldConfig over a field-compatible network. Each call
      * performs the whole sequence and returns the real object, which then
      * advances on its own each cycle. The call sets it going and does not step
-     * it. Every call requires RenderConfig::target_window.
+     * it. Every call requires RenderConfig::target_window or target_images.
      *
      * @code
      * auto life  = vega.evolve(grid_config, seed, { .target_window = window });
@@ -142,7 +142,7 @@ public:
      * Model and Instances the node or network is reached through the buffer's
      * get_node or get_network. Mint builds form and does not advance state,
      * which is what evolve is for. Every config requires
-     * RenderConfig::target_window.
+     * RenderConfig::target_window or target_images.
      *
      * @code
      * auto form = vega.mint(StructureConfig::Object {

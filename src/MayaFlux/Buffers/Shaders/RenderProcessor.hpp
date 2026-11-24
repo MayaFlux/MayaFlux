@@ -54,6 +54,18 @@ public:
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
         const std::shared_ptr<VKBuffer>& buffer);
 
+    /**
+     * @brief Make a window and image targets the destinations of this processor.
+     *
+     * The window takes the first place when there is one. With no window the
+     * first image does, and the others are added. Every earlier destination is
+     * dropped. Logs when there is no destination at all.
+     */
+    void set_destinations(
+        const std::shared_ptr<Core::Window>& window,
+        const std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>>& images,
+        const std::shared_ptr<VKBuffer>& buffer);
+
     /** @brief Also draw into a window. Ignored when the window is already a destination. */
     void add_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
 

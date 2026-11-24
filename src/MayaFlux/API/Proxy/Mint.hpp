@@ -20,7 +20,7 @@ namespace MayaFlux {
  * Each overload performs the complete sequence for one arrangement: resolve
  * its source, construct any required network, register the network and buffer
  * in their required order, attach textures and configure rendering. Every
- * config requires RenderConfig::target_window.
+ * config requires RenderConfig::target_window or target_images.
  *
  * Nothing here is realtime safe. Call from the thread that constructs the
  * objects.

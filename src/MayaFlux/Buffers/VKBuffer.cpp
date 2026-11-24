@@ -442,20 +442,9 @@ void VKBuffer::apply_render_config(
 
     render_processor->set_fragment_shader(config.fragment_shader);
 
-    const auto self = std::dynamic_pointer_cast<VKBuffer>(shared_from_this());
-    if (config.target_window) {
-        render_processor->set_target_window(config.target_window, self);
-        for (const auto& image : config.target_images) {
-            render_processor->add_target_image(image, self);
-        }
-    } else if (!config.target_images.empty()) {
-        render_processor->set_target_image(config.target_images.front(), self);
-        for (size_t i = 1; i < config.target_images.size(); ++i) {
-            render_processor->add_target_image(config.target_images[i], self);
-        }
-    } else {
-        render_processor->set_target_window(config.target_window, self);
-    }
+    render_processor->set_destinations(
+        config.target_window, config.target_images,
+        std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
 
     render_processor->set_primitive_topology(config.topology);
     render_processor->set_triangulate(config.triangulate);

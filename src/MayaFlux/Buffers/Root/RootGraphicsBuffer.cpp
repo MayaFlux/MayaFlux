@@ -3,16 +3,239 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
-#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/DisplayService.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
-#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
+
+namespace {
+
+using ImageTargetPtr = std::shared_ptr<Portal::Graphics::ImageTarget>;
+using RenderableInfo = RootGraphicsBuffer::RenderableBufferInfo;
+using Children = std::vector<std::shared_ptr<VKBuffer>>;
+
+/**
+ * Active targets that buffers draw into, each once, taking the redraw request
+ * a changed buffer implies.
+ */
+std::vector<ImageTargetPtr> collect_targets(const Children& children)
+{
+    std::vector<ImageTargetPtr> targets;
+    for (const auto& child : children) {
+        if (!child || child->needs_removal())
+            continue;
+
+        const bool changed = child->take_content_dirty();
+        for (const auto& [id, image] : child->get_image_pipelines()) {
+            if (!image || !image->active())
+                continue;
+            if (changed)
+                image->request_redraw();
+            if (std::ranges::find(targets, image) == targets.end())
+                targets.push_back(image);
+        }
+    }
+    return targets;
+}
+
+/**
+ * Which targets redraw: those that asked, and any whose buffers sample the
+ * image of one that does, until no more are added.
+ */
+std::vector<bool> redrawing(const Children& children, const std::vector<ImageTargetPtr>& targets)
+{
+    std::vector<bool> drawing;
+    drawing.reserve(targets.size());
+    for (const auto& target : targets)
+        drawing.push_back(target->take_redraw());
+
+    const auto samples_a_redrawing_source = [&](size_t consumer) {
+        for (const auto& child : children) {
+            if (!child || child->needs_removal())
+                continue;
+            for (const auto& [id, target] : child->get_image_pipelines()) {
+                if (target != targets[consumer])
+                    continue;
+                const auto render = child->get_render_processor(id);
+                if (!render || !render->is_visible(child))
+                    continue;
+                for (const auto& texture : render->bound_textures()) {
+                    for (size_t source = 0; source < targets.size(); ++source) {
+                        if (drawing[source] && source != consumer && targets[source]->image() == texture)
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
+    };
+
+    for (bool grew = true; grew;) {
+        grew = false;
+        for (size_t consumer = 0; consumer < targets.size(); ++consumer) {
+            if (!drawing[consumer] && samples_a_redrawing_source(consumer)) {
+                drawing[consumer] = true;
+                grew = true;
+            }
+        }
+    }
+    return drawing;
+}
+
+/**
+ * Targets in the order they draw: one whose image another target's buffers
+ * bind as a texture draws before that target. A cycle keeps its given order.
+ */
+std::vector<ImageTargetPtr> order_image_targets(
+    const std::vector<ImageTargetPtr>& targets,
+    const std::unordered_map<ImageTargetPtr, std::vector<const RenderableInfo*>>& groups)
+{
+    std::unordered_map<ImageTargetPtr, std::vector<ImageTargetPtr>> producers;
+    for (const auto& consumer : targets) {
+        for (const auto* info : groups.at(consumer)) {
+            const auto render = info->buffer->get_render_processor(info->pipeline_id);
+            if (!render)
+                continue;
+            for (const auto& texture : render->bound_textures()) {
+                for (const auto& producer : targets) {
+                    if (producer != consumer && producer->image() == texture)
+                        producers[consumer].push_back(producer);
+                }
+            }
+        }
+    }
+
+    std::vector<ImageTargetPtr> ordered;
+    std::vector<ImageTargetPtr> remaining = targets;
+    while (!remaining.empty()) {
+        auto next = std::ranges::find_if(remaining, [&](const ImageTargetPtr& candidate) {
+            const auto found = producers.find(candidate);
+            if (found == producers.end())
+                return true;
+            return std::ranges::all_of(found->second, [&](const ImageTargetPtr& producer) {
+                return std::ranges::find(ordered, producer) != ordered.end();
+            });
+        });
+        if (next == remaining.end())
+            next = remaining.begin();
+        ordered.push_back(*next);
+        remaining.erase(next);
+    }
+    return ordered;
+}
+
+std::vector<RenderableInfo> record_image_targets(const Children& children)
+{
+    const auto targets = collect_targets(children);
+    const auto drawing = redrawing(children, targets);
+
+    std::vector<RenderableInfo> recorded;
+    std::vector<Portal::Graphics::CommandBufferID> skipped;
+    for (size_t index = 0; index < targets.size(); ++index) {
+        const auto& image = targets[index];
+
+        if (!drawing[index]) {
+            for (const auto& child : children) {
+                if (!child)
+                    continue;
+                for (const auto& [id, target] : child->get_image_pipelines()) {
+                    const auto command = child->get_pipeline_command(id);
+                    if (target == image && command != Portal::Graphics::INVALID_COMMAND_BUFFER)
+                        skipped.push_back(command);
+                }
+            }
+            continue;
+        }
+
+        for (const auto& child : children) {
+            if (!child || child->needs_removal())
+                continue;
+
+            for (const auto& [id, target] : child->get_image_pipelines()) {
+                if (target != image)
+                    continue;
+
+                auto render = child->get_render_processor(id);
+                if (!render || !render->is_visible(child))
+                    continue;
+
+                try {
+                    auto command = child->get_pipeline_command(id);
+                    if (command == Portal::Graphics::INVALID_COMMAND_BUFFER) {
+                        render->record_draw(child, id);
+                        command = child->get_pipeline_command(id);
+                    }
+                    if (command == Portal::Graphics::INVALID_COMMAND_BUFFER)
+                        continue;
+
+                    RenderableInfo info;
+                    info.buffer = child;
+                    info.target_image = image;
+                    info.pipeline_id = id;
+                    info.command_buffer_id = command;
+                    info.needs_depth = child->needs_depth_attachment();
+                    recorded.push_back(info);
+                } catch (const std::exception& e) {
+                    MF_RT_ERROR(Journal::Component::Core, Journal::Context::BufferProcessing,
+                        "Error recording graphics buffer for an image target: {}", e.what());
+                }
+            }
+        }
+    }
+
+    if (!skipped.empty()) {
+        Portal::Graphics::get_shader_foundry().retire_after_submit(skipped);
+    }
+    return recorded;
+}
+
+/**
+ * One scope per image target that has something recorded. A target whose image
+ * another target's buffers bind as a texture draws first.
+ */
+void draw_image_targets(const std::vector<RenderableInfo>& renderables)
+{
+    std::vector<ImageTargetPtr> targets;
+    std::unordered_map<ImageTargetPtr, std::vector<const RenderableInfo*>> groups;
+    for (const auto& renderable : renderables) {
+        if (!renderable.target_image
+            || renderable.command_buffer_id == Portal::Graphics::INVALID_COMMAND_BUFFER) {
+            continue;
+        }
+        auto& group = groups[renderable.target_image];
+        if (group.empty())
+            targets.push_back(renderable.target_image);
+        group.push_back(&renderable);
+    }
+
+    auto& flow = Portal::Graphics::get_render_flow();
+
+    for (const auto& target : order_image_targets(targets, groups)) {
+        const auto& infos = groups.at(target);
+
+        std::vector<Portal::Graphics::CommandBufferID> secondaries;
+        for (const auto* info : infos)
+            secondaries.push_back(info->command_buffer_id);
+
+        const bool use_depth = std::ranges::any_of(infos, [](const RenderableInfo* info) {
+            return info->needs_depth;
+        });
+
+        if (const auto point = flow.draw_image_target(*target, secondaries, use_depth)) {
+            for (const auto* info : infos)
+                info->buffer->note_use(point.timeline, point.value);
+        }
+
+        for (const auto* info : infos)
+            info->buffer->clear_pipeline_commands();
+    }
+}
+
+}
 
 GraphicsBatchProcessor::GraphicsBatchProcessor(std::shared_ptr<Buffer> root_buffer)
     : m_root_buffer(std::dynamic_pointer_cast<RootGraphicsBuffer>(std::move(root_buffer)))
@@ -118,76 +341,8 @@ void GraphicsBatchProcessor::processing_function(const std::shared_ptr<Buffer>& 
         }
     }
 
-    std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> image_targets;
-    for (const auto& child : root_buf->get_child_buffers()) {
-        if (!child || child->needs_removal())
-            continue;
-
-        const bool changed = child->take_content_dirty();
-        for (const auto& [id, image] : child->get_image_pipelines()) {
-            if (!image || !image->active())
-                continue;
-            if (changed)
-                image->request_redraw();
-            if (std::ranges::find(image_targets, image) == image_targets.end())
-                image_targets.push_back(image);
-        }
-    }
-
-    std::vector<Portal::Graphics::CommandBufferID> skipped_commands;
-    for (const auto& image : image_targets) {
-        if (!image->take_redraw()) {
-            for (const auto& child : root_buf->get_child_buffers()) {
-                if (!child)
-                    continue;
-                for (const auto& [id, target] : child->get_image_pipelines()) {
-                    const auto command = child->get_pipeline_command(id);
-                    if (target == image && command != Portal::Graphics::INVALID_COMMAND_BUFFER)
-                        skipped_commands.push_back(command);
-                }
-            }
-            continue;
-        }
-
-        for (const auto& child : root_buf->get_child_buffers()) {
-            if (!child || child->needs_removal())
-                continue;
-
-            for (const auto& [id, target] : child->get_image_pipelines()) {
-                if (target != image)
-                    continue;
-
-                auto render = child->get_render_processor(id);
-                if (!render || !render->is_visible(child))
-                    continue;
-
-                try {
-                    auto command = child->get_pipeline_command(id);
-                    if (command == Portal::Graphics::INVALID_COMMAND_BUFFER) {
-                        render->record_draw(child, id);
-                        command = child->get_pipeline_command(id);
-                    }
-                    if (command == Portal::Graphics::INVALID_COMMAND_BUFFER)
-                        continue;
-
-                    RootGraphicsBuffer::RenderableBufferInfo info;
-                    info.buffer = child;
-                    info.target_image = image;
-                    info.pipeline_id = id;
-                    info.command_buffer_id = command;
-                    info.needs_depth = child->needs_depth_attachment();
-                    root_buf->add_renderable_buffer(info);
-                } catch (const std::exception& e) {
-                    MF_RT_ERROR(Journal::Component::Core, Journal::Context::BufferProcessing,
-                        "Error recording graphics buffer for an image target: {}", e.what());
-                }
-            }
-        }
-    }
-
-    if (!skipped_commands.empty()) {
-        Portal::Graphics::get_shader_foundry().retire_after_submit(skipped_commands);
-    }
+    for (const auto& info : record_image_targets(root_buf->get_child_buffers()))
+        root_buf->add_renderable_buffer(info);
 
     root_buf->sort_renderable_buffers();
 }
@@ -315,142 +470,6 @@ void PresentProcessor::set_callback(RenderCallback callback)
         m_attached);
 }
 
-namespace {
-
-    using ImageTargetPtr = std::shared_ptr<Portal::Graphics::ImageTarget>;
-    using RenderableInfo = RootGraphicsBuffer::RenderableBufferInfo;
-
-    /**
-     * Targets in the order they draw: one whose image another target's buffers
-     * bind as a texture draws before that target. A cycle keeps its given order.
-     */
-    std::vector<ImageTargetPtr> order_image_targets(
-        const std::vector<ImageTargetPtr>& targets,
-        const std::unordered_map<ImageTargetPtr, std::vector<const RenderableInfo*>>& groups)
-    {
-        std::unordered_map<ImageTargetPtr, std::vector<ImageTargetPtr>> producers;
-        for (const auto& consumer : targets) {
-            for (const auto* info : groups.at(consumer)) {
-                const auto render = info->buffer->get_render_processor(info->pipeline_id);
-                if (!render)
-                    continue;
-                for (const auto& texture : render->bound_textures()) {
-                    for (const auto& producer : targets) {
-                        if (producer != consumer && producer->image() == texture)
-                            producers[consumer].push_back(producer);
-                    }
-                }
-            }
-        }
-
-        std::vector<ImageTargetPtr> ordered;
-        std::vector<ImageTargetPtr> remaining = targets;
-        while (!remaining.empty()) {
-            auto next = std::ranges::find_if(remaining, [&](const ImageTargetPtr& candidate) {
-                const auto found = producers.find(candidate);
-                if (found == producers.end())
-                    return true;
-                return std::ranges::all_of(found->second, [&](const ImageTargetPtr& producer) {
-                    return std::ranges::find(ordered, producer) != ordered.end();
-                });
-            });
-            if (next == remaining.end())
-                next = remaining.begin();
-            ordered.push_back(*next);
-            remaining.erase(next);
-        }
-        return ordered;
-    }
-
-    /**
-     * One scope per image target that has something to draw, submitted on the
-     * graphics queue and recorded as produced, so a later submission that
-     * samples the image waits for it.
-     */
-    void draw_image_targets(
-        const std::vector<RenderableInfo>& renderables,
-        std::vector<Portal::Graphics::CommandBufferID>& retire_ids)
-    {
-        std::vector<ImageTargetPtr> targets;
-        std::unordered_map<ImageTargetPtr, std::vector<const RenderableInfo*>> groups;
-        for (const auto& renderable : renderables) {
-            if (!renderable.target_image
-                || renderable.command_buffer_id == Portal::Graphics::INVALID_COMMAND_BUFFER) {
-                continue;
-            }
-            auto& group = groups[renderable.target_image];
-            if (group.empty())
-                targets.push_back(renderable.target_image);
-            group.push_back(&renderable);
-        }
-
-        if (targets.empty())
-            return;
-
-        auto& foundry = Portal::Graphics::get_shader_foundry();
-        auto& flow = Portal::Graphics::get_render_flow();
-
-        for (const auto& target : order_image_targets(targets, groups)) {
-            const auto& infos = groups.at(target);
-
-            const auto primary_cmd_id = foundry.begin_commands(Portal::Graphics::ShaderFoundry::CommandBufferType::GRAPHICS);
-            auto primary_cmd = foundry.get_command_buffer(primary_cmd_id);
-            if (!primary_cmd) {
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Failed to create a primary command buffer for an image target");
-                for (const auto* info : infos)
-                    info->buffer->clear_pipeline_commands();
-                continue;
-            }
-
-            try {
-                foundry.hold_image(primary_cmd_id, target->image());
-                if (target->depth_image())
-                    foundry.hold_image(primary_cmd_id, target->depth_image());
-
-                const bool use_depth = std::ranges::any_of(infos, [](const RenderableInfo* info) {
-                    return info->needs_depth;
-                });
-                flow.begin_rendering(primary_cmd_id, *target, use_depth);
-
-                std::vector<vk::CommandBuffer> secondary_buffers;
-                for (const auto* info : infos) {
-                    if (auto secondary = foundry.get_command_buffer(info->command_buffer_id))
-                        secondary_buffers.push_back(secondary);
-                }
-                if (!secondary_buffers.empty())
-                    primary_cmd.executeCommands(secondary_buffers);
-
-                flow.end_rendering(primary_cmd_id, *target);
-
-                const auto fence = foundry.submit_async(primary_cmd_id);
-                const auto point = foundry.fence_point(fence);
-                if (point) {
-                    for (const auto* info : infos)
-                        info->buffer->note_use(point.timeline, point.value);
-                }
-                foundry.release_fence(fence);
-
-                if (target->image()->get_mip_levels() > 1) {
-                    Portal::Graphics::get_texture_manager().generate_mipmaps(
-                        target->image(), target->mip_filter(), Portal::Graphics::SubmitMode::ASYNC);
-                }
-
-                MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Drew {} buffers into an image target", secondary_buffers.size());
-            } catch (const std::exception& e) {
-                retire_ids.push_back(primary_cmd_id);
-                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                    "Failed to draw into an image target: {}", e.what());
-            }
-
-            for (const auto* info : infos)
-                info->buffer->clear_pipeline_commands();
-        }
-    }
-
-}
-
 void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffer>& root)
 {
     const auto& renderable_buffers = root->get_renderable_buffers();
@@ -468,7 +487,7 @@ void PresentProcessor::fallback_renderer(const std::shared_ptr<RootGraphicsBuffe
         }
     }
 
-    draw_image_targets(renderable_buffers, retire_ids);
+    draw_image_targets(renderable_buffers);
 
     std::unordered_map<std::shared_ptr<Core::Window>, std::vector<const RootGraphicsBuffer::RenderableBufferInfo*>> buffers_by_window;
     for (auto it = pending_refreshes.begin(); it != pending_refreshes.end();) {

@@ -354,9 +354,9 @@ struct RenderConfig {
     /**
      * @brief Images to draw into instead of, or besides, a window.
      *
-     * A buffer's primary render processor takes the window when there is one,
-     * otherwise the first image. A buffer takes one destination from this config,
-     * so more than one in total is refused.
+     * The window and every image are destinations of the buffer's primary render
+     * processor, each with its own pipeline. The same image listed twice is one
+     * destination.
      */
     std::vector<std::shared_ptr<ImageTarget>> target_images;
     std::string vertex_shader;

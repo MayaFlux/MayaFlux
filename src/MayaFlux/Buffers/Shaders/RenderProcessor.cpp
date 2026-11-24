@@ -222,6 +222,30 @@ void RenderProcessor::set_target_image(
     image->request_clear();
 }
 
+void RenderProcessor::set_destinations(
+    const std::shared_ptr<Core::Window>& window,
+    const std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>>& images,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (window) {
+        set_target_window(window, buffer);
+        for (const auto& image : images) {
+            add_target_image(image, buffer);
+        }
+        return;
+    }
+
+    if (images.empty()) {
+        set_target_window(window, buffer);
+        return;
+    }
+
+    set_target_image(images.front(), buffer);
+    for (size_t i = 1; i < images.size(); ++i) {
+        add_target_image(images[i], buffer);
+    }
+}
+
 void RenderProcessor::add_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
 {
     if (!window) {

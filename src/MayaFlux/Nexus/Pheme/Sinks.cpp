@@ -174,7 +174,7 @@ void add_render_sink(
     renderer->enable_depth_test();
     buf->set_needs_depth_attachment(true);
 
-    renderer->set_target_window(rc.target_window, buf);
+    renderer->set_destinations(rc.target_window, rc.target_images, buf);
     buf->set_render_processor(renderer);
     buf->get_processing_chain()->add_final_processor(renderer, buf);
 

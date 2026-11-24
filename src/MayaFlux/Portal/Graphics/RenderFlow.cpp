@@ -1013,6 +1013,55 @@ void RenderFlow::end_rendering(CommandBufferID cmd_id, ImageTarget& target)
         "Ended dynamic rendering into an image target");
 }
 
+Core::TimelinePoint RenderFlow::draw_image_target(
+    ImageTarget& target,
+    const std::vector<CommandBufferID>& secondary_ids,
+    bool use_depth)
+{
+    const auto primary_id = m_shader_foundry->begin_commands(ShaderFoundry::CommandBufferType::GRAPHICS);
+    auto primary = m_shader_foundry->get_command_buffer(primary_id);
+    if (!primary) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to create a primary command buffer for an image target");
+        return {};
+    }
+
+    try {
+        m_shader_foundry->hold_image(primary_id, target.image());
+        if (target.depth_image())
+            m_shader_foundry->hold_image(primary_id, target.depth_image());
+
+        begin_rendering(primary_id, target, use_depth);
+
+        std::vector<vk::CommandBuffer> secondaries;
+        for (const auto id : secondary_ids) {
+            if (auto secondary = m_shader_foundry->get_command_buffer(id))
+                secondaries.push_back(secondary);
+        }
+        if (!secondaries.empty())
+            primary.executeCommands(secondaries);
+
+        end_rendering(primary_id, target);
+
+        const auto fence = m_shader_foundry->submit_async(primary_id);
+        const auto point = m_shader_foundry->fence_point(fence);
+        m_shader_foundry->release_fence(fence);
+
+        if (target.image()->get_mip_levels() > 1) {
+            get_texture_manager().generate_mipmaps(target.image(), target.mip_filter(), SubmitMode::ASYNC);
+        }
+
+        MF_RT_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+            "Drew {} buffers into an image target", secondaries.size());
+        return point;
+    } catch (const std::exception& e) {
+        m_shader_foundry->retire_after_submit(std::span<const CommandBufferID> { &primary_id, 1 });
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to draw into an image target: {}", e.what());
+        return {};
+    }
+}
+
 //==============================================================================
 // Command Recording
 //==============================================================================

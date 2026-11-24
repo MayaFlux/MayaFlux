@@ -172,6 +172,23 @@ public:
      */
     void end_rendering(CommandBufferID cmd_id, ImageTarget& target);
 
+    /**
+     * @brief Draw recorded secondary command buffers into an image target and submit
+     * @param target Target to draw into
+     * @param secondary_ids Secondary command buffers recorded for the target's formats
+     * @param use_depth Attach the target's depth image, as begin_rendering takes it
+     * @return The point the submission completes at, or an empty point when nothing was submitted
+     *
+     * One scope: begin rendering, execute the secondaries, end rendering, submit on the
+     * graphics queue and note the point as produced, so a later submission that samples
+     * the image waits for it. A target with a mip chain gets its chain generated right
+     * after. The caller notes its buffers' use of the point.
+     */
+    Core::TimelinePoint draw_image_target(
+        ImageTarget& target,
+        const std::vector<CommandBufferID>& secondary_ids,
+        bool use_depth = true);
+
     //==========================================================================
     // Command Recording
     //==========================================================================
