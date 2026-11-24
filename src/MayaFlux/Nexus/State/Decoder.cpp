@@ -2,9 +2,9 @@
 
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 
-#include "MayaFlux/IO/Image/ImageReader.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include "MayaFlux/Transitive/Facet/ControlValueText.hpp"
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
 
 namespace MayaFlux::Nexus {
@@ -12,7 +12,7 @@ namespace MayaFlux::Nexus {
 namespace {
 
     // -------------------------------------------------------------------------
-    // Versions and pixels
+    // Versions
     // -------------------------------------------------------------------------
 
     bool version_supported(uint32_t version)
@@ -25,161 +25,6 @@ namespace {
         return "Unsupported schema version: " + std::to_string(version)
             + " (supported " + std::to_string(State::k_schema_min_version)
             + " to " + std::to_string(State::k_schema_version) + ")";
-    }
-
-    constexpr uint32_t k_member_keys_version = 7;
-
-    void rename_key(nlohmann::json& object, const char* from, const char* to)
-    {
-        if (object.is_object() && object.contains(from) && !object.contains(to)) {
-            object[to] = std::move(object[from]);
-            object.erase(from);
-        }
-    }
-
-    void migrate_schema(nlohmann::json& document)
-    {
-        if (!document.is_object() || document.value("version", k_member_keys_version) >= k_member_keys_version) {
-            return;
-        }
-
-        if (const auto ranges = document.find("ranges"); ranges != document.end()) {
-            rename_key(*ranges, "position.x", "pos_x");
-            rename_key(*ranges, "position.y", "pos_y");
-            rename_key(*ranges, "position.z", "pos_z");
-            rename_key(*ranges, "color.r", "color_r");
-            rename_key(*ranges, "color.g", "color_g");
-            rename_key(*ranges, "color.b", "color_b");
-        }
-
-        if (const auto entities = document.find("entities"); entities != document.end() && entities->is_array()) {
-            for (auto& entity : *entities) {
-                rename_key(entity, "falloff_curve", "falloff_curve_name");
-                if (const auto nav = entity.find("locus_nav"); nav != entity.end()) {
-                    rename_key(*nav, "near", "near_plane");
-                    rename_key(*nav, "far", "far_plane");
-                }
-                const auto wiring = entity.find("wiring");
-                if (wiring == entity.end() || !wiring->is_object()) {
-                    continue;
-                }
-                if (const auto steps = wiring->find("steps"); steps != wiring->end() && steps->is_array()) {
-                    for (auto& step : *steps) {
-                        rename_key(step, "delay", "delay_seconds");
-                    }
-                }
-            }
-        }
-
-        if (const auto expanses = document.find("expanses"); expanses != document.end() && expanses->is_array()) {
-            for (auto& expanse : *expanses) {
-                rename_key(expanse, "fit", "fit_name");
-            }
-        }
-    }
-
-    void note_older_version(uint32_t version, std::vector<std::string>& warnings)
-    {
-        if (version < State::k_schema_version) {
-            warnings.push_back("Schema version " + std::to_string(version)
-                + " predates " + std::to_string(State::k_schema_version)
-                + ": fields added since are absent and take their defaults");
-        }
-        if (version < k_member_keys_version) {
-            warnings.push_back("Schema version " + std::to_string(version)
-                + ": member keys renamed in " + std::to_string(k_member_keys_version) + " were migrated");
-        }
-    }
-
-    float denormalize(float norm, const State::Range& r)
-    {
-        return r.min + norm * (r.max - r.min);
-    }
-
-    struct PixelView {
-        IO::ImageData image;
-        const std::vector<float>* pixels { nullptr };
-        uint32_t width { 0 };
-    };
-
-    std::optional<PixelView> load_exr(
-        const std::string& exr_path,
-        uint32_t expected_entity_count,
-        uint32_t expected_rows,
-        std::string& error_out)
-    {
-        auto image_opt = IO::ImageReader::load(exr_path, 0);
-        if (!image_opt) {
-            error_out = "Failed to load EXR: " + exr_path;
-            return std::nullopt;
-        }
-
-        const auto* pixels = image_opt->as_float();
-        if (!pixels || pixels->empty()) {
-            error_out = "EXR has no float pixel data: " + exr_path;
-            return std::nullopt;
-        }
-        if (image_opt->channels != State::k_channels) {
-            error_out = "EXR channel count mismatch: expected "
-                + std::to_string(State::k_channels) + " got " + std::to_string(image_opt->channels);
-            return std::nullopt;
-        }
-        if (image_opt->height != expected_rows) {
-            error_out = "EXR row count mismatch: expected "
-                + std::to_string(expected_rows) + " got " + std::to_string(image_opt->height);
-            return std::nullopt;
-        }
-        if (image_opt->width != expected_entity_count) {
-            error_out = "EXR width (" + std::to_string(image_opt->width)
-                + ") does not match entity count (" + std::to_string(expected_entity_count) + ")";
-            return std::nullopt;
-        }
-
-        const uint32_t w = image_opt->width;
-        return PixelView { .image = std::move(*image_opt), .pixels = nullptr, .width = w };
-    }
-
-    /**
-     * @brief The numeric fields of one entity, read from its EXR column.
-     */
-    struct Fields {
-        std::optional<glm::vec3> position;
-        float intensity {};
-        float radius {};
-        float query_radius {};
-        glm::vec3 color {};
-        float size {};
-    };
-
-    Fields read_fields(
-        const State::EntityRecord& entry,
-        const std::vector<float>& pixels,
-        uint32_t width,
-        size_t column,
-        const State::RangeSet& r)
-    {
-        const auto px = [&](size_t row, size_t channel) {
-            return pixels[((row * width + column) * State::k_channels) + channel];
-        };
-
-        Fields f;
-        if (entry.position) {
-            f.position = glm::vec3 {
-                denormalize(px(0, 0), r.pos_x),
-                denormalize(px(0, 1), r.pos_y),
-                denormalize(px(0, 2), r.pos_z),
-            };
-        }
-        f.intensity = denormalize(px(0, 3), r.intensity);
-        f.color = {
-            denormalize(px(1, 0), r.color_r),
-            denormalize(px(1, 1), r.color_g),
-            denormalize(px(1, 2), r.color_b),
-        };
-        f.size = denormalize(px(1, 3), r.size);
-        f.radius = denormalize(px(2, 0), r.radius);
-        f.query_radius = denormalize(px(2, 1), r.query_radius);
-        return f;
     }
 
     // -------------------------------------------------------------------------
@@ -276,8 +121,48 @@ namespace {
     }
 
     // -------------------------------------------------------------------------
-    // Applying fields to live entities
+    // Applying saved state to live entities
     // -------------------------------------------------------------------------
+
+    std::string who_is(const State::EntityRecord& entry)
+    {
+        return entry.kind + " " + std::to_string(entry.id);
+    }
+
+    /**
+     * @brief Give every control of the entity the value the record saved for it.
+     *
+     * A control the record does not list was empty when it was saved and is emptied.
+     * A listed control the entity does not hold is reported and skipped.
+     */
+    void apply_controls(
+        const QuantityStore& store,
+        const State::EntityRecord& entry,
+        std::vector<std::string>& warnings)
+    {
+        store.for_each([&](std::string_view name, Quantity& slot) {
+            const auto saved = entry.controls.find(std::string(name));
+            if (saved == entry.controls.end()) {
+                slot.assign(Quantity::unset());
+                return;
+            }
+
+            Quantity decoded;
+            Reflect::TextError reason = Reflect::TextError::Invalid;
+            if (Reflect::TextCodec<Quantity>::decode(saved->second, decoded, reason)) {
+                slot.assign(decoded);
+            } else {
+                warnings.push_back(who_is(entry) + ": control '" + std::string(name)
+                    + "' has unreadable text '" + saved->second + "', left as it is");
+            }
+        });
+
+        for (const auto& [name, text] : entry.controls) {
+            if (!store.find(name)) {
+                warnings.push_back(who_is(entry) + ": control '" + name + "' is not held by the entity, skipped");
+            }
+        }
+    }
 
     void apply_locus_nav(Locus& locus, const State::LocusNavRecord& nav)
     {
@@ -296,71 +181,20 @@ namespace {
             state.yaw = std::atan2(dir.x, dir.z);
             state.pitch = std::asin(glm::clamp(dir.y, -1.0F, 1.0F));
         }
-        locus.set_aspect(nav.aspect);
-    }
-
-    void apply_presence(Presence& presence, const State::EntityRecord& entry)
-    {
-        if (!entry.falloff_curve_name.empty()) {
-            if (auto fc = Reflect::string_to_enum_case_insensitive<Presence::FalloffCurve>(entry.falloff_curve_name)) {
-                presence.set_falloff_curve(*fc);
-            }
-        }
-        if (entry.falloff_radius) {
-            presence.set_falloff_radius(*entry.falloff_radius);
-        }
-    }
-
-    void apply_emitter(Emitter& emitter, const State::EntityRecord& entry, const Fields& f)
-    {
-        if (f.position) {
-            emitter.set_position(*f.position);
-        } else {
-            emitter.clear_position();
-        }
-        emitter.set_intensity(f.intensity);
-        emitter.set_radius(f.radius);
-        if (entry.color) {
-            emitter.set_color(f.color);
-        }
-        if (entry.size) {
-            emitter.set_size(f.size);
-        }
-    }
-
-    void apply_sensor(Sensor& sensor, const Fields& f)
-    {
-        if (f.position) {
-            sensor.set_position(*f.position);
-        } else {
-            sensor.clear_position();
-        }
-        sensor.set_query_radius(f.query_radius);
     }
 
     void apply_agent(
         Agent& agent,
         const State::EntityRecord& entry,
-        const Fields& f,
         std::vector<std::string>& warnings)
     {
-        if (f.position) {
-            agent.set_position(*f.position);
-        } else {
-            agent.clear_position();
-        }
-        if (entry.orientation) {
-            agent.set_orientation(glm::quat(
-                entry.orientation->w, entry.orientation->x, entry.orientation->y, entry.orientation->z));
-        }
-        agent.set_intensity(f.intensity);
-        agent.set_radius(f.radius);
-        agent.set_query_radius(f.query_radius);
-        if (entry.color) {
-            agent.set_color(f.color);
-        }
-        if (entry.size) {
-            agent.set_size(f.size);
+        apply_controls(agent.store(), entry, warnings);
+
+        if (auto* presence = dynamic_cast<Presence*>(&agent)) {
+            const auto held = presence->get<PresenceControls>();
+            if (const auto curve = quantity_value<Presence::FalloffCurve>(held.falloff_curve)) {
+                presence->set_falloff_curve(*curve);
+            }
         }
 
         if (entry.locus_nav) {
@@ -371,19 +205,11 @@ namespace {
                     + " has locus_nav in schema but is not a Locus at runtime");
             }
         }
-        if (auto* presence = dynamic_cast<Presence*>(&agent)) {
-            apply_presence(*presence, entry);
-        }
     }
 
     // -------------------------------------------------------------------------
     // Entities: patch an existing one, or construct a missing one
     // -------------------------------------------------------------------------
-
-    std::string who_is(const State::EntityRecord& entry)
-    {
-        return entry.kind + " " + std::to_string(entry.id);
-    }
 
     void note_name_mismatch(
         const State::EntityRecord& entry,
@@ -401,7 +227,6 @@ namespace {
     bool patch_entity(
         Fabric& fabric,
         const State::EntityRecord& entry,
-        const Fields& f,
         std::vector<std::string>& warnings)
     {
         switch (State::parse_kind(entry.kind)) {
@@ -411,7 +236,7 @@ namespace {
                 return false;
             }
             note_name_mismatch(entry, "fn_name", entry.influence_fn_name, e->fn_name(), warnings);
-            apply_emitter(*e, entry, f);
+            apply_controls(e->store(), entry, warnings);
             return true;
         }
         case Fabric::Kind::Sensor: {
@@ -420,7 +245,7 @@ namespace {
                 return false;
             }
             note_name_mismatch(entry, "fn_name", entry.perception_fn_name, s->fn_name(), warnings);
-            apply_sensor(*s, f);
+            apply_controls(s->store(), entry, warnings);
             return true;
         }
         case Fabric::Kind::Agent: {
@@ -430,7 +255,7 @@ namespace {
             }
             note_name_mismatch(entry, "perception_fn_name", entry.perception_fn_name, a->perception_fn_name(), warnings);
             note_name_mismatch(entry, "influence_fn_name", entry.influence_fn_name, a->influence_fn_name(), warnings);
-            apply_agent(*a, entry, f, warnings);
+            apply_agent(*a, entry, warnings);
             return true;
         }
         }
@@ -447,10 +272,12 @@ namespace {
         }
     }
 
+    /** @brief The query radius an entity is built with. The record's controls give it its own right after. */
+    constexpr float k_built_radius = 1.0F;
+
     std::shared_ptr<Agent> construct_agent(
         Fabric& fabric,
         const State::EntityRecord& entry,
-        const Fields& f,
         std::vector<std::string>& warnings)
     {
         const std::string who = who_is(entry);
@@ -473,7 +300,7 @@ namespace {
                 .scroll_speed = nav.scroll_speed,
             };
             warnings.push_back(who + ": view_targets must be reconnected by caller");
-            return std::make_shared<Locus>(config, f.query_radius,
+            return std::make_shared<Locus>(config, k_built_radius,
                 entry.perception_fn_name, std::move(pfn),
                 entry.influence_fn_name, std::move(ifn));
         }
@@ -481,7 +308,7 @@ namespace {
         if (entry.subkind == "presence") {
             auto rfn = resolve_fn(fabric.resolve_radiate_fn(entry.radiate_fn_name),
                 entry.radiate_fn_name, who + " radiate_fn", warnings);
-            return std::make_shared<Presence>(f.query_radius,
+            return std::make_shared<Presence>(k_built_radius,
                 entry.perception_fn_name, std::move(pfn),
                 entry.influence_fn_name, std::move(ifn),
                 entry.radiate_fn_name, std::move(rfn));
@@ -495,9 +322,9 @@ namespace {
         }
 
         if (entry.perception_fn_name.empty() && entry.influence_fn_name.empty()) {
-            return std::make_shared<Agent>(f.query_radius);
+            return std::make_shared<Agent>(k_built_radius);
         }
-        return std::make_shared<Agent>(f.query_radius,
+        return std::make_shared<Agent>(k_built_radius,
             entry.perception_fn_name, std::move(pfn),
             entry.influence_fn_name, std::move(ifn));
     }
@@ -505,7 +332,6 @@ namespace {
     void construct_entity(
         Fabric& fabric,
         const State::EntityRecord& entry,
-        const Fields& f,
         std::vector<std::string>& warnings)
     {
         const std::string who = who_is(entry);
@@ -524,7 +350,7 @@ namespace {
                     resolve_fn(fabric.resolve_influence_fn(entry.influence_fn_name),
                         entry.influence_fn_name, who + " influence_fn", warnings));
             }
-            apply_emitter(*emitter, entry, f);
+            apply_controls(emitter->store(), entry, warnings);
             auto wiring = fabric.wire(emitter);
             note_runtime_id(entry, emitter->id(), warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, warnings);
@@ -533,21 +359,21 @@ namespace {
         case Fabric::Kind::Sensor: {
             std::shared_ptr<Sensor> sensor;
             if (entry.perception_fn_name.empty()) {
-                sensor = std::make_shared<Sensor>(f.query_radius);
+                sensor = std::make_shared<Sensor>(k_built_radius);
             } else {
-                sensor = std::make_shared<Sensor>(f.query_radius, entry.perception_fn_name,
+                sensor = std::make_shared<Sensor>(k_built_radius, entry.perception_fn_name,
                     resolve_fn(fabric.resolve_perception_fn(entry.perception_fn_name),
                         entry.perception_fn_name, who + " perception_fn", warnings));
             }
-            apply_sensor(*sensor, f);
+            apply_controls(sensor->store(), entry, warnings);
             auto wiring = fabric.wire(sensor);
             note_runtime_id(entry, sensor->id(), warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, warnings);
             break;
         }
         case Fabric::Kind::Agent: {
-            auto agent = construct_agent(fabric, entry, f, warnings);
-            apply_agent(*agent, entry, f, warnings);
+            auto agent = construct_agent(fabric, entry, warnings);
+            apply_agent(*agent, entry, warnings);
             auto wiring = fabric.wire(agent);
             note_runtime_id(entry, agent->id(), warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, warnings);
@@ -576,7 +402,7 @@ namespace {
     void apply_bounds(Expanse& expanse, const Record& rec)
     {
         if (rec.bounds_min && rec.bounds_max) {
-            expanse.set_bounds({ .min = *rec.bounds_min, .max = *rec.bounds_max });
+            expanse.set({ .bounds = Kinesis::AABB3D { .min = *rec.bounds_min, .max = *rec.bounds_max } });
         }
     }
 
@@ -665,8 +491,8 @@ namespace {
                 || x->on_exit_fn_name() != rec.on_exit_fn_name) {
                 continue;
             }
-            if (rec.fn_name.empty()
-                && (!x->bounds() || x->bounds()->min != *rec.bounds_min || x->bounds()->max != *rec.bounds_max)) {
+            if (const auto box = x->bounds();
+                rec.fn_name.empty() && (!box || box->min != *rec.bounds_min || box->max != *rec.bounds_max)) {
                 continue;
             }
             return x;
@@ -709,7 +535,7 @@ namespace {
     std::optional<float> read_cell_size(const std::string& json_path)
     {
         IO::JSONSerializer ser;
-        auto schema = ser.read<State::FabricSchema>(json_path, migrate_schema);
+        auto schema = ser.read<State::FabricSchema>(json_path);
         return schema ? schema->cell_size : std::nullopt;
     }
 
@@ -733,10 +559,9 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     m_missing_count = 0;
 
     const std::string json_path = base_path + ".json";
-    const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<State::FabricSchema>(json_path, migrate_schema);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -750,25 +575,9 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         return false;
     }
 
-    std::optional<PixelView> pv_opt;
-    const std::vector<float>* pixels = nullptr;
-    uint32_t width = 0;
-    if (!schema.entities.empty()) {
-        pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), State::k_exr_rows, m_last_error);
-        if (!pv_opt) {
-            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-            return false;
-        }
-        pixels = pv_opt->image.as_float();
-        width = pv_opt->width;
-    }
-
     std::vector<std::string> warnings;
-    note_older_version(schema.version, warnings);
 
-    for (size_t i = 0; i < schema.entities.size(); ++i) {
-        const auto& entry = schema.entities[i];
-
+    for (const auto& entry : schema.entities) {
         if (!State::kind_known(entry.kind)) {
             warnings.push_back("unknown kind '" + entry.kind + "' for id "
                 + std::to_string(entry.id) + ", skipping");
@@ -776,8 +585,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             continue;
         }
 
-        const Fields fields = read_fields(entry, *pixels, width, i, schema.ranges);
-        if (patch_entity(fabric, entry, fields, warnings)) {
+        if (patch_entity(fabric, entry, warnings)) {
             ++m_patched_count;
         } else {
             warnings.push_back("id " + std::to_string(entry.id) + " not found as "
@@ -793,8 +601,8 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     log_warnings(warnings);
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
-        "StateDecoder: patched {} entities ({} missing) from {} + {}",
-        m_patched_count, m_missing_count, exr_path, json_path);
+        "StateDecoder: patched {} entities ({} missing) from {}",
+        m_patched_count, m_missing_count, json_path);
 
     return true;
 }
@@ -809,10 +617,9 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
     m_last_error.clear();
 
     const std::string json_path = base_path + ".json";
-    const std::string exr_path = base_path + ".exr";
 
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<State::FabricSchema>(json_path, migrate_schema);
+    auto schema_opt = ser.read<State::FabricSchema>(json_path);
     if (!schema_opt) {
         m_last_error = "Failed to load schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
@@ -826,27 +633,10 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    std::optional<PixelView> pv_opt;
-    const std::vector<float>* pixels = nullptr;
-    uint32_t width = 0;
-    if (!schema.entities.empty()) {
-        pv_opt = load_exr(exr_path, static_cast<uint32_t>(schema.entities.size()), State::k_exr_rows, m_last_error);
-        if (!pv_opt) {
-            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);
-            return result;
-        }
-        pixels = pv_opt->image.as_float();
-        width = pv_opt->width;
-    }
-
-    note_older_version(schema.version, result.warnings);
-
     const auto existing_ids = fabric.all_ids();
     const std::unordered_set<uint32_t> existing(existing_ids.begin(), existing_ids.end());
 
-    for (size_t i = 0; i < schema.entities.size(); ++i) {
-        const auto& entry = schema.entities[i];
-
+    for (const auto& entry : schema.entities) {
         if (!State::kind_known(entry.kind)) {
             result.warnings.push_back("Unknown kind '" + entry.kind
                 + "' for id " + std::to_string(entry.id) + ", skipping");
@@ -854,16 +644,14 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
             continue;
         }
 
-        const Fields fields = read_fields(entry, *pixels, width, i, schema.ranges);
-
         if (existing.contains(entry.id)) {
-            if (patch_entity(fabric, entry, fields, result.warnings)) {
+            if (patch_entity(fabric, entry, result.warnings)) {
                 ++result.patched;
             } else {
                 ++result.skipped;
             }
         } else {
-            construct_entity(fabric, entry, fields, result.warnings);
+            construct_entity(fabric, entry, result.warnings);
             ++result.constructed;
         }
     }
@@ -897,7 +685,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
 
     const std::string tapestry_path = base_dir + "/tapestry.json";
     IO::JSONSerializer ser;
-    auto schema_opt = ser.read<State::TapestrySchema>(tapestry_path, migrate_schema);
+    auto schema_opt = ser.read<State::TapestrySchema>(tapestry_path);
     if (!schema_opt) {
         m_last_error = "Failed to load tapestry schema: " + ser.last_error();
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO, m_last_error);

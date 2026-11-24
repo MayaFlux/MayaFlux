@@ -19,8 +19,9 @@ Hull::Hull(std::shared_ptr<Buffers::VKBuffer> buf,
         return;
     }
 
-    m_local = read_bounds(m_buf, m_collection);
-    if (!m_local) {
+    if (const auto bounds = read_bounds(m_buf, m_collection)) {
+        m_hull.local.observe(*bounds);
+    } else {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
             "Hull contains nothing: no geometry could be read from the buffer");
     }
@@ -28,7 +29,8 @@ Hull::Hull(std::shared_ptr<Buffers::VKBuffer> buf,
 
 bool Hull::contains(const glm::vec3& p) const
 {
-    if (!m_buf || !m_local) {
+    const auto box = quantity_value<Kinesis::AABB3D>(m_hull.local);
+    if (!m_buf || !box) {
         return false;
     }
 
@@ -38,24 +40,25 @@ bool Hull::contains(const glm::vec3& p) const
         return false;
     }
 
-    return m_local->contains(glm::vec3(glm::inverse(drawn) * glm::vec4(p, 1.0F)));
+    return box->contains(glm::vec3(glm::inverse(drawn) * glm::vec4(p, 1.0F)));
 }
 
 std::pair<glm::vec3, float> Hull::reach() const
 {
-    if (!m_buf || !m_local) {
+    const auto box = quantity_value<Kinesis::AABB3D>(m_hull.local);
+    if (!m_buf || !box) {
         return Expanse::reach();
     }
 
     const glm::mat4 drawn = read_placement(m_buf);
-    const glm::vec3 center = glm::vec3(drawn * glm::vec4(m_local->center(), 1.0F));
+    const glm::vec3 center = glm::vec3(drawn * glm::vec4(box->center(), 1.0F));
 
     float radius = 0.0F;
     for (int corner = 0; corner < 8; ++corner) {
         const glm::vec3 local {
-            (corner & 1) != 0 ? m_local->max.x : m_local->min.x,
-            (corner & 2) != 0 ? m_local->max.y : m_local->min.y,
-            (corner & 4) != 0 ? m_local->max.z : m_local->min.z,
+            (corner & 1) != 0 ? box->max.x : box->min.x,
+            (corner & 2) != 0 ? box->max.y : box->min.y,
+            (corner & 4) != 0 ? box->max.z : box->min.z,
         };
         radius = std::max(radius, glm::length(glm::vec3(drawn * glm::vec4(local, 1.0F)) - center));
     }
@@ -69,7 +72,7 @@ void Hull::refit()
     }
 
     if (const auto bounds = read_bounds(m_buf, m_collection)) {
-        m_local = bounds;
+        set(HullControls { .local = *bounds });
     } else {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
             "Hull::refit kept the previous bounds: no geometry could be read from the buffer");

@@ -73,7 +73,8 @@ public:
      * @brief Cleanup a buffer and release associated resources
      * @param buffer Shared pointer to the buffer to cleanup
      *
-     * Waits for the buffer's last recorded GPU use, then destroys it.
+     * Waits for tracked submitted use. Deferred users retain the old allocation
+     * until their existing submission completes.
      */
     void cleanup_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
@@ -82,7 +83,7 @@ public:
      * @param buffer Shared pointer to the buffer to retire
      *
      * The buffer is cleared and unregistered at once, so it can be initialized
-     * again. Does not wait for the GPU.
+     * again. Recorded deferred users retain its old allocation without submitting.
      */
     void retire_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
@@ -117,10 +118,16 @@ public:
     void initialize_image(const std::shared_ptr<VKImage>& image);
 
     /**
-     * @brief Cleanup a VKImage (destroy view, image, and free memory)
+     * @brief Detach a managed image and retire its allocation after recorded use
      * @param image VKImage to cleanup
+     *
+     * Managed images lose their handles immediately. Recorded library commands
+     * retain the old allocation until they complete or are discarded.
      */
     void cleanup_image(const std::shared_ptr<VKImage>& image);
+
+    /** Keep this image's current allocation alive through a recorded command. */
+    [[nodiscard]] std::shared_ptr<void> retain_image_allocation(const std::shared_ptr<VKImage>& image) const;
 
     /**
      * @brief Transition every mip level and layer of an image to a new layout
@@ -285,6 +292,27 @@ public:
     void cleanup();
 
 private:
+    using AllocationSizes = Memory::FlatMap<VkDeviceMemory, vk::DeviceSize>;
+
+    struct BufferAllocation {
+        vk::Device device;
+        std::shared_ptr<Memory::SnapshotCell<AllocationSizes>> allocation_sizes;
+        vk::Buffer buffer;
+        vk::DeviceMemory memory;
+        bool mapped;
+
+        ~BufferAllocation();
+    };
+
+    struct ImageAllocation {
+        vk::Device device;
+        vk::Image image;
+        vk::ImageView view;
+        vk::DeviceMemory memory;
+
+        ~ImageAllocation();
+    };
+
     void load_host_copy_layouts();
     [[nodiscard]] bool host_copy_src_layout(vk::ImageLayout layout) const;
     [[nodiscard]] bool host_copy_dst_layout(vk::ImageLayout layout) const;
@@ -308,8 +336,6 @@ private:
         vk::ImageLayout restore_layout,
         vk::PipelineStageFlags2 restore_stage);
 
-    void release_buffer_handles(vk::Buffer buffer, vk::DeviceMemory memory, bool mapped);
-
     /**
      * @brief Wait for the GPU work a host image copy depends on
      *
@@ -327,8 +353,10 @@ private:
     VKCommandManager& m_command_manager;
 
     std::vector<std::shared_ptr<Buffers::VKBuffer>> m_managed_buffers;
-    using AllocationSizes = Memory::FlatMap<VkDeviceMemory, vk::DeviceSize>;
-    Memory::SnapshotCell<AllocationSizes> m_buffer_allocation_sizes;
+    std::map<std::shared_ptr<Buffers::VKBuffer>, std::shared_ptr<BufferAllocation>, std::owner_less<>> m_buffer_allocations;
+    std::map<std::shared_ptr<VKImage>, std::shared_ptr<ImageAllocation>, std::owner_less<>> m_image_allocations;
+    std::shared_ptr<Memory::SnapshotCell<AllocationSizes>> m_buffer_allocation_sizes =
+        std::make_shared<Memory::SnapshotCell<AllocationSizes>>();
     std::unordered_map<size_t, vk::Sampler> m_sampler_cache;
     bool m_host_copy_layouts_ready {};
     std::vector<vk::ImageLayout> m_host_copy_src_layouts;

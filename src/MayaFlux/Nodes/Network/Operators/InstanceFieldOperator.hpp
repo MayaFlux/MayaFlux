@@ -28,12 +28,21 @@ namespace MayaFlux::Nodes::Network {
  * For time-varying behaviour, close over a shared atomic or external clock in
  * the field callable.
  *
+ * The payload of a slot (tint, scalar, texture index) is driven the same way by a TintField,
+ * a ScalarField and a TextureField, each a function of the slot's current value, so a field of
+ * space or time can colour, size or retexture instances. A payload field composes with a
+ * transform or position field on the same slot, and a slot is marked dirty only when a payload
+ * value changes.
+ *
  * Slots without a bound field are untouched.
  */
 class MAYAFLUX_API InstanceFieldOperator : public InstanceOperator {
 public:
     using TransformField = std::function<glm::mat4(const glm::mat4&)>;
     using PositionField = Kinesis::VectorField;
+    using TintField = std::function<glm::vec3(const glm::vec3&)>;
+    using ScalarField = std::function<float(float)>;
+    using TextureField = std::function<uint32_t(uint32_t)>;
 
     /**
      * @brief Bind a TransformField to a slot.
@@ -52,6 +61,28 @@ public:
      * Replaces any previously bound field (position or transform) for the slot.
      */
     void bind_position(uint32_t slot_index, PositionField field);
+
+    /**
+     * @brief Bind a TintField to a slot: current tint in, new tint out.
+     *
+     * Replaces any tint field of the slot and leaves its other fields alone.
+     */
+    void bind_tint(uint32_t slot_index, TintField field);
+
+    /**
+     * @brief Bind a ScalarField to a slot: current scalar in, new scalar out.
+     *
+     * Replaces any scalar field of the slot and leaves its other fields alone.
+     */
+    void bind_scalar(uint32_t slot_index, ScalarField field);
+
+    /**
+     * @brief Bind a TextureField to a slot: current texture index in, new index out.
+     *
+     * The index must stay below the count of the buffer's instance textures. Replaces any
+     * texture field of the slot and leaves its other fields alone.
+     */
+    void bind_texture(uint32_t slot_index, TextureField field);
 
     /**
      * @brief Remove all bindings for a slot.
@@ -117,6 +148,9 @@ public:
 private:
     std::unordered_map<uint32_t, TransformField> m_transform_fields;
     std::unordered_map<uint32_t, PositionField> m_position_fields;
+    std::unordered_map<uint32_t, TintField> m_tint_fields;
+    std::unordered_map<uint32_t, ScalarField> m_scalar_fields;
+    std::unordered_map<uint32_t, TextureField> m_texture_fields;
 
     std::shared_ptr<Yantra::ShaderExecutionContext<>> m_executor;
     std::shared_ptr<Nodes::GpuSync::GpuComputeNode> m_compute_node;

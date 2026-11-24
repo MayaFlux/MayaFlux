@@ -305,4 +305,25 @@ Vruta::Event window_closed(
     }
 }
 
+Vruta::Event window_event(
+    std::shared_ptr<Core::Window> window,
+    Vruta::WindowEventFilter filter,
+    std::function<void(const Core::WindowEvent&)> callback)
+{
+    auto& promise = co_await GetEventPromise {};
+    auto& source = window->get_event_source();
+
+    while (true) {
+        if (promise.should_terminate) {
+            break;
+        }
+
+        const auto event = co_await WindowEventAwaiter(source, filter);
+        if (promise.should_terminate) {
+            break;
+        }
+        callback(event);
+    }
+}
+
 } // namespace MayaFlux::Kriya

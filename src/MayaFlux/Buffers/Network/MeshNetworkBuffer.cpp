@@ -2,12 +2,18 @@
 
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
+#include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
+
+#include "SpatialFieldWiring.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -18,7 +24,7 @@ namespace MayaFlux::Buffers {
 MeshNetworkBuffer::MeshNetworkBuffer(
     std::shared_ptr<Nodes::Network::MeshNetwork> network,
     float over_allocate_factor)
-    : VKBuffer(
+    : StateFieldBuffer(
           estimate_vertex_bytes(network, over_allocate_factor),
           Usage::VERTEX,
           Kakshya::DataModality::VERTEX_POSITIONS_3D)
@@ -112,6 +118,9 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
     }
     set_vertex_layout(vertex_layout);
 
+    wire_skin_passes(vertex_layout.stride_bytes);
+    wire_field_pass(vertex_layout.stride_bytes);
+
     for (const auto& entry : config.additional_textures)
         m_render_config.additional_textures.push_back(entry);
 
@@ -189,6 +198,127 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         textured);
 }
 
+void MeshNetworkBuffer::set_slot_skin(uint32_t slot, std::shared_ptr<const Kakshya::MeshSkin> skin)
+{
+    if (m_render_processor) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer::set_slot_skin: rendering is already set up, the skin passes are wired there");
+        return;
+    }
+
+    std::erase_if(m_skins, [slot](const SkinEntry& entry) { return entry.slot == slot; });
+    if (skin) {
+        m_skins.push_back({ .slot = slot, .skin = std::move(skin), .processor = nullptr });
+    }
+}
+
+bool MeshNetworkBuffer::set_slot_palette(uint32_t slot, std::vector<glm::mat4> palette)
+{
+    const auto entry = std::ranges::find(m_skins, slot, &SkinEntry::slot);
+    return entry != m_skins.end() && entry->processor && entry->processor->set_palette(std::move(palette));
+}
+
+void MeshNetworkBuffer::wire_skin_passes(size_t record_bytes)
+{
+    if (m_skins.empty()) {
+        return;
+    }
+
+    if (record_bytes < sizeof(Kakshya::MeshVertex)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer: records of {} bytes are smaller than a MeshVertex, so no skin pass is wired", record_bytes);
+        return;
+    }
+
+    const auto& slots = m_network->slots();
+    for (auto& entry : m_skins) {
+        if (entry.slot >= slots.size() || !slots[entry.slot].node) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                "MeshNetworkBuffer: slot {} has no geometry, so it is not skinned", entry.slot);
+            continue;
+        }
+
+        const auto& vertices = slots[entry.slot].node->get_mesh_vertices();
+        const std::span<const uint8_t> rest(
+            reinterpret_cast<const uint8_t*>(vertices.data()), vertices.size() * sizeof(Kakshya::MeshVertex));
+
+        try {
+            entry.processor = std::make_shared<SkinProcessor>(entry.skin, rest, "slot" + std::to_string(entry.slot));
+        } catch (const std::invalid_argument& e) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                "MeshNetworkBuffer: the skin of slot {} does not fit its mesh, so it is not skinned: {}", entry.slot, e.what());
+            continue;
+        }
+
+        entry.processor->set_first_vertex_source(
+            [weak = std::weak_ptr<Nodes::Network::MeshNetwork>(m_network), slot = entry.slot]() -> uint32_t {
+                const auto network = weak.lock();
+                if (!network) {
+                    return 0;
+                }
+                const auto& all = network->slots();
+                uint32_t first = 0;
+                for (const uint32_t index : network->sorted_indices()) {
+                    if (index == slot) {
+                        break;
+                    }
+                    if (all[index].node) {
+                        first += static_cast<uint32_t>(all[index].node->get_mesh_vertex_count());
+                    }
+                }
+                return first;
+            });
+
+        get_processing_chain()->add_processor(entry.processor, shared_from_this());
+    }
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "MeshNetworkBuffer: {} skin passes wired", m_skins.size());
+}
+
+void MeshNetworkBuffer::wire_field_pass(size_t record_bytes)
+{
+    const auto chain = m_network->get_operator_chain();
+    if (!chain)
+        return;
+
+    std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op;
+    for (const auto& op : chain->operators()) {
+        field_op = std::dynamic_pointer_cast<Nodes::Network::GpuFieldOperator>(op);
+        if (field_op)
+            break;
+    }
+    if (!field_op)
+        return;
+
+    if (field_op->get_layout().stride_bytes != record_bytes) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer: the field operator's layout is {} bytes per vertex, the buffer's "
+            "records are {}; no field pass is wired",
+            field_op->get_layout().stride_bytes, record_bytes);
+        return;
+    }
+
+    if (wants_spatial_stages(field_op->get_field_config())) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer: the hash, claim, density and population stages are not wired for a "
+            "MeshNetwork; only the field pass is");
+    }
+
+    wire_field_stages(
+        std::dynamic_pointer_cast<StateFieldBuffer>(shared_from_this()),
+        field_op, std::nullopt, {}, nullptr);
+
+    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+        "MeshNetworkBuffer: field pass wired, {} bound fields, {} bytes per vertex",
+        field_op->binding_count(), record_bytes);
+}
+
+MeshNetworkBuffer::~MeshNetworkBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_diffuse_texture);
+}
+
 // =============================================================================
 // bind_diffuse_texture
 // =============================================================================
@@ -197,6 +327,9 @@ void MeshNetworkBuffer::bind_diffuse_texture(
     std::shared_ptr<Core::VKImage> image,
     std::string_view binding_name)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(image);
+    loom.release_image(m_diffuse_texture);
     m_diffuse_texture = std::move(image);
     m_diffuse_binding = std::string(binding_name);
 

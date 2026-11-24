@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <glm/gtc/quaternion.hpp>
 #include <vector>
 
 namespace MayaFlux::Kinesis {
@@ -57,5 +58,27 @@ namespace MayaFlux::Kinesis {
     const std::vector<double>& scale_factors,
     uint32_t axis = 2,
     uint32_t dimensions = 2);
+
+/**
+ * @brief Matrix of a translation, a rotation and a per-axis scale, applied in that order
+ *        to a point as T * R * S.
+ * @param translation Translation
+ * @param rotation Rotation; normalised before use
+ * @param scale Per-axis scale
+ */
+[[nodiscard]] MAYAFLUX_API glm::mat4 compose_transform(
+    const glm::vec3& translation,
+    const glm::quat& rotation,
+    const glm::vec3& scale);
+
+/**
+ * @brief Translation, rotation and scale of a matrix made by compose_transform.
+ * @param transform Matrix with a bottom row of (0, 0, 0, 1), no shear and no zero scale.
+ * @return Translation, unit rotation and scale, or nullopt when a column has no length.
+ *
+ * A matrix that mirrors (negative determinant) reports the mirror as a negative x scale.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<std::tuple<glm::vec3, glm::quat, glm::vec3>> decompose_transform(
+    const glm::mat4& transform);
 
 } // namespace MayaFlux::Kinesis

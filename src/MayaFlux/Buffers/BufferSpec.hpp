@@ -48,16 +48,16 @@ using GraphicsProcessingFunction = std::function<void(const std::shared_ptr<VKBu
 /**
  * @brief Global default sample rate. Updated by buffer manager upon engine instantiation.
  */
-inline uint64_t s_registered_sample_rate { 48000 };
+extern MAYAFLUX_API uint64_t s_registered_sample_rate;
 
 /**
  * @brief Global default buffer size. Updated by buffer manager upon engine instantiation.
  */
-inline uint32_t s_preferred_buffer_size { 512 };
+extern MAYAFLUX_API uint32_t s_preferred_buffer_size;
 
 /**
  * @brief Global default frame rate. Updated by buffer manager upon engine instantiation.
  */
-inline uint32_t s_preferred_frame_rate { 60 };
+extern MAYAFLUX_API uint32_t s_preferred_frame_rate;
 
 }

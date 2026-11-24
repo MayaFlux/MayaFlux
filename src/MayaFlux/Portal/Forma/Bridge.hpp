@@ -710,6 +710,10 @@ private:
     void cancel_inbound(ElementRecord& rec);
     void cancel_outbound(ElementRecord& rec);
     void spawn_inbound(const ElementRef& ref, std::function<float()> source);
+
+    /** @brief Run @p cycle once per frame under @p name until the task is cancelled. */
+    void spawn_each(const std::string& name, std::function<void()> cycle);
+
     void write_aggregate(
         Layer& layer,
         std::vector<std::function<float()>> readers,

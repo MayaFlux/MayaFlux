@@ -62,10 +62,10 @@ MAYAFLUX_API bool relaxation_grid_positions(
  * works unchanged for any GraphicsOperator, not only PhysicsOperator. Every
  * field comes along, not only position: color, scalar (size/thickness/
  * weight depending on the concrete type), uv, normal, and tangent each
- * become their own SpatialAttribute, so a vertex reaches the archive whole
+ * become their own Kakshya::SpatialAttribute, so a vertex reaches the archive whole
  * rather than reduced to a coordinate. Always attaches a "cluster" attribute
  * from op->build_cluster_ids() (0 for every vertex on an operator that never
- * overrides it), plus one SpatialAttribute per op->extract_vertex_attributes()
+ * overrides it), plus one Kakshya::SpatialAttribute per op->extract_vertex_attributes()
  * entry (extra state beyond the vertex record itself, e.g. PhysicsOperator's
  * mass).
  *

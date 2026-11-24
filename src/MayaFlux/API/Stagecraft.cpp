@@ -10,7 +10,7 @@ namespace MayaFlux {
 std::shared_ptr<Nexus::Fabric> create_fabric(const std::string& name, float cell_size)
 {
     auto fabric = std::make_shared<Nexus::Fabric>(
-        *get_scheduler(), *get_event_manager(), *get_buffer_manager(), cell_size);
+        get_scheduler(), get_event_manager(), get_buffer_manager(), cell_size);
     fabric->set_name(name);
     return fabric;
 }

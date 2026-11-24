@@ -221,7 +221,7 @@ struct MAYAFLUX_API ContainerDataStructure {
  * hybrid computational models.
  */
 template <typename T>
-class MAYAFLUX_API NDDataContainer {
+class NDDataContainer {
 public:
     virtual ~NDDataContainer() = default;
 

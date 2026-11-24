@@ -2,7 +2,11 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
 #include "MayaFlux/Nodes/Network/Operators/MeshOperator.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Nodes::Network {
 
@@ -16,22 +20,38 @@ MeshNetwork::MeshNetwork()
     set_topology(Topology::CUSTOM);
 }
 
+MeshNetwork::~MeshNetwork()
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& [index, image] : m_held_textures) {
+        loom.release_image(image);
+    }
+}
+
 // =============================================================================
 // Slot management
 // =============================================================================
+
+void MeshNetwork::set_slot_texture(uint32_t index, std::shared_ptr<Core::VKImage> image)
+{
+    auto& slot = get_slot(index);
+    auto& loom = Portal::Graphics::get_texture_manager();
+
+    loom.retain_image(image);
+    if (const auto held = m_held_textures.find(index); held != m_held_textures.end()) {
+        loom.release_image(held->second);
+        held->second = image;
+    } else if (image) {
+        m_held_textures.emplace(index, image);
+    }
+    slot.diffuse_texture = std::move(image);
+}
 
 uint32_t MeshNetwork::add_slot(
     std::string name,
     std::shared_ptr<GpuSync::MeshWriterNode> node,
     std::optional<uint32_t> parent)
 {
-    if (!node) {
-        error<std::invalid_argument>(
-            Journal::Component::Nodes, Journal::Context::Init,
-            std::source_location::current(),
-            "MeshNetwork::add_slot: null MeshWriterNode for slot '{}'", name);
-    }
-
     if (parent.has_value() && parent.value() >= m_slots.size()) {
         error<std::out_of_range>(
             Journal::Component::Nodes, Journal::Context::Init,
@@ -234,6 +254,28 @@ void MeshNetwork::propagate_world_transforms()
 
 std::optional<Kakshya::MeshData> MeshNetwork::get_mesh_data() const
 {
+    return merged_mesh_data(false);
+}
+
+std::optional<Kakshya::MeshData> MeshNetwork::get_world_mesh_data() const
+{
+    return merged_mesh_data(true);
+}
+
+glm::mat4 MeshNetwork::composed_transform(const MeshSlot& slot) const
+{
+    glm::mat4 world = slot.local_transform;
+    std::optional<uint32_t> parent = slot.parent_index;
+    for (size_t hops = 0; parent && hops < m_slots.size(); ++hops) {
+        const MeshSlot& above = m_slots[*parent];
+        world = above.local_transform * world;
+        parent = above.parent_index;
+    }
+    return world;
+}
+
+std::optional<Kakshya::MeshData> MeshNetwork::merged_mesh_data(bool placed) const
+{
     auto mesh_data = Kakshya::MeshData::empty();
     Kakshya::MeshInsertion ins(mesh_data.vertex_variant, mesh_data.index_variant);
 
@@ -242,17 +284,60 @@ std::optional<Kakshya::MeshData> MeshNetwork::get_mesh_data() const
             continue;
         }
 
-        const auto packed = slot.node->get_mesh_data();
+        auto packed = slot.node->get_mesh_data();
         if (!packed) {
             continue;
         }
 
-        ins.insert_submesh(
-            std::get<std::vector<uint8_t>>(packed->vertex_variant),
-            std::get<std::vector<uint32_t>>(packed->index_variant),
-            slot.name.empty() ? std::to_string(slot.index) : slot.name,
-            {},
-            packed->layout);
+        const std::string name = slot.name.empty() ? std::to_string(slot.index) : slot.name;
+        const glm::mat4 transform = placed ? composed_transform(slot) : glm::mat4(1.0F);
+
+        const size_t part_count = packed->submeshes ? packed->submeshes->regions.size() : 0;
+        std::vector<Kakshya::MeshData> parts;
+        uint64_t covered_indices = 0;
+        uint64_t covered_vertices = 0;
+        for (size_t i = 0; i < part_count; ++i) {
+            auto part = packed->extract_submesh(i);
+            const auto* range = packed->submeshes->regions[i].get<Kakshya::MeshSubrange>();
+            if (!part || !range) {
+                parts.clear();
+                break;
+            }
+            covered_indices += range->index_count;
+            covered_vertices += range->vertex_count;
+            parts.push_back(std::move(*part));
+        }
+
+        const bool keeps_parts = !parts.empty() && parts.size() == part_count
+            && covered_indices == std::get<std::vector<uint32_t>>(packed->index_variant).size()
+            && covered_vertices == packed->vertex_count();
+
+        if (!keeps_parts) {
+            if (placed) {
+                Kakshya::place_vertices(
+                    std::get<std::vector<uint8_t>>(packed->vertex_variant), packed->layout, transform);
+            }
+            ins.insert_submesh(
+                std::get<std::vector<uint8_t>>(packed->vertex_variant),
+                std::get<std::vector<uint32_t>>(packed->index_variant),
+                name, {}, packed->layout);
+            continue;
+        }
+
+        for (auto& part : parts) {
+            auto& vertices = std::get<std::vector<uint8_t>>(part.vertex_variant);
+            if (placed) {
+                Kakshya::place_vertices(vertices, part.layout, transform);
+            }
+
+            Kakshya::Region carried = part.submeshes->regions.front();
+            auto range = *carried.get<Kakshya::MeshSubrange>();
+            if (range.name.empty()) {
+                range.name = name;
+            }
+            carried.set(range);
+            ins.insert_submesh(vertices, std::get<std::vector<uint32_t>>(part.index_variant), carried, part.layout);
+        }
     }
 
     const auto access = ins.build();
@@ -263,6 +348,130 @@ std::optional<Kakshya::MeshData> MeshNetwork::get_mesh_data() const
     mesh_data.submeshes = access->submeshes;
 
     return mesh_data;
+}
+
+std::shared_ptr<MeshNetwork> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly)
+{
+    if (!assembly) {
+        return nullptr;
+    }
+
+    const size_t rows = assembly->get_total_elements();
+    if (rows == 0) {
+        return nullptr;
+    }
+
+    const auto world = assembly->world_transforms();
+    auto network = std::make_shared<MeshNetwork>();
+
+    for (size_t row = 0; row < rows; ++row) {
+        const auto placement = assembly->placement(row);
+        if (!placement) {
+            return nullptr;
+        }
+
+        std::shared_ptr<GpuSync::MeshWriterNode> node;
+        if (placement->source) {
+            if (const auto* mesh = assembly->mesh(*placement->source)) {
+                node = std::make_shared<GpuSync::MeshWriterNode>(mesh->vertex_count());
+                node->set_mesh(*mesh);
+            }
+        }
+
+        std::optional<uint32_t> parent;
+        if (placement->parent) {
+            parent = static_cast<uint32_t>(*placement->parent);
+        }
+
+        const auto index = network->add_slot(placement->name, std::move(node), parent);
+        auto& slot = network->get_slot(index);
+        slot.local_transform = placement->local;
+        slot.world_transform = world[row];
+    }
+    return network;
+}
+
+std::optional<MeshNetworkPart> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    std::span<const uint64_t> rows,
+    MeshPartPlacement placement)
+{
+    if (!assembly || rows.empty()) {
+        return std::nullopt;
+    }
+
+    const size_t total = assembly->get_total_elements();
+    std::vector<uint64_t> selected(rows.begin(), rows.end());
+    std::ranges::sort(selected);
+    selected.erase(std::ranges::unique(selected).begin(), selected.end());
+    if (selected.back() >= total) {
+        return std::nullopt;
+    }
+
+    std::vector<bool> shown(total, false);
+    for (const uint64_t row : selected) {
+        shown[row] = true;
+    }
+
+    std::vector<bool> included = shown;
+    if (placement == MeshPartPlacement::Chained) {
+        std::vector<bool> walked(total, false);
+        for (const uint64_t row : selected) {
+            auto parent = assembly->placement(row)->parent;
+            while (parent && !walked[*parent]) {
+                walked[*parent] = true;
+                included[*parent] = true;
+                parent = assembly->placement(*parent)->parent;
+            }
+        }
+    }
+
+    const auto world = assembly->world_transforms();
+    MeshNetworkPart part { .network = std::make_shared<MeshNetwork>(), .rows = {} };
+    std::vector<std::optional<uint32_t>> slot_of(total);
+    bool any_mesh = false;
+
+    for (size_t row = 0; row < total; ++row) {
+        if (!included[row]) {
+            continue;
+        }
+        const auto held = assembly->placement(row);
+        if (!held) {
+            return std::nullopt;
+        }
+
+        std::shared_ptr<GpuSync::MeshWriterNode> node;
+        if (shown[row] && held->source) {
+            if (const auto* mesh = assembly->mesh(*held->source)) {
+                node = std::make_shared<GpuSync::MeshWriterNode>(mesh->vertex_count());
+                node->set_mesh(*mesh);
+            }
+        }
+
+        const bool flat = placement == MeshPartPlacement::Flat;
+        if (flat && !node) {
+            continue;
+        }
+        any_mesh = any_mesh || node != nullptr;
+
+        std::optional<uint32_t> parent;
+        if (!flat && held->parent) {
+            parent = slot_of[*held->parent];
+        }
+
+        const auto index = part.network->add_slot(held->name, std::move(node), parent);
+        auto& slot = part.network->get_slot(index);
+        slot.local_transform = flat ? world[row] : held->local;
+        slot.world_transform = world[row];
+        slot_of[row] = index;
+        part.rows.push_back(row);
+    }
+
+    if (!any_mesh) {
+        return std::nullopt;
+    }
+    return part;
 }
 
 } // namespace MayaFlux::Nodes::Network

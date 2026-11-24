@@ -3,6 +3,7 @@
 #include "Principals/Agent.hpp"
 
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Kriya/BroadcastEvents.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -38,6 +39,11 @@ class StateEncoder;
  * performs an immediate single call with no coroutine. Any scheduling
  * modifier (@c every, @c on, @c move_to, @c position_from, @c use) creates
  * and registers a coroutine owned by Fabric.
+ *
+ * @c on and @c on_scroll add a trigger, so one wiring may hold any number of them:
+ * every key, button and window event an entity answers to goes through one wiring.
+ * The triggers share @c times, and a firing a window event caused carries that event
+ * in @c InfluenceContext::input, so the entity can tell which trigger fired.
  */
 class MAYAFLUX_API Wiring {
 public:
@@ -55,10 +61,19 @@ public:
 
     /**
      * @brief Fire the entity on a recurring interval.
-     * @param interval_seconds Period between invocations.
-     * @param token Scheduler rate to use (default: SAMPLE_ACCURATE).
+     * @param interval_seconds Period between invocations; zero or less fires once per cycle of the token.
+     * @param token Scheduler rate to use (default: SAMPLE_ACCURATE). Every token runs on its own clock, and a choreography built with @c move_to uses it too.
      */
     Wiring& every(double interval_seconds, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /**
+     * @brief Fire the entity once per cycle of a clock.
+     *
+     * No seconds-to-unit rounding: FRAME_ACCURATE fires once per frame, SAMPLE_ACCURATE
+     * once per sample. Equivalent to @c every(0.0, token).
+     * @param token Scheduler rate whose cycle drives the entity.
+     */
+    Wiring& every(Vruta::ProcessingToken token);
 
     /**
      * @brief Limit a recurring registration to a fixed duration then cancel.
@@ -117,16 +132,43 @@ public:
 
     /**
      * @brief Fire the entity on each incoming message from a network source.
-     * @param source OSC or raw network source.
+     * @param source OSC or raw network source; the wiring keeps it alive.
      */
-    Wiring& on(Vruta::NetworkSource& source);
+    Wiring& on(std::shared_ptr<Vruta::NetworkSource> source);
 
     /**
-     * @brief Fire the entity on each matching window event.
-     * @param source Event stream.
-     * @param filter Optional filter criteria.
+     * @brief Fire the entity on each value a broadcast source signals.
+     *
+     * The firing runs on the thread that signals the source, so a Kriya::Course event
+     * fires the entity on the routine that advances the course. The value is not passed
+     * on: the entity is fired as for any trigger. A source holds one pending value, so
+     * give each wiring its own, as Course::subscribe does.
+     * @tparam T Payload type of the source.
+     * @param source Source to listen to; the wiring keeps it alive.
      */
-    Wiring& on(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter = {});
+    template <typename T>
+    Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source)
+    {
+        m_triggers.emplace_back(BroadcastTrigger {
+            .listen = [source = std::move(source)](std::function<void()> fire) {
+                return Kriya::on_signal(source, [fire = std::move(fire)](const T&) { fire(); });
+            } });
+        return *this;
+    }
+
+    /**
+     * @brief Fire the entity on each matching event of a window.
+     *
+     * A mouse position carried by the event is made available to the entity as the cursor.
+     * @param window Source window.
+     * @param filter Filter criteria; an empty filter matches every event. Constrained to
+     *               exactly WindowEventFilter so a key or ModifiedKey still selects the key overload.
+     */
+    template <std::same_as<Vruta::WindowEventFilter> Filter>
+    Wiring& on(std::shared_ptr<Core::Window> window, Filter filter)
+    {
+        return window_filter(std::move(window), std::move(filter));
+    }
 
     /**
      * @brief Fire the entity on each mouse scroll event from a window.
@@ -281,17 +323,16 @@ private:
     };
 
     struct NetworkTrigger {
-        Vruta::NetworkSource* source;
-    };
-
-    struct EventTrigger {
-        Vruta::EventSource* source;
-        Vruta::EventFilter filter;
+        std::shared_ptr<Vruta::NetworkSource> source;
     };
 
     struct WindowEventTrigger {
-        Vruta::WindowEventSource* source {};
+        std::shared_ptr<Core::Window> window;
         Vruta::WindowEventFilter filter;
+    };
+
+    struct BroadcastTrigger {
+        std::function<Vruta::Event(std::function<void()>)> listen;
     };
 
     using Trigger = std::variant<
@@ -299,9 +340,9 @@ private:
         KeyTrigger,
         MouseTrigger,
         NetworkTrigger,
-        EventTrigger,
         WindowEventTrigger,
-        ScrollTrigger>;
+        ScrollTrigger,
+        BroadcastTrigger>;
     using Factory = std::variant<std::monostate, SoundFactory, GraphicsFactory, CrossFactory>;
     using EFactory = std::optional<EventFactory>;
 
@@ -319,7 +360,7 @@ private:
     Vruta::ProcessingToken m_metro_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
     Vruta::ProcessingToken m_duration_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
 
-    Trigger m_trigger;
+    std::vector<Trigger> m_triggers;
     Factory m_factory;
     EFactory m_event_factory;
     std::string m_factory_name;
@@ -329,7 +370,7 @@ private:
     std::string m_bind_attach_name;
     std::string m_bind_detach_name;
 
-    Vruta::Event window_event_source_loop(Vruta::WindowEventSource& source, Vruta::WindowEventFilter filter, Fabric& fabric, uint32_t id, std::function<void()> fire);
+    Wiring& window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter);
 
 public:
     // =====================================================================
@@ -361,10 +402,13 @@ public:
     [[nodiscard]] const std::vector<MoveStep>& move_steps() const { return m_move_steps; }
 
     /** @brief True if @c on_scroll was called. */
-    [[nodiscard]] bool is_scroll() const { return std::holds_alternative<ScrollTrigger>(m_trigger); }
+    [[nodiscard]] bool is_scroll() const
+    {
+        return std::ranges::any_of(m_triggers, [](const Trigger& t) { return std::holds_alternative<ScrollTrigger>(t); });
+    }
 
-    /** @brief Active trigger variant set by @c on. */
-    [[nodiscard]] const Trigger& trigger() const { return m_trigger; }
+    /** @brief Triggers added by @c on and @c on_scroll, in the order they were added. */
+    [[nodiscard]] const std::vector<Trigger>& triggers() const { return m_triggers; }
 
     /** @brief Active factory variant set by @c use for non-Event factories. */
     [[nodiscard]] const Factory& factory() const { return m_factory; }

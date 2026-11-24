@@ -7,6 +7,14 @@
 
 namespace MayaFlux::Nexus {
 
+AgentControls& Agent::open(QuantityStore& store)
+{
+    auto& controls = store.declare<AgentControls>();
+    controls.intensity.observe(1.0F);
+    controls.radius.observe(1.0F);
+    return controls;
+}
+
 void Agent::set_vertices(const void* data, size_t byte_count)
 {
     for (auto& s : m_render_sinks)
@@ -22,7 +30,7 @@ void Agent::attach(const std::shared_ptr<Buffers::VKBuffer>& buf, const AttachCo
     }
 
     detach();
-    m_attachment = make_attachment(buf, config, m_orientation);
+    m_attachment = make_attachment(buf, config, orientation());
     follow_attachment();
 }
 
@@ -36,15 +44,25 @@ void Agent::detach()
 
 void Agent::recenter()
 {
-    if (m_attachment) {
-        recenter_attachment(*m_attachment, m_position, m_orientation);
+    if (!m_attachment) {
+        return;
+    }
+    auto placed = position();
+    recenter_attachment(*m_attachment, placed, orientation());
+    if (placed) {
+        m_controls.position.observe(*placed);
     }
 }
 
 void Agent::follow_attachment()
 {
-    if (m_attachment) {
-        Nexus::follow_attachment(*m_attachment, m_position, m_orientation);
+    if (!m_attachment) {
+        return;
+    }
+    auto placed = position();
+    Nexus::follow_attachment(*m_attachment, placed, orientation());
+    if (placed) {
+        m_controls.position.observe(*placed);
     }
 }
 

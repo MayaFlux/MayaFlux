@@ -3,6 +3,10 @@
 #include "InstanceSSBOProcessor.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
+namespace MayaFlux::Core {
+class VKImage;
+}
+
 namespace MayaFlux::Nodes::Network {
 class InstanceNetwork;
 }
@@ -16,10 +20,15 @@ class RenderProcessor;
  * @brief VKBuffer that renders an InstanceNetwork as a single instanced draw call.
  *
  * Template geometry (from slot 0's node) is uploaded once into the vertex buffer.
- * Per-slot transforms are packed into an SSBO at binding 1 by InstanceSSBOProcessor.
+ * Per-slot transforms are packed into an SSBO at binding 1 by InstanceSSBOProcessor,
+ * and per-slot payloads (tint, texture index, free scalar) into one at binding 8.
  * The shader reads gl_InstanceIndex to fetch the mat4 and transform position,
- * normal, and tangent. instance_count on RenderProcessor is set to slot_count()
- * each cycle.
+ * normal, and tangent, and the payload to tint the colour. instance_count on
+ * RenderProcessor is set to slot_count() each cycle.
+ *
+ * bind_instance_textures() gives the instances a texture array: each slot's
+ * texture index picks the image its instance samples, with instance_textured.frag
+ * as the default fragment shader for a triangle template.
  *
  * Topology is taken from slot 0's node. All slots must carry geometry with the
  * same topology and vertex layout for the single draw call to be correct.
@@ -47,10 +56,22 @@ public:
         std::shared_ptr<Nodes::Network::InstanceNetwork> network,
         float over_allocate_factor = 1.5F);
 
-    ~InstanceNetworkBuffer() override = default;
+    ~InstanceNetworkBuffer() override;
 
     void setup_processors(ProcessingToken token) override;
     void setup_rendering(const RenderConfig& config);
+
+    /**
+     * @brief Give the instances a texture array, one image per GeometrySlot::texture index.
+     * @param images Images in index order. Must be set before setup_rendering() for the
+     *        pipeline to include the array; a template that is not triangles ignores it.
+     *
+     * The array occupies descriptor bindings from 2 up, in front of any additional
+     * textures, which are bound after it.
+     */
+    void bind_instance_textures(std::vector<std::shared_ptr<Core::VKImage>> images);
+
+    [[nodiscard]] bool has_instance_textures() const noexcept { return !m_instance_textures.empty(); }
 
     [[nodiscard]] std::shared_ptr<InstanceSSBOProcessor> get_ssbo_processor() const
     {
@@ -66,6 +87,7 @@ public:
 private:
     std::shared_ptr<Nodes::Network::InstanceNetwork> m_network;
     std::shared_ptr<InstanceSSBOProcessor> m_ssbo_processor;
+    std::vector<std::shared_ptr<Core::VKImage>> m_instance_textures;
 
     static size_t estimate_vertex_bytes(
         const std::shared_ptr<Nodes::Network::InstanceNetwork>& network,

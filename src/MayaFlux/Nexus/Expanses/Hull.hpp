@@ -15,7 +15,8 @@ class StateEncoder;
  * @brief An Expanse whose region is the bounds of a buffer that already exists.
  *
  * The buffer's geometry is read once, when the Hull is built and on refit(),
- * and the box is kept in the buffer's stored coordinates. Containment takes a
+ * and the box is kept in the buffer's stored coordinates, as the `local` control
+ * of HullControls. Containment takes a
  * world position back through the transform the buffer is drawn with, so the
  * region follows the buffer wherever it is placed, for example by an Agent
  * attached to it, and stays an exact box under rotation and scale. The buffer
@@ -60,7 +61,7 @@ private:
 
     std::shared_ptr<Buffers::VKBuffer> m_buf;
     std::optional<uint32_t> m_collection;
-    std::optional<Kinesis::AABB3D> m_local;
+    HullControls& m_hull { extend<HullControls>() };
 };
 
 } // namespace MayaFlux::Nexus

@@ -53,9 +53,18 @@ public:
      *
      * Creates a new Timer that will use the provided scheduler for
      * timing operations. The scheduler provides the sample clock and
-     * task management infrastructure needed for precise timing.
+     * task management infrastructure needed for precise timing. The timer
+     * keeps the scheduler alive for as long as it exists.
      */
-    Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+    Timer(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The timer does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    Timer(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+        : Timer(std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }), token)
+    {
+    }
+
     ~Timer();
 
     /**
@@ -91,12 +100,12 @@ public:
 
 private:
     /**
-     * @brief Reference to the scheduler that manages this timer
+     * @brief The scheduler that manages this timer
      *
      * The scheduler provides the timing infrastructure needed to
      * execute callbacks at precise sample positions.
      */
-    Vruta::TaskScheduler& m_Scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_Scheduler;
 
     /**
      * @brief The underlying computational routine that implements the timer
@@ -160,9 +169,18 @@ public:
      *
      * Creates a new TimedAction that will use the provided scheduler for
      * timing operations. The scheduler provides the sample clock and
-     * task management infrastructure needed for precise timing.
+     * task management infrastructure needed for precise timing. The action
+     * keeps the scheduler alive for as long as it exists.
      */
-    TimedAction(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+    TimedAction(const std::shared_ptr<Vruta::TaskScheduler>& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The action does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
+    TimedAction(Vruta::TaskScheduler& scheduler, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+        : TimedAction(std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }), token)
+    {
+    }
+
     ~TimedAction() = default;
 
     /**
@@ -199,12 +217,12 @@ public:
 
 private:
     /**
-     * @brief Reference to the scheduler that manages this action
+     * @brief The scheduler that manages this action
      *
      * The scheduler provides the timing infrastructure needed to
      * execute the end function at the right time.
      */
-    Vruta::TaskScheduler& m_Scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_Scheduler;
 
     /**
      * @brief The timer used to schedule the end function
@@ -248,13 +266,27 @@ public:
      * @param token The processing token that determines the timing context for this activation (default is SAMPLE_ACCURATE)
      *
      * Creates a new NodeTimer that will use the provided scheduler and
-     * graph manager for timing and node management operations.
+     * graph manager for timing and node management operations. The activation
+     * keeps the scheduler alive for as long as it exists.
      */
+    TemporalActivation(
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        Nodes::NodeGraphManager& graph_manager,
+        Buffers::BufferManager& buffer_manager,
+        Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /** @deprecated Pass the scheduler as a shared_ptr. The activation does not own it. */
+    [[deprecated("pass the scheduler as a std::shared_ptr")]]
     TemporalActivation(
         Vruta::TaskScheduler& scheduler,
         Nodes::NodeGraphManager& graph_manager,
         Buffers::BufferManager& buffer_manager,
-        Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+        Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE)
+        : TemporalActivation(
+              std::shared_ptr<Vruta::TaskScheduler>(&scheduler, [](Vruta::TaskScheduler*) { }),
+              graph_manager, buffer_manager, token)
+    {
+    }
 
     ~TemporalActivation() = default;
 
@@ -330,12 +362,12 @@ public:
 
 private:
     /**
-     * @brief Reference to the scheduler that manages this timer
+     * @brief The scheduler that manages this timer
      *
      * The scheduler provides the timing infrastructure needed for
      * precise control of entity activation durations.
      */
-    Vruta::TaskScheduler& m_scheduler;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
 
     /**
      * @brief Cleans up the current operation, disconnecting the entity and resetting state

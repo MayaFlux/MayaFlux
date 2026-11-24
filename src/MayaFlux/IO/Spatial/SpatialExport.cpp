@@ -37,7 +37,7 @@ namespace {
         std::span<const uint8_t> raw,
         size_t vertex_count,
         std::vector<glm::vec3>& positions,
-        std::vector<SpatialAttribute>& attributes)
+        std::vector<Kakshya::SpatialAttribute>& attributes)
     {
         if (layout.stride_bytes != sizeof(Kakshya::Vertex)) {
             return false;
@@ -55,7 +55,7 @@ namespace {
 
         positions = std::move(std::get<std::vector<glm::vec3>>(channels[0]));
         for (size_t i = 0; i < column_names.size(); ++i) {
-            attributes.push_back(SpatialAttribute { .name = column_names[i], .scope = SpatialScope::Varying,
+            attributes.push_back(Kakshya::SpatialAttribute { .name = column_names[i], .scope = Kakshya::SpatialScope::Varying,
                 .values = std::move(channels[i + 1]) });
         }
 
@@ -170,7 +170,7 @@ bool write_operator_sample(
     }
 
     std::vector<glm::vec3> positions;
-    std::vector<SpatialAttribute> attributes;
+    std::vector<Kakshya::SpatialAttribute> attributes;
     if (!extract_vertex_columns(layout, raw, vertex_count, positions, attributes)) {
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "write_operator_sample: vertex layout is not a Kakshya::Vertex record");
@@ -196,9 +196,9 @@ bool write_operator_sample(
         }
     }
 
-    attributes.push_back(SpatialAttribute {
+    attributes.push_back(Kakshya::SpatialAttribute {
         .name = "cluster",
-        .scope = SpatialScope::Varying,
+        .scope = Kakshya::SpatialScope::Varying,
         .values = Kakshya::DataVariant { std::move(cluster_ids) } });
 
     for (auto& [name, values] : op->extract_vertex_attributes()) {
@@ -208,9 +208,9 @@ bool write_operator_sample(
                 "write_operator_sample: extract_vertex_attributes() '{}' count mismatch", name);
             return false;
         }
-        attributes.push_back(SpatialAttribute {
+        attributes.push_back(Kakshya::SpatialAttribute {
             .name = name,
-            .scope = SpatialScope::Varying,
+            .scope = Kakshya::SpatialScope::Varying,
             .values = std::move(values) });
     }
 
@@ -285,7 +285,7 @@ namespace {
             Buffers::generation_slot(Buffers::gpu_buffer_handle(buffer)), raw.data(), raw.size(), staging);
 
         std::vector<glm::vec3> positions;
-        std::vector<SpatialAttribute> attributes;
+        std::vector<Kakshya::SpatialAttribute> attributes;
         if (!extract_vertex_columns(layout, raw, vertex_count, positions, attributes)) {
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                 "write_network_geometry_buffer_sample: vertex layout is not a Kakshya::Vertex record");
@@ -316,9 +316,9 @@ namespace {
             Buffers::download_back_buffer(
                 buffer->read_state_slot("hash_cluster_id"), cluster_ids.data(),
                 cluster_ids.size() * sizeof(uint32_t), staging);
-            attributes.push_back(SpatialAttribute {
+            attributes.push_back(Kakshya::SpatialAttribute {
                 .name = "cluster",
-                .scope = SpatialScope::Varying,
+                .scope = Kakshya::SpatialScope::Varying,
                 .values = Kakshya::DataVariant { std::move(cluster_ids) } });
         }
 

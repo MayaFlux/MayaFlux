@@ -104,14 +104,18 @@ public:
      *
      * @param r Falloff radius in world-space units.
      */
-    void set_falloff_radius(float r) { m_falloff_radius = r; }
+    [[deprecated("use set(PresenceControls { .falloff_radius = ... })")]] void set_falloff_radius(float r)
+    {
+        m_presence.falloff_radius.assign(Quantity(r));
+    }
 
     /**
      * @brief Current falloff radius, or the query radius if none was set.
      */
     [[nodiscard]] float falloff_radius() const
     {
-        return m_falloff_radius > 0.0F ? m_falloff_radius : query_radius();
+        const auto radius = quantity_value<float>(m_presence.falloff_radius);
+        return radius && *radius > 0.0F ? *radius : query_radius();
     }
 
     /**
@@ -122,6 +126,7 @@ public:
     {
         m_falloff = std::move(fn);
         m_falloff_curve.reset();
+        m_presence.falloff_curve.assign(Quantity::unset());
     }
 
     /**
@@ -150,7 +155,11 @@ public:
         return m_neighbors;
     }
 
-    /** @brief Set the falloff curve to a named built-in. */
+    /**
+     * @brief Set the falloff curve to a named built-in.
+     *
+     * `set(PresenceControls { .falloff_curve = ... })` does the same at the next perception.
+     */
     void set_falloff_curve(FalloffCurve curve);
 
     /** @brief Current named curve, or nullopt if a custom lambda was set via set_falloff(). */
@@ -165,7 +174,7 @@ public:
     void invoke_influence(const InfluenceContext& ctx) const override;
 
 private:
-    float m_falloff_radius { 0.0F };
+    PresenceControls& m_presence { extend<PresenceControls>() };
     FalloffFn m_falloff;
     RadiateFn m_radiate;
 

@@ -55,7 +55,7 @@ struct MAYAFLUX_API MutationConfig {
      * HashDensityColorProcessor and must exist even when mutation is never
      * enabled at all.
      */
-    void declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const;
+    void declare_fields(const std::shared_ptr<StateFieldBuffer>& buffer) const;
 };
 
 /**

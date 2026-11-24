@@ -99,6 +99,14 @@ namespace {
 
     std::string spell(clang::QualType type, const clang::ASTContext& context)
     {
+#ifdef _WIN32
+        if (llvm::isa<clang::TypedefType>(type.getTypePtr())) {
+            clang::PrintingPolicy policy = context.getPrintingPolicy();
+            policy.FullyQualifiedName = true;
+            policy.PrintAsCanonical = false;
+            return relative_to_root(type.getAsString(policy));
+        }
+#endif
         const clang::QualType qualified = clang::TypeName::getFullyQualifiedType(type, context, false);
         return relative_to_root(qualified.getAsString(context.getPrintingPolicy()));
     }

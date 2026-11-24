@@ -17,11 +17,12 @@ namespace MayaFlux::IO {
  * assumption ModelReader/MeshInsertion make on the way in. A MeshData with
  * any other stride is rejected rather than misinterpreted.
  *
- * Mesh-only: this writer targets triangle geometry exclusively. It does not
+ * Mesh-only: this writer targets face geometry exclusively. It does not
  * attempt point/line export. Assimp's own topology support for those is
  * format-dependent and, for two formats (STL, Collada), silently drops the
  * geometry entirely rather than erroring. That case is out of scope here by
- * design.
+ * design. A MeshData that keeps its polygons (MeshData::faces) is written as those
+ * polygons, and any other MeshData as its triangles.
  *
  * format_id resolution (ModelWriteOptions::format_id):
  * Assimp dispatches by an internal format id string, not by extension;

@@ -16,6 +16,10 @@ namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
 }
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -65,15 +69,41 @@ using TextureResolver = std::function<std::shared_ptr<Core::VKImage>(const std::
  * - aiProcess_JoinIdenticalVertices: deduplicate vertices
  * - aiProcess_SortByPType: isolate TRIANGLE primitives
  *
+ * set_keep_polygons(true) before open() changes that. Faces of any size reach the
+ * MeshData as its polygons (MeshData::faces) with the triangles derived from them,
+ * instead of being triangulated by Assimp, and a mesh is no longer split by primitive
+ * type, so triangles and polygons of one source mesh stay one MeshData. Faces of fewer
+ * than three indices are left out. Normals and tangents the file does not carry are
+ * derived from the polygons by Kinesis (write_vertex_normals and write_vertex_tangents,
+ * which leave any the file does carry alone) in place of the two generation steps.
+ *
  * FileReader contract:
  * create_container() and load_into_container() are no-ops for this reader;
  * mesh data does not go through the SignalSourceContainer streaming path.
- * Use load() or the IOManager::load_mesh() convenience wrapper instead.
+ * Use load(), create_mesh_assembly() or the IOManager::load_mesh() convenience wrapper instead.
  */
 class MAYAFLUX_API ModelReader : public FileReader {
 public:
     ModelReader();
     ~ModelReader() override;
+
+    /**
+     * @brief Keep polygons as they are in the file instead of triangulating them.
+     *
+     * Applies to the next open(). Off by default. See the class description for what
+     * changes.
+     */
+    void set_keep_polygons(bool keep) noexcept { m_keep_polygons = keep; }
+
+    /**
+     * @brief Whether the next open() bakes the node tree into the vertices.
+     *
+     * Applies to the next open(). Off by default. On, Assimp (aiProcess_PreTransformVertices)
+     * places every mesh where its node put it and leaves one root, so the scene has no
+     * hierarchy to animate, and it drops the scene's animations and bones. Use it for a static
+     * scene that should be one flat set of placed meshes.
+     */
+    void set_flatten(bool flatten) noexcept { m_flatten = flatten; }
 
     // -------------------------------------------------------------------------
     // Primary API — use these
@@ -117,10 +147,24 @@ public:
     create_mesh_buffers(const TextureResolver& resolver = nullptr) const;
 
     /**
-     * @brief Construct a MeshNetwork from all meshes in the currently loaded scene.
+     * @brief Construct a MeshNetwork from the scene's node tree.
      *
-     * One MeshSlot per aiMesh, named from aiMesh::mName (or "mesh_N" if unnamed).
+     * One slot per node, named from the node, parented as the tree is, with the
+     * node's transform as local_transform and the composed world_transform
+     * already resolved. A node with no mesh becomes a joint slot with no node.
+     * The first mesh of a node lives on the node's own slot; each further mesh
+     * becomes a child slot named from the mesh. A mesh referenced by several
+     * nodes gets its own copy of the geometry in each slot.
+     *
+     * An identity scene root gets no slot: its meshes and children become root
+     * slots, so a single-node file loads as one root slot per mesh. A scene
+     * root with a transform is kept as a joint. Meshes no node references are
+     * added as root slots, named from aiMesh::mName (or "mesh_N" if unnamed).
      * Each slot's MeshWriterNode holds the extracted vertex and index data.
+     *
+     * The network is built from create_mesh_assembly(), so slot i is row i of that assembly and
+     * one of its motions plays on this network through Kriya::slot_sink. An identity scene root
+     * that an animation targets is kept as a joint.
      *
      * If resolver is provided, it is called with the raw diffuse path from each
      * mesh's material. The returned VKImage is assigned to slot.diffuse_texture.
@@ -133,6 +177,34 @@ public:
      */
     [[nodiscard]] std::shared_ptr<Nodes::Network::MeshNetwork>
     create_mesh_network(const TextureResolver& resolver = nullptr) const;
+
+    /**
+     * @brief Build a MeshAssemblyContainer from the scene.
+     *
+     * Every valid mesh becomes one source, stored once, so a mesh several nodes use
+     * stays shared. Every material becomes a MeshAssemblyMaterial (name, diffuse path,
+     * whether the path points into the file). The node tree becomes the placement rows
+     * with the same rules as create_mesh_network(): one row per node, parented as the
+     * tree is, a node with no mesh a joint, the first mesh of a node on the node's own
+     * row and each further mesh a child row, an identity scene root with no row unless
+     * an animation targets it, and meshes no node references as root rows.
+     *
+     * Each Assimp animation becomes a motion. A channel is resolved by node name; a name
+     * that matches no row or more than one row, a node with no row, and a node an
+     * animation keys twice are skipped with a warning. Times are seconds: key time over
+     * mTicksPerSecond, with 0 ticks per second read as 1. A key's interpolation is Step
+     * or Linear (rotations spherical), or CubicSpline with the tangents of its key: the glTF
+     * importer of Assimp 6.0.6 and later hands over a cubic sampler as three keys at one time,
+     * the incoming tangent, the value and the outgoing tangent, and they are read as one key.
+     * Older Assimp keeps only the value, so such keys arrive as Linear. The scene's ModelInfo is
+     * kept in the assembly's facets.
+     *
+     * Requires open(). Does not call close(). Textures are not resolved: the assembly
+     * holds the paths.
+     *
+     * @return The assembly, or nullptr if no scene is loaded.
+     */
+    [[nodiscard]] std::shared_ptr<Kakshya::MeshAssemblyContainer> create_mesh_assembly() const;
 
     // -------------------------------------------------------------------------
     // FileReader interface
@@ -196,6 +268,9 @@ private:
     std::unique_ptr<Impl> m_impl;
 
     bool m_is_open { false };
+    bool m_keep_polygons { false };
+    bool m_flatten { false };
+    bool m_polygons_imported { false };
     mutable std::string m_last_error;
 
     [[nodiscard]] Kakshya::MeshData extract_single_mesh(

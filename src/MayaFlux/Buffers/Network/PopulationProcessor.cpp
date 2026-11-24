@@ -1,7 +1,7 @@
 #include "PopulationProcessor.hpp"
 
 #include "NeighbourWalkHelper.hpp"
-#include "NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 
@@ -9,7 +9,7 @@
 
 namespace MayaFlux::Buffers {
 
-void PopulationConfig::declare_fields(const std::shared_ptr<NetworkGeometryBuffer>& buffer) const
+void PopulationConfig::declare_fields(const std::shared_ptr<StateFieldBuffer>& buffer) const
 {
     buffer->declare_state("mutation_alive", hash.particle_count, sizeof(uint32_t), false);
     buffer->declare_state("mutation_spawn_cursor", 1, sizeof(uint32_t), false);

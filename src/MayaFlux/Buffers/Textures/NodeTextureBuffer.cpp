@@ -42,6 +42,11 @@ NodeTextureBuffer::NodeTextureBuffer(
         get_size_bytes());
 }
 
+NodeTextureBuffer::~NodeTextureBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_gpu_texture);
+}
+
 void NodeTextureBuffer::setup_processors(ProcessingToken token)
 {
     auto self = std::dynamic_pointer_cast<NodeTextureBuffer>(shared_from_this());

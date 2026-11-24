@@ -13,6 +13,7 @@
 
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -95,6 +96,7 @@ namespace {
         Kakshya::MeshSubrange sub;
         sub.index_start = 0;
         sub.index_count = mesh_data.face_count() * 3;
+        sub.vertex_count = mesh_data.vertex_count();
         sub.name = name;
 
         Kakshya::RegionGroup rg("submeshes");
@@ -118,23 +120,19 @@ namespace {
             return std::nullopt;
         }
 
-        const glm::mat3 normal_matrix(world);
-
-        auto& vertex_bytes = std::get<std::vector<uint8_t>>(mesh_data->vertex_variant);
-        std::vector<Kakshya::MeshVertex> verts(vertex_bytes.size() / sizeof(Kakshya::MeshVertex));
-        std::memcpy(verts.data(), vertex_bytes.data(), vertex_bytes.size());
-        for (auto& v : verts) {
-            v.position = glm::vec3(world * glm::vec4(v.position, 1.0F));
-            v.normal = glm::normalize(normal_matrix * v.normal);
-            v.tangent = glm::vec4(glm::normalize(normal_matrix * glm::vec3(v.tangent)), v.tangent.w);
+        if (!Kakshya::place_vertices(
+                std::get<std::vector<uint8_t>>(mesh_data->vertex_variant), mesh_data->layout, world)) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "save_mesh: slot '{}' has vertices that cannot be placed", name);
+            return std::nullopt;
         }
-        std::memcpy(vertex_bytes.data(), verts.data(), vertex_bytes.size());
 
         const auto index_count = std::get<std::vector<uint32_t>>(mesh_data->index_variant).size();
 
         Kakshya::MeshSubrange sub;
         sub.index_start = 0;
         sub.index_count = static_cast<uint32_t>(index_count);
+        sub.vertex_count = mesh_data->vertex_count();
         sub.name = name;
         sub.diffuse_path = diffuse_path;
         Kakshya::RegionGroup rg("submeshes");

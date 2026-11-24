@@ -4,7 +4,7 @@
 #include "MayaFlux/Kakshya/NDData/CompositeForest.hpp"
 #include "MayaFlux/Kakshya/NDData/CompositeInsertion.hpp"
 #include "MayaFlux/Kakshya/DataFieldTraversal.hpp"
-#include "MayaFlux/Kakshya/NDimensionalContainer.hpp"
+#include "MayaFlux/Kakshya/SemanticContainer.hpp"
 #include "MayaFlux/Kakshya/Region/RegionGroup.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -19,8 +19,8 @@ namespace MayaFlux::Kakshya {
  * CompositeArray, rebasing selected text offsets into its own text store.
  * Each traversal owns its own position and window size.
  *
- * Specializes NDDataContainer<CompositeArray> directly, not
- * SignalSourceContainer, so it carries no ProcessingState and no
+ * Specializes SemanticContainer<CompositeArray> (NDDataContainer<CompositeArray>
+ * directly, not SignalSourceContainer), so it carries no ProcessingState and no
  * DataProcessor attach/detach lifecycle. On-demand, non-recurring access
  * goes through DataFieldTraversal<CompositeArray> instead, obtained via
  * traverse().
@@ -45,7 +45,7 @@ namespace MayaFlux::Kakshya {
  * @note Views and traversal objects borrow the source array. Changes to
  * source storage can invalidate them according to CompositeArray's rules.
  */
-class MAYAFLUX_API CompositeContainer : public NDDataContainer<CompositeArray> {
+class MAYAFLUX_API CompositeContainer : public SemanticContainer<CompositeArray> {
 public:
     ~CompositeContainer() override;
 
@@ -215,15 +215,6 @@ public:
     [[nodiscard]] std::vector<CompositeArray> get_region_data(const Region& region) const override;
 
     /**
-     * @brief Copy the valid regions of a group into separate arrays.
-     * @param group Regions to select.
-     * @return One owning array per valid region; shorter than
-     * group.regions.size() when a region fails to slice or copy, since
-     * failures are skipped rather than represented as an empty entry.
-     */
-    [[nodiscard]] std::vector<CompositeArray> get_region_group_data(const RegionGroup& group) const override;
-
-    /**
      * @brief Copy valid one-dimensional segments into separate arrays.
      * @param segments Source regions with offsets and element counts.
      * @return One owning array per valid segment; shorter than
@@ -240,21 +231,6 @@ public:
      * @note Invalid ranges, counts, or layouts leave the source unchanged.
      */
     void set_region_data(const Region& region, const std::vector<CompositeArray>& data) override;
-
-    /** @brief Store or replace a named region group. */
-    void add_region_group(const RegionGroup& group) override;
-
-    /** @brief Return a named region group, or an empty group if absent. */
-    [[nodiscard]] RegionGroup get_region_group(const std::string& name) const override;
-
-    /** @brief Copy all named region groups. */
-    [[nodiscard]] std::unordered_map<std::string, RegionGroup> get_all_region_groups() const override
-    {
-        return m_region_groups;
-    }
-
-    /** @brief Remove a named region group if present. */
-    void remove_region_group(const std::string& name) override;
 
     /** @brief Valid element regions are already resident in the array. */
     [[nodiscard]] bool is_region_loaded(const Region& region) const override;
@@ -280,22 +256,11 @@ public:
     /** @brief Whether the array contains any elements. */
     [[nodiscard]] bool has_data() const override { return !m_data.empty(); }
 
-    /** @brief Mutable dimensional metadata. */
-    [[nodiscard]] ContainerDataStructure& get_structure() override { return m_structure; }
-
-    /** @brief Dimensional metadata. */
-    [[nodiscard]] const ContainerDataStructure& get_structure() const override { return m_structure; }
-
-    /** @brief Replace dimensional metadata. */
-    void set_structure(ContainerDataStructure structure) override { m_structure = std::move(structure); }
-
 private:
     CompositeArray m_data;
     CompositeArray m_materialized_data;
     size_t m_next_element {};
     size_t m_batch_size;
-    ContainerDataStructure m_structure { DataModality::TENSOR_ND, OrganizationStrategy::INTERLEAVED };
-    std::unordered_map<std::string, RegionGroup> m_region_groups;
 };
 
 }

@@ -190,6 +190,21 @@ bool upload_volume(
     return true;
 }
 
+std::vector<Buffers::VolumeGridBuffer::FieldDecl> volume_field_decls(const Kakshya::VolumeData& data)
+{
+    std::vector<Buffers::VolumeGridBuffer::FieldDecl> decls;
+    decls.reserve(data.fields.size());
+    for (const auto& field : data.fields) {
+        decls.push_back({
+            .name = field.name,
+            .stride_bytes = field.is_vector() ? sizeof(glm::vec4) : sizeof(float),
+            .double_buffered = true,
+            .semantics = field.semantics,
+        });
+    }
+    return decls;
+}
+
 // ============================================================================
 // save_volume
 // ============================================================================

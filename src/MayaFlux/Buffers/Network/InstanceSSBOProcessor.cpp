@@ -44,6 +44,9 @@ void InstanceSSBOProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     m_transform_arena = std::make_shared<Portal::Graphics::SlotArena>();
     m_transform_arena->initialize(ssbo_bytes, Portal::Graphics::BufferUsageHint::HOST_STORAGE, 3);
 
+    m_payload_arena = std::make_shared<Portal::Graphics::SlotArena>();
+    m_payload_arena->initialize(slot_count * sizeof(InstancePayload), Portal::Graphics::BufferUsageHint::HOST_STORAGE, 3);
+
     upload_template(vk_buf);
     upload_transforms(vk_buf);
     push_ssbo_binding(vk_buf);
@@ -60,6 +63,10 @@ void InstanceSSBOProcessor::on_detach(const std::shared_ptr<Buffer>&)
         m_transform_arena->release();
     }
     m_transform_arena.reset();
+    if (m_payload_arena) {
+        m_payload_arena->release();
+    }
+    m_payload_arena.reset();
     m_index_buffer.reset();
     m_index_staging.reset();
 }
@@ -149,8 +156,30 @@ void InstanceSSBOProcessor::upload_transforms(const std::shared_ptr<VKBuffer>& v
     m_transform_slot = m_transform_arena->acquire();
     m_transform_arena->write(m_transform_slot, m_transform_scratch.data(), bytes);
 
+    upload_payload();
+
     if (auto rp = vertex_buf->get_render_processor())
         rp->set_instance_count(static_cast<uint32_t>(slots.size()));
+}
+
+void InstanceSSBOProcessor::upload_payload()
+{
+    if (!m_payload_arena || !m_payload_arena->is_initialized())
+        return;
+
+    const auto& slots = m_network->slots();
+    m_payload_scratch.assign(slots.size(), InstancePayload {});
+    for (const auto& slot : slots) {
+        m_payload_scratch[slot.index] = { .tint = slot.tint, .scalar = slot.scalar, .texture = slot.texture };
+    }
+
+    const size_t bytes = m_payload_scratch.size() * sizeof(InstancePayload);
+    if (bytes > m_payload_arena->slot_bytes()) {
+        m_payload_arena->initialize(bytes * 3 / 2, Portal::Graphics::BufferUsageHint::HOST_STORAGE, 3);
+    }
+
+    m_payload_slot = m_payload_arena->acquire();
+    m_payload_arena->write(m_payload_slot, m_payload_scratch.data(), bytes);
 }
 
 void InstanceSSBOProcessor::push_ssbo_binding(const std::shared_ptr<VKBuffer>& vertex_buf)
@@ -160,21 +189,28 @@ void InstanceSSBOProcessor::push_ssbo_binding(const std::shared_ptr<VKBuffer>& v
 
     auto& bindings = vertex_buf->get_engine_context().ssbo_bindings;
 
-    Portal::Graphics::DescriptorBindingInfo info;
-    info.set = 0;
-    info.binding = k_transform_ssbo_binding;
-    info.type = vk::DescriptorType::eStorageBuffer;
-    info.buffer_info = m_transform_arena->info(m_transform_slot);
-    info.arena = m_transform_arena;
-    info.slot = m_transform_slot;
+    const auto push = [&bindings](uint32_t binding, const std::shared_ptr<Portal::Graphics::SlotArena>& arena, size_t slot) {
+        Portal::Graphics::DescriptorBindingInfo info;
+        info.set = 0;
+        info.binding = binding;
+        info.type = vk::DescriptorType::eStorageBuffer;
+        info.buffer_info = arena->info(slot);
+        info.arena = arena;
+        info.slot = slot;
 
-    auto it = std::ranges::find_if(bindings, [](const auto& b) {
-        return b.set == 0 && b.binding == k_transform_ssbo_binding;
-    });
-    if (it != bindings.end()) {
-        *it = info;
-    } else {
-        bindings.push_back(info);
+        auto it = std::ranges::find_if(bindings, [binding](const auto& b) {
+            return b.set == 0 && b.binding == binding;
+        });
+        if (it != bindings.end()) {
+            *it = info;
+        } else {
+            bindings.push_back(info);
+        }
+    };
+
+    push(k_transform_ssbo_binding, m_transform_arena, m_transform_slot);
+    if (m_payload_arena && m_payload_arena->is_initialized()) {
+        push(k_payload_ssbo_binding, m_payload_arena, m_payload_slot);
     }
 }
 

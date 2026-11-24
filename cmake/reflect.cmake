@@ -13,7 +13,7 @@ function(mayaflux_reflect_sources target unit)
         list(APPEND scan_flags --extra-arg=-Wno-ignored-gch)
     endif()
 
-    set(sidecars "")
+    set(stamps "")
     foreach(header IN LISTS ARGN)
         if(NOT header MATCHES "\\.(h|hh|hpp|hxx)$" OR header MATCHES "\\.(describe|signatures)\\.[^.]+$")
             continue()
@@ -27,45 +27,52 @@ function(mayaflux_reflect_sources target unit)
         if(request)
             set(sidecar "${dir}/${stem}.describe.hpp")
             set(depfile "${CMAKE_BINARY_DIR}/reflect/${rel}.d")
+            set(stamp "${CMAKE_BINARY_DIR}/reflect/${rel}.stamp")
             add_custom_command(
-                OUTPUT "${sidecar}"
+                OUTPUT "${stamp}"
+                BYPRODUCTS "${sidecar}"
                 COMMAND mayaflux_reflect --build "${header}"
                     -p "${CMAKE_BINARY_DIR}"
                     --translation-unit "${unit}"
                     ${scan_flags}
                     --depfile "${depfile}"
-                    --depfile-target "${sidecar}"
+                    --depfile-target "${stamp}"
+                COMMAND ${CMAKE_COMMAND} -E touch "${stamp}"
                 DEPENDS "${header}" mayaflux_reflect
                 DEPFILE "${depfile}"
                 COMMENT "Describing ${rel}"
                 VERBATIM
             )
-            list(APPEND sidecars "${sidecar}")
+            list(APPEND stamps "${stamp}")
         endif()
 
         file(STRINGS "${header}" function_request REGEX "^[ \t;}]*MF_DESCRIBE_FUNCTION[ \t]*\\(" LIMIT_COUNT 1)
         if(function_request)
             set(sidecar "${dir}/${stem}.signatures.hpp")
             set(depfile "${CMAKE_BINARY_DIR}/reflect/${rel}.signatures.d")
+            set(stamp "${CMAKE_BINARY_DIR}/reflect/${rel}.signatures.stamp")
             add_custom_command(
-                OUTPUT "${sidecar}"
+                OUTPUT "${stamp}"
+                BYPRODUCTS "${sidecar}"
                 COMMAND mayaflux_signatures --functions --build "${header}"
                     -p "${CMAKE_BINARY_DIR}"
                     --translation-unit "${unit}"
                     ${scan_flags}
                     --depfile "${depfile}"
-                    --depfile-target "${sidecar}"
+                    --depfile-target "${stamp}"
+                COMMAND ${CMAKE_COMMAND} -E touch "${stamp}"
                 DEPENDS "${header}" mayaflux_signatures
                 DEPFILE "${depfile}"
                 COMMENT "Describing functions in ${rel}"
                 VERBATIM
             )
-            list(APPEND sidecars "${sidecar}")
+            list(APPEND stamps "${stamp}")
         endif()
     endforeach()
 
-    if(sidecars)
-        target_sources(${target} PRIVATE ${sidecars})
+    if(stamps)
+        add_custom_target(${target}_reflect DEPENDS ${stamps})
+        add_dependencies(${target} ${target}_reflect)
     endif()
 endfunction()
 
@@ -92,6 +99,7 @@ endif()
 file(GLOB_RECURSE _mf_headers "${_mf_src}/MayaFlux/*.hpp")
 
 set(_mf_sidecars "")
+set(_mf_stamps "")
 foreach(_header IN LISTS _mf_headers)
     if(_header MATCHES "\\.(describe|signatures)\\.hpp$")
         continue()
@@ -108,30 +116,35 @@ foreach(_header IN LISTS _mf_headers)
 
     set(_mf_sidecar "${_mf_dir}/${_mf_stem}.describe.hpp")
     set(_mf_depfile "${_mf_work}/${_mf_rel}.d")
+    set(_mf_stamp "${_mf_work}/${_mf_rel}.stamp")
 
     add_custom_command(
-        OUTPUT "${_mf_sidecar}"
+        OUTPUT "${_mf_stamp}"
+        BYPRODUCTS "${_mf_sidecar}"
         COMMAND mayaflux_reflect --build "${_header}"
             -p "${CMAKE_BINARY_DIR}"
             --translation-unit "${_mf_unit}"
             ${_mf_scan_flags}
             --depfile "${_mf_depfile}"
-            --depfile-target "${_mf_sidecar}"
+            --depfile-target "${_mf_stamp}"
+        COMMAND ${CMAKE_COMMAND} -E touch "${_mf_stamp}"
         DEPENDS "${_header}" mayaflux_reflect
         DEPFILE "${_mf_depfile}"
         COMMENT "Describing ${_mf_rel}"
         VERBATIM
     )
     list(APPEND _mf_sidecars "${_mf_sidecar}")
+    list(APPEND _mf_stamps "${_mf_stamp}")
 endforeach()
 
 if(_mf_sidecars)
-    add_custom_target(mayaflux_reflect_sidecars DEPENDS ${_mf_sidecars})
+    add_custom_target(mayaflux_reflect_sidecars DEPENDS ${_mf_stamps})
     add_dependencies(MayaFluxLib mayaflux_reflect_sidecars)
 endif()
 
 set(_mf_proxy "${_mf_src}/MayaFlux/API/Proxy")
 set(_mf_generated "${_mf_proxy}/Generated")
+set(_mf_creator_stamp "${_mf_work}/creator.stamp")
 set(_mf_creator_files
     "${_mf_generated}/CreatorIncludes.hpp"
     "${_mf_generated}/CreatorClasses.hpp"
@@ -140,19 +153,21 @@ set(_mf_creator_files
 )
 
 add_custom_command(
-    OUTPUT ${_mf_creator_files}
+    OUTPUT "${_mf_creator_stamp}"
+    BYPRODUCTS ${_mf_creator_files}
     COMMAND mayaflux_signatures --build
         --root "${CMAKE_SOURCE_DIR}"
         -p "${CMAKE_BINARY_DIR}"
         ${_mf_scan_flags}
         --depfile "${_mf_work}/creator.d"
-        --depfile-target "${_mf_generated}/CreatorIncludes.hpp"
+        --depfile-target "${_mf_creator_stamp}"
+    COMMAND ${CMAKE_COMMAND} -E touch "${_mf_creator_stamp}"
     DEPENDS "${_mf_proxy}/Registry.hpp" mayaflux_signatures
     DEPFILE "${_mf_work}/creator.d"
     COMMENT "Generating Creator methods"
     VERBATIM
 )
-add_custom_target(mayaflux_creator_methods DEPENDS ${_mf_creator_files})
+add_custom_target(mayaflux_creator_methods DEPENDS "${_mf_creator_stamp}")
 if(_mf_sidecars)
     add_dependencies(mayaflux_creator_methods mayaflux_reflect_sidecars)
 endif()

@@ -43,8 +43,27 @@ namespace Kriya {
      *
      * The metro task continues indefinitely until explicitly cancelled, creating
      * a persistent temporal structure within the computational system.
+     *
+     * Tokens: FRAME_ACCURATE counts frames, MULTI_RATE runs as a cross routine counted in
+     * samples, CONDITIONAL runs on the conditional worker in wall-clock seconds, and every
+     * other token counts samples.
      */
     MAYAFLUX_API std::shared_ptr<Vruta::Routine> metro(double interval_seconds, std::function<void()> callback, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
+
+    /**
+     * @brief Creates a routine that calls a function once per unit of a token's clock
+     * @param callback Function to call each cycle
+     * @param token Clock to follow: a sample, a frame, a multi-rate cycle, or one pass of the conditional worker
+     * @return The routine, or nullptr for an empty callback or an unsupported token
+     *
+     * Unlike metro there is no interval in seconds, so nothing is rounded to units.
+     * Runs until cancelled. The default token is the frame clock.
+     *
+     * ```cpp
+     * scheduler->add_task(Kriya::each_cycle([view]() { view->sync(); }), "view_sync");
+     * ```
+     */
+    MAYAFLUX_API std::shared_ptr<Vruta::Routine> each_cycle(std::function<void()> callback, Vruta::ProcessingToken token = Vruta::ProcessingToken::FRAME_ACCURATE);
 
     /**
      * @brief Creates a temporal sequence that executes callbacks at specified time offsets
@@ -75,6 +94,7 @@ namespace Kriya {
      * ```
      *
      * The sequence task completes after executing all events in the defined timeline.
+     * Tokens are as for metro.
      */
     MAYAFLUX_API std::shared_ptr<Vruta::Routine> sequence(std::vector<std::pair<double, std::function<void()>>> sequence, Vruta::ProcessingToken token = Vruta::ProcessingToken::SAMPLE_ACCURATE);
 

@@ -1,6 +1,14 @@
 #include "VisionQuery.hpp"
 
+#include "VisionInsight.hpp"
+
 namespace MayaFlux::Kinesis::Vision {
+
+const Facet<std::shared_ptr<Core::VKImage>>& vision_frame()
+{
+    static const Facet<std::shared_ptr<Core::VKImage>> key;
+    return key;
+}
 
 namespace {
 

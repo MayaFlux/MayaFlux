@@ -1,5 +1,7 @@
 #include "MatrixTransforms.hpp"
 
+#include <glm/glm.hpp>
+
 namespace MayaFlux::Kinesis {
 
 Eigen::MatrixXd create_rotation_matrix(double angle, uint32_t axis, uint32_t dimensions)
@@ -75,6 +77,44 @@ Eigen::MatrixXd create_rotation_scaling_matrix(
     uint32_t dimensions)
 {
     return create_scaling_matrix(scale_factors) * create_rotation_matrix(angle, axis, dimensions);
+}
+
+glm::mat4 compose_transform(
+    const glm::vec3& translation,
+    const glm::quat& rotation,
+    const glm::vec3& scale)
+{
+    glm::mat4 result = glm::mat4_cast(glm::normalize(rotation));
+    result[0] *= scale.x;
+    result[1] *= scale.y;
+    result[2] *= scale.z;
+    result[3] = glm::vec4(translation, 1.0F);
+    return result;
+}
+
+std::optional<std::tuple<glm::vec3, glm::quat, glm::vec3>> decompose_transform(
+    const glm::mat4& transform)
+{
+    glm::vec3 scale {
+        glm::length(glm::vec3(transform[0])),
+        glm::length(glm::vec3(transform[1])),
+        glm::length(glm::vec3(transform[2]))
+    };
+    if (!(scale.x > 0.0F) || !(scale.y > 0.0F) || !(scale.z > 0.0F)) {
+        return std::nullopt;
+    }
+
+    glm::mat3 axes {
+        glm::vec3(transform[0]) / scale.x,
+        glm::vec3(transform[1]) / scale.y,
+        glm::vec3(transform[2]) / scale.z
+    };
+    if (glm::determinant(axes) < 0.0F) {
+        scale.x = -scale.x;
+        axes[0] = -axes[0];
+    }
+
+    return std::tuple { glm::vec3(transform[3]), glm::normalize(glm::quat_cast(axes)), scale };
 }
 
 } // namespace MayaFlux::Kinesis

@@ -6,6 +6,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -92,6 +93,15 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_config.topology, m_render_config.polygon_mode);
     if (m_render_config.triangulate)
         m_render_config.geometry_shader.clear();
+    const auto topology_draws_triangles = m_render_config.topology != Portal::Graphics::PrimitiveTopology::POINT_LIST
+        && m_render_config.topology != Portal::Graphics::PrimitiveTopology::LINE_LIST
+        && m_render_config.topology != Portal::Graphics::PrimitiveTopology::LINE_STRIP;
+    const bool textured = !m_instance_textures.empty() && topology_draws_triangles;
+    if (!m_instance_textures.empty() && !topology_draws_triangles) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
+            "InstanceNetworkBuffer: instance textures are ignored for a point or line template");
+    }
+
     switch (m_render_config.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
             if (m_render_config.vertex_shader.empty())
@@ -113,8 +123,10 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         default:
             if (m_render_config.vertex_shader.empty())
                 m_render_config.vertex_shader = "instance.vert.spv";
-            if (m_render_config.fragment_shader.empty())
-                m_render_config.fragment_shader = "triangle.frag.spv";
+            if (m_render_config.fragment_shader.empty()) {
+                m_render_config.fragment_shader = textured
+                    ? "instance_textured.frag.spv" : "triangle.frag.spv";
+            }
             break;
     }
 
@@ -123,7 +135,17 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         0, InstanceSSBOProcessor::k_transform_ssbo_binding,
         vk::DescriptorType::eStorageBuffer);
 
-    uint32_t binding_idx = 0;
+    sc.bindings["instancePayload"] = ShaderBinding(
+        0, InstanceSSBOProcessor::k_payload_ssbo_binding,
+        vk::DescriptorType::eStorageBuffer);
+
+    const auto texture_count = static_cast<uint32_t>(m_instance_textures.size());
+    if (textured) {
+        sc.bindings["diffuseTex"] = ShaderBinding(
+            0, 2, vk::DescriptorType::eCombinedImageSampler, texture_count);
+    }
+
+    uint32_t binding_idx = textured ? texture_count : 0;
     for (const auto& entry : m_render_config.additional_textures)
         sc.bindings[entry.name] = ShaderBinding(0, 2 + binding_idx++, vk::DescriptorType::eCombinedImageSampler);
 
@@ -142,6 +164,11 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
         m_render_processor->set_mill_spec(mill_spec);
     }
 
+    if (textured) {
+        for (uint32_t i = 0; i < texture_count; ++i)
+            m_render_processor->bind_texture(2 + i, m_instance_textures[i]);
+    }
+
     for (const auto& entry : m_render_config.additional_textures)
         m_render_processor->bind_texture(entry);
 
@@ -150,6 +177,32 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
         "InstanceNetworkBuffer::setup_rendering: vert={} frag={}",
         m_render_config.vertex_shader, m_render_config.fragment_shader);
+}
+
+InstanceNetworkBuffer::~InstanceNetworkBuffer()
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& image : m_instance_textures) {
+        loom.release_image(image);
+    }
+}
+
+void InstanceNetworkBuffer::bind_instance_textures(std::vector<std::shared_ptr<Core::VKImage>> images)
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& image : images) {
+        loom.retain_image(image);
+    }
+    for (const auto& image : m_instance_textures) {
+        loom.release_image(image);
+    }
+    m_instance_textures = std::move(images);
+
+    if (m_render_processor) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "InstanceNetworkBuffer::bind_instance_textures: the pipeline was compiled before the "
+            "textures were given; call before setup_rendering()");
+    }
 }
 
 // =============================================================================

@@ -634,6 +634,12 @@ void GpuResourceManager::cleanup()
         return;
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
+    if (!foundry.is_initialized()) {
+        m_units.clear();
+        m_shared->cells.clear();
+        return;
+    }
+
     auto& compute_press = Portal::Graphics::get_compute_press();
     const auto device = foundry.get_device();
 
@@ -1009,6 +1015,7 @@ void GpuResourceManager::transition_image(
 
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto cmd = foundry.get_command_buffer(m_recording->command());
+    foundry.hold_image(m_recording->command(), image);
 
     vk::ImageMemoryBarrier2 barrier {};
     barrier.srcStageMask = vk::PipelineStageFlagBits2::eAllCommands;
@@ -1057,6 +1064,11 @@ void GpuResourceManager::record_unit(Portal::Graphics::CommandBufferID cmd_id, c
     size_t push_constant_size,
     const Portal::Graphics::IndirectDispatch& indirect)
 {
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    for (const auto& image : unit.image_slots) {
+        foundry.hold_image(cmd_id, image);
+    }
+
     Portal::Graphics::ComputeStage stage {
         .pipeline_id = unit.pipeline_id,
         .descriptor_set_ids = unit.descriptor_set_ids,

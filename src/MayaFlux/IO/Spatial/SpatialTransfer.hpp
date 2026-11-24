@@ -161,7 +161,7 @@ private:
  */
 class MAYAFLUX_API RelaxationGridCapture {
 public:
-    using ToAttributes = std::function<std::vector<SpatialAttribute>(std::span<const uint8_t>)>;
+    using ToAttributes = std::function<std::vector<Kakshya::SpatialAttribute>(std::span<const uint8_t>)>;
 
     /**
      * @param grid          Source grid. Held for the capture's lifetime.

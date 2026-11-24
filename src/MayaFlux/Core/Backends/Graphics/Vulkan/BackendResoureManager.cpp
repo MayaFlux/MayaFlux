@@ -231,7 +231,7 @@ vk::MappedMemoryRange BackendResourceManager::mapped_memory_range(
     range.memory = memory;
 
     std::optional<vk::DeviceSize> known_size;
-    if (const auto sizes = m_buffer_allocation_sizes.read()) {
+    if (const auto sizes = m_buffer_allocation_sizes->read()) {
         const auto allocation = sizes->find(static_cast<VkDeviceMemory>(memory));
         if (allocation != sizes->end()) {
             known_size = allocation->second;
@@ -334,7 +334,7 @@ void BackendResourceManager::allocate_raw_buffer(
         }
     }
 
-    m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(out_memory), size = mem_requirements.size](AllocationSizes& sizes) {
+    m_buffer_allocation_sizes->update([key = static_cast<VkDeviceMemory>(out_memory), size = mem_requirements.size](AllocationSizes& sizes) {
         sizes.insert_or_assign(key, size);
     });
 }
@@ -368,6 +368,7 @@ void BackendResourceManager::initialize_buffer(const std::shared_ptr<Buffers::VK
     resources.memory = memory;
     resources.mapped_ptr = mapped_ptr;
 
+    m_buffer_allocations[buffer] = std::make_shared<BufferAllocation>(m_context.get_device(), m_buffer_allocation_sizes, vk_buffer, memory, mapped_ptr != nullptr);
     m_managed_buffers.push_back(buffer);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
@@ -393,8 +394,8 @@ void BackendResourceManager::cleanup_buffer(const std::shared_ptr<Buffers::VKBuf
     buffer->await_use();
 
     auto& res = it->get()->get_buffer_resources();
-
-    release_buffer_handles(res.buffer, res.memory, res.mapped_ptr != nullptr);
+    auto allocation = std::move(m_buffer_allocations.at(buffer));
+    m_buffer_allocations.erase(buffer);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKBuffer cleaned up: {:p}", static_cast<void*>(res.buffer));
@@ -420,9 +421,8 @@ void BackendResourceManager::retire_buffer(const std::shared_ptr<Buffers::VKBuff
     }
 
     auto& res = it->get()->get_buffer_resources();
-    const vk::Buffer old_buffer = res.buffer;
-    const vk::DeviceMemory old_memory = res.memory;
-    const bool mapped = res.mapped_ptr != nullptr;
+    auto allocation = std::move(m_buffer_allocations.at(buffer));
+    m_buffer_allocations.erase(buffer);
 
     res.mapped_ptr = nullptr;
     res.buffer = vk::Buffer {};
@@ -430,28 +430,37 @@ void BackendResourceManager::retire_buffer(const std::shared_ptr<Buffers::VKBuff
 
     m_managed_buffers.erase(it);
 
-    m_command_manager.retire_resource(
-        [this, old_buffer, old_memory, mapped]() {
-            release_buffer_handles(old_buffer, old_memory, mapped);
-        },
-        m_command_manager.submitted());
+    m_command_manager.retire_resource([held = std::move(allocation)] {}, m_command_manager.submitted());
 }
 
-void BackendResourceManager::release_buffer_handles(vk::Buffer buffer, vk::DeviceMemory memory, bool mapped)
+BackendResourceManager::BufferAllocation::~BufferAllocation()
 {
     if (mapped) {
-        m_context.get_device().unmapMemory(memory);
+        device.unmapMemory(memory);
     }
 
     if (buffer) {
-        m_context.get_device().destroyBuffer(buffer);
+        device.destroyBuffer(buffer);
     }
 
     if (memory) {
-        m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(memory)](AllocationSizes& sizes) {
+        allocation_sizes->update([key = static_cast<VkDeviceMemory>(memory)](AllocationSizes& sizes) {
             return sizes.erase(key);
         });
-        m_context.get_device().freeMemory(memory);
+        device.freeMemory(memory);
+    }
+}
+
+BackendResourceManager::ImageAllocation::~ImageAllocation()
+{
+    if (view) {
+        device.destroyImageView(view);
+    }
+    if (image) {
+        device.destroyImage(image);
+    }
+    if (memory) {
+        device.freeMemory(memory);
     }
 }
 
@@ -684,6 +693,8 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
     image->set_image_resources(resources);
     image->set_current_layout(vk::ImageLayout::eUndefined);
     image->set_host_transfer(host_transfer);
+    m_image_allocations[image] = std::make_shared<ImageAllocation>(
+        m_context.get_device(), vk_image, image_view, memory);
 
     MF_INFO(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage initialized: {}x{}x{}, format: {}, {} mips, {} layers",
@@ -695,6 +706,16 @@ void BackendResourceManager::initialize_image(const std::shared_ptr<VKImage>& im
 void BackendResourceManager::cleanup_image(const std::shared_ptr<VKImage>& image)
 {
     if (!image || !image->is_initialized()) {
+        return;
+    }
+
+    auto allocation = m_image_allocations.find(image);
+    if (allocation != m_image_allocations.end()) {
+        auto held = std::move(allocation->second);
+        m_image_allocations.erase(allocation);
+        image->set_image_resources(VKImageResources {});
+        image->set_host_transfer(false);
+        m_command_manager.retire_resource([held = std::move(held)] {}, m_command_manager.submitted());
         return;
     }
 
@@ -717,6 +738,13 @@ void BackendResourceManager::cleanup_image(const std::shared_ptr<VKImage>& image
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "VKImage cleaned up");
+}
+
+std::shared_ptr<void> BackendResourceManager::retain_image_allocation(
+    const std::shared_ptr<VKImage>& image) const
+{
+    const auto it = m_image_allocations.find(image);
+    return it == m_image_allocations.end() ? nullptr : it->second;
 }
 
 void BackendResourceManager::load_host_copy_layouts()
@@ -1644,6 +1672,14 @@ TimelinePoint BackendResourceManager::execute_async(
     const std::function<void(vk::CommandBuffer)>& recorder,
     std::vector<std::shared_ptr<void>> keep_alive)
 {
+    std::vector<std::shared_ptr<void>> allocations;
+    for (const auto& held : keep_alive) {
+        if (auto it = m_image_allocations.find(held); it != m_image_allocations.end()) {
+            allocations.push_back(it->second);
+        }
+    }
+    keep_alive.insert(keep_alive.end(), allocations.begin(), allocations.end());
+
     const vk::CommandBuffer cmd = m_command_manager.begin_single_time_commands();
     if (!cmd) {
         return {};
@@ -1667,6 +1703,18 @@ void BackendResourceManager::record_deferred_commands(
     const std::function<void(vk::CommandBuffer)>& recorder,
     std::vector<std::shared_ptr<void>> keep_alive)
 {
+    std::vector<std::shared_ptr<void>> allocations;
+    for (const auto& held : keep_alive) {
+        if (auto it = m_buffer_allocations.find(held);
+            it != m_buffer_allocations.end()) {
+            allocations.push_back(it->second);
+        }
+        if (auto it = m_image_allocations.find(held);
+            it != m_image_allocations.end()) {
+            allocations.push_back(it->second);
+        }
+    }
+    keep_alive.insert(keep_alive.end(), allocations.begin(), allocations.end());
     m_command_manager.record_deferred_commands(recorder, std::move(keep_alive));
 }
 
@@ -1695,7 +1743,7 @@ void BackendResourceManager::cleanup()
                 device.destroyBuffer(slot.buffer);
             }
             if (slot.memory) {
-                m_buffer_allocation_sizes.update([key = static_cast<VkDeviceMemory>(slot.memory)](AllocationSizes& sizes) {
+                m_buffer_allocation_sizes->update([key = static_cast<VkDeviceMemory>(slot.memory)](AllocationSizes& sizes) {
                     return sizes.erase(key);
                 });
                 device.freeMemory(slot.memory);
@@ -1715,7 +1763,13 @@ void BackendResourceManager::cleanup()
         }
     }
     m_managed_buffers.clear();
-    m_buffer_allocation_sizes.reset();
+    m_buffer_allocations.clear();
+    for (const auto& [image, allocation] : m_image_allocations) {
+        image->set_image_resources(VKImageResources {});
+        image->set_host_transfer(false);
+    }
+    m_image_allocations.clear();
+    m_buffer_allocation_sizes->reset();
     m_host_copy_layouts_ready = false;
     m_host_copy_src_layouts.clear();
     m_host_copy_dst_layouts.clear();

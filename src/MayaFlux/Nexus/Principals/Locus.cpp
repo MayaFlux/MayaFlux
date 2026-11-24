@@ -11,8 +11,8 @@ Locus::Locus(const Kinesis::NavigationConfig& config,
     : Agent(query_radius, std::move(perception), std::move(influence))
     , m_nav(Kinesis::make_navigation_state(config))
 {
-    Agent::set_position(m_nav.eye);
-    m_view = Kinesis::compute_view_transform(m_nav, m_aspect);
+    m_controls.position.observe(m_nav.eye);
+    m_view = Kinesis::compute_view_transform(m_nav, aspect());
 }
 
 Locus::Locus(const Kinesis::NavigationConfig& config,
@@ -24,8 +24,15 @@ Locus::Locus(const Kinesis::NavigationConfig& config,
           std::move(influence_fn_name), std::move(influence))
     , m_nav(Kinesis::make_navigation_state(config))
 {
-    Agent::set_position(m_nav.eye);
-    m_view = Kinesis::compute_view_transform(m_nav, m_aspect);
+    m_controls.position.observe(m_nav.eye);
+    m_view = Kinesis::compute_view_transform(m_nav, aspect());
+}
+
+LocusControls& Locus::open_locus()
+{
+    auto& controls = extend<LocusControls>();
+    controls.aspect.observe(1.0F);
+    return controls;
 }
 
 void Locus::add_view_target(std::shared_ptr<Buffers::RenderProcessor> proc)
@@ -48,18 +55,20 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
 {
     Agent::invoke_perception(ctx);
 
-    if (attached() && position()) {
-        m_nav.eye = *position();
+    if (attached()) {
+        if (const auto placed = position()) {
+            m_nav.eye = *placed;
+        }
     }
 
-    if (m_timestep) {
-        Kinesis::advance_navigation(m_nav, *m_timestep);
+    if (const auto step = timestep()) {
+        Kinesis::advance_navigation(m_nav, *step);
     } else {
         Kinesis::advance_navigation(m_nav);
     }
-    m_view = Kinesis::build_view_transform(m_nav, m_aspect);
-    Agent::set_position(m_nav.eye);
-    Agent::set_orientation(
+    m_view = Kinesis::build_view_transform(m_nav, aspect());
+    m_controls.position.observe(m_nav.eye);
+    m_controls.orientation.observe(
         glm::angleAxis(m_nav.yaw, glm::vec3(0.0F, 1.0F, 0.0F))
         * glm::angleAxis(-m_nav.pitch, glm::vec3(1.0F, 0.0F, 0.0F)));
 }

@@ -1,6 +1,7 @@
 #include "MeshNetworkProcessor.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
+#include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
@@ -51,6 +52,7 @@ void MeshNetworkProcessor::set_milling_slot_attribute(bool enabled)
         return;
 
     m_milling_slot_attribute = enabled;
+    m_force_full_upload = true;
     for (auto& slot : m_network->slots())
         slot.dirty = true;
 }
@@ -87,6 +89,7 @@ void MeshNetworkProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         push_ssbo_bindings(vk_buf);
     }
     clear_slot_dirty_flags();
+    m_force_full_upload = false;
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "MeshNetworkProcessor: initialised — {} slots, {} bytes vertex, {} indices",
@@ -125,23 +128,39 @@ void MeshNetworkProcessor::processing_function(const std::shared_ptr<Buffer>& bu
     if (!vk_buf)
         return;
 
-    if (!any_slot_dirty())
+    if (!any_slot_dirty() && !demands_vertex_restore())
         return;
 
-    upload_combined(vk_buf);
-    link_index_resources(vk_buf);
+    if (needs_full_upload()) {
+        upload_combined(vk_buf);
+        link_index_resources(vk_buf);
+        clear_slot_dirty_flags();
+        m_force_full_upload = false;
+
+        if (!m_model_arena || !m_model_arena->is_initialized()
+            || !m_slot_index_arena || !m_slot_index_arena->is_initialized())
+            allocate_ssbo_buffers();
+
+        upload_ssbos();
+        push_ssbo_bindings(vk_buf);
+
+        MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "MeshNetworkProcessor: re-uploaded {} bytes vertex, {} indices",
+            m_vertex_aggregate.size(), m_index_aggregate.size());
+        return;
+    }
+
+    collect_model_matrices(m_model_scratch);
     clear_slot_dirty_flags();
+    if (m_model_scratch == m_model_aggregate)
+        return;
 
-    if (!m_model_arena || !m_model_arena->is_initialized()
-        || !m_slot_index_arena || !m_slot_index_arena->is_initialized())
-        allocate_ssbo_buffers();
-
-    upload_ssbos();
+    m_model_aggregate = m_model_scratch;
+    upload_model_matrices();
     push_ssbo_bindings(vk_buf);
 
     MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "MeshNetworkProcessor: re-uploaded {} bytes vertex, {} indices",
-        m_vertex_aggregate.size(), m_index_aggregate.size());
+        "MeshNetworkProcessor: re-uploaded {} model matrices", m_model_aggregate.size());
 }
 
 // =============================================================================
@@ -183,6 +202,7 @@ void MeshNetworkProcessor::upload_combined(
     m_index_aggregate.clear();
     m_model_aggregate.clear();
     m_slot_index_aggregate.clear();
+    m_uploaded_nodes.clear();
 
     uint32_t running_vertex_count = 0;
 
@@ -190,6 +210,8 @@ void MeshNetworkProcessor::upload_combined(
         const auto& slot = slots[idx];
         if (!slot.node)
             continue;
+
+        m_uploaded_nodes.push_back(slot.node);
 
         const auto& verts = slot.node->get_mesh_vertices();
         const auto& indices = slot.node->get_mesh_indices();
@@ -284,7 +306,7 @@ void MeshNetworkProcessor::link_index_resources(
     vertex_buf->set_index_resources(
         m_gpu_index_buffer->get_buffer(),
         m_gpu_index_buffer->get_buffer_resources().memory,
-        m_gpu_index_buffer->get_size_bytes());
+        m_index_aggregate.size() * sizeof(uint32_t));
 }
 
 bool MeshNetworkProcessor::any_slot_dirty() const
@@ -292,6 +314,47 @@ bool MeshNetworkProcessor::any_slot_dirty() const
     return std::ranges::any_of(m_network->slots(), [](const auto& slot) {
         return slot.dirty || (slot.node && slot.node->needs_gpu_update());
     });
+}
+
+bool MeshNetworkProcessor::demands_vertex_restore() const
+{
+    if (const auto* primary = m_network->get_operator(); primary && primary->demands_full_vertex_restore())
+        return true;
+
+    const auto chain = m_network->get_operator_chain();
+    return chain && std::ranges::any_of(chain->operators(), [](const auto& op) {
+        return op && op->demands_full_vertex_restore();
+    });
+}
+
+bool MeshNetworkProcessor::needs_full_upload() const
+{
+    if (m_force_full_upload || demands_vertex_restore())
+        return true;
+
+    const auto& slots = m_network->slots();
+    size_t position = 0;
+    for (uint32_t idx : m_network->sorted_indices()) {
+        const auto& node = slots[idx].node;
+        if (!node)
+            continue;
+        if (node->needs_gpu_update())
+            return true;
+        if (position >= m_uploaded_nodes.size() || m_uploaded_nodes[position] != node)
+            return true;
+        ++position;
+    }
+    return position != m_uploaded_nodes.size();
+}
+
+void MeshNetworkProcessor::collect_model_matrices(std::vector<glm::mat4>& out) const
+{
+    out.clear();
+    const auto& slots = m_network->slots();
+    for (uint32_t idx : m_network->sorted_indices()) {
+        if (slots[idx].node)
+            out.push_back(slots[idx].world_transform);
+    }
 }
 
 void MeshNetworkProcessor::clear_slot_dirty_flags()
@@ -367,6 +430,19 @@ void MeshNetworkProcessor::upload_ssbos()
 
     m_slot_index_slot = m_slot_index_arena->acquire();
     m_slot_index_arena->write(m_slot_index_slot, m_slot_index_aggregate.data(), slot_index_bytes);
+}
+
+void MeshNetworkProcessor::upload_model_matrices()
+{
+    if (m_model_aggregate.empty() || !m_model_arena || !m_model_arena->is_initialized())
+        return;
+
+    const size_t model_bytes = m_model_aggregate.size() * sizeof(glm::mat4);
+    if (model_bytes > m_model_arena->slot_bytes())
+        return;
+
+    m_model_slot = m_model_arena->acquire();
+    m_model_arena->write(m_model_slot, m_model_aggregate.data(), model_bytes);
 }
 
 void MeshNetworkProcessor::push_ssbo_bindings(const std::shared_ptr<VKBuffer>& buffer)

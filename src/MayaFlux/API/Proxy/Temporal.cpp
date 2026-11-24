@@ -19,7 +19,7 @@ std::shared_ptr<Nodes::Node> operator|(const TemporalWrapper<Nodes::Node>& wrapp
     auto task_token = get_task_token(ctx.domain.value());
 
     auto activation = std::make_shared<Kriya::TemporalActivation>(
-        *get_scheduler(), *get_node_graph_manager(), *get_buffer_manager(), task_token);
+        get_scheduler(), *get_node_graph_manager(), *get_buffer_manager(), task_token);
 
     if (ctx.channels.has_value()) {
         activation->activate_node(node, spec.seconds, node_token, ctx.channels.value());
@@ -49,7 +49,7 @@ std::shared_ptr<Buffers::Buffer> operator|(const TemporalWrapper<Buffers::Buffer
     auto task_token = get_task_token(ctx.domain.value());
 
     auto activation = std::make_shared<Kriya::TemporalActivation>(
-        *get_scheduler(), *get_node_graph_manager(), *get_buffer_manager(), task_token);
+        get_scheduler(), *get_node_graph_manager(), *get_buffer_manager(), task_token);
 
     if (ctx.channel.has_value()) {
         activation->activate_buffer(buffer, spec.seconds, buffer_token, ctx.channel.value());
@@ -79,7 +79,7 @@ std::shared_ptr<Nodes::Network::NodeNetwork> operator|(const TemporalWrapper<Nod
     auto task_token = get_task_token(ctx.domain.value());
 
     auto activation = std::make_shared<Kriya::TemporalActivation>(
-        *get_scheduler(), *get_node_graph_manager(), *get_buffer_manager(), task_token);
+        get_scheduler(), *get_node_graph_manager(), *get_buffer_manager(), task_token);
 
     activation->activate_network(network, spec.seconds, node_token);
 

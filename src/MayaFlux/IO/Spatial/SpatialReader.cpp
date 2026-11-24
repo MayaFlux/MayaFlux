@@ -2,6 +2,10 @@
 
 #include "MayaFlux/IO/FileReader.hpp"
 
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Kinesis/MatrixTransforms.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/VertexRecords.hpp"
+
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -20,6 +24,12 @@
 #ifdef MAYAFLUX_PLATFORM_WINDOWS
 #ifdef ERROR
 #undef ERROR
+#endif
+#ifdef near
+#undef near
+#endif
+#ifdef far
+#undef far
 #endif
 #endif // MAYAFLUX_PLATFORM_WINDOWS
 
@@ -51,7 +61,7 @@ namespace {
         std::vector<int32_t> vertex_counts_per_curve;
         std::vector<uint64_t> ids;
         std::vector<glm::vec3> velocities;
-        std::vector<SpatialAttribute> attributes;
+        std::vector<Kakshya::SpatialAttribute> attributes;
     };
 
     struct StreamRecord {
@@ -65,16 +75,43 @@ namespace {
         SampleStorage storage;
     };
 
-    std::optional<SpatialScope> from_alembic_scope(GeometryScope scope)
+    struct MeshRecord {
+        std::variant<IPolyMesh, ISubD> object;
+        std::unordered_map<std::string, std::string> metadata;
+        Alembic::AbcCoreAbstract::TimeSamplingPtr time_sampling;
+        size_t sample_count { 0 };
+        Kakshya::TopologyVariance variance { Kakshya::TopologyVariance::Constant };
+    };
+
+    struct CameraRecord {
+        ICamera object;
+        Alembic::AbcCoreAbstract::TimeSamplingPtr time_sampling;
+        size_t sample_count { 0 };
+        bool constant { true };
+    };
+
+    Kakshya::TopologyVariance from_alembic_variance(MeshTopologyVariance variance)
+    {
+        switch (variance) {
+        case kConstantTopology:
+            return Kakshya::TopologyVariance::Constant;
+        case kHomogenousTopology:
+            return Kakshya::TopologyVariance::Homogeneous;
+        default:
+            return Kakshya::TopologyVariance::Heterogeneous;
+        }
+    }
+
+    std::optional<Kakshya::SpatialScope> from_alembic_scope(GeometryScope scope)
     {
         switch (scope) {
         case kConstantScope:
-            return SpatialScope::Constant;
+            return Kakshya::SpatialScope::Constant;
         case kUniformScope:
-            return SpatialScope::Uniform;
+            return Kakshya::SpatialScope::Uniform;
         case kVaryingScope:
         case kVertexScope:
-            return SpatialScope::Varying;
+            return Kakshya::SpatialScope::Varying;
         default:
             return std::nullopt;
         }
@@ -107,6 +144,196 @@ namespace {
         return std::nullopt;
     }
 
+    enum class ValueScope : uint8_t {
+        None,
+        Vertex,
+        Corner,
+        Face,
+        Constant
+    };
+
+    template <class Elem>
+    struct MeshValues {
+        std::vector<Elem> values;
+        ValueScope scope { ValueScope::None };
+
+        [[nodiscard]] bool per_corner_or_face() const noexcept
+        {
+            return scope == ValueScope::Corner || scope == ValueScope::Face;
+        }
+
+        [[nodiscard]] Elem at(size_t corner, size_t vertex, size_t face) const
+        {
+            switch (scope) {
+            case ValueScope::Vertex:
+                return values[vertex];
+            case ValueScope::Corner:
+                return values[corner];
+            case ValueScope::Face:
+                return values[face];
+            default:
+                return values[0];
+            }
+        }
+    };
+
+    template <class Param, class Elem, class Convert>
+    MeshValues<Elem> read_mesh_values(
+        const Param& param, const ISampleSelector& selector,
+        size_t vertex_count, size_t corner_count, size_t face_count,
+        const char* what, const std::string& name, Convert convert)
+    {
+        MeshValues<Elem> result;
+        if (!param.valid()) {
+            return result;
+        }
+
+        const auto sample = param.getExpandedValue(selector);
+        const auto values = sample.getVals();
+        if (!values || values->size() == 0) {
+            return result;
+        }
+
+        const auto scope = sample.getScope();
+        const size_t count = values->size();
+        ValueScope found = ValueScope::None;
+        if (scope == kConstantScope && count == 1) {
+            found = ValueScope::Constant;
+        } else if (scope == kUniformScope && count == face_count) {
+            found = ValueScope::Face;
+        } else if ((scope == kVertexScope || scope == kVaryingScope) && count == vertex_count) {
+            found = ValueScope::Vertex;
+        } else if (scope == kFacevaryingScope && count == corner_count) {
+            found = ValueScope::Corner;
+        }
+
+        if (found == ValueScope::None) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "SpatialReader: mesh '{}': the {} have a scope or size this reader does not read, skipped",
+                name, what);
+            return result;
+        }
+
+        result.values.reserve(count);
+        for (size_t i = 0; i < count; ++i) {
+            result.values.push_back(convert((*values)[i]));
+        }
+        result.scope = found;
+        return result;
+    }
+
+    template <class Schema>
+    std::optional<Kakshya::MeshData> read_cage(
+        Schema& schema, const ISampleSelector& selector, const std::string& name, std::string& error)
+    {
+        typename Schema::Sample sample;
+        schema.get(sample, selector);
+
+        const auto positions = sample.getPositions();
+        const auto face_indices = sample.getFaceIndices();
+        const auto face_counts = sample.getFaceCounts();
+        if (!positions || !face_indices || !face_counts) {
+            error = "the sample has no positions or no faces";
+            return std::nullopt;
+        }
+        if (positions->size() == 0 || face_counts->size() == 0) {
+            return Kakshya::MeshData::empty();
+        }
+
+        const size_t vertex_count = positions->size();
+        const size_t corner_count = face_indices->size();
+        const size_t face_count = face_counts->size();
+
+        uint64_t summed = 0;
+        for (size_t f = 0; f < face_count; ++f) {
+            const int32_t count = (*face_counts)[f];
+            if (count < 3) {
+                error = "a face has fewer than three corners";
+                return std::nullopt;
+            }
+            summed += static_cast<uint64_t>(count);
+        }
+        if (summed != corner_count) {
+            error = "the face sizes do not add up to the face indices";
+            return std::nullopt;
+        }
+        for (size_t c = 0; c < corner_count; ++c) {
+            const int32_t vertex = (*face_indices)[c];
+            if (vertex < 0 || static_cast<size_t>(vertex) >= vertex_count) {
+                error = "a face index names a vertex that does not exist";
+                return std::nullopt;
+            }
+        }
+
+        const auto to_vec2 = [](const Imath::V2f& v) { return glm::vec2(v.x, v.y); };
+        const auto to_vec3 = [](const Imath::V3f& v) { return glm::vec3(v.x, v.y, v.z); };
+
+        const auto uvs = read_mesh_values<IV2fGeomParam, glm::vec2>(
+            schema.getUVsParam(), selector, vertex_count, corner_count, face_count, "texture coordinates", name, to_vec2);
+
+        MeshValues<glm::vec3> normals;
+        if constexpr (std::is_same_v<Schema, IPolyMeshSchema>) {
+            normals = read_mesh_values<IN3fGeomParam, glm::vec3>(
+                schema.getNormalsParam(), selector, vertex_count, corner_count, face_count, "normals", name, to_vec3);
+        }
+
+        const bool split = uvs.per_corner_or_face() || normals.per_corner_or_face();
+
+        std::vector<Kakshya::MeshVertex> vertices(split ? corner_count : vertex_count);
+        if (split) {
+            size_t corner = 0;
+            for (size_t f = 0; f < face_count; ++f) {
+                for (int32_t k = 0; k < (*face_counts)[f]; ++k, ++corner) {
+                    const auto source = static_cast<size_t>((*face_indices)[corner]);
+                    vertices[corner].position = to_vec3((*positions)[source]);
+                    if (normals.scope != ValueScope::None) {
+                        vertices[corner].normal = normals.at(corner, source, f);
+                    }
+                    if (uvs.scope != ValueScope::None) {
+                        vertices[corner].uv = uvs.at(corner, source, f);
+                    }
+                }
+            }
+        } else {
+            for (size_t v = 0; v < vertex_count; ++v) {
+                vertices[v].position = to_vec3((*positions)[v]);
+                if (normals.scope != ValueScope::None) {
+                    vertices[v].normal = normals.at(0, v, 0);
+                }
+                if (uvs.scope != ValueScope::None) {
+                    vertices[v].uv = uvs.at(0, v, 0);
+                }
+            }
+        }
+
+        Kakshya::FaceList faces;
+        faces.sizes.reserve(face_count);
+        faces.corners.reserve(corner_count);
+        size_t offset = 0;
+        for (size_t f = 0; f < face_count; ++f) {
+            const auto count = static_cast<size_t>((*face_counts)[f]);
+            faces.sizes.push_back(static_cast<uint32_t>(count));
+            for (size_t k = count; k > 0; --k) {
+                const size_t corner = offset + k - 1;
+                faces.corners.push_back(split ? static_cast<uint32_t>(corner)
+                                              : static_cast<uint32_t>((*face_indices)[corner]));
+            }
+            offset += count;
+        }
+
+        auto mesh = Kakshya::MeshData::from_vertices(vertices, std::move(faces));
+        if (!mesh) {
+            error = "the faces could not be triangulated over the vertices";
+            return std::nullopt;
+        }
+
+        (void)Kinesis::write_vertex_normals(*mesh);
+        if (uvs.scope != ValueScope::None) {
+            (void)Kinesis::write_vertex_tangents(*mesh);
+        }
+        return mesh;
+    }
+
     template <class Elem, class Src>
     std::vector<Elem> copy_elements(const Src* src, size_t count)
     {
@@ -125,7 +352,7 @@ namespace {
     }
 
     template <class Param, class Elem>
-    std::optional<SpatialAttribute> read_param(
+    std::optional<Kakshya::SpatialAttribute> read_param(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
         const ISampleSelector& selector)
@@ -138,14 +365,14 @@ namespace {
             return std::nullopt;
         }
 
-        return SpatialAttribute {
+        return Kakshya::SpatialAttribute {
             .name = decl.name,
             .scope = *scope,
             .values = Kakshya::DataVariant { copy_array<Elem>(values) }
         };
     }
 
-    std::optional<SpatialAttribute> read_float4_param(
+    std::optional<Kakshya::SpatialAttribute> read_float4_param(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
         const ISampleSelector& selector)
@@ -161,14 +388,14 @@ namespace {
         std::vector<glm::vec4> quads(values->size() / 4);
         std::memcpy(quads.data(), values->get(), values->size() * sizeof(float));
 
-        return SpatialAttribute {
+        return Kakshya::SpatialAttribute {
             .name = decl.name,
             .scope = *scope,
             .values = Kakshya::DataVariant { std::move(quads) }
         };
     }
 
-    std::optional<SpatialAttribute> read_attribute(
+    std::optional<Kakshya::SpatialAttribute> read_attribute(
         const ICompoundProperty& arb,
         const AttributeDecl& decl,
         const ISampleSelector& selector)
@@ -272,55 +499,173 @@ namespace {
 } // namespace
 
 struct SpatialReader::Impl {
+    static constexpr size_t max_depth = 256;
+
+    struct XformRecord {
+        IXform object;
+        size_t sample_count { 0 };
+        Alembic::AbcCoreAbstract::TimeSamplingPtr time_sampling;
+        bool constant { true };
+        bool inherits { true };
+    };
+
     IArchive archive;
+    std::string path;
     std::vector<std::string> names;
+    std::vector<SpatialObject> objects;
     std::unordered_map<std::string, StreamRecord> records;
+    std::unordered_map<std::string, XformRecord> xforms;
+    std::vector<std::string> mesh_names;
+    std::unordered_map<std::string, MeshRecord> meshes;
+    std::vector<std::string> camera_names;
+    std::unordered_map<std::string, CameraRecord> cameras;
 
     void index_streams();
+    void index_children(const IObject& parent, std::optional<size_t> parent_index,
+        const std::string& parent_path, size_t depth);
 };
 
 void SpatialReader::Impl::index_streams()
 {
     names.clear();
+    objects.clear();
     records.clear();
+    xforms.clear();
+    mesh_names.clear();
+    meshes.clear();
+    camera_names.clear();
+    cameras.clear();
 
-    const IObject top = archive.getTop();
+    index_children(archive.getTop(), std::nullopt, {}, 0);
+}
 
-    for (size_t i = 0; i < top.getNumChildren(); ++i) {
-        const auto& header = top.getChildHeader(i);
+void SpatialReader::Impl::index_children(const IObject& parent, std::optional<size_t> parent_index,
+    const std::string& parent_path, size_t depth)
+{
+    if (depth >= max_depth) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader: the hierarchy is deeper than {} levels, the rest below '{}' is skipped",
+            max_depth, parent_path);
+        return;
+    }
+
+    for (size_t i = 0; i < parent.getNumChildren(); ++i) {
+        const IObject child = parent.getChild(i);
+        const auto& header = parent.getChildHeader(i);
         const std::string& name = header.getName();
+        const std::string path = parent_path.empty() ? name : parent_path + "/" + name;
+
+        SpatialObject entry;
+        entry.path = path;
+        entry.parent = parent_index;
+        entry.instance_descendant = child.isInstanceDescendant();
+        if (child.isInstanceRoot()) {
+            entry.instance_source = child.instanceSourcePath();
+            if (!entry.instance_source.empty() && entry.instance_source.front() == '/') {
+                entry.instance_source.erase(0, 1);
+            }
+        }
 
         StreamRecord record;
         record.metadata = user_metadata(header.getMetaData());
-
         ICompoundProperty arb;
+        bool is_stream = false;
+        bool descend = false;
 
         if (IPoints::matches(header)) {
-            IPoints points(top, name);
+            IPoints points(child, kWrapExisting);
             auto& schema = points.getSchema();
             record.topology = PrimitiveTopology::POINT_LIST;
             record.sample_count = schema.getNumSamples();
             record.time_sampling = schema.getTimeSampling();
             arb = schema.getArbGeomParams();
             record.object = std::move(points);
+            entry.kind = SpatialObjectKind::Points;
+            entry.sample_count = record.sample_count;
+            is_stream = true;
         } else if (ICurves::matches(header)) {
-            ICurves curves(top, name);
+            ICurves curves(child, kWrapExisting);
             auto& schema = curves.getSchema();
             record.topology = PrimitiveTopology::LINE_STRIP;
             record.sample_count = schema.getNumSamples();
             record.time_sampling = schema.getTimeSampling();
             arb = schema.getArbGeomParams();
             record.object = std::move(curves);
+            entry.kind = SpatialObjectKind::Curves;
+            entry.sample_count = record.sample_count;
+            is_stream = true;
+        } else if (IXform::matches(header)) {
+            IXform xform(child, kWrapExisting);
+            auto& schema = xform.getSchema();
+            XformRecord xform_record;
+            xform_record.sample_count = schema.getNumSamples();
+            xform_record.time_sampling = schema.getTimeSampling();
+            xform_record.constant = schema.isConstant();
+            if (xform_record.sample_count > 0) {
+                xform_record.inherits = schema.getInheritsXforms(ISampleSelector(static_cast<index_t>(0)));
+            }
+            xform_record.object = std::move(xform);
+            entry.kind = SpatialObjectKind::Xform;
+            entry.sample_count = xform_record.sample_count;
+            xforms.emplace(path, std::move(xform_record));
+            descend = true;
+        } else if (IPolyMesh::matches(header) || ISubD::matches(header)) {
+            MeshRecord mesh;
+            mesh.metadata = record.metadata;
+            if (IPolyMesh::matches(header)) {
+                IPolyMesh poly(child, kWrapExisting);
+                auto& schema = poly.getSchema();
+                mesh.sample_count = schema.getNumSamples();
+                mesh.time_sampling = schema.getTimeSampling();
+                mesh.variance = from_alembic_variance(schema.getTopologyVariance());
+                mesh.object = std::move(poly);
+                entry.kind = SpatialObjectKind::PolyMesh;
+            } else {
+                ISubD subd(child, kWrapExisting);
+                auto& schema = subd.getSchema();
+                mesh.sample_count = schema.getNumSamples();
+                mesh.time_sampling = schema.getTimeSampling();
+                mesh.variance = from_alembic_variance(schema.getTopologyVariance());
+                mesh.object = std::move(subd);
+                entry.kind = SpatialObjectKind::SubD;
+            }
+            entry.sample_count = mesh.sample_count;
+            mesh_names.push_back(path);
+            meshes.emplace(path, std::move(mesh));
+            descend = true;
+        } else if (ICamera::matches(header)) {
+            ICamera camera(child, kWrapExisting);
+            auto& schema = camera.getSchema();
+            CameraRecord camera_record;
+            camera_record.sample_count = schema.getNumSamples();
+            camera_record.time_sampling = schema.getTimeSampling();
+            camera_record.constant = schema.isConstant();
+            camera_record.object = std::move(camera);
+            entry.kind = SpatialObjectKind::Camera;
+            entry.sample_count = camera_record.sample_count;
+            camera_names.push_back(path);
+            cameras.emplace(path, std::move(camera_record));
+        } else if (header.getMetaData().get("schema").empty()) {
+            entry.kind = SpatialObjectKind::Group;
+            descend = true;
         } else {
+            entry.kind = SpatialObjectKind::Other;
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "SpatialReader: object '{}' is neither points nor curves, skipped", name);
-            continue;
+                "SpatialReader: object '{}' is neither points nor curves, listed but not read", path);
         }
 
-        record.attributes = declare_attributes(arb, name);
+        const size_t index = objects.size();
+        objects.push_back(std::move(entry));
 
-        names.push_back(name);
-        records.emplace(name, std::move(record));
+        if (is_stream) {
+            record.attributes = declare_attributes(arb, path);
+            names.push_back(path);
+            records.emplace(path, std::move(record));
+        }
+
+        if (descend) {
+            index_children(child, index, path, depth + 1);
+        }
     }
 }
 
@@ -330,8 +675,23 @@ SpatialReader::SpatialReader()
 }
 
 SpatialReader::~SpatialReader() = default;
-SpatialReader::SpatialReader(SpatialReader&&) noexcept = default;
-SpatialReader& SpatialReader::operator=(SpatialReader&&) noexcept = default;
+
+SpatialReader::SpatialReader(SpatialReader&& other) noexcept
+    : m_impl(std::move(other.m_impl))
+    , m_last_error(std::move(other.m_last_error))
+{
+    other.m_impl = std::make_unique<Impl>();
+}
+
+SpatialReader& SpatialReader::operator=(SpatialReader&& other) noexcept
+{
+    if (this != &other) {
+        m_impl = std::move(other.m_impl);
+        m_last_error = std::move(other.m_last_error);
+        other.m_impl = std::make_unique<Impl>();
+    }
+    return *this;
+}
 
 bool SpatialReader::open(const std::string& filepath)
 {
@@ -367,6 +727,7 @@ bool SpatialReader::open(const std::string& filepath)
         }
 
         m_impl->archive = archive;
+        m_impl->path = resolved;
         m_impl->index_streams();
     } catch (const std::exception& e) {
         close();
@@ -384,7 +745,14 @@ bool SpatialReader::open(const std::string& filepath)
 void SpatialReader::close()
 {
     m_impl->records.clear();
+    m_impl->xforms.clear();
+    m_impl->meshes.clear();
+    m_impl->mesh_names.clear();
+    m_impl->cameras.clear();
+    m_impl->camera_names.clear();
+    m_impl->objects.clear();
     m_impl->names.clear();
+    m_impl->path.clear();
     m_impl->archive = IArchive();
 }
 
@@ -508,6 +876,38 @@ std::optional<SpatialSample> SpatialReader::read_sample(
     }
 }
 
+std::optional<size_t> SpatialReader::get_vertex_count(
+    const std::string& stream_name, size_t index) const
+{
+    if (!m_impl->archive.valid()) {
+        set_error("get_vertex_count: no archive open");
+        return std::nullopt;
+    }
+
+    const auto it = m_impl->records.find(stream_name);
+    if (it == m_impl->records.end() || index >= it->second.sample_count) {
+        return std::nullopt;
+    }
+
+    try {
+        const ISampleSelector selector(static_cast<index_t>(index));
+        Alembic::Util::Dimensions dimensions;
+
+        if (auto* points = std::get_if<IPoints>(&it->second.object)) {
+            points->getSchema().getPositionsProperty().getDimensions(dimensions, selector);
+        } else if (auto* curves = std::get_if<ICurves>(&it->second.object)) {
+            curves->getSchema().getPositionsProperty().getDimensions(dimensions, selector);
+        }
+
+        return static_cast<size_t>(dimensions.numPoints());
+    } catch (const std::exception& e) {
+        set_error(std::string("get_vertex_count: ") + e.what());
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader::get_vertex_count: '{}' sample {}: {}", stream_name, index, e.what());
+        return std::nullopt;
+    }
+}
+
 std::optional<double> SpatialReader::sample_time(
     const std::string& stream_name, size_t index) const
 {
@@ -520,6 +920,460 @@ std::optional<double> SpatialReader::sample_time(
 
     return static_cast<double>(
         it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
+}
+
+const std::vector<std::string>& SpatialReader::get_mesh_names() const
+{
+    return m_impl->mesh_names;
+}
+
+size_t SpatialReader::get_mesh_sample_count(const std::string& mesh_name) const
+{
+    const auto it = m_impl->meshes.find(mesh_name);
+    return it == m_impl->meshes.end() ? 0 : it->second.sample_count;
+}
+
+std::optional<Kakshya::TopologyVariance> SpatialReader::get_mesh_variance(const std::string& mesh_name) const
+{
+    const auto it = m_impl->meshes.find(mesh_name);
+    if (it == m_impl->meshes.end()) {
+        return std::nullopt;
+    }
+    return it->second.variance;
+}
+
+std::optional<double> SpatialReader::mesh_time(const std::string& mesh_name, size_t index) const
+{
+    const auto it = m_impl->meshes.find(mesh_name);
+    if (it == m_impl->meshes.end() || index >= it->second.sample_count || !it->second.time_sampling) {
+        return std::nullopt;
+    }
+    return static_cast<double>(it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
+}
+
+const std::vector<std::string>& SpatialReader::get_camera_names() const
+{
+    return m_impl->camera_names;
+}
+
+size_t SpatialReader::get_camera_sample_count(const std::string& camera_name) const
+{
+    const auto it = m_impl->cameras.find(camera_name);
+    return it == m_impl->cameras.end() ? 0 : it->second.sample_count;
+}
+
+std::optional<double> SpatialReader::camera_time(const std::string& camera_name, size_t index) const
+{
+    const auto it = m_impl->cameras.find(camera_name);
+    if (it == m_impl->cameras.end() || index >= it->second.sample_count || !it->second.time_sampling) {
+        return std::nullopt;
+    }
+    return static_cast<double>(it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
+}
+
+std::optional<Kinesis::Lens> SpatialReader::read_lens(const std::string& camera_name, size_t index) const
+{
+    if (!m_impl->archive.valid()) {
+        set_error("read_lens: no archive open");
+        return std::nullopt;
+    }
+
+    const auto it = m_impl->cameras.find(camera_name);
+    if (it == m_impl->cameras.end() || index >= it->second.sample_count) {
+        set_error("read_lens: no camera '" + camera_name + "' with sample " + std::to_string(index));
+        return std::nullopt;
+    }
+
+    try {
+        CameraSample sample;
+        it->second.object.getSchema().get(sample, ISampleSelector(static_cast<index_t>(index)));
+
+        Kinesis::Lens lens;
+        lens.focal_length = sample.getFocalLength();
+        lens.horizontal_aperture = sample.getHorizontalAperture();
+        lens.vertical_aperture = sample.getVerticalAperture();
+        lens.near = sample.getNearClippingPlane();
+        lens.far = sample.getFarClippingPlane();
+        lens.f_stop = sample.getFStop();
+        lens.focus_distance = sample.getFocusDistance();
+
+        double top {};
+        double bottom {};
+        double left {};
+        double right {};
+        sample.getScreenWindow(top, bottom, left, right);
+        lens.window = { .left = left, .right = right, .bottom = bottom, .top = top };
+        return lens;
+    } catch (const std::exception& error) {
+        set_error(std::string("read_lens: ") + error.what());
+        return std::nullopt;
+    }
+}
+
+std::optional<Kakshya::MeshData> SpatialReader::read_mesh(const std::string& mesh_name, size_t index) const
+{
+    if (!m_impl->archive.valid()) {
+        set_error("read_mesh: no archive open");
+        return std::nullopt;
+    }
+
+    const auto it = m_impl->meshes.find(mesh_name);
+    if (it == m_impl->meshes.end()) {
+        set_error("read_mesh: no mesh named '" + mesh_name + "'");
+        return std::nullopt;
+    }
+    if (index >= it->second.sample_count) {
+        set_error("read_mesh: index " + std::to_string(index) + " out of range for '" + mesh_name + "'");
+        return std::nullopt;
+    }
+
+    try {
+        const ISampleSelector selector(static_cast<index_t>(index));
+        std::string reason;
+        auto& object = it->second.object;
+        auto mesh = std::holds_alternative<IPolyMesh>(object)
+            ? read_cage(std::get<IPolyMesh>(object).getSchema(), selector, mesh_name, reason)
+            : read_cage(std::get<ISubD>(object).getSchema(), selector, mesh_name, reason);
+        if (!mesh) {
+            set_error("read_mesh: '" + mesh_name + "' sample " + std::to_string(index) + ": " + reason);
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "SpatialReader::read_mesh: '{}' sample {}: {}", mesh_name, index, reason);
+        }
+        return mesh;
+    } catch (const std::exception& e) {
+        set_error(std::string("read_mesh: ") + e.what());
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader::read_mesh: '{}' sample {}: {}", mesh_name, index, e.what());
+        return std::nullopt;
+    }
+}
+
+const std::vector<SpatialObject>& SpatialReader::get_objects() const
+{
+    return m_impl->objects;
+}
+
+std::optional<glm::mat4> SpatialReader::read_transform(const std::string& path, size_t index) const
+{
+    const auto it = m_impl->xforms.find(path);
+    if (it == m_impl->xforms.end()) {
+        set_error("read_transform: no transform object at '" + path + "'");
+        return std::nullopt;
+    }
+    if (index >= it->second.sample_count) {
+        set_error("read_transform: index " + std::to_string(index) + " out of range for '" + path + "'");
+        return std::nullopt;
+    }
+
+    try {
+        XformSample sample;
+        it->second.object.getSchema().get(sample, ISampleSelector(static_cast<index_t>(index)));
+        const auto matrix = sample.getMatrix();
+        glm::mat4 result;
+        for (int column = 0; column < 4; ++column) {
+            for (int row = 0; row < 4; ++row) {
+                result[column][row] = static_cast<float>(matrix[column][row]);
+            }
+        }
+        return result;
+    } catch (const std::exception& e) {
+        set_error(std::string("read_transform: ") + e.what());
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "SpatialReader::read_transform: '{}' sample {}: {}", path, index, e.what());
+        return std::nullopt;
+    }
+}
+
+std::optional<double> SpatialReader::transform_time(const std::string& path, size_t index) const
+{
+    const auto it = m_impl->xforms.find(path);
+    if (it == m_impl->xforms.end() || index >= it->second.sample_count || !it->second.time_sampling) {
+        return std::nullopt;
+    }
+    return static_cast<double>(it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
+}
+
+std::shared_ptr<Kakshya::MeshAssemblyContainer> SpatialReader::create_mesh_assembly() const
+{
+    if (!m_impl->archive.valid()) {
+        set_error("create_mesh_assembly: no archive open");
+        return nullptr;
+    }
+
+    const auto& objects = m_impl->objects;
+    auto assembly = std::make_shared<Kakshya::MeshAssemblyContainer>();
+
+    std::unordered_map<std::string, size_t> object_index;
+    for (size_t i = 0; i < objects.size(); ++i) {
+        object_index.emplace(objects[i].path, i);
+    }
+
+    const auto last_segment = [](const std::string& path) {
+        const auto slash = path.rfind('/');
+        return slash == std::string::npos ? path : path.substr(slash + 1);
+    };
+
+    const auto canonical = [&](std::string path) {
+        constexpr int max_redirects = 16;
+        for (int redirects = 0; redirects < max_redirects; ++redirects) {
+            std::string probe = path;
+            bool redirected = false;
+            while (true) {
+                const auto found = object_index.find(probe);
+                if (found != object_index.end() && !objects[found->second].instance_source.empty()) {
+                    path = objects[found->second].instance_source + path.substr(probe.size());
+                    redirected = true;
+                    break;
+                }
+                const auto slash = probe.rfind('/');
+                if (slash == std::string::npos) {
+                    break;
+                }
+                probe.erase(slash);
+            }
+            if (!redirected) {
+                break;
+            }
+        }
+        return path;
+    };
+
+    std::unordered_map<std::string, std::optional<uint64_t>> source_by_path;
+    const auto source_for = [&](const SpatialObject& object) -> std::optional<uint64_t> {
+        const std::string key = canonical(object.path);
+        if (const auto known = source_by_path.find(key); known != source_by_path.end()) {
+            return known->second;
+        }
+
+        const std::string& stream = m_impl->records.contains(key) ? key : object.path;
+        const auto record = m_impl->records.find(stream);
+        auto sample = read_sample(stream, 0);
+        if (record == m_impl->records.end() || !sample) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "SpatialReader::create_mesh_assembly: '{}' has no readable first sample, skipped", stream);
+            source_by_path.emplace(key, std::nullopt);
+            return std::nullopt;
+        }
+
+        Kakshya::MeshAssemblySource source;
+        source.geometry = sample->to_data();
+        source.name = last_segment(key);
+        source.origin = stream;
+
+        std::vector<double> times;
+        times.reserve(record->second.sample_count);
+        for (size_t i = 0; i < record->second.sample_count; ++i) {
+            if (const auto time = sample_time(stream, i)) {
+                times.push_back(*time);
+            }
+        }
+        if (times.size() == record->second.sample_count) {
+            source.time = Kinesis::TimeSampling::acyclic(std::move(times));
+        }
+
+        source.variance = record->second.sample_count > 1 ? Kakshya::TopologyVariance::Heterogeneous : Kakshya::TopologyVariance::Constant;
+        if (std::holds_alternative<IPoints>(record->second.object) && record->second.sample_count > 1) {
+            const auto first_count = get_vertex_count(stream, 0);
+            bool same = first_count.has_value();
+            for (size_t i = 1; i < record->second.sample_count && same; ++i) {
+                same = get_vertex_count(stream, i) == first_count;
+            }
+            if (same) {
+                source.variance = Kakshya::TopologyVariance::Homogeneous;
+            }
+        }
+        if (const auto* curves = std::get_if<ICurves>(&record->second.object); curves && record->second.sample_count > 1) {
+            switch (curves->getSchema().getTopologyVariance()) {
+            case kConstantTopology:
+                source.variance = Kakshya::TopologyVariance::Constant;
+                break;
+            case kHomogenousTopology:
+                source.variance = Kakshya::TopologyVariance::Homogeneous;
+                break;
+            default:
+                break;
+            }
+        }
+        source.facets.set(record->second.metadata);
+
+        const auto index = assembly->add_source(std::move(source));
+        source_by_path.emplace(key, index);
+        return index;
+    };
+
+    const auto mesh_source_for = [&](const SpatialObject& object) -> std::optional<uint64_t> {
+        const std::string key = canonical(object.path);
+        if (const auto known = source_by_path.find(key); known != source_by_path.end()) {
+            return known->second;
+        }
+
+        const std::string& mesh_name = m_impl->meshes.contains(key) ? key : object.path;
+        const auto record = m_impl->meshes.find(mesh_name);
+        auto mesh = read_mesh(mesh_name, 0);
+        if (record == m_impl->meshes.end() || !mesh) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "SpatialReader::create_mesh_assembly: '{}' has no readable first sample, skipped", mesh_name);
+            source_by_path.emplace(key, std::nullopt);
+            return std::nullopt;
+        }
+
+        Kakshya::MeshAssemblySource source;
+        source.geometry = std::move(*mesh);
+        source.name = last_segment(key);
+        source.origin = mesh_name;
+
+        std::vector<double> times;
+        times.reserve(record->second.sample_count);
+        for (size_t i = 0; i < record->second.sample_count; ++i) {
+            if (const auto time = mesh_time(mesh_name, i)) {
+                times.push_back(*time);
+            }
+        }
+        if (times.size() == record->second.sample_count) {
+            source.time = Kinesis::TimeSampling::acyclic(std::move(times));
+        }
+
+        source.variance = record->second.variance;
+        source.facets.set(record->second.metadata);
+
+        const auto index = assembly->add_source(std::move(source));
+        source_by_path.emplace(key, index);
+        return index;
+    };
+
+    std::vector<std::optional<uint64_t>> row_of(objects.size());
+    Kakshya::MeshAssemblyMotion motion { .name = std::filesystem::path(m_impl->path).stem().string(), .channels = {} };
+
+    for (size_t i = 0; i < objects.size(); ++i) {
+        const auto& object = objects[i];
+        const std::optional<uint64_t> parent_row = object.parent ? row_of[*object.parent] : std::nullopt;
+        const std::string name = last_segment(object.path);
+
+        switch (object.kind) {
+        case SpatialObjectKind::Group: {
+            const auto row = assembly->add_placement({ .name = name, .parent = parent_row });
+            row_of[i] = row;
+            break;
+        }
+        case SpatialObjectKind::Xform: {
+            const auto& xform = m_impl->xforms.at(object.path);
+            const auto local = read_transform(object.path, 0).value_or(glm::mat4(1.0F));
+            const auto row = assembly->add_placement({ .name = name,
+                .parent = xform.inherits ? parent_row : std::nullopt,
+                .local = local });
+            row_of[i] = row;
+
+            if (!row || xform.constant || xform.sample_count < 2) {
+                break;
+            }
+
+            std::vector<double> times;
+            std::vector<glm::vec3> translations;
+            std::vector<glm::vec4> rotations;
+            std::vector<glm::vec3> scales;
+            bool usable = true;
+            for (size_t s = 0; s < xform.sample_count && usable; ++s) {
+                const auto time = transform_time(object.path, s);
+                const auto matrix = read_transform(object.path, s);
+                const auto parts = matrix ? Kinesis::decompose_transform(*matrix) : std::nullopt;
+                if (!time || !parts) {
+                    usable = false;
+                    break;
+                }
+                const auto& [translation, rotation, scale] = *parts;
+                times.push_back(*time);
+                translations.push_back(translation);
+                rotations.emplace_back(rotation.x, rotation.y, rotation.z, rotation.w);
+                scales.push_back(scale);
+            }
+
+            auto sampling = usable ? Kinesis::TimeSampling::acyclic(std::move(times)) : std::nullopt;
+            if (!sampling) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "SpatialReader::create_mesh_assembly: transform '{}' cannot be decomposed or its times do not increase, kept at its first sample",
+                    object.path);
+                break;
+            }
+
+            Kakshya::MeshAssemblyChannel channel { .row = *row };
+            channel.translation = Kinesis::TimedValues<glm::vec3>::create(
+                { .times = *sampling, .values = std::move(translations), .default_mode = Kinesis::KeyInterpolation::Linear });
+            channel.rotation = Kinesis::TimedValues<glm::vec4>::create(
+                { .times = *sampling, .values = std::move(rotations), .kind = Kinesis::ValueKind::Rotation });
+            channel.scale = Kinesis::TimedValues<glm::vec3>::create(
+                { .times = std::move(*sampling), .values = std::move(scales) });
+            motion.channels.push_back(std::move(channel));
+            break;
+        }
+        case SpatialObjectKind::Points:
+        case SpatialObjectKind::Curves: {
+            const auto source = source_for(object);
+            if (source) {
+                row_of[i] = assembly->add_placement({ .name = name, .parent = parent_row, .source = source });
+            } else {
+                row_of[i] = parent_row;
+            }
+            break;
+        }
+        case SpatialObjectKind::Camera: {
+            const auto& record = m_impl->cameras.at(object.path);
+            auto lens = read_lens(object.path, 0);
+            if (!lens) {
+                MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                    "SpatialReader::create_mesh_assembly: camera '{}' has no readable first sample, skipped", object.path);
+                row_of[i] = parent_row;
+                break;
+            }
+
+            Kakshya::MeshAssemblySource source;
+            source.geometry = *lens;
+            source.name = name;
+            source.origin = object.path;
+
+            std::vector<double> times;
+            times.reserve(record.sample_count);
+            for (size_t s = 0; s < record.sample_count; ++s) {
+                if (const auto time = camera_time(object.path, s)) {
+                    times.push_back(*time);
+                }
+            }
+            if (times.size() == record.sample_count) {
+                source.time = Kinesis::TimeSampling::acyclic(std::move(times));
+            }
+            source.variance = record.constant || record.sample_count < 2
+                ? Kakshya::TopologyVariance::Constant
+                : Kakshya::TopologyVariance::Homogeneous;
+
+            const auto index = assembly->add_source(std::move(source));
+            row_of[i] = assembly->add_placement({ .name = name, .parent = parent_row, .source = index });
+            break;
+        }
+        case SpatialObjectKind::PolyMesh:
+        case SpatialObjectKind::SubD: {
+            const auto source = mesh_source_for(object);
+            if (source) {
+                row_of[i] = assembly->add_placement({ .name = name, .parent = parent_row, .source = source });
+            } else {
+                row_of[i] = parent_row;
+            }
+            break;
+        }
+        default:
+            row_of[i] = parent_row;
+            break;
+        }
+    }
+
+    if (!motion.channels.empty()) {
+        std::ignore = assembly->add_motion(std::move(motion));
+    }
+
+    MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
+        "SpatialReader::create_mesh_assembly: {} rows, {} sources, {} motions",
+        assembly->get_total_elements(), assembly->get_data().sources.size(),
+        assembly->get_data().motions.size());
+
+    return assembly;
 }
 
 } // namespace MayaFlux::IO

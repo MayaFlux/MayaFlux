@@ -67,25 +67,10 @@ SpatialIndex<PointT>::SpatialIndex(float cell_size, DistanceFn distance)
     , m_distance_fn(std::move(distance))
     , m_use_grid(static_cast<bool>(detail::PointTraits<PointT>::fixed_dimension))
 {
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    for (auto& hp : m_hazard_ptrs) {
-        hp.store(nullptr);
-    }
-#endif
 }
 
 template <typename PointT>
-SpatialIndex<PointT>::~SpatialIndex()
-{
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto* snap = m_snapshot.load(std::memory_order_acquire);
-    delete snap;
-    for (auto* r : m_retired) {
-        delete r;
-    }
-#endif
-}
+SpatialIndex<PointT>::~SpatialIndex() = default;
 
 // =========================================================================
 // Mutation
@@ -164,43 +149,34 @@ void SpatialIndex<PointT>::clear()
 template <typename PointT>
 void SpatialIndex<PointT>::publish()
 {
-    auto snap = std::make_unique<SpatialSnapshot<PointT>>();
-    snap->cell_size = m_cell_size;
+    SpatialSnapshot<PointT> snap;
+    snap.cell_size = m_cell_size;
 
     if constexpr (detail::PointTraits<PointT>::fixed_dimension) {
-        snap->dimensions = detail::PointTraits<PointT>::dimensions;
+        snap.dimensions = detail::PointTraits<PointT>::dimensions;
     } else {
-        snap->dimensions = m_positions.empty()
+        snap.dimensions = m_positions.empty()
             ? 0
             : detail::get_dimensions(m_positions.front());
     }
 
     auto live_count = static_cast<uint32_t>(m_id_to_slot.size());
-    snap->positions.reserve(live_count);
-    snap->slot_to_id.reserve(live_count);
-    snap->id_to_slot.reserve(live_count);
+    snap.positions.reserve(live_count);
+    snap.slot_to_id.reserve(live_count);
+    snap.id_to_slot.reserve(live_count);
 
     for (const auto& [id, slot] : m_id_to_slot) {
-        auto new_slot = static_cast<uint32_t>(snap->positions.size());
-        snap->positions.push_back(m_positions[slot]);
-        snap->slot_to_id.push_back(id);
-        snap->id_to_slot[id] = new_slot;
+        auto new_slot = static_cast<uint32_t>(snap.positions.size());
+        snap.positions.push_back(m_positions[slot]);
+        snap.slot_to_id.push_back(id);
+        snap.id_to_slot[id] = new_slot;
     }
 
     if (m_use_grid) {
-        rebuild_grid(*snap);
+        rebuild_grid(snap);
     }
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto* old = m_snapshot.exchange(snap.release(), std::memory_order_acq_rel);
-    if (old) {
-        retire_snapshot(old);
-    }
-#else
-    m_snapshot.store(
-        std::shared_ptr<const SpatialSnapshot<PointT>>(snap.release()),
-        std::memory_order_release);
-#endif
+    m_snapshot.publish(std::move(snap));
 }
 
 // =========================================================================
@@ -240,28 +216,16 @@ std::vector<QueryResult> SpatialIndex<PointT>::within_radius(
     std::vector<QueryResult> results;
     float radius_sq = radius * radius;
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto [snap, slot] = acquire_snapshot();
+    auto snap = m_snapshot.read();
     if (!snap) {
         return results;
     }
-#else
-    auto snap_ptr = m_snapshot.load(std::memory_order_acquire);
-    if (!snap_ptr) {
-        return results;
-    }
-    const auto* snap = snap_ptr.get();
-#endif
 
     if (m_use_grid) {
         query_grid(*snap, center, radius_sq, results);
     } else {
         query_brute(*snap, center, radius_sq, results);
     }
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    release_snapshot(slot);
-#endif
 
     return results;
 }
@@ -271,20 +235,10 @@ std::vector<QueryResult> SpatialIndex<PointT>::k_nearest(
     const PointT& center,
     uint32_t k) const
 {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto [snap, slot] = acquire_snapshot();
+    auto snap = m_snapshot.read();
     if (!snap || snap->positions.empty()) {
-        if (snap)
-            release_snapshot(slot);
         return {};
     }
-#else
-    auto snap_ptr = m_snapshot.load(std::memory_order_acquire);
-    if (!snap_ptr || snap_ptr->positions.empty()) {
-        return {};
-    }
-    const auto* snap = snap_ptr.get();
-#endif
 
     k = std::min(k, static_cast<uint32_t>(snap->positions.size()));
 
@@ -311,53 +265,28 @@ std::vector<QueryResult> SpatialIndex<PointT>::k_nearest(
     }
     std::ranges::reverse(results);
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    release_snapshot(slot);
-#endif
-
     return results;
 }
 
 template <typename PointT>
 std::optional<PointT> SpatialIndex<PointT>::position_of(uint32_t id) const
 {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto [snap, slot] = acquire_snapshot();
+    auto snap = m_snapshot.read();
     if (!snap) {
         return std::nullopt;
     }
     auto it = snap->id_to_slot.find(id);
-    std::optional<PointT> result = (it != snap->id_to_slot.end())
-        ? std::optional<PointT>(snap->positions[it->second])
-        : std::nullopt;
-    release_snapshot(slot);
-    return result;
-#else
-    auto snap_ptr = m_snapshot.load(std::memory_order_acquire);
-    if (!snap_ptr) {
+    if (it == snap->id_to_slot.end()) {
         return std::nullopt;
     }
-    auto it = snap_ptr->id_to_slot.find(id);
-    if (it == snap_ptr->id_to_slot.end()) {
-        return std::nullopt;
-    }
-    return snap_ptr->positions[it->second];
-#endif
+    return snap->positions[it->second];
 }
 
 template <typename PointT>
 size_t SpatialIndex<PointT>::count() const
 {
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto [snap, slot] = acquire_snapshot();
-    size_t n = snap ? snap->positions.size() : 0;
-    if (snap)
-        release_snapshot(slot);
-    return n;
-#else
-    auto snap_ptr = m_snapshot.load(std::memory_order_acquire);
-    return snap_ptr ? snap_ptr->positions.size() : 0;
-#endif
+    auto snap = m_snapshot.read();
+    return snap ? snap->positions.size() : 0;
 }
 
 template <typename PointT>
@@ -365,8 +294,7 @@ std::vector<std::pair<uint32_t, PointT>> SpatialIndex<PointT>::all() const
 {
     std::vector<std::pair<uint32_t, PointT>> result;
 
-#ifdef MAYAFLUX_PLATFORM_MACOS
-    auto [snap, slot] = acquire_snapshot();
+    auto snap = m_snapshot.read();
     if (!snap) {
         return result;
     }
@@ -374,17 +302,6 @@ std::vector<std::pair<uint32_t, PointT>> SpatialIndex<PointT>::all() const
     for (uint32_t i = 0; i < static_cast<uint32_t>(snap->positions.size()); ++i) {
         result.emplace_back(snap->slot_to_id[i], snap->positions[i]);
     }
-    release_snapshot(slot);
-#else
-    auto snap_ptr = m_snapshot.load(std::memory_order_acquire);
-    if (!snap_ptr) {
-        return result;
-    }
-    result.reserve(snap_ptr->positions.size());
-    for (uint32_t i = 0; i < static_cast<uint32_t>(snap_ptr->positions.size()); ++i) {
-        result.emplace_back(snap_ptr->slot_to_id[i], snap_ptr->positions[i]);
-    }
-#endif
 
     return result;
 }
@@ -478,56 +395,6 @@ void SpatialIndex<PointT>::query_brute(
         }
     }
 }
-
-// =========================================================================
-// macOS hazard pointer protocol
-// =========================================================================
-
-#ifdef MAYAFLUX_PLATFORM_MACOS
-
-template <typename PointT>
-std::pair<const SpatialSnapshot<PointT>*, size_t>
-SpatialIndex<PointT>::acquire_snapshot() const
-{
-    size_t slot = m_hazard_counter.fetch_add(1, std::memory_order_relaxed) % MAX_READERS;
-    const SpatialSnapshot<PointT>* current;
-    do {
-        current = m_snapshot.load(std::memory_order_acquire);
-        m_hazard_ptrs[slot].store(current, std::memory_order_release);
-    } while (current != m_snapshot.load(std::memory_order_acquire));
-    return { current, slot };
-}
-
-template <typename PointT>
-void SpatialIndex<PointT>::release_snapshot(size_t slot) const
-{
-    m_hazard_ptrs[slot].store(nullptr, std::memory_order_release);
-}
-
-template <typename PointT>
-void SpatialIndex<PointT>::retire_snapshot(const SpatialSnapshot<PointT>* old)
-{
-    m_retired.push_back(old);
-
-    auto it = m_retired.begin();
-    while (it != m_retired.end()) {
-        bool referenced = false;
-        for (size_t i = 0; i < MAX_READERS; ++i) {
-            if (m_hazard_ptrs[i].load(std::memory_order_acquire) == *it) {
-                referenced = true;
-                break;
-            }
-        }
-        if (!referenced) {
-            delete *it;
-            it = m_retired.erase(it);
-        } else {
-            ++it;
-        }
-    }
-}
-
-#endif // MAYAFLUX_PLATFORM_MACOS
 
 // =========================================================================
 // Factory functions

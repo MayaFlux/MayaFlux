@@ -1,6 +1,10 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Source/DynamicVideoStream.hpp"
+#include "MayaFlux/Kinesis/VertexSampler.hpp"
+#include "MayaFlux/Kriya/MeshReflow.hpp"
+#include "MayaFlux/Kriya/SpatialReflow.hpp"
+#include "MayaFlux/Kriya/VolumeReflow.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 /**
@@ -20,6 +24,8 @@
 namespace MayaFlux {
 
 namespace Kriya {
+    class MeshAssemblyRealization;
+    struct MeshAssemblyRealizedPart;
     class SamplingPipeline;
     class TapSetBuilder;
     class ChimeraBuilder;
@@ -33,7 +39,9 @@ namespace Kakshya {
 
 namespace Buffers {
     class AudioBuffer;
+    class RecordedGeometryBuffer;
     class TextureArrayBuffer;
+    class VolumeGridBuffer;
 }
 
 namespace Yantra::Vision {
@@ -366,6 +374,86 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
     uint32_t input_channel, double seconds, std::optional<uint32_t> monitor = std::nullopt, uint32_t channel = 0);
 
 /**
+ * @brief Begin a reflow that plays a volume sequence into a volume buffer.
+ *
+ * Every field of each frame replaces the buffer's field (volume_sink), on the engine's
+ * frame clock once start() runs. The builder takes the rest of its description from
+ * ReflowBuilder: courses, selection, frame operations. Keep the Reflow start() returns
+ * alive for as long as it should play, and steer it through its courses.
+ *
+ * @code{.cpp}
+ * auto sequence = IO::open_volume_sequence(
+ *     { .pattern = "smoke.{:04}.vdb", .count = 96 }, *Kinesis::TimeSampling::uniform(1.0 / 24.0),
+ *     IO::LatticeSource::Union);
+ * auto first = sequence->read(0);
+ * auto volume = vega.VolumeGridBuffer(first->lattice, IO::volume_field_decls(*first)) | Graphics;
+ * auto reflow = MayaFlux::create_volume_reflow(sequence, volume)
+ *                   .course({ .in = 0.0, .out = 4.0, .edge = Kriya::CourseEdge::Loop })
+ *                   .start();
+ * reflow->courses().front()->speed(0.5);
+ * @endcode
+ *
+ * @param source The frames to play, such as a SequenceContainer<VolumeData>.
+ * @param volume The buffer to write, made for those frames (vega.VolumeGridBuffer).
+ * @return Builder. A null source or buffer makes build() and start() return nullptr.
+ */
+MAYAFLUX_API Kriya::VolumeReflowBuilder create_volume_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>> source,
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume);
+
+/**
+ * @brief Begin a reflow that plays an Alembic stream into a recorded geometry buffer.
+ *
+ * Each frame replaces the buffer's geometry (spatial_sink), on the engine's frame clock once
+ * start() runs. The builder takes the rest of its description from ReflowBuilder: courses,
+ * selection, frame operations. Keep the Reflow start() returns alive for as long as it
+ * should play, and steer it through its courses.
+ *
+ * @code{.cpp}
+ * auto frames = IO::SpatialFileFrames::create("swarm.abc");
+ * auto buffer = vega.RecordedGeometryBuffer(*frames->max_vertex_count(), frames->topology(),
+ *     Kinesis::SamplerBounds { .min = glm::vec3(-4.0F), .max = glm::vec3(4.0F) }) | Graphics;
+ * buffer->setup_rendering({ .target_window = window });
+ * auto reflow = MayaFlux::create_spatial_reflow(frames, buffer)
+ *                   .course({ .edge = Kriya::CourseEdge::Loop })
+ *                   .start();
+ * @endcode
+ *
+ * @param source The frames to play, such as an IO::SpatialFileFrames or a SequenceContainer<SpatialData>.
+ * @param buffer The buffer to show them in, made for those frames (vega.RecordedGeometryBuffer).
+ * @return Builder. A null source makes build() and start() return nullptr.
+ */
+MAYAFLUX_API Kriya::SpatialReflowBuilder create_spatial_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>> source,
+    const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer);
+
+/**
+ * @brief Begin a reflow that plays mesh frames into a mesh buffer.
+ *
+ * Each frame replaces the buffer's geometry (mesh_sink), on the engine's frame clock once
+ * start() runs. Frames may differ in size and connectivity; the buffer uploads indices only
+ * when they change, and starts empty if made from MeshData::empty(). The builder takes the
+ * rest of its description from ReflowBuilder: courses, selection, frame operations. Keep the
+ * Reflow start() returns alive for as long as it should play, and steer it through its courses.
+ *
+ * @code{.cpp}
+ * auto frames = Kakshya::ResidentFrames<Kakshya::MeshData>::create(times, std::move(meshes));
+ * auto buffer = std::make_shared<Buffers::MeshBuffer>(Kakshya::MeshData::empty()) | Graphics;
+ * buffer->setup_rendering({ .target_window = window });
+ * auto reflow = MayaFlux::create_mesh_reflow(frames, buffer)
+ *                   .course({ .edge = Kriya::CourseEdge::Loop })
+ *                   .start();
+ * @endcode
+ *
+ * @param source The frames to play, such as a ResidentFrames of MeshData.
+ * @param buffer The buffer to show them in.
+ * @return Builder. A null source makes build() and start() return nullptr.
+ */
+MAYAFLUX_API Kriya::MeshReflowBuilder create_mesh_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::MeshData>> source,
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer);
+
+/**
  * @brief A vision workflow running on the engine's managers.
  *
  * Its live runs stop when the returned workflow is destroyed. Include
@@ -382,5 +470,34 @@ MAYAFLUX_API std::shared_ptr<Kriya::BufferPipeline> record_into(
  * @endcode
  */
 MAYAFLUX_API std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow();
+
+/**
+ * @brief Register the buffers and networks of a realized assembly, set up their rendering and show their first shots.
+ *
+ * The network of every part of meshes and every part of instances is registered with the visual rate
+ * node graph, since it is the network's own processing that composes the placements a sink writes into
+ * the slots and instances. Every buffer of every part is added to the graphics buffers, then given the RenderConfig the
+ * callable answers for it, then the sources of points and curves show their first shot (show_rest).
+ * What a reflow plays afterwards, the placement sink and the lanes, is yours to start.
+ *
+ * Bind materials (MeshAssemblyRealization::bind_materials) before this, so the textured shaders find
+ * their images when the buffers are set up.
+ *
+ * @code{.cpp}
+ * auto level = Kriya::MeshAssemblyRealization::create(assembly, { .partition = Kakshya::Partitions::instanced(4) });
+ * MayaFlux::present_realization(level, [window](const Kriya::MeshAssemblyRealizedPart&, size_t) {
+ *     return Portal::Graphics::RenderConfig { .target_window = window };
+ * });
+ * @endcode
+ *
+ * @param realization The realization to show. Null does nothing.
+ * @param config The RenderConfig for a part, and for a part of points or curves also the index of the
+ *        buffer in the part (the slot, or the row's place in the part's rows), so every one can draw
+ *        its own way. Called once for each buffer.
+ * @return How many buffers were shown.
+ */
+MAYAFLUX_API size_t present_realization(
+    const std::shared_ptr<Kriya::MeshAssemblyRealization>& realization,
+    const std::function<Portal::Graphics::RenderConfig(const Kriya::MeshAssemblyRealizedPart&, size_t)>& config);
 
 } // namespace MayaFlux

@@ -54,11 +54,7 @@ struct MAYAFLUX_API RegionCache {
 /**
  * @brief Key for a cached DataVariant vector, one variant per channel.
  */
-inline const Facet<std::vector<DataVariant>>& variant_cache()
-{
-    static const Facet<std::vector<DataVariant>> key;
-    return key;
-}
+MAYAFLUX_API const Facet<std::vector<DataVariant>>& variant_cache();
 
 /**
  * @struct RegionSegment

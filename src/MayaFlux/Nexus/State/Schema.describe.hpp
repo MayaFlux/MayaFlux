@@ -20,6 +20,20 @@ struct Description<::MayaFlux::Nexus::State::AudioSinkRecord> {
 };
 
 template <>
+struct Description<::MayaFlux::Nexus::State::ComponentRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::ComponentRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::ComponentRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::ComponentRecord::component> { "component" },
+            Member<&::MayaFlux::Nexus::State::ComponentRecord::range> { "range" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::State::EntityRecord> {
     static constexpr std::string_view name = "MayaFlux::Nexus::State::EntityRecord";
 
@@ -29,13 +43,7 @@ struct Description<::MayaFlux::Nexus::State::EntityRecord> {
             Member<&::MayaFlux::Nexus::State::EntityRecord::id> { "id" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::kind> { "kind" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::subkind> { "subkind" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::position> { "position" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::orientation> { "orientation" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::intensity> { "intensity" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::radius> { "radius" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::query_radius> { "query_radius" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::color> { "color" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::size> { "size" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::controls> { "controls" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::influence_fn_name> { "influence_fn_name" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::perception_fn_name> { "perception_fn_name" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::radiate_fn_name> { "radiate_fn_name" },
@@ -43,8 +51,6 @@ struct Description<::MayaFlux::Nexus::State::EntityRecord> {
             Member<&::MayaFlux::Nexus::State::EntityRecord::audio_sinks> { "audio_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::render_sinks> { "render_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::locus_nav> { "locus_nav" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::falloff_curve_name> { "falloff_curve_name" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::falloff_radius> { "falloff_radius" },
         };
     }
 };
@@ -93,7 +99,7 @@ struct Description<::MayaFlux::Nexus::State::FabricSchema> {
             Member<&::MayaFlux::Nexus::State::FabricSchema::fabric_name> { "fabric_name" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::entities> { "entities" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::expanses> { "expanses" },
-            Member<&::MayaFlux::Nexus::State::FabricSchema::ranges> { "ranges" },
+            Member<&::MayaFlux::Nexus::State::FabricSchema::components> { "components" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::cell_size> { "cell_size" },
         };
     }
@@ -114,7 +120,6 @@ struct Description<::MayaFlux::Nexus::State::LocusNavRecord> {
             Member<&::MayaFlux::Nexus::State::LocusNavRecord::speed> { "speed" },
             Member<&::MayaFlux::Nexus::State::LocusNavRecord::mouse_sensitivity> { "mouse_sensitivity" },
             Member<&::MayaFlux::Nexus::State::LocusNavRecord::scroll_speed> { "scroll_speed" },
-            Member<&::MayaFlux::Nexus::State::LocusNavRecord::aspect> { "aspect" },
         };
     }
 };
@@ -128,27 +133,6 @@ struct Description<::MayaFlux::Nexus::State::Range> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::Range::min> { "min" },
             Member<&::MayaFlux::Nexus::State::Range::max> { "max" },
-        };
-    }
-};
-
-template <>
-struct Description<::MayaFlux::Nexus::State::RangeSet> {
-    static constexpr std::string_view name = "MayaFlux::Nexus::State::RangeSet";
-
-    static constexpr auto members()
-    {
-        return std::tuple {
-            Member<&::MayaFlux::Nexus::State::RangeSet::pos_x> { "pos_x" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::pos_y> { "pos_y" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::pos_z> { "pos_z" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::intensity> { "intensity" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::color_r> { "color_r" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::color_g> { "color_g" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::color_b> { "color_b" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::size> { "size" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::radius> { "radius" },
-            Member<&::MayaFlux::Nexus::State::RangeSet::query_radius> { "query_radius" },
         };
     }
 };

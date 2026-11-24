@@ -7,16 +7,35 @@
 
 namespace MayaFlux::Nexus {
 
+namespace {
+
+    template <typename T>
+    std::shared_ptr<T> unowned(T& object)
+    {
+        return std::shared_ptr<T>(&object, [](T*) { });
+    }
+
+} // namespace
+
+Fabric::Fabric(
+    std::shared_ptr<Vruta::TaskScheduler> scheduler,
+    std::shared_ptr<Vruta::EventManager> event_manager,
+    std::shared_ptr<Buffers::BufferManager> buffer_manager,
+    float cell_size)
+    : m_scheduler(std::move(scheduler))
+    , m_event_manager(std::move(event_manager))
+    , m_buffers(std::move(buffer_manager))
+    , m_index(Kinesis::make_spatial_index_3d(cell_size))
+    , m_cell_size(cell_size)
+{
+}
+
 Fabric::Fabric(
     Vruta::TaskScheduler& scheduler,
     Vruta::EventManager& event_manager,
     Buffers::BufferManager& buffer_manager,
     float cell_size)
-    : m_scheduler(scheduler)
-    , m_event_manager(event_manager)
-    , m_buffers(buffer_manager)
-    , m_index(Kinesis::make_spatial_index_3d(cell_size))
-    , m_cell_size(cell_size)
+    : Fabric(unowned(scheduler), unowned(event_manager), unowned(buffer_manager), cell_size)
 {
 }
 
@@ -28,13 +47,13 @@ Fabric::~Fabric()
 
     for (auto& [id, reg] : m_registrations) {
         if (!reg.task_name.empty()) {
-            m_scheduler.cancel_task(reg.task_name);
+            m_scheduler->cancel_task(reg.task_name);
         }
         if (!reg.chain_name.empty()) {
-            m_scheduler.cancel_task(reg.chain_name);
+            m_scheduler->cancel_task(reg.chain_name);
         }
-        if (!reg.event_name.empty()) {
-            m_event_manager.cancel_event(reg.event_name);
+        for (const auto& name : reg.event_names) {
+            m_event_manager->cancel_event(name);
         }
         release(reg);
     }
@@ -50,7 +69,7 @@ void Fabric::release(Registration& reg)
         using T = std::decay_t<decltype(*ptr)>;
         if constexpr (std::is_same_v<T, Emitter> || std::is_same_v<T, Agent>) {
             ptr->detach();
-            ptr->release_sinks(m_buffers);
+            ptr->release_sinks(*m_buffers);
         }
     },
         reg.member);
@@ -65,8 +84,8 @@ Wiring Fabric::wire(std::shared_ptr<Emitter> emitter)
     Member m = emitter;
     uint32_t id = assign_id(m);
     Registration reg { .member = std::move(m) };
-    if (emitter->m_position.has_value()) {
-        track(id, reg, *emitter->m_position);
+    if (const auto position = emitter->position()) {
+        track(id, reg, *position);
     }
     m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
@@ -77,8 +96,8 @@ Wiring Fabric::wire(std::shared_ptr<Sensor> sensor)
     Member m = sensor;
     uint32_t id = assign_id(m);
     Registration reg { .member = std::move(m) };
-    if (sensor->m_position.has_value()) {
-        track(id, reg, *sensor->m_position);
+    if (const auto position = sensor->position()) {
+        track(id, reg, *position);
     }
     m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
@@ -89,8 +108,8 @@ Wiring Fabric::wire(std::shared_ptr<Agent> agent)
     Member m = agent;
     uint32_t id = assign_id(m);
     Registration reg { .member = std::move(m) };
-    if (agent->m_position.has_value()) {
-        track(id, reg, *agent->m_position);
+    if (const auto position = agent->position()) {
+        track(id, reg, *position);
     }
     m_registrations.try_emplace(id, std::move(reg));
     return Wiring { *this, id };
@@ -106,13 +125,13 @@ void Fabric::remove(uint32_t id)
     auto& reg = it->second;
 
     if (!reg.task_name.empty()) {
-        m_scheduler.cancel_task(reg.task_name);
+        m_scheduler->cancel_task(reg.task_name);
     }
     if (!reg.chain_name.empty()) {
-        m_scheduler.cancel_task(reg.chain_name);
+        m_scheduler->cancel_task(reg.chain_name);
     }
-    if (!reg.event_name.empty()) {
-        m_event_manager.cancel_event(reg.event_name);
+    for (const auto& name : reg.event_names) {
+        m_event_manager->cancel_event(name);
     }
     untrack(reg);
     release(reg);
@@ -269,14 +288,15 @@ void Fabric::commit()
 {
     for (auto& [id, reg] : m_registrations) {
         std::visit([&](const auto& ptr) {
-            if (!ptr->m_position.has_value()) {
+            const auto position = ptr->position();
+            if (!position.has_value()) {
                 untrack(reg);
                 return;
             }
             if (reg.spatial_id.has_value()) {
-                m_index->update(*reg.spatial_id, *ptr->m_position);
+                m_index->update(*reg.spatial_id, *position);
             } else {
-                track(id, reg, *ptr->m_position);
+                track(id, reg, *position);
             }
         },
             reg.member);
@@ -298,12 +318,12 @@ void Fabric::commit()
 
     for (auto& [id, reg] : m_registrations) {
         if (reg.commit_driven) {
-            fire(reg);
+            fire(reg, std::nullopt, nullptr);
         }
     }
 }
 
-void Fabric::fire(uint32_t id)
+void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor, const Core::WindowEvent* input)
 {
     auto it = m_registrations.find(id);
     if (it == m_registrations.end()) {
@@ -311,8 +331,7 @@ void Fabric::fire(uint32_t id)
             "Fabric::fire: id {} not registered", id);
         return;
     }
-    fire(it->second);
-    it->second.pending_cursor.reset();
+    fire(it->second, cursor, input);
 }
 
 // =============================================================================
@@ -386,7 +405,7 @@ uint32_t Fabric::assign_id(Member& m)
     return id;
 }
 
-void Fabric::fire(const Registration& reg) const
+void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, const Core::WindowEvent* input) const
 {
     std::visit([&](const auto& ptr) {
         using T = std::decay_t<decltype(*ptr)>;
@@ -394,23 +413,25 @@ void Fabric::fire(const Registration& reg) const
         if constexpr (std::is_same_v<T, Emitter>) {
             ptr->follow_attachment();
             InfluenceContext ctx;
-            if (ptr->m_position.has_value()) {
-                ctx.position = *ptr->m_position;
+            if (const auto position = ptr->position()) {
+                ctx.position = *position;
             }
-            ctx.intensity = ptr->m_intensity;
-            ctx.radius = ptr->m_radius;
-            ctx.color = ptr->m_color;
-            ctx.size = ptr->m_size;
-            ctx.cursor_pos = reg.pending_cursor;
+            ctx.intensity = ptr->intensity();
+            ctx.radius = ptr->radius();
+            ctx.color = ptr->color();
+            ctx.size = ptr->size();
+            ctx.cursor_pos = cursor;
+            ctx.input = input;
             ptr->invoke(ctx);
 
         } else if constexpr (std::is_same_v<T, Sensor>) {
             PerceptionContext ctx;
-            ctx.radius = ptr->m_query_radius;
+            const float query_radius = ptr->query_radius();
+            ctx.radius = query_radius;
             std::vector<Kinesis::QueryResult> results;
-            if (ptr->m_position.has_value()) {
-                ctx.position = *ptr->m_position;
-                results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
+            if (const auto position = ptr->position()) {
+                ctx.position = *position;
+                results = m_index->within_radius(*position, query_radius);
                 translate(results);
                 ctx.spatial_results = std::span(results);
             }
@@ -418,38 +439,31 @@ void Fabric::fire(const Registration& reg) const
 
         } else if constexpr (std::is_same_v<T, Agent>) {
             ptr->follow_attachment();
-            if (ptr->m_position.has_value()) {
-                auto results = m_index->within_radius(*ptr->m_position, ptr->m_query_radius);
-                translate(results);
-                PerceptionContext pctx;
-                pctx.position = *ptr->m_position;
-                pctx.radius = ptr->m_query_radius;
-                pctx.orientation = ptr->m_orientation;
-                pctx.spatial_results = std::span(results);
-                ptr->invoke_perception(pctx);
 
-                InfluenceContext ictx;
-                ictx.position = *ptr->m_position;
-                ictx.orientation = ptr->m_orientation;
-                ictx.intensity = ptr->m_intensity;
-                ictx.radius = ptr->m_radius;
-                ictx.color = ptr->m_color;
-                ictx.size = ptr->m_size;
-                ictx.cursor_pos = reg.pending_cursor;
-                ptr->invoke_influence(ictx);
-            } else {
-                PerceptionContext pctx;
-                pctx.radius = ptr->m_query_radius;
-                pctx.orientation = ptr->m_orientation;
-                ptr->invoke_perception(pctx);
-                InfluenceContext ictx;
-                ictx.orientation = ptr->m_orientation;
-                ictx.intensity = ptr->m_intensity;
-                ictx.radius = ptr->m_radius;
-                ictx.color = ptr->m_color;
-                ictx.size = ptr->m_size;
-                ptr->invoke_influence(ictx);
+            std::vector<Kinesis::QueryResult> results;
+            PerceptionContext pctx;
+            pctx.radius = ptr->query_radius();
+            pctx.orientation = ptr->orientation();
+            if (const auto position = ptr->position()) {
+                results = m_index->within_radius(*position, pctx.radius);
+                translate(results);
+                pctx.position = *position;
+                pctx.spatial_results = std::span(results);
             }
+            ptr->invoke_perception(pctx);
+
+            InfluenceContext ictx;
+            ictx.orientation = ptr->orientation();
+            ictx.intensity = ptr->intensity();
+            ictx.radius = ptr->radius();
+            ictx.color = ptr->color();
+            ictx.size = ptr->size();
+            if (const auto position = ptr->position()) {
+                ictx.position = *position;
+                ictx.cursor_pos = cursor;
+            }
+            ictx.input = input;
+            ptr->invoke_influence(ictx);
         }
     },
         reg.member);

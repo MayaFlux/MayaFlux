@@ -4,6 +4,12 @@
 
 #include "MayaFlux/Buffers/State/RelaxationGridBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/Kriya/SpatialReflow.hpp"
+#include "MayaFlux/Kriya/VolumeReflow.hpp"
+
+namespace MayaFlux::Buffers {
+class RecordedGeometryBuffer;
+}
 
 namespace MayaFlux::Nodes::Network {
 class NodeNetwork;
@@ -51,7 +57,15 @@ concept GridCellData = (ArithmeticData<State> || GlmVec2Type<State> || GlmVec4Ty
  *   GpuFieldOperator, reading its vertex layout from the network's own
  *   primary operator.
  *
- * All three route to the graphics domain and every call requires
+ * - A recorded sequence of volume frames, played into a volume by a Reflow: the volume is
+ *   registered, rendering is attached, and the reflow starts on the frame clock. The call
+ *   returns the Reflow, whose courses steer the playback, and the proxy keeps it playing
+ *   until its stop() is called.
+ * - A recorded stream of spatial frames, such as an Alembic capture, played into a
+ *   RecordedGeometryBuffer the same way. The buffer's own field operator decides which
+ *   spatial stages run over the frames.
+ *
+ * The first three route to the graphics domain and every call requires
  * RenderConfig::target_window. There is no default window. A null target logs
  * an error and returns nullptr, and nothing is registered. Exceptions thrown
  * by the classes' constructors propagate.
@@ -208,6 +222,73 @@ public:
     }
 
     /**
+     * @brief Play a sequence of volume frames into a volume and attach rendering.
+     * @param volume Unregistered volume made for the frames, such as one built over the
+     *        lattice of the first frame with IO::volume_field_decls. Built with a
+     *        SurfaceConfig if it is to be drawn.
+     * @param frames The frames to play, such as a SequenceContainer made by
+     *        IO::open_volume_sequence.
+     * @param reflow Courses, frame operations, selection and rewrite. Default constructed
+     *        plays the whole sequence once.
+     * @param render Render target. target_window is required.
+     * @return The reflow, or nullptr if the volume or the frames are null, the target
+     *         window is null, or the config cannot make a reflow. Nothing is registered
+     *         in that case.
+     *
+     * The config is checked first, then the volume is registered in the graphics domain,
+     * rendering is attached, and the reflow is started on the engine's frame clock. Every
+     * declared field of each frame replaces the volume's field (Kriya::volume_sink), and
+     * whatever processors the volume has run after. The proxy holds the reflow, so it keeps
+     * playing if the caller lets go, until stop() is called on it.
+     */
+    auto operator()(
+        const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::VolumeData>& reflow,
+        const RenderConfig& render)
+        -> std::shared_ptr<Kriya::VolumeReflow>
+    {
+        auto playing = build_reflow(volume, frames, reflow, render);
+        if (playing) {
+            MF_LIVE_EXPOSE_AUTO(playing);
+        }
+        return playing;
+    }
+
+    /**
+     * @brief Play a stream of spatial frames into a recorded geometry buffer and attach rendering.
+     * @param buffer Unregistered buffer made for the frames: capacity of at least the largest
+     *        frame (IO::SpatialFileFrames::max_vertex_count), the stream's topology, and a
+     *        field operator if the spatial stages are wanted.
+     * @param frames The frames to play, such as an IO::SpatialFileFrames.
+     * @param reflow Courses, frame operations, selection and rewrite. Default constructed
+     *        plays the whole stream once.
+     * @param render Render target. target_window is required.
+     * @return The reflow, or nullptr if the buffer or the frames are null, the target window
+     *         is null, or the config cannot make a reflow. Nothing is registered in that case.
+     *
+     * The config is checked first, then the buffer is registered in the graphics domain,
+     * which wires its stages, rendering is attached, and the reflow is started on the
+     * engine's frame clock. Each frame replaces the buffer's geometry (Kriya::spatial_sink).
+     * The proxy holds the reflow, so it keeps playing if the caller lets go, until stop() is
+     * called on it. A buffer made by vega.RecordedGeometryBuffer and piped to Graphics is
+     * already registered: play that one with MayaFlux::create_spatial_reflow instead.
+     */
+    auto operator()(
+        const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::SpatialData>& reflow,
+        const RenderConfig& render)
+        -> std::shared_ptr<Kriya::SpatialReflow>
+    {
+        auto playing = build_reflow(buffer, frames, reflow, render);
+        if (playing) {
+            MF_LIVE_EXPOSE_AUTO(playing);
+        }
+        return playing;
+    }
+
+    /**
      * @brief Drive a network's vertices with fields and spatial stages, and attach rendering.
      * @tparam Network A field-compatible NodeNetwork subclass, such as ParticleNetwork.
      * @param network Unregistered network.
@@ -272,6 +353,34 @@ private:
     bool build_flow(
         const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
         const Buffers::VolumeGridBuffer::FlowConfig& flow,
+        const RenderConfig& render);
+
+    /**
+     * @brief Check the config, register the volume, render it and start the reflow.
+     * @param volume Volume to play into.
+     * @param frames Frames to play.
+     * @param reflow Reflow description.
+     * @param render Render target.
+     * @return The reflow, kept by the proxy, or nullptr on failure with nothing registered.
+     */
+    std::shared_ptr<Kriya::VolumeReflow> build_reflow(
+        const std::shared_ptr<Buffers::VolumeGridBuffer>& volume,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::VolumeData>& reflow,
+        const RenderConfig& render);
+
+    /**
+     * @brief Check the config, register the buffer, render it and start the reflow.
+     * @param buffer Buffer to play into.
+     * @param frames Frames to play.
+     * @param reflow Reflow description.
+     * @param render Render target.
+     * @return The reflow, kept by the proxy, or nullptr on failure with nothing registered.
+     */
+    std::shared_ptr<Kriya::SpatialReflow> build_reflow(
+        const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer,
+        const std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>>& frames,
+        const Kriya::ReflowConfig<Kakshya::SpatialData>& reflow,
         const RenderConfig& render);
 
     /**

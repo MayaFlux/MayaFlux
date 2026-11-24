@@ -109,7 +109,7 @@ file(GLOB TINYVDB_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.c
     ${CMAKE_SOURCE_DIR}/third_party/tinyvdb/*.cc
 )
-list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_gpu\\.c$")
+list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_gpu(_compute)?\\.c$")
 list(FILTER TINYVDB_SOURCES EXCLUDE REGEX "tinyvdb_io\\.cc$")
 
 add_library(tinyvdb STATIC ${TINYVDB_SOURCES})
@@ -122,6 +122,9 @@ set_target_properties(tinyvdb PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON
 )
 target_compile_definitions(tinyvdb PRIVATE TVDB_NO_MMAP)
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(tinyvdb PRIVATE $<$<COMPILE_LANGUAGE:C>:/experimental:c11atomics>)
+endif()
 target_include_directories(tinyvdb PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/third_party/tinyvdb>
     $<INSTALL_INTERFACE:include/MayaFlux/thirdparty/tinyvdb>

@@ -80,6 +80,8 @@ namespace Buffers {
     class InstanceNetworkBuffer;
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
+    class RecordedGeometryBuffer;
+    class VolumeGridBuffer;
 }
 
 namespace Kakshya {
@@ -151,4 +153,6 @@ namespace IO {
     B(NetworkGeometryBuffer, MayaFlux::Buffers::NetworkGeometryBuffer)     \
     B(NetworkTextureBuffer, MayaFlux::Buffers::NetworkTextureBuffer)       \
     B(InstanceNetworkBuffer, MayaFlux::Buffers::InstanceNetworkBuffer)     \
-    B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)
+    B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)           \
+    B(RecordedGeometryBuffer, MayaFlux::Buffers::RecordedGeometryBuffer)   \
+    B(VolumeGridBuffer, MayaFlux::Buffers::VolumeGridBuffer)

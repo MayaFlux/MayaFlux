@@ -65,8 +65,9 @@ Mantle::Mantle(const Kinesis::AABB3D& bounds,
     CrossingFn on_exit)
     : Expanse(bounds, std::move(on_enter), std::move(on_exit))
     , m_look { .buf = std::move(buf), .transform = std::make_shared<glm::mat4>(1.0F) }
-    , m_fit(fit)
 {
+    m_mantle.fit.observe(fit);
+
     if (!m_look.buf) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::Init,
             "Mantle needs a buffer");
@@ -78,25 +79,20 @@ Mantle::Mantle(const Kinesis::AABB3D& bounds,
             "Mantle fits tiling modes as STRETCH: tiling has no meaning for geometry");
     }
 
-    m_local = read_bounds(m_look.buf);
-    if (!m_local) {
+    const auto local = read_bounds(m_look.buf);
+    if (!local) {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
             "Mantle leaves the buffer where it is: no geometry could be read from it");
         return;
     }
 
+    m_mantle.local.observe(*local);
     refresh();
 }
 
 Mantle::~Mantle()
 {
     release_attachment(m_look);
-}
-
-void Mantle::set_bounds(const Kinesis::AABB3D& bounds)
-{
-    Expanse::set_bounds(bounds);
-    refresh();
 }
 
 void Mantle::refit()
@@ -106,8 +102,7 @@ void Mantle::refit()
     }
 
     if (const auto local = read_bounds(m_look.buf)) {
-        m_local = local;
-        refresh();
+        set(MantleControls { .local = *local });
     } else {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
             "Mantle::refit kept the previous geometry: no geometry could be read from the buffer");
@@ -116,18 +111,28 @@ void Mantle::refit()
 
 void Mantle::begin_evaluate()
 {
-    if (m_local) {
+    const bool moved = m_controls.bounds.pending<Kinesis::AABB3D>().has_value();
+    const bool refitted = m_mantle.local.pending<Kinesis::AABB3D>().has_value();
+    const bool refit_mode = m_mantle.fit.pending<Portal::Graphics::FitMode>().has_value();
+
+    if (moved || refitted || refit_mode) {
+        refresh();
+    } else if (m_mantle.local.has_value()) {
         place_attachment(m_look);
     }
 }
 
 void Mantle::refresh()
 {
-    if (!m_local || !bounds()) {
+    const auto local = quantity_value<Kinesis::AABB3D>(m_mantle.local);
+    const auto box = bounds();
+    if (!local || !box) {
         return;
     }
 
-    *m_look.transform = Kinesis::box_transform(*m_local, resolve(*m_local, *bounds(), m_fit));
+    const auto fit = quantity_value<Portal::Graphics::FitMode>(m_mantle.fit)
+                         .value_or(Portal::Graphics::FitMode::STRETCH);
+    *m_look.transform = Kinesis::box_transform(*local, resolve(*local, *box, fit));
     place_attachment(m_look);
 }
 

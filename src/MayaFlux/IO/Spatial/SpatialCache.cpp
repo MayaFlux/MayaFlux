@@ -27,14 +27,14 @@ namespace {
     using namespace Alembic::AbcGeom;
     using Portal::Graphics::PrimitiveTopology;
 
-    GeometryScope to_alembic_scope(SpatialScope scope)
+    GeometryScope to_alembic_scope(Kakshya::SpatialScope scope)
     {
         switch (scope) {
-        case SpatialScope::Constant:
+        case Kakshya::SpatialScope::Constant:
             return kConstantScope;
-        case SpatialScope::Uniform:
+        case Kakshya::SpatialScope::Uniform:
             return kUniformScope;
-        case SpatialScope::Varying:
+        case Kakshya::SpatialScope::Varying:
             return kVaryingScope;
         }
         return kConstantScope;
@@ -96,7 +96,7 @@ namespace {
     bool set_attribute(
         std::unordered_map<std::string, GeomParamVariant>& params,
         const OCompoundProperty& arb_params,
-        const SpatialAttribute& attr,
+        const Kakshya::SpatialAttribute& attr,
         size_t expected_count)
     {
         const auto scope = to_alembic_scope(attr.scope);
@@ -207,21 +207,21 @@ namespace {
         return false;
     }
 
-    size_t vertex_attribute_count(SpatialScope scope, size_t point_count)
+    size_t vertex_attribute_count(Kakshya::SpatialScope scope, size_t point_count)
     {
-        return scope == SpatialScope::Constant || scope == SpatialScope::Uniform
+        return scope == Kakshya::SpatialScope::Constant || scope == Kakshya::SpatialScope::Uniform
             ? 1
             : point_count;
     }
 
-    size_t curves_attribute_count(SpatialScope scope, size_t vertex_count, size_t curve_count)
+    size_t curves_attribute_count(Kakshya::SpatialScope scope, size_t vertex_count, size_t curve_count)
     {
         switch (scope) {
-        case SpatialScope::Constant:
+        case Kakshya::SpatialScope::Constant:
             return 1;
-        case SpatialScope::Uniform:
+        case Kakshya::SpatialScope::Uniform:
             return curve_count;
-        case SpatialScope::Varying:
+        case Kakshya::SpatialScope::Varying:
             return vertex_count;
         }
         return 1;
@@ -249,8 +249,22 @@ SpatialCache::SpatialCache()
 }
 
 SpatialCache::~SpatialCache() = default;
-SpatialCache::SpatialCache(SpatialCache&&) noexcept = default;
-SpatialCache& SpatialCache::operator=(SpatialCache&&) noexcept = default;
+SpatialCache::SpatialCache(SpatialCache&& other) noexcept
+    : m_impl(std::move(other.m_impl))
+    , m_last_error(std::move(other.m_last_error))
+{
+    other.m_impl = std::make_unique<Impl>();
+}
+
+SpatialCache& SpatialCache::operator=(SpatialCache&& other) noexcept
+{
+    if (this != &other) {
+        m_impl = std::move(other.m_impl);
+        m_last_error = std::move(other.m_last_error);
+        other.m_impl = std::make_unique<Impl>();
+    }
+    return *this;
+}
 
 bool SpatialCache::open(const std::string& filepath)
 {

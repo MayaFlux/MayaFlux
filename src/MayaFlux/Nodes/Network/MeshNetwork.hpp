@@ -3,6 +3,10 @@
 #include "MeshSlot.hpp"
 #include "NodeNetwork.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -44,7 +48,7 @@ namespace MayaFlux::Nodes::Network {
 class MAYAFLUX_API MeshNetwork : public NodeNetwork {
 public:
     MeshNetwork();
-    ~MeshNetwork() override = default;
+    ~MeshNetwork() override;
 
     // -------------------------------------------------------------------------
     // Slot management
@@ -53,7 +57,8 @@ public:
     /**
      * @brief Add a slot to the network.
      * @param name    Logical name for lookup and logging.
-     * @param node    MeshWriterNode carrying the slot's geometry.
+     * @param node    MeshWriterNode carrying the slot's geometry, or null for a
+     *                joint: a slot that only carries a transform for its children.
      * @param parent  Index of the parent slot, or nullopt for a root slot.
      * @return        Stable index of the new slot. Never changes after insertion.
      */
@@ -68,6 +73,13 @@ public:
      */
     [[nodiscard]] MeshSlot& get_slot(uint32_t index);
     [[nodiscard]] const MeshSlot& get_slot(uint32_t index) const;
+
+    /**
+     * @brief Set a slot's diffuse texture and hold it until replaced or the network ends.
+     * @param index Slot index as returned by add_slot().
+     * @param image Texture for the slot, or null to clear it.
+     */
+    void set_slot_texture(uint32_t index, std::shared_ptr<Core::VKImage> image);
 
     /**
      * @brief Find a slot by name.
@@ -104,6 +116,17 @@ public:
      * @return The merged mesh, or nullopt when no slot has geometry.
      */
     [[nodiscard]] std::optional<Kakshya::MeshData> get_mesh_data() const;
+
+    /**
+     * @brief Every slot's geometry merged into one MeshData, placed where the slots are.
+     *
+     * As get_mesh_data, but each slot's world transform is applied to its positions,
+     * normals and tangents. The transform is composed from the local transforms up the
+     * parent chain, so it is current whether or not the network has processed a block.
+     *
+     * @return The merged mesh, or nullopt when no slot has geometry.
+     */
+    [[nodiscard]] std::optional<Kakshya::MeshData> get_world_mesh_data() const;
 
     // -------------------------------------------------------------------------
     // NodeNetwork interface
@@ -169,6 +192,7 @@ public:
 
 private:
     std::vector<MeshSlot> m_slots;
+    std::map<uint32_t, std::shared_ptr<Core::VKImage>> m_held_textures;
 
     /// @brief Processing order: indices into m_slots, parents before children.
     std::vector<uint32_t> m_sorted_indices;
@@ -180,6 +204,81 @@ private:
 
     void rebuild_sort();
     void propagate_world_transforms();
+
+    [[nodiscard]] glm::mat4 composed_transform(const MeshSlot& slot) const;
+    [[nodiscard]] std::optional<Kakshya::MeshData> merged_mesh_data(bool placed) const;
 };
+
+/**
+ * @brief Build a MeshNetwork from a MeshAssembly: one slot for every row, in row order.
+ * @param assembly The assembly to read. Null gives nullptr.
+ * @return A network where slot i is row i. A slot has the row's name and parent, its local
+ *         transform is the row's local placement and its world transform the row's world
+ *         placement. A row that shows a mesh gets a node of its own holding a copy of that
+ *         mesh with its submeshes and polygon faces, so a mesh shared by several rows is
+ *         copied into each. A joint, and a row whose source is points or curves, gets no
+ *         node and only carries its transform. Nullptr for an assembly with no rows.
+ *
+ * Because slot i is row i, an assembly's motion plays on the network by writing one local
+ * matrix per slot (Kriya::slot_sink). The material is not applied: a MeshAssemblyMaterial
+ * holds a path, and loading and binding the texture is the caller's, with
+ * MeshNetwork::set_slot_texture.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<MeshNetwork> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly);
+
+/**
+ * @enum MeshPartPlacement
+ * @brief How a part of an assembly keeps the placement of its rows.
+ */
+enum class MeshPartPlacement : uint8_t {
+    /**
+     * Every row that shows a mesh is a root slot and is given its world placement, so the part
+     * needs nothing of the hierarchy, joints and rows shown elsewhere are not in it, and
+     * any subset of an assembly can be a part.
+     */
+    Flat,
+
+    /**
+     * The part keeps the parent chain. Every ancestor of a row it shows is in it as a joint, and
+     * each slot is given its local placement, so an operator that moves a slot moves its children.
+     */
+    Chained
+};
+
+/**
+ * @struct MeshNetworkPart
+ * @brief A network that shows some rows of an assembly, and which rows.
+ *
+ * rows[i] is the row slot i shows, in ascending row order, so a placement is written to a
+ * slot through this table. A chained part's rows include the joints it had to add.
+ */
+struct MeshNetworkPart {
+    std::shared_ptr<MeshNetwork> network;
+    std::vector<uint64_t> rows;
+
+    /** @brief The slot that shows a row, or nullopt when the part does not hold it. */
+    [[nodiscard]] std::optional<uint32_t> slot_of(uint64_t row) const
+    {
+        const auto it = std::ranges::lower_bound(rows, row);
+        return it != rows.end() && *it == row ? std::optional<uint32_t> { static_cast<uint32_t>(it - rows.begin()) } : std::nullopt;
+    }
+};
+
+/**
+ * @brief Build a network that shows some rows of an assembly.
+ * @param assembly The assembly. Null gives nullopt.
+ * @param rows The rows to show, in any order. A row that shows no mesh is not shown.
+ * @param placement Whether the part is flat or keeps the hierarchy.
+ * @return The part, or nullopt when a row is out of range or none of them shows a mesh.
+ *
+ * Each row's mesh is copied into the slot of its own, as make_mesh_network(assembly) does, with
+ * its submeshes and polygon faces. The material is not applied. A flat part starts at the rows'
+ * rest world placement and a chained one at their rest local placement.
+ */
+[[nodiscard]] MAYAFLUX_API std::optional<MeshNetworkPart> make_mesh_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    std::span<const uint64_t> rows,
+    MeshPartPlacement placement = MeshPartPlacement::Flat);
 
 } // namespace MayaFlux::Nodes::Network

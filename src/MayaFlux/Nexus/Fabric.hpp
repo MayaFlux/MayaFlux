@@ -55,7 +55,18 @@ public:
      *                      entity unregisters them from it.
      * @param cell_size     Grid cell edge length for the spatial index.
      */
-    explicit Fabric(
+    Fabric(
+        std::shared_ptr<Vruta::TaskScheduler> scheduler,
+        std::shared_ptr<Vruta::EventManager> event_manager,
+        std::shared_ptr<Buffers::BufferManager> buffer_manager,
+        float cell_size = 1.0F);
+
+    /**
+     * @brief Construct from references the caller keeps alive for the Fabric's life.
+     * @deprecated Pass shared_ptrs; this overload is removed next release.
+     */
+    [[deprecated("pass shared_ptr scheduler, event manager and buffer manager")]]
+    Fabric(
         Vruta::TaskScheduler& scheduler,
         Vruta::EventManager& event_manager,
         Buffers::BufferManager& buffer_manager,
@@ -156,6 +167,62 @@ public:
     void remove_expanse(uint32_t id);
 
     // =========================================================================
+    // Population controls
+    // =========================================================================
+
+    /**
+     * @brief Apply one controls struct to every entity of this Fabric.
+     * @tparam C EmitterControls, SensorControls, AgentControls, PresenceControls, LocusControls
+     *         or any struct an entity holds through extend().
+     *
+     * An entity that does not hold C is left alone, so `set_all(PresenceControls { ... })`
+     * reaches only the Presences. Members of @p incoming that are empty are untouched, as
+     * for the entity's own set().
+     */
+    template <typename C>
+    void set_all(const C& incoming)
+    {
+        for (auto& [id, reg] : m_registrations) {
+            std::visit([&incoming](const auto& ptr) { ptr->set(incoming); }, reg.member);
+        }
+    }
+
+    /**
+     * @brief Give each entity its own value of a controls struct.
+     * @tparam C Controls struct, as for set_all().
+     * @param make Called with each entity id, returns the struct that entity takes, or
+     *             nullopt to leave it alone.
+     */
+    template <typename C, typename Make>
+    void set_each(const Make& make)
+    {
+        for (auto& [id, reg] : m_registrations) {
+            if (const std::optional<C> incoming = make(id)) {
+                std::visit([&incoming](const auto& ptr) { ptr->set(*incoming); }, reg.member);
+            }
+        }
+    }
+
+    /**
+     * @brief Apply one controls struct to the entities inside an Expanse.
+     * @tparam C Controls struct, as for set_all().
+     * @param expanse Region whose occupants, as of the last commit, take @p incoming.
+     */
+    template <typename C>
+    void set_within(const Expanse& expanse, const C& incoming)
+    {
+        const auto* inside = expanse.occupants(m_fabric_id);
+        if (!inside) {
+            return;
+        }
+        for (const uint32_t id : *inside) {
+            if (const auto it = m_registrations.find(id); it != m_registrations.end()) {
+                std::visit([&incoming](const auto& ptr) { ptr->set(incoming); }, it->second.member);
+            }
+        }
+    }
+
+    // =========================================================================
     // Commit
     // =========================================================================
 
@@ -170,9 +237,14 @@ public:
 
     /**
      * @brief Fire a single object against the current snapshot without republishing.
-     * @param id Id assigned at registration.
+     * @param id     Id assigned at registration.
+     * @param cursor Cursor position the firing carries into the influence context. It
+     *               belongs to this call alone, so firings from different threads never
+     *               see each other's cursor.
+     * @param input  Window event that caused the firing, passed to the influence context
+     *               for the duration of the call.
      */
-    void fire(uint32_t id);
+    void fire(uint32_t id, std::optional<glm::vec2> cursor = std::nullopt, const Core::WindowEvent* input = nullptr);
 
     // =========================================================================
     // Spatial queries
@@ -327,24 +399,23 @@ private:
     struct Registration {
         Member member;
         std::string task_name;
-        std::string event_name;
+        std::vector<std::string> event_names;
         std::string chain_name;
         bool commit_driven { false };
         std::optional<uint32_t> spatial_id;
         std::optional<Wiring> wiring;
-        std::optional<glm::vec2> pending_cursor;
     };
 
     uint32_t assign_id(Member& m);
-    void fire(const Registration& reg) const;
+    void fire(const Registration& reg, std::optional<glm::vec2> cursor, const Core::WindowEvent* input) const;
     void track(uint32_t id, Registration& reg, const glm::vec3& position);
     void untrack(Registration& reg);
     void release(Registration& reg);
     void translate(std::vector<Kinesis::QueryResult>& results) const;
 
-    Vruta::TaskScheduler& m_scheduler;
-    Vruta::EventManager& m_event_manager;
-    Buffers::BufferManager& m_buffers;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
+    std::shared_ptr<Vruta::EventManager> m_event_manager;
+    std::shared_ptr<Buffers::BufferManager> m_buffers;
 
     std::unique_ptr<Kinesis::SpatialIndex3D> m_index;
     std::map<uint32_t, Registration> m_registrations;

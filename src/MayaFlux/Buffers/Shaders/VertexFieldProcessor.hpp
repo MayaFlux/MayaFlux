@@ -8,7 +8,7 @@
 
 namespace MayaFlux::Buffers {
 
-class NetworkGeometryBuffer;
+class StateFieldBuffer;
 
 /**
  * @class VertexFieldProcessor
@@ -75,9 +75,9 @@ class NetworkGeometryBuffer;
  * Cluster-scoped bindings (GpuFieldOperator::bind's cluster argument) need a
  * per-vertex cluster id at dispatch time. When the operator reports
  * needs_cluster_id(), on_attach resolves the target buffer as a
- * NetworkGeometryBuffer and calls its ensure_cluster_ids(), which declares
- * and populates hash_cluster_id from whatever the network's own primary
- * GraphicsOperator reports (all zero unless that operator overrides
+ * StateFieldBuffer and calls its ensure_cluster_ids(). A NetworkGeometryBuffer
+ * declares and populates hash_cluster_id from whatever the network's own
+ * primary GraphicsOperator reports (all zero unless that operator overrides
  * GraphicsOperator::build_cluster_ids(), which today only PhysicsOperator
  * does) if nothing else -- NetworkGeometryBuffer's own hash wiring, most
  * commonly -- has already done so. This is not particle-specific: a
@@ -192,7 +192,7 @@ private:
 
     std::chrono::steady_clock::time_point m_epoch { std::chrono::steady_clock::now() };
 
-    std::shared_ptr<NetworkGeometryBuffer> m_network_buffer;
+    std::shared_ptr<StateFieldBuffer> m_network_buffer;
     bool m_needs_cluster_id {};
 
     /**
@@ -215,13 +215,13 @@ private:
      * @brief Ensure the backing hash_cluster_id state field exists, when
      *        m_needs_cluster_id is true.
      * @return False when cluster scoping is needed but the attached buffer
-     *         is not a NetworkGeometryBuffer, or NetworkGeometryBuffer::
-     *         ensure_cluster_ids() itself fails (no primary GraphicsOperator,
+     *         is not a StateFieldBuffer, or its ensure_cluster_ids() itself
+     *         fails (for a NetworkGeometryBuffer: no primary GraphicsOperator,
      *         or it reports zero points). True when m_needs_cluster_id is
      *         false: nothing to do.
      *
      * Delegates the actual declare/derive/upload to
-     * NetworkGeometryBuffer::ensure_cluster_ids(), which is itself
+     * StateFieldBuffer::ensure_cluster_ids(), which is itself
      * has_state-guarded, so calling this again after a revision rebuild is
      * cheap and whichever caller (this processor, or NetworkGeometryBuffer's
      * own hash wiring) reaches it first does the real work.

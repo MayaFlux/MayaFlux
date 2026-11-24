@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
@@ -17,9 +18,14 @@ namespace MayaFlux::Nexus {
  * @brief Object that both perceives nearby entities and acts on MayaFlux objects.
  *
  * Constructed with a query radius and, optionally, a perception function and an
- * influence function. Position is optional: call @c set_position before registering with
- * @c Fabric if spatial behaviour is required. Without a position the spatial
- * index is not consulted and @c spatial_results will be empty on each commit.
+ * influence function. Position is optional: set one with `set({ .position = ... })`
+ * before registering with @c Fabric if spatial behaviour is required. Without a
+ * position the spatial index is not consulted and @c spatial_results will be empty
+ * on each commit.
+ *
+ * Its state is a struct of Quantity members, AgentControls, applied with `set()`
+ * from any thread. A member given `Quantity::unset()` is emptied. `extend<C>()`
+ * adds a struct of the user's own beside it, as Presence and Locus do for theirs.
  *
  * On each commit the perception function is invoked first, then the influence
  * function. Both receive contexts populated from the same spatial snapshot.
@@ -35,6 +41,7 @@ namespace MayaFlux::Nexus {
  */
 class MAYAFLUX_API Agent {
 public:
+    using Controls = AgentControls;
     using InfluenceFn = std::function<void(const InfluenceContext&)>;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
 
@@ -45,8 +52,8 @@ public:
      *                     Ignored if no position has been set.
      */
     explicit Agent(float query_radius = 1.0F)
-        : m_query_radius(query_radius)
     {
+        m_controls.query_radius.observe(query_radius);
     }
 
     /**
@@ -57,10 +64,10 @@ public:
      * @param influence    Called second on every commit.
      */
     explicit Agent(float query_radius, PerceptionFn perception, InfluenceFn influence)
-        : m_query_radius(query_radius)
-        , m_perception_fn(std::move(perception))
+        : m_perception_fn(std::move(perception))
         , m_influence_fn(std::move(influence))
     {
+        m_controls.query_radius.observe(query_radius);
     }
 
     /**
@@ -74,12 +81,12 @@ public:
     Agent(float query_radius,
         std::string perception_fn_name, PerceptionFn perception,
         std::string influence_fn_name, InfluenceFn influence)
-        : m_query_radius(query_radius)
-        , m_perception_fn_name(std::move(perception_fn_name))
+        : m_perception_fn_name(std::move(perception_fn_name))
         , m_perception_fn(std::move(perception))
         , m_influence_fn_name(std::move(influence_fn_name))
         , m_influence_fn(std::move(influence))
     {
+        m_controls.query_radius.observe(query_radius);
     }
 
     /** @brief Releases the attached buffer's placement. Sinks are released by the owning Fabric. */
@@ -103,41 +110,102 @@ public:
     /** @brief The influence function itself. */
     [[nodiscard]] const InfluenceFn& influence_fn() const { return m_influence_fn; }
 
+    // =========================================================================
+    // Controls
+    // =========================================================================
+
+    /**
+     * @brief Apply the members of @p incoming that hold a value.
+     * @tparam C AgentControls, or the struct of a derived class or one added with extend().
+     *
+     * Members left empty are untouched, and `Quantity::unset()` empties a member.
+     * Safe from any thread.
+     */
+    template <typename C = AgentControls>
+    void set(const C& incoming)
+    {
+        m_store.merge(incoming);
+    }
+
+    /** @brief A copy of the controls of type C as they are now. */
+    template <typename C = AgentControls>
+    [[nodiscard]] C get() const
+    {
+        return m_store.snapshot<C>();
+    }
+
+    /** @brief Add a struct of the user's own controls beside AgentControls and return it. */
+    template <typename C>
+    [[nodiscard]] C& extend()
+    {
+        return m_store.extend<C>();
+    }
+
+    /** @brief The live controls, read without a copy. */
+    [[nodiscard]] const AgentControls& controls() const noexcept { return m_controls; }
+
+    /** @brief Every control by name, for tools that list or set them. */
+    [[nodiscard]] const QuantityStore& store() const noexcept { return m_store; }
+
     /**
      * @brief Return the current position, if set.
      */
-    [[nodiscard]] const std::optional<glm::vec3>& position() const { return m_position; }
+    [[nodiscard]] std::optional<glm::vec3> position() const
+    {
+        return quantity_value<glm::vec3>(m_controls.position);
+    }
 
     /**
      * @brief Set the position, enabling spatial indexing and queries for this object.
      * @param p World-space coordinates.
      */
-    void set_position(const glm::vec3& p) { m_position = p; }
+    [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
+    {
+        m_controls.position.assign(Quantity(p));
+    }
 
     /**
      * @brief Clear the position, removing this object from spatial operations.
      */
-    void clear_position() { m_position.reset(); }
+    [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
+    {
+        m_controls.position.assign(Quantity::unset());
+    }
 
     /** @brief Set the orientation. Local +Z is forward. Unset means no rotation. */
-    void set_orientation(const glm::quat& q) { m_orientation = q; }
+    [[deprecated("use set({ .orientation = ... })")]] void set_orientation(const glm::quat& q)
+    {
+        m_controls.orientation.assign(Quantity(q));
+    }
 
     /** @brief Clear the orientation. */
-    void clear_orientation() { m_orientation.reset(); }
+    [[deprecated("use set({ .orientation = Quantity::unset() })")]] void clear_orientation()
+    {
+        m_controls.orientation.assign(Quantity::unset());
+    }
 
     /** @brief Get the current orientation, if set. */
-    [[nodiscard]] const std::optional<glm::quat>& orientation() const { return m_orientation; }
+    [[nodiscard]] std::optional<glm::quat> orientation() const
+    {
+        return quantity_value<glm::quat>(m_controls.orientation);
+    }
 
     /**
      * @brief Return the query radius.
      */
-    [[nodiscard]] float query_radius() const { return m_query_radius; }
+    [[nodiscard]] float query_radius() const
+    {
+        return quantity_value<float>(m_controls.query_radius).value_or(1.0F);
+    }
 
     /**
      * @brief Set the query radius.
      * @param r New radius in world-space units.
      */
-    void set_query_radius(float r) { m_query_radius = r; }
+    [[deprecated("use set({ .query_radius = ... })")]] void set_query_radius(float r)
+    {
+        m_controls.query_radius.assign(Quantity(r));
+    }
 
     /**
      * @brief Return the stable object id assigned by Fabric.
@@ -181,14 +249,14 @@ public:
      */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config)
     {
-        add_render_sink(m_render_sinks, mgr, config, {}, "", m_position);
+        add_render_sink(m_render_sinks, mgr, config, {}, "", position());
     }
 
     /** @brief Register a render output targeting @p window with a producer function. */
     void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
         std::string fn_name, RenderFn fn)
     {
-        add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), m_position);
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), position());
     }
 
     /** @brief Unregister every audio and render sink. */
@@ -333,34 +401,64 @@ public:
     }
 
     /** @brief Set the intensity, a general-purpose parameter for influence functions. */
-    void set_intensity(float i) { m_intensity = i; }
+    [[deprecated("use set({ .intensity = ... })")]] void set_intensity(float i)
+    {
+        m_controls.intensity.assign(Quantity(i));
+    }
 
     /** @brief Get the current intensity. */
-    [[nodiscard]] float intensity() const { return m_intensity; }
+    [[nodiscard]] float intensity() const
+    {
+        return quantity_value<float>(m_controls.intensity).value_or(1.0F);
+    }
 
     /** @brief Set the radius, a general-purpose parameter for influence functions. */
-    void set_radius(float r) { m_radius = r; }
+    [[deprecated("use set({ .radius = ... })")]] void set_radius(float r)
+    {
+        m_controls.radius.assign(Quantity(r));
+    }
 
     /** @brief Get the current radius. */
-    [[nodiscard]] float radius() const { return m_radius; }
+    [[nodiscard]] float radius() const
+    {
+        return quantity_value<float>(m_controls.radius).value_or(1.0F);
+    }
 
     /** @brief Set the color, a general-purpose parameter for influence functions. */
-    void set_color(const glm::vec3& c) { m_color = c; }
+    [[deprecated("use set({ .color = ... })")]] void set_color(const glm::vec3& c)
+    {
+        m_controls.color.assign(Quantity(c));
+    }
 
     /** @brief Clear the color, resetting it to an unset state. */
-    void clear_color() { m_color.reset(); }
+    [[deprecated("use set({ .color = Quantity::unset() })")]] void clear_color()
+    {
+        m_controls.color.assign(Quantity::unset());
+    }
 
     /** @brief Get the current color, if set. */
-    [[nodiscard]] const std::optional<glm::vec3>& color() const { return m_color; }
+    [[nodiscard]] std::optional<glm::vec3> color() const
+    {
+        return quantity_value<glm::vec3>(m_controls.color);
+    }
 
     /** @brief Set the size, a general-purpose parameter for influence functions. */
-    void set_size(float s) { m_size = s; }
+    [[deprecated("use set({ .size = ... })")]] void set_size(float s)
+    {
+        m_controls.size.assign(Quantity(s));
+    }
 
     /** @brief Clear the size, resetting it to an unset state. */
-    void clear_size() { m_size.reset(); }
+    [[deprecated("use set({ .size = Quantity::unset() })")]] void clear_size()
+    {
+        m_controls.size.assign(Quantity::unset());
+    }
 
     /** @brief Get the current size, if set. */
-    [[nodiscard]] const std::optional<float>& size() const { return m_size; }
+    [[nodiscard]] std::optional<float> size() const
+    {
+        return quantity_value<float>(m_controls.size);
+    }
 
     /**
      * @brief Invoke the perception function with the supplied context.
@@ -395,14 +493,14 @@ public:
     }
 
 private:
-    std::optional<glm::vec3> m_position;
-    std::optional<glm::quat> m_orientation;
-    std::optional<glm::vec3> m_color;
-    std::optional<float> m_size;
-    float m_intensity { 1.0F };
-    float m_radius { 1.0F };
+    [[nodiscard]] static AgentControls& open(QuantityStore& store);
 
-    float m_query_radius;
+    QuantityStore m_store;
+
+protected:
+    AgentControls& m_controls { open(m_store) };
+
+private:
     std::string m_perception_fn_name;
     PerceptionFn m_perception_fn;
     std::string m_influence_fn_name;

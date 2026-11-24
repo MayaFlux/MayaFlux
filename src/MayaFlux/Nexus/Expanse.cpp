@@ -10,6 +10,11 @@ uint32_t Expanse::allocate_id()
     return next.fetch_add(1, std::memory_order_relaxed);
 }
 
+ExpanseControls& Expanse::open(QuantityStore& store)
+{
+    return store.declare<ExpanseControls>();
+}
+
 void Expanse::evict(uint32_t fabric_id)
 {
     const auto it = m_occupants_by_fabric.find(fabric_id);

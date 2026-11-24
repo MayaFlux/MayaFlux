@@ -17,12 +17,14 @@ namespace MayaFlux::Nexus {
  * Writes what the classes hold, in the order they are registered by id:
  * Emitters, Sensors, Agents (including Locus and Presence), their wiring and
  * sinks, and the Expanses of each Fabric (including Hull and Mantle). Output:
- *   {base}.exr   RGBA32F, one column per entity, rows described in Schema.hpp.
- *   {base}.json  Per-entity records and per-channel ranges for denormalization.
+ *   {base}.exr   RGBA32F, one column per entity, a value per numeric component of
+ *                the controls the entities hold, laid out as FabricSchema::components says.
+ *   {base}.json  Per-entity records, which hold each control by name, and the
+ *                component ranges the EXR was normalized by.
  *
- * An entity without a position is written with its position absent. Optional
- * fields (position, orientation, color, size) are omitted from the schema when
- * unset. A callable that exists but has no name emits a warning. Live objects
+ * An entity's state is its controls: every slot of its store that holds a value
+ * is written, and an empty one is left out. A callable that exists but has no
+ * name emits a warning. Live objects
  * (buffers, windows, typed influences and perceptions, attachments, callables
  * themselves) are never encoded, only their names and plain configuration.
  */

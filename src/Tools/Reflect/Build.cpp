@@ -91,16 +91,29 @@ bool write_depfile(const std::filesystem::path& path, const std::string& target,
 
 bool write_generated(const std::filesystem::path& path, const std::string& content, std::string& error)
 {
-    if (!write_if_changed(path, content, error)) {
-        return false;
+#ifdef _WIN32
+    if (auto have = read_text(path)) {
+        const bool crlf = have->find("\r\n") != std::string::npos;
+        for (auto at = have->find("\r\n"); at != std::string::npos; at = have->find("\r\n", at + 1)) {
+            have->erase(at, 1);
+        }
+        if (*have == content) {
+            return true;
+        }
+        if (crlf) {
+            std::string output;
+            output.reserve(content.size());
+            for (std::size_t i = 0; i < content.size(); ++i) {
+                if (content[i] == '\n' && (i == 0 || content[i - 1] != '\r')) {
+                    output += '\r';
+                }
+                output += content[i];
+            }
+            return write_if_changed(path, output, error);
+        }
     }
-    std::error_code code;
-    std::filesystem::last_write_time(path, std::filesystem::file_time_type::clock::now(), code);
-    if (code) {
-        error = "cannot update the timestamp of " + path.string();
-        return false;
-    }
-    return true;
+#endif
+    return write_if_changed(path, content, error);
 }
 
 std::vector<std::filesystem::path> without_sidecars(std::vector<std::filesystem::path> dependencies)

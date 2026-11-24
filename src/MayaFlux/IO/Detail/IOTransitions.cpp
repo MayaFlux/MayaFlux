@@ -28,6 +28,7 @@
 #include "MayaFlux/IO/Spatial/SpatialTransfer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::IO::Detail {
 
@@ -87,12 +88,34 @@ void configure_camera_container(
     container->mark_ready_for_processing(true);
 }
 
+namespace {
+
+    struct ResolvedTextures {
+        std::unordered_map<std::string, std::shared_ptr<Core::VKImage>> images;
+
+        ~ResolvedTextures()
+        {
+            auto& loom = Portal::Graphics::get_texture_manager();
+            for (const auto& [path, image] : images) {
+                loom.release_image(image);
+            }
+        }
+    };
+
+}
+
 TextureResolver make_default_resolver(const std::string& filepath)
 {
     const auto base_dir = std::filesystem::path(filepath).parent_path();
-    return [base_dir](const std::string& raw) -> std::shared_ptr<Core::VKImage> {
+    return [base_dir, resolved = std::make_shared<ResolvedTextures>()](const std::string& raw) -> std::shared_ptr<Core::VKImage> {
         auto tex_path = FileReader::resolve_path((base_dir / raw).generic_string());
-        return IO::ImageReader::load_texture(tex_path);
+        const auto found = resolved->images.find(tex_path);
+        if (found != resolved->images.end()) {
+            return found->second;
+        }
+        auto image = IO::ImageReader::load_texture(tex_path);
+        resolved->images.emplace(std::move(tex_path), image);
+        return image;
     };
 }
 
@@ -132,16 +155,7 @@ std::shared_ptr<Buffers::VolumeGridBuffer> create_volume_grid_buffer(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,
     const Kakshya::VolumeData& volume_data)
 {
-    std::vector<Buffers::VolumeGridBuffer::FieldDecl> decls;
-    decls.reserve(volume_data.fields.size());
-    for (const auto& field : volume_data.fields) {
-        decls.push_back({
-            .name = field.name,
-            .stride_bytes = field.is_vector() ? sizeof(glm::vec4) : sizeof(float),
-            .double_buffered = true,
-            .semantics = field.semantics,
-        });
-    }
+    const auto decls = IO::volume_field_decls(volume_data);
 
     auto buffer = buffer_manager->create_graphics_buffer<Buffers::VolumeGridBuffer>(
         Buffers::ProcessingToken::GRAPHICS_BACKEND,

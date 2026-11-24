@@ -6,7 +6,7 @@
 #include "MayaFlux/Buffers/Geometry/GeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
-#include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/NodeTextureBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
@@ -94,7 +94,7 @@ void DataReadProcessor::read_field(std::string name)
             return submit_read(pending, self.m_staging, bytes, 0, false, true);
         }
 
-        if (const auto network = std::dynamic_pointer_cast<NetworkGeometryBuffer>(vk);
+        if (const auto network = std::dynamic_pointer_cast<StateFieldBuffer>(vk);
             network && network->has_state(name)) {
             const size_t bytes = network->get_state_bytes(name);
             pending.handle = gpu_buffer_handle(network->read_state_slot(name), bytes);

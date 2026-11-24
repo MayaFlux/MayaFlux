@@ -585,3 +585,31 @@ std::shared_ptr<Buffers::NetworkAudioBuffer> Creator::NetworkAudioBuffer(uint32_
     MF_LIVE_EXPOSE_NAMED("NetworkAudioBuffer", obj);
     return obj;
 }
+
+std::shared_ptr<Buffers::RecordedGeometryBuffer> Creator::RecordedGeometryBuffer(uint32_t capacity, Portal::Graphics::PrimitiveTopology topology, Kinesis::SamplerBounds bounds, std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op, Kakshya::VertexAccessConfig access)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::RecordedGeometryBuffer>(std::forward<decltype(capacity)>(capacity), std::forward<decltype(topology)>(topology), std::forward<decltype(bounds)>(bounds), std::forward<decltype(field_op)>(field_op), std::forward<decltype(access)>(access));
+    MF_LIVE_EXPOSE_NAMED("RecordedGeometryBuffer", obj);
+    return obj;
+}
+
+std::shared_ptr<Buffers::VolumeGridBuffer> Creator::VolumeGridBuffer(Kinesis::Lattice3D lattice, std::initializer_list<Buffers::VolumeGridBuffer::FieldDecl> fields, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::VolumeGridBuffer>(std::forward<decltype(lattice)>(lattice), std::forward<decltype(fields)>(fields), std::forward<decltype(surface)>(surface));
+    MF_LIVE_EXPOSE_NAMED("VolumeGridBuffer", obj);
+    return obj;
+}
+
+std::shared_ptr<Buffers::VolumeGridBuffer> Creator::VolumeGridBuffer(Kinesis::Lattice3D lattice, std::vector<Buffers::VolumeGridBuffer::FieldDecl> fields, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::VolumeGridBuffer>(std::forward<decltype(lattice)>(lattice), std::forward<decltype(fields)>(fields), std::forward<decltype(surface)>(surface));
+    MF_LIVE_EXPOSE_NAMED("VolumeGridBuffer", obj);
+    return obj;
+}
+
+std::shared_ptr<Buffers::VolumeGridBuffer> Creator::VolumeGridBuffer(Kinesis::Lattice3D lattice, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::VolumeGridBuffer>(std::forward<decltype(lattice)>(lattice), std::forward<decltype(surface)>(surface));
+    MF_LIVE_EXPOSE_NAMED("VolumeGridBuffer", obj);
+    return obj;
+}

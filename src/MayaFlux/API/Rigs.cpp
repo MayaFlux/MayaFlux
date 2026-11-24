@@ -6,9 +6,18 @@
 #include "MayaFlux/API/Graph.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Textures/TextureArrayBuffer.hpp"
 #include "MayaFlux/IO/IOManager.hpp"
+#include "MayaFlux/IO/Spatial/SpatialSequence.hpp"
+#include "MayaFlux/IO/Volume/VolumeTransfer.hpp"
+#include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
+#include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Kriya/Chimera.hpp"
+#include "MayaFlux/Kriya/Realization/MeshAssemblyRealization.hpp"
+#include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 #include "MayaFlux/Kriya/SamplingPipeline.hpp"
 #include "MayaFlux/Kriya/TapSet.hpp"
 #include "MayaFlux/Yantra/Workflows/Vision/VisionWorkflow.hpp"
@@ -286,10 +295,76 @@ std::shared_ptr<Kriya::BufferPipeline> record_into(
         std::max<uint64_t>(1, static_cast<uint64_t>(std::ceil(blocks))), monitor, channel);
 }
 
+Kriya::VolumeReflowBuilder create_volume_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::VolumeData>> source,
+    const std::shared_ptr<Buffers::VolumeGridBuffer>& volume)
+{
+    return Kriya::VolumeReflowBuilder(
+        std::move(source), volume ? Kriya::volume_sink(volume) : Kriya::VolumeReflow::Sink {}, 0.0, get_scheduler());
+}
+
+Kriya::SpatialReflowBuilder create_spatial_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::SpatialData>> source,
+    const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer)
+{
+    return Kriya::SpatialReflowBuilder(
+        std::move(source), buffer ? Kriya::spatial_sink(buffer) : Kriya::SpatialReflow::Sink {}, 0.0, get_scheduler());
+}
+
+Kriya::MeshReflowBuilder create_mesh_reflow(
+    std::shared_ptr<const Kakshya::FrameSource<Kakshya::MeshData>> source,
+    const std::shared_ptr<Buffers::MeshBuffer>& buffer)
+{
+    return Kriya::MeshReflowBuilder(
+        std::move(source), buffer ? Kriya::mesh_sink(buffer) : Kriya::MeshReflow::Sink {}, 0.0, get_scheduler());
+}
+
 std::shared_ptr<Yantra::Vision::VisionWorkflow> create_vision_workflow()
 {
     return std::make_shared<Yantra::Vision::VisionWorkflow>(
         get_scheduler(), get_event_manager(), get_io_manager(), get_buffer_manager());
+}
+
+size_t present_realization(
+    const std::shared_ptr<Kriya::MeshAssemblyRealization>& realization,
+    const std::function<Portal::Graphics::RenderConfig(const Kriya::MeshAssemblyRealizedPart&, size_t)>& config)
+{
+    if (!realization || !config) {
+        return 0;
+    }
+
+    auto buffers = get_buffer_manager();
+    constexpr auto token = Buffers::ProcessingToken::GRAPHICS_BACKEND;
+    size_t shown = 0;
+
+    for (const auto& part : realization->parts()) {
+        if (part.network) {
+            register_node_network(part.network, Nodes::ProcessingToken::VISUAL_RATE);
+        }
+        if (part.instances) {
+            register_node_network(part.instances, Nodes::ProcessingToken::VISUAL_RATE);
+        }
+        if (part.network_buffer) {
+            buffers->add_buffer(part.network_buffer, token);
+            part.network_buffer->setup_rendering(config(part, 0));
+            ++shown;
+        }
+        if (part.instance_buffer) {
+            buffers->add_buffer(part.instance_buffer, token);
+            part.instance_buffer->setup_rendering(config(part, 0));
+            ++shown;
+        }
+        for (size_t i = 0; i < part.spatial_buffers.size(); ++i) {
+            if (const auto& buffer = part.spatial_buffers[i]) {
+                buffers->add_buffer(buffer, token);
+                buffer->setup_rendering(config(part, i));
+                ++shown;
+            }
+        }
+    }
+
+    realization->show_rest();
+    return shown;
 }
 
 } // namespace MayaFlux

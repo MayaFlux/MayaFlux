@@ -254,6 +254,11 @@ void TextureArrayBuffer::write_layer_value(size_t index, const glm::vec4& values
         &values, sizeof(glm::vec4));
 }
 
+TextureArrayBuffer::~TextureArrayBuffer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_blank_image);
+}
+
 void TextureArrayBuffer::bind_layer_data()
 {
     if (const auto processor = get_render_processor(); processor && m_layer_data) {
@@ -369,7 +374,8 @@ void TextureArrayBuffer::ensure_array()
         return;
     }
 
-    set_gpu_texture(std::move(image));
+    set_gpu_texture(image);
+    loom.release_image(image);
 }
 
 void TextureArrayBuffer::ensure_weights()

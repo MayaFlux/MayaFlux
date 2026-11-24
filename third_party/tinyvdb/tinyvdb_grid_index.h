@@ -5,9 +5,8 @@
 // point voxelization). Pure-C, operates on flat int32 coord triples and float
 // world points.
 //
-// NOTE: the hash-backed queries (coords_in_set / points_in_set / ijk_to_index /
-// voxelize) pack each axis into 21 biased bits, so coordinates must lie in
-// [-2^20, 2^20-1]. The same range applies to morton_encode/decode.
+// Hash-backed queries compare full int32 triples and resolve duplicates to the
+// first occurrence. Morton encoding alone is limited to 21 bits per axis.
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -20,6 +19,7 @@ extern "C" {
 // Batch world->voxel ijk (the cell containing each point):
 //   ijk = floor((world - origin) / voxel_size), per axis.
 // `points` is `n` xyz triples; `out_ijk` is `n` int32 triples.
+// Invalid or unrepresentable components are written as zero.
 void tvdb_world_to_ijk(const float* points, size_t n,
                        const float voxel_size[3], const float origin[3],
                        int32_t* out_ijk);
@@ -47,6 +47,7 @@ bool tvdb_coords_in_set(const int32_t* active, size_t na,
                         const int32_t* query, size_t nq, uint8_t* out);
 
 // For each world point, 1 if its voxel (floor) is in the active set.
+// Invalid/nonfinite frames or unrepresentable points return false without writing output.
 bool tvdb_points_in_set(const float* points, size_t np,
                         const float voxel_size[3], const float origin[3],
                         const int32_t* active, size_t na, uint8_t* out);
@@ -57,7 +58,8 @@ bool tvdb_ijk_to_index(const int32_t* active, size_t na,
                        const int32_t* query, size_t nq, int64_t* out);
 
 // For each active voxel, the number of its neighbors that are also active.
-// `connectivity` is 6 (face) or 26 (face+edge+vertex). Returns false on OOM.
+// `connectivity` is 6 (face) or 26 (face+edge+vertex). Returns false on invalid input or OOM.
+// Neighbors outside int32 coordinates are missing.
 bool tvdb_neighbor_counts(const int32_t* active, size_t na,
                           int connectivity, int32_t* out_counts);
 

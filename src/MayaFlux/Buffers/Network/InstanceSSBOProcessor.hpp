@@ -12,6 +12,22 @@ namespace MayaFlux::Buffers {
 class InstaneceNetworkBuffer;
 
 /**
+ * @struct InstancePayload
+ * @brief One instance's payload as the shaders read it: a std430 struct of 32 bytes.
+ *
+ * Mirrors GeometrySlot::tint, scalar and texture. The padding keeps the struct at the
+ * 16 byte alignment a vec3 member gives it in std430.
+ */
+struct InstancePayload {
+    glm::vec3 tint { 1.0F };
+    float scalar { 1.0F };
+    uint32_t texture {};
+    std::array<uint32_t, 3> padding {};
+};
+
+static_assert(sizeof(InstancePayload) == 32);
+
+/**
  * @class InstanceSSBOProcessor
  * @brief Uploads template geometry once and packs per-slot mat4 transforms
  *        into an SSBO each frame for a single instanced draw call.
@@ -22,14 +38,15 @@ class InstaneceNetworkBuffer;
  * carry distinct nodes the vertex buffer holds slot 0's geometry only;
  * callers are responsible for ensuring node topology is consistent across slots.
  *
- * Per-instance SSBO is written every cycle that any slot is dirty.
+ * Per-instance SSBOs are written every cycle that any slot is dirty.
  * RenderProcessor instance_count is set to network->slot_count() after
- * each SSBO write.
+ * each write.
  *
  * SSBO layout (one entry per slot, tightly packed):
  *   binding k_transform_ssbo_binding - mat4 transform[slot_count]
+ *   binding k_payload_ssbo_binding   - InstancePayload payload[slot_count]
  *
- * The shader reads gl_InstanceIndex to index into the transform array.
+ * The shader reads gl_InstanceIndex to index into both arrays.
  */
 class MAYAFLUX_API InstanceSSBOProcessor : public VKBufferProcessor {
 public:
@@ -49,6 +66,16 @@ public:
         return m_transform_arena ? m_transform_arena->buffer() : nullptr;
     }
 
+    /**
+     * @brief Buffer holding the payload slots, which changes if the arena grows
+     *
+     * The live payload sits at the offset of the slot last pushed, as with the transforms.
+     */
+    [[nodiscard]] std::shared_ptr<VKBuffer> get_payload_ssbo() const
+    {
+        return m_payload_arena ? m_payload_arena->buffer() : nullptr;
+    }
+
 protected:
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
     void on_detach(const std::shared_ptr<Buffer>& buffer) override;
@@ -60,6 +87,10 @@ private:
     std::shared_ptr<VKBuffer> m_vertex_staging;
     std::shared_ptr<Portal::Graphics::SlotArena> m_transform_arena;
     size_t m_transform_slot {};
+
+    std::shared_ptr<Portal::Graphics::SlotArena> m_payload_arena;
+    size_t m_payload_slot {};
+    std::vector<InstancePayload> m_payload_scratch;
     std::shared_ptr<VKBuffer> m_index_buffer;
     std::shared_ptr<VKBuffer> m_index_staging;
 
@@ -68,12 +99,14 @@ private:
     void upload_template(const std::shared_ptr<VKBuffer>& vertex_buf);
     void upload_indices(const std::shared_ptr<VKBuffer>& vertex_buf);
     void upload_transforms(const std::shared_ptr<VKBuffer>& vertex_buf);
+    void upload_payload();
     void push_ssbo_binding(const std::shared_ptr<VKBuffer>& vertex_buf);
 
     [[nodiscard]] bool any_slot_dirty() const;
     void clear_dirty_flags();
 
     static constexpr uint32_t k_transform_ssbo_binding = 1;
+    static constexpr uint32_t k_payload_ssbo_binding = 8;
 
     friend class InstanceNetworkBuffer;
 };

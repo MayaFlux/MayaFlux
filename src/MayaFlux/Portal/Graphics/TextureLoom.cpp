@@ -84,6 +84,7 @@ void TextureLoom::shutdown()
         }
     }
     m_textures.clear();
+    m_holders.clear();
     m_resource_manager = nullptr;
     m_backend = nullptr;
 
@@ -130,7 +131,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
         m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created 2D texture: {}x{}, format: {}, mips: {}",
         width, height, vk::to_string(vk_format), mip_levels);
@@ -163,7 +164,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d_uninitialized(
         return nullptr;
     }
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created 2D texture (uninitialized): {}x{}, format: {}, mips: {}",
         width, height, vk::to_string(vk_format), mip_levels);
@@ -202,7 +203,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_3d(
         m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created 3D texture: {}x{}x{}, format: {}",
         width, height, depth, vk::to_string(vk_format));
@@ -241,7 +242,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_cubemap(
         m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created cubemap: {}x{}, format: {}", size, size, vk::to_string(vk_format));
     return image;
@@ -287,7 +288,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d_array(
         m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created 2D array texture: {}x{} layers={} format={}",
         width, height, layers, vk::to_string(vk_format));
@@ -320,7 +321,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
 
     m_resource_manager->transition_image_layout(image, vk::ImageLayout::eColorAttachmentOptimal);
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created render target: {}x{}, format: {}",
         width, height, vk::to_string(vk_format));
@@ -356,7 +357,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_depth_buffer(
 
     m_resource_manager->transition_image_layout(image, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created depth buffer: {}x{}, format: {}, stencil: {}",
         width, height, vk::to_string(vk_format), with_stencil);
@@ -389,7 +390,7 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_storage_image(
 
     m_resource_manager->transition_image_layout(image, vk::ImageLayout::eGeneral);
 
-    m_textures.push_back(image);
+    track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
         "Created storage image: {}x{}, format: {}",
         width, height, vk::to_string(vk_format));
@@ -745,6 +746,53 @@ bool TextureLoom::blit_layer(
     };
 
     return m_resource_manager->blit_image(src, dst, region, to_blit_filter(blit.filter), mode);
+}
+
+//==============================================================================
+// Cleanup
+//==============================================================================
+
+void TextureLoom::clear_image_residency(const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!is_initialized() || !image)
+        return;
+
+    m_resource_manager->cleanup_image(image);
+    std::erase(m_textures, image);
+    m_holders.erase(image.get());
+}
+
+void TextureLoom::track(const std::shared_ptr<Core::VKImage>& image)
+{
+    m_textures.push_back(image);
+    m_holders[image.get()] = 1;
+}
+
+void TextureLoom::retain_image(const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!is_initialized() || !image) {
+        return;
+    }
+
+    if (const auto held = m_holders.find(image.get()); held != m_holders.end()) {
+        ++held->second;
+    }
+}
+
+void TextureLoom::release_image(const std::shared_ptr<Core::VKImage>& image)
+{
+    if (!is_initialized() || !image) {
+        return;
+    }
+
+    const auto held = m_holders.find(image.get());
+    if (held == m_holders.end()) {
+        return;
+    }
+
+    if (--held->second == 0) {
+        clear_image_residency(image);
+    }
 }
 
 //==============================================================================

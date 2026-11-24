@@ -13,6 +13,7 @@ class VulkanBackend;
 class VKShaderModule;
 class VKComputePipeline;
 class VKDescriptorManager;
+class VKImage;
 }
 
 namespace MayaFlux::Portal::Graphics {
@@ -150,6 +151,7 @@ private:
         vk::QueryPool timestamp_pool;
         std::unordered_map<std::string, uint32_t> timestamp_queries;
         std::vector<SlotLease> holds;
+        std::vector<std::shared_ptr<void>> image_holds;
     };
 
     struct FenceState {
@@ -583,6 +585,9 @@ public:
      * or when it is released without having been submitted.
      */
     void hold_until_complete(CommandBufferID cmd_id, SlotLease hold);
+
+    /** Keep a managed image allocation alive while this command can use it. */
+    void hold_image(CommandBufferID cmd_id, const std::shared_ptr<Core::VKImage>& image);
 
     //==========================================================================
     // Memory Barriers and Synchronization

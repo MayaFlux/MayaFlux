@@ -65,4 +65,73 @@ struct TextCodec<T> {
     }
 };
 
+namespace detail {
+
+    template <std::floating_point F>
+    void append_control_number(std::string& text, F value)
+    {
+        std::array<char, 32> buffer {};
+        const auto result = std::to_chars(buffer.data(), buffer.data() + buffer.size(), value);
+        if (!text.empty()) {
+            text += ' ';
+        }
+        text.append(buffer.data(), result.ptr);
+    }
+
+    template <typename Vector>
+    void append_control_vector(std::string& text, const Vector& vector)
+    {
+        for (glm::length_t i = 0; i < vector.length(); ++i) {
+            append_control_number(text, vector[i]);
+        }
+    }
+
+}
+
+/**
+ * @brief The text of a numeric control slot's value, which its TextCodec reads back.
+ *
+ * Whitespace separated numbers in the shortest form that reads back exactly: one
+ * for a number, a bool or an enum, two to four for a vector or a quaternion, six
+ * for a box (min then max). An empty slot gives an empty string. A width that no
+ * slot holds gives an empty string as well.
+ */
+template <NumericControlSlot T>
+[[nodiscard]] std::string control_text(const T& slot)
+{
+    struct Box {
+        glm::vec3 min;
+        glm::vec3 max;
+    };
+
+    std::string text;
+    if (!slot.has_value()) {
+        return text;
+    }
+
+    switch (slot.width()) {
+    case 1:
+        detail::append_control_number(text, slot.value());
+        break;
+    case 2:
+        detail::append_control_vector(text, slot.template value<glm::vec2>());
+        break;
+    case 3:
+        detail::append_control_vector(text, slot.template value<glm::vec3>());
+        break;
+    case 4:
+        detail::append_control_vector(text, slot.template value<glm::vec4>());
+        break;
+    case 6: {
+        const auto box = slot.template value<Box>();
+        detail::append_control_vector(text, box.min);
+        detail::append_control_vector(text, box.max);
+        break;
+    }
+    default:
+        break;
+    }
+    return text;
+}
+
 }

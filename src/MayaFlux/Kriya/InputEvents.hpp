@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux {
 namespace Core {
@@ -213,6 +214,29 @@ namespace Kriya {
     MAYAFLUX_API Vruta::Event window_resized(
         std::shared_ptr<Core::Window> window,
         std::function<void(uint32_t, uint32_t)> callback);
+
+    /**
+     * @brief Creates an Event coroutine that passes every window event matching a filter to a callback.
+     * @param window   Window to listen to; the coroutine keeps it alive.
+     * @param filter   Criteria, ANDed; an empty filter matches every event.
+     * @param callback Called with the whole event, on the thread that polls the window.
+     * @return Event coroutine that can be added to EventManager.
+     *
+     * For a consumer that needs the event's data, such as the cursor position or the
+     * modifiers. key_pressed and the other helpers pass only what their name says.
+     *
+     * @code
+     * Vruta::WindowEventFilter filter { Core::WindowEventType::MOUSE_MOTION };
+     * auto task = window_event(window, filter,
+     *     [](const Core::WindowEvent& event) {
+     *         // Read event.data
+     *     });
+     * @endcode
+     */
+    MAYAFLUX_API Vruta::Event window_event(
+        std::shared_ptr<Core::Window> window,
+        Vruta::WindowEventFilter filter,
+        std::function<void(const Core::WindowEvent&)> callback);
 
     /**
      * @brief Creates an Event coroutine that triggers on window close.

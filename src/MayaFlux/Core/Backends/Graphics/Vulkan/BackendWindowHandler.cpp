@@ -49,7 +49,7 @@ WindowRenderContext::~WindowRenderContext() = default;
 WindowRenderContext::WindowRenderContext(WindowRenderContext&&) noexcept = default;
 WindowRenderContext& WindowRenderContext::operator=(WindowRenderContext&&) noexcept = default;
 
-void WindowRenderContext::cleanup(VKContext& context)
+void WindowRenderContext::cleanup(VKContext& context, BackendResourceManager& resource_manager)
 {
     vk::Device device = context.get_device();
 
@@ -94,17 +94,8 @@ void WindowRenderContext::cleanup(VKContext& context)
     slot_point.clear();
     slot_submission.clear();
 
-    if (depth_image && depth_image->is_initialized()) {
-        const auto& res = depth_image->get_image_resources();
-        if (res.image_view) {
-            device.destroyImageView(res.image_view);
-        }
-        if (res.memory) {
-            device.freeMemory(res.memory);
-        }
-        if (res.image) {
-            device.destroyImage(res.image);
-        }
+    if (depth_image) {
+        resource_manager.cleanup_image(depth_image);
         depth_image.reset();
     }
 
@@ -559,17 +550,7 @@ bool BackendWindowHandler::recreate_swapchain_internal(WindowRenderContext& cont
     }
 
     if (context.depth_image) {
-        auto device = m_context.get_device();
-        const auto& res = context.depth_image->get_image_resources();
-        if (res.image_view) {
-            device.destroyImageView(res.image_view);
-        }
-        if (res.memory) {
-            device.freeMemory(res.memory);
-        }
-        if (res.image) {
-            device.destroyImage(res.image);
-        }
+        m_resource_manager->cleanup_image(context.depth_image);
         context.depth_image.reset();
     }
 
@@ -590,8 +571,6 @@ void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
         return;
     }
 
-    auto device = m_context.get_device();
-
     if (ctx.depth_image && ctx.depth_image->is_initialized()) {
         TimelineSnapshot frames;
         for (const auto& point : ctx.slot_point) {
@@ -601,16 +580,7 @@ void BackendWindowHandler::ensure_depth_image(WindowRenderContext& ctx)
             }
         }
         m_command_manager.wait(frames);
-        const auto& res = ctx.depth_image->get_image_resources();
-        if (res.image_view) {
-            device.destroyImageView(res.image_view);
-        }
-        if (res.memory) {
-            device.freeMemory(res.memory);
-        }
-        if (res.image) {
-            device.destroyImage(res.image);
-        }
+        m_resource_manager->cleanup_image(ctx.depth_image);
         ctx.depth_image.reset();
     }
 
@@ -1009,7 +979,7 @@ void BackendWindowHandler::unregister_window(const std::shared_ptr<Window>& wind
     auto it = m_window_contexts.begin();
     while (it != m_window_contexts.end()) {
         if (it->window == window) {
-            it->cleanup(m_context);
+            it->cleanup(m_context, *m_resource_manager);
             MF_INFO(Journal::Component::Core, Journal::Context::GraphicsSubsystem,
                 "Unregistered window '{}'", it->window->get_create_info().title);
             it = m_window_contexts.erase(it);
@@ -1031,7 +1001,7 @@ void BackendWindowHandler::handle_window_resize()
 void BackendWindowHandler::cleanup()
 {
     for (auto& config : m_window_contexts) {
-        config.cleanup(m_context);
+        config.cleanup(m_context, *m_resource_manager);
     }
     m_window_contexts.clear();
 }

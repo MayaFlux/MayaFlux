@@ -42,25 +42,12 @@ void MeshProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
         return;
     }
 
-    if (!mesh_buf->m_mesh_data.is_valid()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "MeshProcessor: MeshData is not valid on attach — no GPU resources allocated");
-        return;
-    }
-
     m_mesh_buffer = mesh_buf;
+    m_layout_count.reset();
 
     ensure_initialized(mesh_buf);
 
-    allocate_gpu_buffers(mesh_buf);
-    upload_vertices(mesh_buf);
-    upload_indices(mesh_buf);
-    link_index_resources();
-
-    mesh_buf->clear_vertices_dirty();
-    mesh_buf->clear_indices_dirty();
-
-    mesh_buf->set_vertex_layout(mesh_buf->m_mesh_data.layout);
+    upload_pending(mesh_buf);
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "MeshProcessor: initialised — {} vertices, {} indices ({} faces), stride {}",
@@ -73,6 +60,7 @@ void MeshProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
 void MeshProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
 {
     m_mesh_buffer.reset();
+    m_frame.reset();
     m_gpu_index_buffer.reset();
     m_vertex_staging.reset();
     m_index_staging.reset();
@@ -96,35 +84,92 @@ void MeshProcessor::processing_function(const std::shared_ptr<Buffer>& /*buffer*
                 reinterpret_cast<const uint8_t*>(verts.data()),
                 reinterpret_cast<const uint8_t*>(verts.data() + verts.size()));
             m_mesh_buffer->m_mesh_data.index_variant = indices;
+            m_mesh_buffer->m_mesh_data.faces = node->get_mesh_faces();
+            m_mesh_buffer->m_mesh_data.submeshes = node->get_mesh_submeshes();
             m_mesh_buffer->m_mesh_data.layout.vertex_count = static_cast<uint32_t>(verts.size());
             m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
             m_mesh_buffer->m_indices_dirty.store(true, std::memory_order_release);
         }
     }
 
-    if (m_mesh_buffer->vertices_dirty()) {
-        upload_vertices(m_mesh_buffer);
-        m_mesh_buffer->clear_vertices_dirty();
-
-        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "MeshProcessor: re-uploaded vertex data ({} bytes)",
-            m_mesh_buffer->get_size_bytes());
+    if (auto frame = m_mesh_buffer->current_frame(); frame != m_frame) {
+        m_frame = std::move(frame);
+        adopt_frame(m_frame);
     }
 
-    if (m_mesh_buffer->indices_dirty()) {
-        upload_indices(m_mesh_buffer);
-        link_index_resources();
-        m_mesh_buffer->clear_indices_dirty();
-
-        MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "MeshProcessor: re-uploaded index data ({} indices)",
-            m_mesh_buffer->get_index_count());
+    if (m_mesh_buffer->restores_vertices()) {
+        m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
     }
+
+    upload_pending(m_mesh_buffer);
 }
 
 // =============================================================================
 // Private helpers
 // =============================================================================
+
+void MeshProcessor::adopt_frame(const std::shared_ptr<const Kakshya::MeshData>& frame)
+{
+    auto& data = m_mesh_buffer->m_mesh_data;
+
+    if (!frame) {
+        data = Kakshya::MeshData::empty();
+        m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
+        m_mesh_buffer->m_indices_dirty.store(true, std::memory_order_release);
+        return;
+    }
+
+    const auto* incoming = std::get_if<std::vector<uint32_t>>(&frame->index_variant);
+    const auto* current = std::get_if<std::vector<uint32_t>>(&data.index_variant);
+    const bool same_indices = incoming && current && *incoming == *current;
+
+    data.vertex_variant = frame->vertex_variant;
+    data.layout = frame->layout;
+    data.submeshes = frame->submeshes;
+    data.faces = frame->faces;
+    m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
+
+    if (!same_indices) {
+        data.index_variant = frame->index_variant;
+        m_mesh_buffer->m_indices_dirty.store(true, std::memory_order_release);
+    }
+}
+
+void MeshProcessor::upload_pending(const std::shared_ptr<MeshBuffer>& buf)
+{
+    if (buf->m_mesh_data.is_valid() && !m_gpu_index_buffer) {
+        allocate_gpu_buffers(buf);
+        buf->m_vertices_dirty.store(true, std::memory_order_release);
+        buf->m_indices_dirty.store(true, std::memory_order_release);
+    }
+
+    if (buf->vertices_dirty()) {
+        upload_vertices(buf);
+        buf->clear_vertices_dirty();
+    }
+
+    if (buf->indices_dirty()) {
+        upload_indices(buf);
+        buf->clear_indices_dirty();
+    }
+
+    link_index_resources();
+    sync_layout(buf);
+}
+
+void MeshProcessor::sync_layout(const std::shared_ptr<MeshBuffer>& buf)
+{
+    const uint32_t drawn = buf->m_mesh_data.is_valid() ? buf->m_mesh_data.vertex_count() : 0U;
+
+    if (m_layout_count == drawn) {
+        return;
+    }
+
+    auto layout = buf->m_mesh_data.layout;
+    layout.vertex_count = drawn;
+    buf->set_vertex_layout(layout);
+    m_layout_count = drawn;
+}
 
 void MeshProcessor::allocate_gpu_buffers(const std::shared_ptr<MeshBuffer>& buf)
 {
@@ -134,12 +179,10 @@ void MeshProcessor::allocate_gpu_buffers(const std::shared_ptr<MeshBuffer>& buf)
         &buf->m_mesh_data.index_variant);
 
     if (!vb || vb->empty() || !ib || ib->empty()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "MeshProcessor::allocate_gpu_buffers: empty vertex or index data");
         return;
     }
 
-    if (!buf->is_host_visible()) {
+    if (!m_vertex_staging && !buf->is_host_visible()) {
         m_vertex_staging = create_staging_buffer(vb->size());
     }
 
@@ -196,7 +239,7 @@ void MeshProcessor::link_index_resources()
     m_mesh_buffer->set_index_resources(
         m_gpu_index_buffer->get_buffer(),
         m_gpu_index_buffer->get_buffer_resources().memory,
-        m_gpu_index_buffer->get_size_bytes());
+        static_cast<size_t>(m_mesh_buffer->get_index_count()) * sizeof(uint32_t));
 }
 
 } // namespace MayaFlux::Buffers

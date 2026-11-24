@@ -31,7 +31,7 @@ namespace {
 
 std::shared_ptr<Fabric> Tapestry::create_fabric(float cell_size)
 {
-    auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, *m_buffers, cell_size);
+    auto fabric = std::make_shared<Fabric>(m_scheduler, m_event_manager, m_buffers, cell_size);
     fabric->set_id(m_next_id++);
     m_fabrics.push_back(fabric);
     return fabric;
@@ -45,7 +45,7 @@ std::shared_ptr<Fabric> Tapestry::create_fabric(std::string name, float cell_siz
         return m_named_fabrics[name].lock();
     }
 
-    auto fabric = std::make_shared<Fabric>(*m_scheduler, *m_event_manager, *m_buffers, cell_size);
+    auto fabric = std::make_shared<Fabric>(m_scheduler, m_event_manager, m_buffers, cell_size);
     fabric->set_id(m_next_id++);
     fabric->set_name(name);
     m_fabrics.push_back(fabric);

@@ -3,18 +3,24 @@
 #include "GeometrySlot.hpp"
 #include "NodeNetwork.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+struct MeshAssemblyGroup;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
  * @class InstanceNetwork
  * @brief NodeNetwork whose slots are flat, peer GeometrySlots for instanced rendering.
  *
- * All slots may hold the same node (shared template geometry) or distinct nodes.
- * No DAG, no parent indices. process_batch() runs the operator chain then calls
- * compute_frame() on each slot's node. The buffer layer reads the slot list each
- * cycle and uploads per-instance transforms as an SSBO for a single instanced
- * draw call. Per-vertex data (color, normals, UVs) is owned by each node's
- * vertex buffer and is unchanged by the instancing path.
+ * The geometry drawn is the first slot's node, instanced once per slot, so a slot
+ * is a transform and the slots usually share one node. No DAG, no parent
+ * indices. process_batch() runs the operator chain then calls compute_frame() on
+ * each slot's node. The buffer layer reads the slot list each cycle and uploads
+ * per-instance transforms as an SSBO for a single instanced draw call. Per-vertex
+ * data (color, normals, UVs) is owned by the first slot's node and is unchanged by
+ * the instancing path.
  *
  * Usage:
  * @code
@@ -73,5 +79,23 @@ private:
     std::vector<GeometrySlot> m_slots;
     std::shared_ptr<NetworkOperator> m_operator;
 };
+
+/**
+ * @brief Build an InstanceNetwork from one group of a MeshAssembly: every row that shows
+ *        the same mesh with the same material.
+ * @param assembly The assembly the group came from. Null gives nullptr.
+ * @param group A group from assembly.groups().
+ * @return A network with one slot per row, named from the row, all sharing one template
+ *         node made from the group's mesh, each slot's transform the row's world
+ *         placement. Nullptr when the group's source is neither a mesh nor a set of points (curves
+ *         sources are not instanced) or a row is out of range.
+ *
+ * The material is not applied: a MeshAssemblyMaterial holds a path, and loading and
+ * binding the texture is the caller's, with InstanceNetworkBuffer::bind_instance_textures.
+ * Every slot keeps the default payload.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<InstanceNetwork> make_instance_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const Kakshya::MeshAssemblyGroup& group);
 
 } // namespace MayaFlux::Nodes::Network

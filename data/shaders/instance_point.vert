@@ -12,6 +12,19 @@ layout(set = 0, binding = 1) readonly buffer InstanceTransforms {
     mat4 transforms[];
 };
 
+struct InstancePayload {
+    vec3 tint;
+    float scalar;
+    uint texture;
+    uint pad0;
+    uint pad1;
+    uint pad2;
+};
+
+layout(std430, set = 0, binding = 8) readonly buffer InstancePayloads {
+    InstancePayload payloads[];
+};
+
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_color;
 layout(location = 2) in float in_size;
@@ -26,14 +39,15 @@ layout(location = 2) out vec2 out_uv;
 void main()
 {
     mat4 instance_transform = transforms[gl_InstanceIndex];
+    InstancePayload payload = payloads[gl_InstanceIndex];
     vec4 world_pos = vt.geometry * (instance_transform * vec4(in_position, 1.0));
     gl_Position = vt.projection * vt.view * world_pos;
     if (MILL_BILLBOARD) {
         gl_Position = mill_billboard_clip(vt.view, vt.projection,
             vt.geometry * instance_transform, in_position, in_tangent, in_uv, false);
     }
-    gl_PointSize = in_size;
-    out_color = in_color;
+    gl_PointSize = in_size * payload.scalar;
+    out_color = in_color * payload.tint;
     out_world_pos = world_pos.xyz;
     out_uv = in_uv;
 }
