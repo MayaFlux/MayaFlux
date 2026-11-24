@@ -97,7 +97,7 @@ Collapsible& Collapsible::place(
                 m.sync();
             });
     } else {
-        const glm::uvec2 dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+        const glm::uvec2 dims = row_pixel_dims(surface.extent(), x_min, x_max, row_h);
 
         auto params = std::make_shared<Portal::Text::PressParams>(Portal::Text::PressParams {
             .color = m_label_color,
@@ -116,7 +116,7 @@ Collapsible& Collapsible::place(
         auto repress = [el, surface, params, label_text = m_label_text,
                            open = open_state, color_closed = m_color_closed,
                            color_open = m_color_open, x_min, x_max, row_h]() mutable {
-            params->render_bounds = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+            params->render_bounds = row_pixel_dims(surface.extent(), x_min, x_max, row_h);
             params->background = { open->value ? color_open : color_closed, 1.F };
             el.set_text(label_text, *params);
         };

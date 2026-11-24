@@ -419,18 +419,6 @@ void RenderProcessor::register_pipeline(const std::shared_ptr<VKBuffer>& buffer)
     buffer->set_pipeline_window(m_lane->pipeline, m_lane->window);
 }
 
-std::vector<std::shared_ptr<Core::VKImage>> RenderProcessor::bound_textures() const
-{
-    std::vector<std::shared_ptr<Core::VKImage>> textures;
-    textures.reserve(m_texture_bindings.size());
-    for (const auto& [binding, texture] : m_texture_bindings) {
-        if (texture.texture) {
-            textures.push_back(texture.texture);
-        }
-    }
-    return textures;
-}
-
 void RenderProcessor::set_visible(bool visible, const std::shared_ptr<VKBuffer>& buffer)
 {
     if (!buffer)
@@ -551,10 +539,7 @@ void RenderProcessor::set_geometry_transform_source(std::function<glm::mat4()> f
     m_geometry_transform.reset();
 }
 
-void RenderProcessor::bind_texture(
-    uint32_t binding,
-    const std::shared_ptr<Core::VKImage>& texture,
-    vk::Sampler sampler)
+void RenderProcessor::bind_image(uint32_t binding, const std::shared_ptr<Core::VKImage>& texture)
 {
     if (!texture || !texture->is_initialized() || !texture->get_image_view()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -562,15 +547,14 @@ void RenderProcessor::bind_texture(
         return;
     }
 
-    if (!sampler) {
-        const auto chosen = m_binding_samplers.find(binding);
-        sampler = chosen != m_binding_samplers.end()
-            ? chosen->second
-            : Portal::Graphics::SamplerForge::instance().get_or_create(
-                  { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
-    }
+    const auto chosen = m_binding_samplers.find(binding);
+    const vk::Sampler sampler = chosen != m_binding_samplers.end()
+        ? chosen->second
+        : Portal::Graphics::SamplerForge::instance().get_or_create(
+              { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
 
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
+    m_target_bindings.erase(binding);
     m_needs_descriptor_rebuild = true;
 
     if (m_lane->pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
@@ -602,45 +586,69 @@ void RenderProcessor::bind_texture(
         "Bound texture to binding {}", binding);
 }
 
-void RenderProcessor::bind_texture(
-    const std::string& descriptor_name,
-    const std::shared_ptr<Core::VKImage>& texture,
-    vk::Sampler sampler)
+bool RenderProcessor::samples(const std::shared_ptr<Portal::Graphics::ImageTarget>& target) const
 {
-    auto binding_it = m_config.bindings.find(descriptor_name);
-    if (binding_it == m_config.bindings.end()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "No binding configured for descriptor '{}'", descriptor_name);
-        return;
+    if (!target) {
+        return false;
     }
 
-    bind_texture(binding_it->second.binding, texture, sampler);
+    const bool by_target = std::ranges::any_of(m_target_bindings,
+        [&target](const auto& entry) { return entry.second == target; });
+    if (by_target) {
+        return true;
+    }
+
+    return std::ranges::any_of(m_texture_bindings,
+        [&target](const auto& entry) { return entry.second.texture == target->image(); });
 }
 
-void RenderProcessor::bind_texture(
-    uint32_t binding,
-    const std::shared_ptr<Core::VKImage>& texture,
-    const Portal::Graphics::SamplerConfig& sampler)
+void RenderProcessor::follow_target_images()
 {
-    set_binding_sampler(binding, sampler);
-    bind_texture(binding, texture, vk::Sampler {});
-}
+    std::vector<std::pair<uint32_t, std::shared_ptr<Portal::Graphics::ImageTarget>>> stale;
+    for (const auto& [binding, target] : m_target_bindings) {
+        const auto bound = m_texture_bindings.find(binding);
+        if (bound == m_texture_bindings.end() || bound->second.texture != target->image()) {
+            stale.emplace_back(binding, target);
+        }
+    }
 
-void RenderProcessor::bind_texture(
-    const std::string& descriptor_name,
-    const std::shared_ptr<Core::VKImage>& texture,
-    const Portal::Graphics::SamplerConfig& sampler)
-{
-    set_binding_sampler(descriptor_name, sampler);
-    bind_texture(descriptor_name, texture, vk::Sampler {});
+    for (const auto& [binding, target] : stale) {
+        bind_image(binding, target->image());
+        m_target_bindings[binding] = target;
+    }
 }
 
 void RenderProcessor::bind_texture(const Portal::Graphics::SampledTexture& texture)
 {
-    if (texture.sampler) {
-        set_binding_sampler(texture.name, *texture.sampler);
+    if (texture.target && texture.image) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind both an image and an image target to '{}'", texture.name);
+        return;
     }
-    bind_texture(texture.name, texture.image, vk::Sampler {});
+
+    uint32_t binding {};
+    if (texture.binding) {
+        binding = *texture.binding;
+    } else {
+        const auto binding_it = m_config.bindings.find(texture.name);
+        if (binding_it == m_config.bindings.end()) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "No binding configured for descriptor '{}'", texture.name);
+            return;
+        }
+        binding = binding_it->second.binding;
+    }
+
+    if (texture.sampler) {
+        set_binding_sampler(binding, *texture.sampler);
+    }
+
+    if (texture.target) {
+        bind_image(binding, texture.target->image());
+        m_target_bindings[binding] = texture.target;
+        return;
+    }
+    bind_image(binding, texture.image);
 }
 
 void RenderProcessor::set_binding_sampler(uint32_t binding, const Portal::Graphics::SamplerConfig& config)
@@ -1225,6 +1233,7 @@ bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_
         return false;
 
     if (m_lane == m_lanes.front().get()) {
+        follow_target_images();
         if (m_needs_descriptor_rebuild) {
             for (size_t i = 1; i < m_lanes.size(); ++i) {
                 m_lanes[i]->needs_descriptors = true;

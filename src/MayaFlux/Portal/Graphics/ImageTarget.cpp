@@ -119,6 +119,7 @@ bool ImageTarget::resize(uint32_t width, uint32_t height)
 
     m_width.store(width, std::memory_order_relaxed);
     m_height.store(height, std::memory_order_relaxed);
+    m_generation.fetch_add(1, std::memory_order_release);
     request_clear();
     return true;
 }

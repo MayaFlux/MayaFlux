@@ -97,8 +97,8 @@ public:
     /** @brief Every image target this processor draws into. */
     [[nodiscard]] std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> get_target_images() const;
 
-    /** @brief Images bound as textures by this processor, so the root can draw their producers first. */
-    [[nodiscard]] std::vector<std::shared_ptr<Core::VKImage>> bound_textures() const;
+    /** @brief Whether this processor samples the image of @p target, however it was bound, so the root can draw that target first. */
+    [[nodiscard]] bool samples(const std::shared_ptr<Portal::Graphics::ImageTarget>& target) const;
 
     /** @brief The pipeline of the first destination. */
     Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_lanes.front()->pipeline; }
@@ -173,44 +173,19 @@ public:
     }
 
     /**
-     * @brief Bind a texture to a descriptor binding point
-     * @param binding Binding index (matches shader layout(binding = N))
-     * @param texture VKImage texture to bind
-     * @param sampler Optional sampler (uses default linear if null)
-     */
-    void bind_texture(
-        uint32_t binding,
-        const std::shared_ptr<Core::VKImage>& texture,
-        vk::Sampler sampler = nullptr);
-
-    /**
-     * @brief Bind a texture to a named descriptor
-     * @param descriptor_name Logical name (must be in config.bindings)
-     * @param texture VKImage texture to bind
-     * @param sampler Optional sampler (uses default linear if null)
-     */
-    void bind_texture(
-        const std::string& descriptor_name,
-        const std::shared_ptr<Core::VKImage>& texture,
-        vk::Sampler sampler = nullptr);
-
-    /**
-     * @brief Bind a texture with a sampler described by a config.
+     * @brief Bind a texture to a descriptor binding.
      *
-     * The sampler is kept for the binding, so a later bind without one reuses it.
+     * @code
+     * rp->bind_texture({ .name = "tex", .image = image });
+     * rp->bind_texture({ .binding = 2, .image = image, .sampler = nearest });
+     * rp->bind_texture({ .name = "tex", .target = target });
+     * @endcode
+     *
+     * The sampler is kept for the binding, so a later bind without one reuses
+     * it. A binding made with a target is bound again to target->image() on the
+     * next execute after the target is resized. Nothing is bound, and an error
+     * is logged, for an unknown name, a missing image, or both image and target.
      */
-    void bind_texture(
-        uint32_t binding,
-        const std::shared_ptr<Core::VKImage>& texture,
-        const Portal::Graphics::SamplerConfig& sampler);
-
-    /** @brief Named form of the config overload. */
-    void bind_texture(
-        const std::string& descriptor_name,
-        const std::shared_ptr<Core::VKImage>& texture,
-        const Portal::Graphics::SamplerConfig& sampler);
-
-    /** @brief Bind an additional texture by name, with its sampler when it has one. */
     void bind_texture(const Portal::Graphics::SampledTexture& texture);
 
     /**
@@ -592,6 +567,13 @@ private:
         vk::Sampler sampler;
     };
     std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
+    std::unordered_map<uint32_t, std::shared_ptr<Portal::Graphics::ImageTarget>> m_target_bindings;
+
+    /** @brief Bind again every binding whose target now has another image. */
+    void follow_target_images();
+
+    /** @brief Bind an image at a binding with the sampler the binding has, forgetting any target it followed. */
+    void bind_image(uint32_t binding, const std::shared_ptr<Core::VKImage>& texture);
     std::unordered_map<uint32_t, vk::Sampler> m_binding_samplers;
 
     std::optional<Portal::Graphics::BlendAttachmentConfig> m_blend_attachment;

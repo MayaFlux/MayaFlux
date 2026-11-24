@@ -10,6 +10,7 @@ class Window;
 
 namespace MayaFlux::Portal::Graphics {
 struct RenderConfig;
+class ImageTarget;
 }
 
 namespace MayaFlux::Buffers {
@@ -72,6 +73,7 @@ struct RenderSink {
     RenderFn fn;
     std::string fn_name;
     std::shared_ptr<Core::Window> window;
+    std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> images;
 };
 
 // =============================================================================
@@ -170,6 +172,17 @@ MAYAFLUX_API void remove_render_sink(
     std::vector<RenderSink>& sinks,
     Buffers::BufferManager& mgr,
     const std::shared_ptr<Core::Window>& window);
+
+/**
+ * @brief Unregister and destroy the render sink that draws into @p image.
+ * @param sinks  Sink vector owned by the calling Emitter or Agent.
+ * @param mgr    BufferManager the VKBuffer was registered with.
+ * @param image  An image target passed in the RenderConfig of add_render_sink().
+ */
+MAYAFLUX_API void remove_render_sink(
+    std::vector<RenderSink>& sinks,
+    Buffers::BufferManager& mgr,
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image);
 
 /**
  * @brief Unregister and destroy every render sink in @p sinks.

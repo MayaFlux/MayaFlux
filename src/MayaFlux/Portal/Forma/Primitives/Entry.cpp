@@ -14,10 +14,17 @@ glm::uvec2 row_pixel_dims(
     float x_min, float x_max, float row_h)
 {
     const auto& ws = window->get_state();
+    return row_pixel_dims(glm::uvec2 { ws.current_width, ws.current_height }, x_min, x_max, row_h);
+}
+
+glm::uvec2 row_pixel_dims(
+    glm::uvec2 extent,
+    float x_min, float x_max, float row_h)
+{
     const auto w = static_cast<uint32_t>(
-        (x_max - x_min) * 0.5F * static_cast<float>(ws.current_width));
+        (x_max - x_min) * 0.5F * static_cast<float>(extent.x));
     const auto h = static_cast<uint32_t>(
-        row_h * 0.5F * static_cast<float>(ws.current_height));
+        row_h * 0.5F * static_cast<float>(extent.y));
     auto atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas();
     if (!atlas) {
         error<std::runtime_error>(Journal::Component::Portal, Journal::Context::Runtime,
@@ -40,7 +47,7 @@ Entry make_entry(
     const Kinesis::AABB2D advanced = cursor.advance(row_h);
     const Kinesis::AABB2D row_rect { .min = { x_min, advanced.min.y }, .max = { x_max, advanced.max.y } };
 
-    const glm::uvec2 dims = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+    const glm::uvec2 dims = row_pixel_dims(surface.extent(), x_min, x_max, row_h);
 
     auto params = std::make_shared<Portal::Text::PressParams>(Portal::Text::PressParams {
         .color = { 1.F, 1.F, 1.F, 1.F },
@@ -75,7 +82,7 @@ Entry make_entry(
     surface.ctx().on_resize(id,
         [el, surface, params, label = spec.label, reader = spec.reader,
             x_min, x_max, row_h](uint32_t, uint32_t) mutable {
-            params->render_bounds = row_pixel_dims(surface.window(), x_min, x_max, row_h);
+            params->render_bounds = row_pixel_dims(surface.extent(), x_min, x_max, row_h);
             el.set_text(reader ? (label + ": " + reader()) : label, *params);
         });
 

@@ -144,8 +144,7 @@ void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
         if (vk) {
             if (auto rp = vk->get_render_processor()) {
                 if (m_pending_texture) {
-                    rp->bind_texture(m_pending_texture->binding,
-                        m_pending_texture->image);
+                    rp->bind_texture({ .name = m_pending_texture->binding, .image = m_pending_texture->image });
                 }
                 m_pending_texture.reset();
                 m_texture_dirty.clear(std::memory_order_release);

@@ -185,6 +185,7 @@ void add_render_sink(
         .fn = std::move(fn),
         .fn_name = std::move(fn_name),
         .window = rc.target_window,
+        .images = rc.target_images,
     });
 
     if (!sink.fn && initial_position.has_value()) {
@@ -208,6 +209,28 @@ void remove_render_sink(
     if (it == sinks.end()) {
         MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
             "Nexus: remove_render_sink called but no sink found for given window");
+        return;
+    }
+
+    mgr.remove_buffer(it->buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+    sinks.erase(it);
+
+    MF_DEBUG(Journal::Component::Buffers, Journal::Context::Init,
+        "Nexus: render sink removed");
+}
+
+void remove_render_sink(
+    std::vector<RenderSink>& sinks,
+    Buffers::BufferManager& mgr,
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image)
+{
+    auto it = std::ranges::find_if(sinks, [&image](const RenderSink& s) {
+        return std::ranges::find(s.images, image) != s.images.end();
+    });
+
+    if (it == sinks.end()) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
+            "Nexus: remove_render_sink called but no sink found for given image target");
         return;
     }
 

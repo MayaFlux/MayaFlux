@@ -140,7 +140,7 @@ void NodeTextureBuffer::setup_rendering(const RenderConfig& user_config)
         m_render_processor->set_binding_sampler(
             m_render_config.default_texture_binding, *m_render_config.default_sampler);
     }
-    m_render_processor->bind_texture(m_render_config.default_texture_binding, get_gpu_texture());
+    m_render_processor->bind_texture({ .name = m_render_config.default_texture_binding, .image = get_gpu_texture() });
 
     for (const auto& entry : m_render_config.additional_textures) {
         m_render_processor->bind_texture(entry);

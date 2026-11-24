@@ -174,9 +174,8 @@ bool RenderFlow::initialize()
                                 .get_service<Registry::Service::DisplayService>();
 
     if (!display_service) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "DisplayService not found in BackendRegistry");
-        return false;
+        MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+            "No DisplayService registered, RenderFlow will draw into image targets only");
     }
 
     m_shader_foundry = foundry;
@@ -763,6 +762,13 @@ void RenderFlow::begin_rendering(
         m_window_associations.emplace(window, WindowRenderAssociation { .window = window, .swapchain_image = swapchain_image });
     } else {
         it->second.swapchain_image = swapchain_image;
+    }
+
+    if (!m_display_service) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering for window '{}' without a DisplayService",
+            window->get_create_info().title);
+        return;
     }
 
     uint32_t width = 0, height = 0;
@@ -1371,6 +1377,9 @@ std::vector<std::shared_ptr<Core::Window>> RenderFlow::get_registered_windows() 
 
 vk::ImageView RenderFlow::get_current_image_view(const std::shared_ptr<Core::Window>& window)
 {
+    if (!m_display_service) {
+        return nullptr;
+    }
     auto view_ptr = m_display_service->get_current_image_view(window);
     if (!view_ptr) {
         return nullptr;

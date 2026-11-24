@@ -316,22 +316,31 @@ enum class FitMode : uint8_t {
     TILE_MIRRORED ///< Source repeated, every other tile mirrored
 };
 
+class ImageTarget;
+
 /**
  * @struct SampledTexture
- * @brief A texture bound besides the default one, with an optional sampler.
+ * @brief A texture and where it is bound, with an optional sampler.
  *
- * `{ "text", nullptr }` and `{ .name = "map", .image = image, .sampler = SamplerConfig { ... } }`
- * both work. Without a sampler the render processor's default is used.
+ * `{ "text", nullptr }`, `{ .name = "map", .image = image, .sampler = SamplerConfig { ... } }`
+ * and `{ .binding = 2, .target = target }` all work. Without a sampler the
+ * binding keeps the one it has, or the render processor's default.
+ *
+ * Where: @c binding when set, otherwise @c name, which must be one the
+ * processor's configuration lists.
+ *
+ * What: @c target when set, and the binding then follows it when it is
+ * resized, otherwise @c image. Setting both is refused.
  */
 struct SampledTexture {
     std::string name;
     std::shared_ptr<Core::VKImage> image;
     std::optional<SamplerConfig> sampler;
+    std::optional<uint32_t> binding;
+    std::shared_ptr<ImageTarget> target;
 
     bool operator==(const SampledTexture& other) const = default;
 };
-
-class ImageTarget;
 
 /**
  * @struct RenderConfig

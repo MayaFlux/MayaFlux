@@ -93,11 +93,16 @@ public:
      * @return False when a side is zero or an allocation failed. After a failure
      *         the target is as it was.
      *
-     * The images are new objects and the old ones are released, so whoever
-     * bound the color image binds image() again. The next scope clears. Calls
-     * are ordered with drawing by the caller.
+     * The images are new objects and the old ones are released. A buffer that
+     * bound the target through RenderProcessor::bind_texture follows on its
+     * next execute. Any other holder of the color image compares generation()
+     * with the value it last saw and binds image() again. The next scope
+     * clears. Calls are ordered with drawing by the caller.
      */
     bool resize(uint32_t width, uint32_t height);
+
+    /** @brief Counts the resizes that gave the target new images. */
+    [[nodiscard]] uint64_t generation() const noexcept { return m_generation.load(std::memory_order_acquire); }
 
     [[nodiscard]] FilterMode mip_filter() const noexcept { return m_mip_filter; }
 
@@ -167,6 +172,7 @@ private:
     std::shared_ptr<Core::VKImage> m_depth;
     std::atomic<uint32_t> m_width {};
     std::atomic<uint32_t> m_height {};
+    std::atomic<uint64_t> m_generation { 0 };
     FilterMode m_mip_filter { FilterMode::LINEAR };
     bool m_full_chain {};
     vk::Format m_color_format {};

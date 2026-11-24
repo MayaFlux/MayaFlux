@@ -14,6 +14,10 @@ namespace MayaFlux::Vruta {
 class EventManager;
 }
 
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
+}
+
 namespace MayaFlux::Portal::Forma {
 
 template <typename T>
@@ -74,9 +78,83 @@ public:
         std::string name);
 
     /**
+     * @brief A Context with no window, for a Layer drawn into an image target.
+     *
+     * Its pixel extent is the size of @p image, read at event time, so a resize
+     * of the target is followed. It subscribes to nothing: the owner of
+     * whatever shows the image passes input in through the feed_* calls, in
+     * pixels of that extent, and Surface::route_input_from() does so for an
+     * on-screen element.
+     *
+     * @param layer Layer to hit-test against. Must outlive Context.
+     * @param image Target the Layer is drawn into.
+     * @throws std::invalid_argument If image is null.
+     */
+    Context(std::shared_ptr<Layer> layer, std::shared_ptr<Portal::Graphics::ImageTarget> image);
+
+    /**
      * @brief Cancel all registered event coroutines.
      */
     ~Context();
+
+    // =========================================================================
+    // Fed input
+    // =========================================================================
+
+    /**
+     * @brief Pointer moved to pixel (@p px, @p py) of the extent, top-left origin.
+     *
+     * Runs hover, enter, leave, move and held-button drag callbacks as a window
+     * motion event does. Meant for a Context without a window; on one with a
+     * window the same input arrives by itself and would be handled twice.
+     */
+    void feed_move(double px, double py);
+
+    /// @brief Button pressed with the pointer at pixel (@p px, @p py). See feed_move().
+    void feed_press(double px, double py, IO::MouseButtons btn);
+
+    /// @brief Button released with the pointer at pixel (@p px, @p py). See feed_move().
+    void feed_release(double px, double py, IO::MouseButtons btn);
+
+    /// @brief Scroll while the pointer is over an element. See feed_move().
+    void feed_scroll(double dx, double dy);
+
+    /// @brief The pointer left the surface: the hovered element is left. See feed_move().
+    void feed_leave();
+
+    /**
+     * @brief Let go of a fed button without a release, ending any drag it began.
+     *
+     * For a release that happened where this Context could not see it.
+     */
+    void feed_cancel(IO::MouseButtons btn);
+
+    /// @brief Whether a button is held: by the window, or by the last feed_press() without a release.
+    [[nodiscard]] bool button_down(IO::MouseButtons btn) const;
+
+    /// @brief Resolved text for the focused element. See feed_move().
+    void feed_text(uint32_t codepoint);
+
+    /**
+     * @brief A key event for the focused element, with the modifiers held.
+     * @param key  The key.
+     * @param type KEY_PRESSED, KEY_RELEASED or KEY_REPEAT. Others are ignored.
+     * @param held Modifiers down at the event.
+     *
+     * Reaches on_press, on_held and on_release callbacks and key subscriptions
+     * as the window's key events do. See feed_move().
+     */
+    void feed_key(IO::Keys key, Core::WindowEventType type, IO::Modifiers held = IO::Modifiers::None);
+
+    /**
+     * @brief Modifiers held now: the window's, or the last passed to feed_key().
+     */
+    [[nodiscard]] IO::Modifiers modifiers() const;
+
+    /**
+     * @brief The size input is measured in: the window's, or the image target's.
+     */
+    [[nodiscard]] glm::uvec2 extent() const noexcept;
 
     Context(const Context&) = delete;
     Context& operator=(const Context&) = delete;
@@ -466,8 +544,15 @@ private:
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
+    std::shared_ptr<Portal::Graphics::ImageTarget> m_image;
     std::shared_ptr<Vruta::EventManager> m_event_manager;
     std::string m_name;
+
+    std::array<bool, 3> m_fed_pressed {};
+    glm::dvec2 m_fed_position {};
+    IO::Modifiers m_fed_modifiers { IO::Modifiers::None };
+
+    [[nodiscard]] glm::dvec2 pointer_position() const;
     std::optional<uint32_t> m_hovered;
 
     std::unordered_map<uint32_t, ElementCallbacks> m_callbacks;

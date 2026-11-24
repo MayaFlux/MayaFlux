@@ -142,7 +142,7 @@ void ComputeMeshBuffer::setup_rendering(const RenderConfig& config)
     apply_render_config(resolved, sc);
 
     if (m_diffuse_texture)
-        m_render_processor->bind_texture(m_diffuse_binding, m_diffuse_texture);
+        m_render_processor->bind_texture({ .name = m_diffuse_binding, .image = m_diffuse_texture });
 
     get_processing_chain()->add_final_processor(
         m_render_processor, shared_from_this());
@@ -238,7 +238,7 @@ void ComputeMeshBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::s
     m_diffuse_binding = std::move(binding);
 
     if (m_render_processor && m_diffuse_texture)
-        m_render_processor->bind_texture(m_diffuse_binding, m_diffuse_texture);
+        m_render_processor->bind_texture({ .name = m_diffuse_binding, .image = m_diffuse_texture });
 }
 
 std::optional<uint32_t> ComputeMeshBuffer::get_live_vertex_count() const

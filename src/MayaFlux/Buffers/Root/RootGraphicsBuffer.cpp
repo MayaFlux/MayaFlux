@@ -63,11 +63,9 @@ std::vector<bool> redrawing(const Children& children, const std::vector<ImageTar
                 const auto render = child->get_render_processor(id);
                 if (!render || !render->is_visible(child))
                     continue;
-                for (const auto& texture : render->bound_textures()) {
-                    for (size_t source = 0; source < targets.size(); ++source) {
-                        if (drawing[source] && source != consumer && targets[source]->image() == texture)
-                            return true;
-                    }
+                for (size_t source = 0; source < targets.size(); ++source) {
+                    if (drawing[source] && source != consumer && render->samples(targets[source]))
+                        return true;
                 }
             }
         }
@@ -100,11 +98,9 @@ std::vector<ImageTargetPtr> order_image_targets(
             const auto render = info->buffer->get_render_processor(info->pipeline_id);
             if (!render)
                 continue;
-            for (const auto& texture : render->bound_textures()) {
-                for (const auto& producer : targets) {
-                    if (producer != consumer && producer->image() == texture)
-                        producers[consumer].push_back(producer);
-                }
+            for (const auto& producer : targets) {
+                if (producer != consumer && render->samples(producer))
+                    producers[consumer].push_back(producer);
             }
         }
     }

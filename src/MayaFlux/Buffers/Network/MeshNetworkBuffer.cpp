@@ -179,10 +179,10 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         for (uint32_t i = 0; i < static_cast<uint32_t>(order.size()); ++i) {
             const auto& slot = slots[order[i]];
             if (slot.diffuse_texture)
-                m_render_processor->bind_texture(3 + i, slot.diffuse_texture);
+                m_render_processor->bind_texture({ .image = slot.diffuse_texture, .binding = 3 + i });
         }
     } else if (m_diffuse_texture && !m_render_config.default_texture_binding.empty()) {
-        m_render_processor->bind_texture(m_render_config.default_texture_binding, m_diffuse_texture);
+        m_render_processor->bind_texture({ .name = m_render_config.default_texture_binding, .image = m_diffuse_texture });
     }
 
     for (const auto& entry : m_render_config.additional_textures)
@@ -336,7 +336,7 @@ void MeshNetworkBuffer::bind_diffuse_texture(
 
     if (m_render_processor) {
         if (m_render_config.default_texture_binding == m_diffuse_binding) {
-            m_render_processor->bind_texture(m_diffuse_binding, m_diffuse_texture);
+            m_render_processor->bind_texture({ .name = m_diffuse_binding, .image = m_diffuse_texture });
         } else {
             MF_WARN(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "MeshNetworkBuffer::bind_diffuse_texture: pipeline compiled without "

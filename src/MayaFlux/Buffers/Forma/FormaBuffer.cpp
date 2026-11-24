@@ -138,9 +138,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
             auto it = std::ranges::find_if(config.additional_textures,
                 [&](const auto& p) { return p.name == config.default_texture_binding; });
             if (it != config.additional_textures.end()) {
-                if (it->sampler)
-                    m_render_processor->set_binding_sampler(slot, *it->sampler);
-                m_render_processor->bind_texture(slot, it->image);
+                m_render_processor->bind_texture({ .image = it->image, .sampler = it->sampler, .binding = slot });
                 ++slot;
             }
         }
@@ -152,7 +150,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
                 m_render_processor->set_binding_sampler(slot, *entry.sampler);
 
             if (entry.image)
-                m_render_processor->bind_texture(slot, entry.image);
+                m_render_processor->bind_texture({ .image = entry.image, .binding = slot });
 
             ++slot;
         }
@@ -247,7 +245,7 @@ void FormaBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string 
 void FormaBuffer::bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image)
 {
     if (m_render_processor)
-        m_render_processor->bind_texture(1 + array_index, image);
+        m_render_processor->bind_texture({ .image = image, .binding = 1 + array_index });
 }
 
 } // namespace MayaFlux::Buffers

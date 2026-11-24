@@ -113,7 +113,7 @@ void TextureBuffer::setup_rendering(const RenderConfig& user_config)
         m_render_processor->set_binding_sampler(
             m_render_config.default_texture_binding, *m_render_config.default_sampler);
     }
-    m_render_processor->bind_texture(m_render_config.default_texture_binding, get_texture());
+    m_render_processor->bind_texture({ .name = m_render_config.default_texture_binding, .image = get_texture() });
 
     for (const auto& entry : m_render_config.additional_textures) {
         m_render_processor->bind_texture(entry);
@@ -190,9 +190,7 @@ void TextureBuffer::set_gpu_texture(std::shared_ptr<Core::VKImage> image)
     m_gpu_texture = std::move(image);
 
     if (m_render_processor && m_gpu_texture) {
-        m_render_processor->bind_texture(
-            m_render_config.default_texture_binding,
-            m_gpu_texture);
+        m_render_processor->bind_texture({ .name = m_render_config.default_texture_binding, .image = m_gpu_texture });
     }
 }
 

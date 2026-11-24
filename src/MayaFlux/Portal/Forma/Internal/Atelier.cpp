@@ -249,10 +249,18 @@ Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string n
 
 Surface Atelier::create_surface(SurfaceConfig config)
 {
+    const bool windowless = !config.window && config.image;
+
     if (!config.layer && config.ctx) {
         config.layer = config.ctx->layer();
     } else if (config.layer && !config.ctx) {
-        config.ctx = std::make_shared<Context>(config.layer, config.window, m_event_manager, config.name);
+        config.ctx = windowless
+            ? std::make_shared<Context>(config.layer, config.image)
+            : std::make_shared<Context>(config.layer, config.window, m_event_manager, config.name);
+        MayaFlux::store(config.ctx);
+    } else if (!config.layer && windowless) {
+        config.layer = std::make_shared<Layer>();
+        config.ctx = std::make_shared<Context>(config.layer, config.image);
         MayaFlux::store(config.ctx);
     } else if (!config.layer) {
         auto [layer, ctx] = create_layer(config.window, config.name);
