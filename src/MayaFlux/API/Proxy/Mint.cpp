@@ -3,9 +3,9 @@
 #include "MayaFlux/API/Graph.hpp"
 #include "MayaFlux/Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/AssembledGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
-#include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
@@ -255,7 +255,7 @@ struct Mint::Impl {
         return buffer;
     }
 
-    [[nodiscard]] std::shared_ptr<Buffers::NetworkGeometryBuffer> build(
+    [[nodiscard]] std::shared_ptr<Buffers::AssembledGeometryBuffer> build(
         const StructureConfig::Assembly& config) const
     {
         if (!has_target(config.render)) {
@@ -277,9 +277,8 @@ struct Mint::Impl {
         }
 
         register_network_if_needed(network);
-        auto buffer = std::make_shared<Buffers::NetworkGeometryBuffer>(network);
+        auto buffer = std::make_shared<Buffers::AssembledGeometryBuffer>(network);
         StructureConfig::RenderConfig render = config.render;
-        render.triangulate = true;
         add_all_textures(render, config.textures);
         register_graphics_buffer(buffer);
         buffer->setup_rendering(render);
@@ -352,7 +351,7 @@ std::shared_ptr<Buffers::InstanceNetworkBuffer> Mint::build(
     return m_impl->build(config);
 }
 
-std::shared_ptr<Buffers::NetworkGeometryBuffer> Mint::build(
+std::shared_ptr<Buffers::AssembledGeometryBuffer> Mint::build(
     const StructureConfig::Assembly& config)
 {
     return m_impl->build(config);

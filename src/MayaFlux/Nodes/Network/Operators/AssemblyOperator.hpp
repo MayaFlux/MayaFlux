@@ -54,6 +54,9 @@ public:
 
     [[nodiscard]] size_t item_count() const { return m_items.size(); }
 
+    /// @brief The items in insertion order, each with its own vertices, indices and topology.
+    [[nodiscard]] const std::vector<std::shared_ptr<GpuSync::GeometryWriterNode>>& get_items() const { return m_items; }
+
     void process(float dt) override;
 
     [[nodiscard]] std::span<const uint8_t> get_vertex_data() const override;
