@@ -19,6 +19,10 @@ namespace MayaFlux::Buffers {
  * Each collection can have different primitive topology (LINE_LIST, LINE_STRIP,
  * POINT_LIST, etc.) and will be rendered with separate RenderProcessors.
  *
+ * A node with indices registered under a triangle topology is uploaded one vertex
+ * per index, and its collection counts indices. Under any other topology the node's
+ * vertices are uploaded as they are.
+ *
  * Architecture:
  * - Upload phase: Aggregate all vertices into single buffer (this processor)
  * - Render phase: Multiple RenderProcessors, one per topology

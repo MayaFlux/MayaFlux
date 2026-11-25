@@ -8,6 +8,26 @@
 
 namespace MayaFlux::Buffers {
 
+namespace {
+
+    bool expands_indices(const CompositeGeometryProcessor::GeometryCollection& collection)
+    {
+        using Portal::Graphics::PrimitiveTopology;
+        return collection.node->has_indices()
+            && (collection.topology == PrimitiveTopology::TRIANGLE_LIST
+                || collection.topology == PrimitiveTopology::TRIANGLE_STRIP
+                || collection.topology == PrimitiveTopology::TRIANGLE_FAN);
+    }
+
+    size_t record_bytes_of(const CompositeGeometryProcessor::GeometryCollection& collection)
+    {
+        return expands_indices(collection)
+            ? static_cast<size_t>(collection.node->get_index_count()) * collection.node->get_vertex_stride()
+            : collection.node->get_vertex_buffer_size_bytes();
+    }
+
+} // namespace
+
 CompositeGeometryProcessor::CompositeGeometryProcessor()
 {
     m_processing_token = ProcessingToken::GRAPHICS_BACKEND;
@@ -93,7 +113,7 @@ void CompositeGeometryProcessor::processing_function(const std::shared_ptr<Buffe
 
     size_t total_bytes = 0;
     for (const auto& col : m_collections) {
-        total_bytes += col.node->get_vertex_buffer_size_bytes();
+        total_bytes += record_bytes_of(col);
     }
 
     if (total_bytes == 0) {
@@ -121,11 +141,6 @@ void CompositeGeometryProcessor::processing_function(const std::shared_ptr<Buffe
             continue;
         }
 
-        std::memcpy(
-            m_staging_aggregate.data() + current_byte_offset,
-            vertex_data.data(),
-            vertex_data.size_bytes());
-
         size_t stride = col.node->get_vertex_stride();
         if (stride == 0) {
             MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -134,8 +149,35 @@ void CompositeGeometryProcessor::processing_function(const std::shared_ptr<Buffe
         }
 
         col.vertex_offset = static_cast<uint32_t>(current_byte_offset / stride);
-        col.vertex_count = col.node->get_vertex_count();
-        // col.vertex_count = static_cast<uint32_t>(vertex_data.size_bytes() / stride);
+
+        size_t written = vertex_data.size_bytes();
+
+        if (expands_indices(col)) {
+            const auto indices = col.node->get_index_data();
+            const size_t available = vertex_data.size_bytes() / stride;
+
+            if (std::ranges::any_of(indices, [available](uint32_t index) { return index >= available; })) {
+                MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                    "Collection '{}' indexes past its {} vertices, not uploaded", col.name, available);
+                col.vertex_count = 0;
+                continue;
+            }
+
+            uint8_t* destination = m_staging_aggregate.data() + current_byte_offset;
+            for (const uint32_t index : indices) {
+                std::memcpy(destination, vertex_data.data() + index * stride, stride);
+                destination += stride;
+            }
+
+            written = indices.size() * stride;
+            col.vertex_count = static_cast<uint32_t>(indices.size());
+        } else {
+            std::memcpy(
+                m_staging_aggregate.data() + current_byte_offset,
+                vertex_data.data(),
+                vertex_data.size_bytes());
+            col.vertex_count = col.node->get_vertex_count();
+        }
 
         if (auto layout = col.node->get_vertex_layout()) {
             layout->vertex_count = col.vertex_count;
@@ -147,7 +189,7 @@ void CompositeGeometryProcessor::processing_function(const std::shared_ptr<Buffe
             "Collection '{}': {} vertices at offset {} (stride: {})",
             col.name, col.vertex_count, col.vertex_offset, stride);
 
-        current_byte_offset += vertex_data.size_bytes();
+        current_byte_offset += written;
     }
 
     auto composite_buffer = std::dynamic_pointer_cast<CompositeGeometryBuffer>(buffer);
