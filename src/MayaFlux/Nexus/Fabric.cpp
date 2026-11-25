@@ -493,6 +493,18 @@ std::shared_ptr<Expanse::CrossingFn> Fabric::resolve_crossing_fn(std::string_vie
     return it != m_crossing_fns.end() ? it->second : nullptr;
 }
 
+std::optional<std::pair<uint32_t, float>> Fabric::nearest_hit(const Kinesis::Ray& ray) const
+{
+    std::optional<std::pair<uint32_t, float>> best;
+    for (const auto& [id, expanse] : m_expanses) {
+        const auto distance = expanse->intersect(ray);
+        if (distance && (!best || *distance < best->second)) {
+            best.emplace(id, *distance);
+        }
+    }
+    return best;
+}
+
 std::vector<uint32_t> Fabric::all_expanse_ids() const
 {
     std::vector<uint32_t> ids;

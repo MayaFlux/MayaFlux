@@ -148,6 +148,38 @@ public:
         return m_contains ? m_contains(p) : box.has_value();
     }
 
+    /**
+     * @brief Where a ray first lies inside the region.
+     *
+     * Answered for a region that is a box. An Expanse with a predicate answers
+     * nullopt, box or not, since a box hit need not satisfy the predicate.
+     *
+     * @param ray World-space ray.
+     * @return Distance along the ray, zero when the origin is inside, or nullopt.
+     */
+    [[nodiscard]] virtual std::optional<float> intersect(const Kinesis::Ray& ray) const
+    {
+        const auto box = bounds();
+        if (!box || m_contains) {
+            return std::nullopt;
+        }
+        return box->ray_entry(ray);
+    }
+
+    /**
+     * @brief Where the region is centred and how far it reaches.
+     *
+     * The centre and the half diagonal of the box if there is one, else the
+     * origin and zero. A derived Expanse whose region is not the box overrides it.
+     */
+    [[nodiscard]] virtual std::pair<glm::vec3, float> reach() const
+    {
+        if (const auto box = bounds()) {
+            return { box->center(), glm::length(box->half_extent()) };
+        }
+        return { glm::vec3(0.0F), 0.0F };
+    }
+
     // =========================================================================
     // Controls
     // =========================================================================
@@ -367,20 +399,6 @@ private:
 protected:
     /** @brief Called at the start of every evaluate(), before any position is tested. */
     virtual void begin_evaluate() { }
-
-    /**
-     * @brief Where the region is centred and how far it reaches, for perceptions.
-     *
-     * The centre and the half diagonal of the box if there is one, else the
-     * origin and zero. A derived Expanse whose region is not the box overrides it.
-     */
-    [[nodiscard]] virtual std::pair<glm::vec3, float> reach() const
-    {
-        if (const auto box = bounds()) {
-            return { box->center(), glm::length(box->half_extent()) };
-        }
-        return { glm::vec3(0.0F), 0.0F };
-    }
 
     /** @brief The live controls, for a derived class to consume what changed. */
     ExpanseControls& m_controls { open(m_store) };

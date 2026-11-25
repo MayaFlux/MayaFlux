@@ -258,6 +258,40 @@ struct AABB3D {
     [[nodiscard]] glm::vec3 extent() const noexcept { return max - min; }
     [[nodiscard]] glm::vec3 half_extent() const noexcept { return (max - min) * 0.5F; }
 
+    /**
+     * @brief Where a ray first lies inside the box.
+     * @param ray Ray of any nonzero direction; it need not be normalized.
+     * @return The ray parameter of the first point inside, in units of the
+     *         direction, zero when the origin is inside; nullopt when the ray
+     *         misses or the box is wholly behind it.
+     */
+    [[nodiscard]] std::optional<float> ray_entry(const Ray& ray) const noexcept
+    {
+        float enter = 0.0F;
+        float exit = std::numeric_limits<float>::infinity();
+
+        for (int axis = 0; axis < 3; ++axis) {
+            const float origin = ray.origin[axis];
+            const float direction = ray.direction[axis];
+            if (direction == 0.0F) {
+                if (origin < min[axis] || origin > max[axis]) {
+                    return std::nullopt;
+                }
+                continue;
+            }
+
+            const float to_min = (min[axis] - origin) / direction;
+            const float to_max = (max[axis] - origin) / direction;
+            enter = std::max(enter, std::min(to_min, to_max));
+            exit = std::min(exit, std::max(to_min, to_max));
+            if (enter > exit) {
+                return std::nullopt;
+            }
+        }
+
+        return enter;
+    }
+
     [[nodiscard]] AABB3D translated(const glm::vec3& offset) const noexcept
     {
         return { .min = min + offset, .max = max + offset };

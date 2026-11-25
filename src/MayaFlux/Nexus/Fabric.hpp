@@ -269,6 +269,15 @@ public:
         const glm::vec3& center, uint32_t k) const;
 
     /**
+     * @brief Find the registered Expanse a ray reaches first.
+     * @param ray World-space ray.
+     * @return The Expanse's id and the distance along the ray, or nullopt when
+     *         none answers Expanse::intersect.
+     */
+    [[nodiscard]] std::optional<std::pair<uint32_t, float>> nearest_hit(
+        const Kinesis::Ray& ray) const;
+
+    /**
      * @brief Access the finalised wiring for an entity for introspection.
      * @param id Entity id assigned at registration.
      * @return Pointer to the wiring, or nullptr if id is not registered

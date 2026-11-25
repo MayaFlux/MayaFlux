@@ -43,8 +43,13 @@ namespace {
         return records;
     }
 
-    /** Slot by slot in the order the buffer concatenates them, placed where each slot draws. */
-    std::optional<Kakshya::MeshData> deformed_network_mesh(const std::shared_ptr<Buffers::MeshNetworkBuffer>& buffer)
+    /**
+     * Slot by slot in the order the buffer concatenates them, placed where each slot draws,
+     * or the one slot @p only as the device holds it, unplaced.
+     */
+    std::optional<Kakshya::MeshData> deformed_network_mesh(
+        const std::shared_ptr<Buffers::MeshNetworkBuffer>& buffer,
+        const std::optional<uint32_t>& only = std::nullopt)
     {
         const auto network = buffer->get_network();
         const auto layout = buffer->get_vertex_layout();
@@ -54,13 +59,24 @@ namespace {
 
         const auto& slots = network->slots();
         size_t total = 0;
+        size_t begin = 0;
+        size_t chosen = 0;
         for (const uint32_t index : network->sorted_indices()) {
-            if (slots[index].node) {
-                total += slots[index].node->get_mesh_vertex_count();
+            if (!slots[index].node) {
+                continue;
             }
+            if (only == index) {
+                begin = total;
+                chosen = slots[index].node->get_mesh_vertex_count();
+            }
+            total += slots[index].node->get_mesh_vertex_count();
         }
-        const auto records = download_records(buffer, total * layout->stride_bytes);
-        if (total == 0 || records.size() < total * layout->stride_bytes) {
+        if (only) {
+            total = chosen;
+        }
+        const size_t extent = (begin + total) * layout->stride_bytes;
+        const auto records = download_records(buffer, extent);
+        if (total == 0 || records.size() < extent) {
             return std::nullopt;
         }
 
@@ -69,13 +85,15 @@ namespace {
         size_t first = 0;
         for (const uint32_t index : network->sorted_indices()) {
             const auto& slot = slots[index];
-            if (!slot.node) {
+            if (!slot.node || (only && only != index)) {
                 continue;
             }
             for (size_t v = 0; v < slot.node->get_mesh_vertex_count(); ++v) {
                 Kakshya::MeshVertex vertex {};
-                std::memcpy(&vertex, records.data() + (first + v) * layout->stride_bytes, sizeof(vertex));
-                vertex.position = glm::vec3(slot.world_transform * glm::vec4(vertex.position, 1.0F));
+                std::memcpy(&vertex, records.data() + (begin + first + v) * layout->stride_bytes, sizeof(vertex));
+                if (!only) {
+                    vertex.position = glm::vec3(slot.world_transform * glm::vec4(vertex.position, 1.0F));
+                }
                 std::memcpy(vertices.data() + (first + v) * sizeof(vertex), &vertex, sizeof(vertex));
             }
             for (const uint32_t i : slot.node->get_mesh_indices()) {
@@ -125,6 +143,21 @@ namespace {
         }
 
         return std::nullopt;
+    }
+
+    /** One slot of a mesh network in the slot's own coordinates. */
+    std::optional<Kakshya::MeshData> slot_mesh(
+        const std::shared_ptr<Buffers::MeshNetworkBuffer>& buffer,
+        uint32_t slot)
+    {
+        const auto network = buffer->get_network();
+        if (!network || slot >= network->slots().size() || !network->slots()[slot].node) {
+            return std::nullopt;
+        }
+        if (deformed_on_device(buffer)) {
+            return deformed_network_mesh(buffer, slot);
+        }
+        return network->slots()[slot].node->get_mesh_data();
     }
 
     size_t position_offset(const Kakshya::VertexLayout& layout)
@@ -296,14 +329,17 @@ namespace {
         return positions && !positions->empty() ? std::optional<Kinesis::AABB3D> { Kinesis::aabb(*positions) } : std::nullopt;
     }
 
-    std::optional<Kinesis::AABB3D> instance_bounds(const std::shared_ptr<Buffers::InstanceNetworkBuffer>& buffer)
+    /** The union of every slot as placed, or the one slot @p only in its own coordinates. */
+    std::optional<Kinesis::AABB3D> instance_bounds(
+        const std::shared_ptr<Buffers::InstanceNetworkBuffer>& buffer,
+        const std::optional<uint32_t>& only = std::nullopt)
     {
         const auto network = buffer->get_network();
         if (!network) {
             return std::nullopt;
         }
 
-        if (network->slot_count() == 0) {
+        if (network->slot_count() == 0 || (only && *only >= network->slot_count())) {
             return std::nullopt;
         }
 
@@ -315,12 +351,16 @@ namespace {
 
         std::optional<Kinesis::AABB3D> total;
         for (uint32_t i = 0; i < network->slot_count(); ++i) {
+            if (only && only != i) {
+                continue;
+            }
             const auto& slot = network->get_slot(i);
+            const glm::mat4 base = only ? glm::mat4(1.0F) : slot.transform;
 
-            std::vector<glm::mat4> poses { slot.transform };
+            std::vector<glm::mat4> poses { base };
             if (first.skin && slot.palette.size() == first.skin->joint_count()) {
                 for (const auto& joint : slot.palette) {
-                    poses.push_back(slot.transform * joint);
+                    poses.push_back(base * joint);
                 }
             }
 
@@ -341,11 +381,53 @@ namespace {
         return total;
     }
 
+    /** A vertex of the geometry every instance draws, the first slot's node. */
+    std::optional<glm::vec3> instance_vertex(
+        const std::shared_ptr<Buffers::InstanceNetworkBuffer>& buffer,
+        uint32_t slot,
+        uint32_t index)
+    {
+        const auto network = buffer->get_network();
+        if (!network || slot >= network->slot_count()) {
+            return std::nullopt;
+        }
+
+        const auto& node = network->get_slot(0).node;
+        if (!node) {
+            return std::nullopt;
+        }
+
+        if (const auto mesh = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(node)) {
+            const auto& vertices = mesh->get_mesh_vertices();
+            return index < vertices.size() ? std::optional<glm::vec3> { vertices[index].position } : std::nullopt;
+        }
+
+        const auto layout = node->get_vertex_layout();
+        const auto positions = layout ? decode_positions(node->get_vertex_data(), *layout) : std::nullopt;
+        return positions && index < positions->size() ? std::optional<glm::vec3> { (*positions)[index] } : std::nullopt;
+    }
+
+    glm::mat4 buffer_placement(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    {
+        const auto proc = buffer->get_render_processor();
+        if (!proc) {
+            return glm::mat4(1.0F);
+        }
+        if (const auto& source = proc->get_geometry_transform_source()) {
+            return source();
+        }
+        if (const auto& fixed = proc->get_geometry_transform()) {
+            return *fixed;
+        }
+        return glm::mat4(1.0F);
+    }
+
 }
 
 std::optional<glm::vec3> read_anchor(
     const std::shared_ptr<Buffers::VKBuffer>& buf,
-    const std::optional<uint32_t>& index)
+    const std::optional<uint32_t>& index,
+    const std::optional<uint32_t>& slot)
 {
     if (const auto cloud = cloud_of(buf); cloud && !cloud->positions.empty()) {
         if (!index) {
@@ -356,13 +438,18 @@ std::optional<glm::vec3> read_anchor(
             : std::nullopt;
     }
 
-    if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf);
-        instances && !index) {
-        const auto bounds = instance_bounds(instances);
-        return bounds ? std::optional<glm::vec3> { bounds->center() } : std::nullopt;
+    if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf)) {
+        if (!index) {
+            const auto bounds = instance_bounds(instances, slot);
+            return bounds ? std::optional<glm::vec3> { bounds->center() } : std::nullopt;
+        }
+        if (slot) {
+            return instance_vertex(instances, *slot, *index);
+        }
     }
 
-    const auto mesh = snapshot_mesh(buf);
+    const auto network_buffer = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buf);
+    const auto mesh = network_buffer && slot ? slot_mesh(network_buffer, *slot) : snapshot_mesh(buf);
     if (!mesh) {
         return std::nullopt;
     }
@@ -409,10 +496,11 @@ std::optional<Kinesis::AABB3D> read_bounds(
     }
 
     if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf)) {
-        return instance_bounds(instances);
+        return instance_bounds(instances, collection);
     }
 
-    const auto mesh = snapshot_mesh(buf);
+    const auto meshes = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buf);
+    const auto mesh = meshes && collection ? slot_mesh(meshes, *collection) : snapshot_mesh(buf);
     const auto* vertices = mesh ? std::get_if<std::vector<uint8_t>>(&mesh->vertex_variant) : nullptr;
     if (!vertices) {
         return std::nullopt;
@@ -422,19 +510,30 @@ std::optional<Kinesis::AABB3D> read_bounds(
     return positions && !positions->empty() ? std::optional<Kinesis::AABB3D> { Kinesis::aabb(*positions) } : std::nullopt;
 }
 
-glm::mat4 read_placement(const std::shared_ptr<Buffers::VKBuffer>& buf)
+glm::mat4 read_placement(
+    const std::shared_ptr<Buffers::VKBuffer>& buf,
+    const std::optional<uint32_t>& slot)
 {
-    const auto proc = buf->get_render_processor();
-    if (!proc) {
-        return glm::mat4(1.0F);
+    const glm::mat4 placed = buffer_placement(buf);
+    if (!slot) {
+        return placed;
     }
-    if (const auto& source = proc->get_geometry_transform_source()) {
-        return source();
+
+    if (const auto meshes = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buf)) {
+        const auto network = meshes->get_network();
+        if (network && *slot < network->slots().size()) {
+            return placed * network->slots()[*slot].world_transform;
+        }
     }
-    if (const auto& fixed = proc->get_geometry_transform()) {
-        return *fixed;
+
+    if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf)) {
+        const auto network = instances->get_network();
+        if (network && *slot < network->slot_count()) {
+            return placed * network->slots()[*slot].transform;
+        }
     }
-    return glm::mat4(1.0F);
+
+    return placed;
 }
 
 } // namespace MayaFlux::Nexus

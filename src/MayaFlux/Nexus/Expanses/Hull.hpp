@@ -19,10 +19,12 @@ class StateEncoder;
  * of HullControls. Containment takes a
  * world position back through the transform the buffer is drawn with, so the
  * region follows the buffer wherever it is placed, for example by an Agent
- * attached to it, and stays an exact box under rotation and scale. The buffer
- * is neither registered nor written to, and nothing is encoded for a Hull.
+ * attached to it, and stays an exact box under rotation and scale. A Hull around
+ * one slot of a mesh or instance network keeps the box in the slot's coordinates
+ * and follows the slot as it moves too. The buffer is neither registered nor
+ * written to, and nothing is encoded for a Hull.
  *
- * Only the buffer's primary render processor is read. A buffer whose geometry
+ * Of the render processors only the buffer's primary one is read. A buffer whose geometry
  * cannot be read contains nothing. Reading a buffer that a GpuFieldOperator drives
  * downloads it from the device, so refit() belongs on a FRAME_ACCURATE metro.
  */
@@ -33,8 +35,9 @@ public:
      * @param buf        Buffer to wrap. Must not be null.
      * @param on_enter   Fired with the entity id when it enters. May be empty.
      * @param on_exit    Fired with the entity id when it leaves. May be empty.
-     * @param collection One collection of a NetworkGeometryBuffer to wrap, for a
-     *                   buffer that holds several bodies. Unset wraps all of it.
+     * @param collection One collection of a NetworkGeometryBuffer, or one slot of a
+     *                   mesh or instance network, to wrap, for a buffer that holds
+     *                   several bodies. Unset wraps all of it.
      */
     explicit Hull(std::shared_ptr<Buffers::VKBuffer> buf,
         CrossingFn on_enter = {},
@@ -44,6 +47,9 @@ public:
     /** @brief Test whether a world position lies within the buffer's bounds as drawn. */
     [[nodiscard]] bool contains(const glm::vec3& p) const override;
 
+    /** @brief Where a ray first lies within the buffer's bounds as drawn. */
+    [[nodiscard]] std::optional<float> intersect(const Kinesis::Ray& ray) const override;
+
     /**
      * @brief Read the buffer's geometry again and take its bounds.
      *
@@ -52,7 +58,6 @@ public:
      */
     void refit();
 
-protected:
     /** @brief The centre of the bounds as drawn, and the distance to their farthest corner. */
     [[nodiscard]] std::pair<glm::vec3, float> reach() const override;
 
