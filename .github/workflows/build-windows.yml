@@ -335,6 +335,18 @@ jobs:
           cache: true
           install_runtime: true
 
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: windows-build
+          max-size: "2G"
+
+      - name: Configure ccache
+        shell: pwsh
+        run: |
+          ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+          ccache --set-config=compiler_check=content
+
       # ============================================
       # PHASE 3: Build Configuration
       # ============================================
@@ -376,6 +388,9 @@ jobs:
 
           $cmakeArgs = @(
             "--preset", $preset,
+            "-DCMAKE_C_COMPILER_LAUNCHER=ccache",
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+            "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded",
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
             "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK /CGTHREADS:$cores"
           )
@@ -394,6 +409,11 @@ jobs:
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
           cmake --build --preset "${{ env.PRESET }}"
+
+      - name: ccache stats
+        if: always()
+        shell: pwsh
+        run: ccache -s -v
 
       - name: Check reflection sidecars
         if: ${{ inputs.run_reflect_check }}
