@@ -38,6 +38,31 @@ template <auto Member, typename T, typename Host>
 }
 
 /**
+ * @brief A function that calls one member function of a host, the command counterpart of
+ *        control_writer.
+ * @tparam Member Pointer to a member function, such as `&Kriya::Course::retrigger` or
+ *         `&Kriya::Course::seek_normalized`. It must not be overloaded.
+ * @tparam T The type of the value the function takes.
+ * @param host The object the member is called on, retained by the function.
+ *
+ * A member that takes the value is given it. A member that takes nothing is called and the
+ * value only says when. What the member returns is dropped. The function fits any callable
+ * that takes `const T&`, such as the target of an influence, so one influence can run
+ * commands beside whatever else it targets.
+ */
+template <auto Member, typename T, typename Host>
+[[nodiscard]] std::function<void(const T&)> call_writer(std::shared_ptr<Host> host)
+{
+    return [host = std::move(host)](const T& value) {
+        if constexpr (std::is_invocable_v<decltype(Member), Host&, const T&>) {
+            std::invoke(Member, *host, value);
+        } else {
+            std::invoke(Member, *host);
+        }
+    };
+}
+
+/**
  * @brief A function that reads one member of a host's controls struct as a type.
  * @tparam Member Pointer to the member, such as `&PhysicsControls::drag`.
  * @tparam T The type to read it as. For a numeric slot it must be the type it was set with, and
