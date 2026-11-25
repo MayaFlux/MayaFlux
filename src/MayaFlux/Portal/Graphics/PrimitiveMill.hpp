@@ -197,7 +197,11 @@ public:
     /** @brief Replace the spec. Takes effect on the next mill(). */
     void set_spec(const MillSpec& spec) { m_spec = spec; }
 
-    /** @brief Destroy the kernel, pipeline and buffers. */
+    /**
+     * @brief Destroy the kernel, pipeline and buffers.
+     *
+     * The output buffers are freed once the work submitted so far completes.
+     */
     void release();
 
 private:

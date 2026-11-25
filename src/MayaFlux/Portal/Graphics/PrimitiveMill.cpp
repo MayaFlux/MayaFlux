@@ -846,6 +846,16 @@ void PrimitiveMill::release()
         m_shader = INVALID_SHADER;
     }
 
+    auto svc = Registry::BackendRegistry::instance()
+                   .get_service<Registry::Service::BufferService>();
+    if (svc && svc->retire_buffer) {
+        for (const auto& buffer : m_outputs) {
+            if (buffer && buffer->is_initialized()) {
+                svc->retire_buffer(buffer);
+            }
+        }
+    }
+
     m_outputs.clear();
     m_output_slot = 0;
     if (m_run_arena) {
