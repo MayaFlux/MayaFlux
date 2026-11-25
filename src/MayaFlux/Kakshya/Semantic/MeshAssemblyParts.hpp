@@ -13,7 +13,8 @@ enum class MeshAssemblyRowKind : uint8_t {
     Mesh, ///< A mesh.
     Points, ///< A set of points.
     Curves, ///< Curves, as lines.
-    Camera ///< A camera's lens: nothing to draw, a view to look through.
+    Camera, ///< A camera's lens: nothing to draw, a view to look through.
+    Light ///< A light source: nothing to draw, and no part is made for it.
 };
 
 /** @brief What the row shows, Joint for a row with no source or a source out of range. */
@@ -63,7 +64,7 @@ struct MeshAssemblyPart {
 /**
  * @brief Sort the rows that show something into parts.
  * @param partition What decides a row's key. Empty keeps every row of a kind together.
- * @return The parts in the order their first rows appear. A joint is in none.
+ * @return The parts in the order their first rows appear. A joint or a light is in none.
  */
 [[nodiscard]] MAYAFLUX_API std::vector<MeshAssemblyPart> partition_assembly(
     const MeshAssemblyContainer& assembly, const MeshAssemblyPartition& partition = {});
