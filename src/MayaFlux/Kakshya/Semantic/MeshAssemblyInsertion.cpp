@@ -110,6 +110,9 @@ std::optional<MeshAssemblyGraft> MeshAssemblyInsertion::graft(const MeshAssembly
         for (auto& channel : moved.channels) {
             channel.row = result.rows[channel.row];
         }
+        for (auto& weights : moved.weights) {
+            weights.row = result.rows[weights.row];
+        }
         result.motions.push_back(m_target->add_motion(std::move(moved)).value());
     }
     return result;

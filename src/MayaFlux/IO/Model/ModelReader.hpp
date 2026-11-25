@@ -14,6 +14,7 @@ class MeshBuffer;
 
 namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
+class PointCloudNetwork;
 }
 
 namespace MayaFlux::Kakshya {
@@ -131,17 +132,20 @@ public:
     [[nodiscard]] std::vector<Kakshya::MeshData> extract_meshes() const;
 
     /**
-     * @brief Construct one MeshBuffer per mesh in the currently loaded scene.
+     * @brief Construct one MeshBuffer per placed mesh of the currently loaded scene.
      *
-     * Calls extract_meshes() internally. Returns empty if no scene is loaded.
+     * Built from create_mesh_assembly(): each buffer's vertices are where its row places
+     * them at rest, and a mesh several rows use gets a buffer for each. Returns empty if
+     * no scene is loaded.
      * setup_processors() and setup_rendering() are left to the caller.
      *
      * If resolver is provided, it is called with the raw diffuse path from each
      * mesh's material. The returned VKImage is bound via bind_diffuse_texture().
-     * Null resolver skips texture binding entirely.
+     * A texture the file carries itself is decoded from the file and does not reach
+     * the resolver. Null resolver skips texture binding entirely.
      *
      * @param resolver Optional texture resolver.
-     * @return One MeshBuffer per aiMesh in scene order.
+     * @return One MeshBuffer per mesh row, in row order.
      */
     [[nodiscard]] std::vector<std::shared_ptr<Buffers::MeshBuffer>>
     create_mesh_buffers(const TextureResolver& resolver = nullptr) const;
@@ -162,13 +166,15 @@ public:
      * added as root slots, named from aiMesh::mName (or "mesh_N" if unnamed).
      * Each slot's MeshWriterNode holds the extracted vertex and index data.
      *
-     * The network is built from create_mesh_assembly(), so slot i is row i of that assembly and
+     * The network holds the tree's rows of create_mesh_assembly(), which come first there, so
+     * slot i is row i of that assembly and
      * one of its motions plays on this network through Kriya::slot_sink. An identity scene root
      * that an animation targets is kept as a joint.
      *
      * If resolver is provided, it is called with the raw diffuse path from each
      * mesh's material. The returned VKImage is assigned to slot.diffuse_texture.
-     * Null resolver skips texture binding entirely.
+     * A texture the file carries itself is decoded from the file and does not reach
+     * the resolver. Null resolver skips texture binding entirely.
      *
      * Requires open(). Does not call close().
      *
@@ -179,19 +185,50 @@ public:
     create_mesh_network(const TextureResolver& resolver = nullptr) const;
 
     /**
+     * @brief The scene's points and lines as point cloud networks.
+     *
+     * At most two: one holding every point, one holding every line, in that order, leaving
+     * out a kind the scene does not have. See Nodes::Network::make_point_cloud_network.
+     * Requires open(). Does not call close().
+     */
+    [[nodiscard]] std::vector<std::shared_ptr<Nodes::Network::PointCloudNetwork>>
+    create_point_cloud_networks() const;
+
+    /**
      * @brief Build a MeshAssemblyContainer from the scene.
      *
      * Every valid mesh becomes one source, stored once, so a mesh several nodes use
      * stays shared. Every material becomes a MeshAssemblyMaterial (name, diffuse path,
-     * whether the path points into the file). The node tree becomes the placement rows
+     * whether the path points into the file), with its textures as MeshAssemblyMaps and
+     * its colours and factors as MeshAssemblySurface in its facets. The node tree becomes the placement rows
      * with the same rules as create_mesh_network(): one row per node, parented as the
      * tree is, a node with no mesh a joint, the first mesh of a node on the node's own
      * row and each further mesh a child row, an identity scene root with no row unless
      * an animation targets it, and meshes no node references as root rows.
      *
-     * Each Assimp animation becomes a motion. A channel is resolved by node name; a name
-     * that matches no row or more than one row, a node with no row, and a node an
-     * animation keys twice are skipped with a warning. Times are seconds: key time over
+     * A camera becomes a Kinesis::Lens source, perspective or orthographic, and a light a
+     * MeshAssemblyLight source. Either sits on the row of its name when that row shows
+     * nothing else and it is at the row's origin facing -Z, otherwise on a child row carrying its
+     * own frame. Both look along -Z with +Y up, as Kinesis::view_from_lens expects. Every
+     * material property is in the material's MeshAssemblyProperties. Where several rows
+     * share a name, a channel or bone naming it takes the first in tree order.
+     *
+     * A mesh of only points or only lines becomes a SpatialData source with color, uv and
+     * normal attributes. UV and colour sets past the first are the source's
+     * MeshAssemblyVertexSets, and its morph targets its MeshAssemblyMorphs. Scene and row
+     * metadata is the assembly's MeshAssemblyMetadata, uninterpreted: no unit or axis
+     * conversion is applied.
+     *
+     * The tree's rows come first. After them come the rows that only a mesh network cannot
+     * hold: the points and lines of a mesh beyond what its row shows, and camera and light
+     * children. create_point_cloud_networks() takes the
+     * points and lines, and MeshAssemblyRealization gives each kind its own target.
+     *
+     * Each Assimp animation becomes a motion. Morph weights are the motion's weights, linear
+     * between keys, and a channel's behaviour before and after its keys is kept on it for
+     * the sink to honour or not. A channel is resolved by name, to the
+     * first row in tree order when several share it; a name that matches no row and a
+     * row an animation keys twice are skipped with a warning. Times are seconds: key time over
      * mTicksPerSecond, with 0 ticks per second read as 1. A key's interpolation is Step
      * or Linear (rotations spherical), or CubicSpline with the tangents of its key: the glTF
      * importer of Assimp 6.0.6 and later hands over a cubic sampler as three keys at one time,
@@ -272,6 +309,9 @@ private:
     bool m_flatten { false };
     bool m_polygons_imported { false };
     mutable std::string m_last_error;
+
+    /** @brief create_mesh_assembly, with or without the rows that follow the tree's own. */
+    [[nodiscard]] std::shared_ptr<Kakshya::MeshAssemblyContainer> assemble(bool beside_the_tree) const;
 
     [[nodiscard]] Kakshya::MeshData extract_single_mesh(
         const void* ai_mesh,

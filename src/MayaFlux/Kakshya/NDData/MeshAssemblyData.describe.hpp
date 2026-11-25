@@ -17,6 +17,8 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblyChannel> {
             Member<&::MayaFlux::Kakshya::MeshAssemblyChannel::translation> { "translation" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyChannel::rotation> { "rotation" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyChannel::scale> { "scale" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblyChannel::before> { "before" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblyChannel::after> { "after" },
         };
     }
 };
@@ -59,6 +61,7 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblyMotion> {
         return std::tuple {
             Member<&::MayaFlux::Kakshya::MeshAssemblyMotion::name> { "name" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyMotion::channels> { "channels" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblyMotion::weights> { "weights" },
         };
     }
 };
@@ -106,6 +109,23 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblySurface> {
             Member<&::MayaFlux::Kakshya::MeshAssemblySurface::base_color> { "base_color" },
             Member<&::MayaFlux::Kakshya::MeshAssemblySurface::metallic> { "metallic" },
             Member<&::MayaFlux::Kakshya::MeshAssemblySurface::roughness> { "roughness" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::emissive> { "emissive" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::alpha_cutoff> { "alpha_cutoff" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::alpha> { "alpha" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblySurface::double_sided> { "double_sided" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Kakshya::MeshAssemblyWeights> {
+    static constexpr std::string_view name = "MayaFlux::Kakshya::MeshAssemblyWeights";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Kakshya::MeshAssemblyWeights::row> { "row" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblyWeights::targets> { "targets" },
         };
     }
 };

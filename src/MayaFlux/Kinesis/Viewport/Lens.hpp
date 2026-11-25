@@ -40,6 +40,7 @@ struct Lens {
     double far { 100000.0 };
     double f_stop { 5.6 };
     double focus_distance { 5.0 };
+    double orthographic_width {}; ///< Above zero the lens is orthographic and the window spans this many scene units.
 };
 
 /**
@@ -139,6 +140,14 @@ enum class FilmFit : uint8_t {
         const double half = 0.5 * height * aspect;
         left = centre - half;
         right = centre + half;
+    }
+
+    if (lens.orthographic_width > 0.0) {
+        const double scale = lens.orthographic_width / lens.window.width();
+        return glm::ortho(
+            static_cast<float>(left * scale), static_cast<float>(right * scale),
+            static_cast<float>(bottom * scale), static_cast<float>(top * scale),
+            static_cast<float>(lens.near), static_cast<float>(lens.far));
     }
 
     return glm::frustum(

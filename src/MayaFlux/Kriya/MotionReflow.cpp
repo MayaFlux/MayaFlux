@@ -38,7 +38,7 @@ MotionReflow::Sink slot_sink(const std::shared_ptr<Nodes::Network::MeshNetwork>&
 
         const size_t slots = held->slot_count();
         const size_t matrices = frame->matrices.size();
-        if (matrices != slots && !*warned) {
+        if (matrices < slots && !*warned) {
             *warned = true;
             MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
                 "slot_sink: a frame has {} placements and the network {} slots; the ones both have are written",

@@ -35,7 +35,7 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> open_spatial_assembly(const std:
         } else if (std::holds_alternative<Kinesis::Lens>(source.geometry)) {
             const auto frames = CameraFileFrames::create(archive, source.origin);
             attached = frames && assembly->set_lens_frames(index, frames);
-        } else {
+        } else if (std::holds_alternative<Kakshya::SpatialData>(source.geometry)) {
             const auto frames = SpatialFileFrames::create(archive, source.origin);
             attached = frames && assembly->set_spatial_frames(index, frames, frames->max_vertex_count());
         }

@@ -129,6 +129,9 @@ public:
     /** @brief The lens of a camera source, or nullptr when it is not one or out of range. */
     [[nodiscard]] const Kinesis::Lens* lens(size_t source) const noexcept;
 
+    /** @brief The light of a light source, or nullptr when the source is not one. */
+    [[nodiscard]] const MeshAssemblyLight* light(size_t source) const noexcept;
+
     /** @brief The frames of a camera source, or nullptr when it has none. */
     [[nodiscard]] std::shared_ptr<const FrameSource<Kinesis::Lens>> lens_frames(size_t source) const;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Composite.hpp"
+#include "ImageData.hpp"
 #include "MeshData.hpp"
 #include "MeshSkin.hpp"
 #include "SpatialData.hpp"
@@ -25,6 +26,36 @@ enum class TopologyVariance : uint8_t {
     Heterogeneous
 };
 
+/** @brief What kind of light source a file describes. */
+enum class MeshAssemblyLightKind : uint8_t {
+    Directional,
+    Point,
+    Spot,
+    Ambient,
+    Area,
+    Unknown ///< The importer could not tell, as it does for some FBX area lights.
+};
+
+/**
+ * @struct MeshAssemblyLight
+ * @brief A light source as a file describes it. Its placement row gives position and direction:
+ *        the light faces -Z with +Y up.
+ *
+ * attenuation holds the constant, linear and quadratic terms. The cone angles are radians as the
+ * importer gives them (glTF's are measured from the axis) and apply to spot lights, size to area
+ * lights. color already includes the file's intensity.
+ */
+struct MeshAssemblyLight {
+    MeshAssemblyLightKind kind { MeshAssemblyLightKind::Point };
+    glm::vec3 color { 1.0F };
+    glm::vec3 specular { 1.0F };
+    glm::vec3 ambient { 0.0F };
+    glm::vec3 attenuation { 1.0F, 0.0F, 0.0F };
+    float inner_cone {};
+    float outer_cone {};
+    glm::vec2 size { 0.0F };
+};
+
 /**
  * @struct MeshAssemblySource
  * @brief One thing a row can show, stored once however many placements use it: a mesh, points
@@ -42,7 +73,7 @@ enum class TopologyVariance : uint8_t {
  * reader reads it by, empty for geometry made in code.
  */
 struct MeshAssemblySource {
-    std::variant<MeshData, SpatialData, Kinesis::Lens> geometry;
+    std::variant<MeshData, SpatialData, Kinesis::Lens, MeshAssemblyLight> geometry;
     std::string name;
     std::string origin;
     std::optional<Kinesis::TimeSampling> time;
@@ -70,19 +101,158 @@ struct MeshAssemblyMaterial {
 MF_DESCRIBE(MeshAssemblyMaterial)
 
 /**
+ * @enum MeshAssemblyAlpha
+ * @brief How a material means the alpha of its colour to be used.
+ */
+enum class MeshAssemblyAlpha : uint8_t {
+    Opaque,
+    Mask,
+    Blend
+};
+
+/**
  * @struct MeshAssemblySurface
  * @brief The colour and factors a material names, kept in its facets by the readers that know them.
  *
- * base_color is the diffuse or base colour with its opacity in the alpha. A reader that finds none of
- * them leaves the facet out, and a consumer reads it with facets.get<MeshAssemblySurface>().
+ * base_color is the diffuse or base colour with its opacity in the alpha. alpha_cutoff applies
+ * under MeshAssemblyAlpha::Mask. A reader that finds none of them leaves the facet out, and a
+ * consumer reads it with facets.get<MeshAssemblySurface>().
  */
 struct MeshAssemblySurface {
     glm::vec4 base_color { 1.0F };
     float metallic { 0.0F };
     float roughness { 1.0F };
+    glm::vec3 emissive { 0.0F };
+    float alpha_cutoff { 0.5F };
+    MeshAssemblyAlpha alpha { MeshAssemblyAlpha::Opaque };
+    bool double_sided {};
 };
 
 MF_DESCRIBE(MeshAssemblySurface)
+
+/** @brief How a texture continues outside the unit square. */
+enum class MeshAssemblyWrap : uint8_t {
+    Repeat,
+    Clamp,
+    Mirror,
+    Decal
+};
+
+/** @brief The offset, scale and rotation in radians a material applies to texture coordinates. */
+struct MeshAssemblyUvTransform {
+    glm::vec2 offset { 0.0F };
+    glm::vec2 scale { 1.0F };
+    float rotation {};
+};
+
+/**
+ * @struct MeshAssemblyTexture
+ * @brief One texture a material names.
+ *
+ * image holds the decoded pixels when the model file carries them, and path is then a reference
+ * into that file. Otherwise image is null and path names a file.
+ */
+struct MeshAssemblyTexture {
+    std::string path;
+    std::shared_ptr<const ImageData> image;
+    MeshAssemblyWrap wrap_u { MeshAssemblyWrap::Repeat };
+    MeshAssemblyWrap wrap_v { MeshAssemblyWrap::Repeat };
+    std::optional<MeshAssemblyUvTransform> transform;
+    uint32_t uv_set {}; ///< 0 is the vertex uv, higher ones are MeshAssemblyVertexSets::uvs[uv_set - 1].
+};
+
+/** @brief A texture under a use MeshAssemblyMaps has no member for, or past the first of one it has. */
+struct MeshAssemblyNamedTexture {
+    std::string use;
+    uint32_t index {};
+    MeshAssemblyTexture texture;
+};
+
+/**
+ * @struct MeshAssemblyMaps
+ * @brief The textures of a material by use, kept in its facets by the readers that know them.
+ *
+ * A file that packs metalness and roughness into one texture names it in both.
+ */
+struct MeshAssemblyMaps {
+    std::optional<MeshAssemblyTexture> base_color;
+    std::optional<MeshAssemblyTexture> normal;
+    std::optional<MeshAssemblyTexture> metalness;
+    std::optional<MeshAssemblyTexture> roughness;
+    std::optional<MeshAssemblyTexture> emissive;
+    std::optional<MeshAssemblyTexture> occlusion;
+    std::optional<MeshAssemblyTexture> opacity;
+    std::vector<MeshAssemblyNamedTexture> others;
+};
+
+/**
+ * @struct MeshAssemblyProperties
+ * @brief Every property a file gives a material, as the importer named it, kept in the material's facets.
+ */
+struct MeshAssemblyProperties {
+    using Value = std::variant<std::vector<float>, std::vector<double>, std::vector<int32_t>, std::string, std::vector<uint8_t>>;
+
+    struct Entry {
+        std::string key;
+        uint32_t semantic {};
+        uint32_t index {};
+        Value value;
+    };
+
+    std::vector<Entry> entries;
+};
+
+/**
+ * @struct MeshAssemblyVertexSets
+ * @brief A mesh source's UV and colour sets past the first, one entry per vertex, kept in its facets.
+ */
+struct MeshAssemblyVertexSets {
+    std::vector<std::vector<glm::vec2>> uvs;
+    std::vector<std::vector<glm::vec4>> colors;
+};
+
+/**
+ * @struct MeshAssemblyMorphTarget
+ * @brief One shape a mesh can take: replacement values for its vertices, not offsets.
+ *
+ * Empty normals or tangents mean the target leaves them as they are. weight is the file's rest weight.
+ */
+struct MeshAssemblyMorphTarget {
+    std::string name;
+    float weight {};
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec3> tangents;
+};
+
+/** @brief The morph targets of a mesh source, kept in its facets. */
+struct MeshAssemblyMorphs {
+    std::vector<MeshAssemblyMorphTarget> targets;
+};
+
+/** @brief The keyed weights of one row's morph targets, in the order of its source's targets. */
+struct MeshAssemblyWeights {
+    uint64_t row {};
+    std::vector<Kinesis::TimedValues<float>> targets;
+};
+
+/**
+ * @struct MeshAssemblyMetadata
+ * @brief The named values a file attaches to its scene and rows, uninterpreted, kept in the assembly's facets.
+ *
+ * An entry with no row belongs to the scene. Nested names are joined with '/'.
+ */
+struct MeshAssemblyMetadata {
+    using Value = std::variant<bool, int64_t, uint64_t, double, glm::vec3, std::string>;
+
+    struct Entry {
+        std::optional<uint64_t> row;
+        std::string key;
+        Value value;
+    };
+
+    std::vector<Entry> entries;
+};
 
 /**
  * @struct MeshAssemblyChannel
@@ -96,6 +266,8 @@ struct MeshAssemblyChannel {
     std::optional<Kinesis::TimedValues<glm::vec3>> translation;
     std::optional<Kinesis::TimedValues<glm::vec4>> rotation;
     std::optional<Kinesis::TimedValues<glm::vec3>> scale;
+    std::optional<Kinesis::OutOfRange> before;
+    std::optional<Kinesis::OutOfRange> after;
 };
 
 /**
@@ -105,6 +277,7 @@ struct MeshAssemblyChannel {
 struct MeshAssemblyMotion {
     std::string name;
     std::vector<MeshAssemblyChannel> channels;
+    std::vector<MeshAssemblyWeights> weights {};
 };
 
 MF_DESCRIBE(MeshAssemblyMotion)

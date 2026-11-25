@@ -90,7 +90,13 @@ namespace {
                     kept.channels.back().row -= start;
                 }
             }
-            if (!kept.channels.empty()) {
+            for (const auto& weights : motion.weights) {
+                if (weights.row >= start && weights.row < start + count) {
+                    kept.weights.push_back(weights);
+                    kept.weights.back().row -= start;
+                }
+            }
+            if (!kept.channels.empty() || !kept.weights.empty()) {
                 out.motions.push_back(std::move(kept));
             }
         }
@@ -110,6 +116,14 @@ namespace {
                 return false;
             }
             targeted[channel.row] = true;
+        }
+        std::vector<bool> weighted(rows, false);
+        for (const auto& weights : motion.weights) {
+            if (weights.row >= rows || weighted[weights.row]) {
+                error = "motion " + motion.name + " weights a row that does not exist, or one row twice";
+                return false;
+            }
+            weighted[weights.row] = true;
         }
         return true;
     }
@@ -206,6 +220,11 @@ bool MeshAssemblyContainer::set_lens_frames(size_t source, std::shared_ptr<const
     m_lens_frames.resize(std::max(m_lens_frames.size(), source + 1));
     m_lens_frames[source] = std::move(frames);
     return true;
+}
+
+const MeshAssemblyLight* MeshAssemblyContainer::light(size_t source) const noexcept
+{
+    return source < m_data.sources.size() ? std::get_if<MeshAssemblyLight>(&m_data.sources[source].geometry) : nullptr;
 }
 
 const Kinesis::Lens* MeshAssemblyContainer::lens(size_t source) const noexcept
