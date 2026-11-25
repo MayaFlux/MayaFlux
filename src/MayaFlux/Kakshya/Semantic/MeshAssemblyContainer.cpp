@@ -333,7 +333,7 @@ bool MeshAssemblyContainer::set_spatial_frames(size_t source, std::shared_ptr<co
     return true;
 }
 
-bool MeshAssemblyContainer::set_lens_frames(size_t source, std::shared_ptr<const FrameSource<Kinesis::Lens>> frames)
+bool MeshAssemblyContainer::set_lens_frames(size_t source, std::shared_ptr<const FrameSource<Kakshya::MeshAssemblyLens>> frames)
 {
     if (lens(source) == nullptr) {
         return false;
@@ -348,12 +348,12 @@ const MeshAssemblyLight* MeshAssemblyContainer::light(size_t source) const noexc
     return source < m_data.sources.size() ? std::get_if<MeshAssemblyLight>(&m_data.sources[source].geometry) : nullptr;
 }
 
-const Kinesis::Lens* MeshAssemblyContainer::lens(size_t source) const noexcept
+const Kakshya::MeshAssemblyLens* MeshAssemblyContainer::lens(size_t source) const noexcept
 {
-    return source < m_data.sources.size() ? std::get_if<Kinesis::Lens>(&m_data.sources[source].geometry) : nullptr;
+    return source < m_data.sources.size() ? std::get_if<Kakshya::MeshAssemblyLens>(&m_data.sources[source].geometry) : nullptr;
 }
 
-std::shared_ptr<const FrameSource<Kinesis::Lens>> MeshAssemblyContainer::lens_frames(size_t source) const
+std::shared_ptr<const FrameSource<Kakshya::MeshAssemblyLens>> MeshAssemblyContainer::lens_frames(size_t source) const
 {
     return source < m_lens_frames.size() ? m_lens_frames[source] : nullptr;
 }

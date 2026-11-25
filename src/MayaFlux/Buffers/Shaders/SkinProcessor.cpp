@@ -5,7 +5,6 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
-#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -17,6 +16,24 @@ namespace {
     constexpr std::array<std::string_view, 7> k_names { "rest", "joints", "weights", "palette", "vertices", "deltas", "morph_weights" };
 
 } // namespace
+
+std::vector<float> shape_offsets(
+    const Kakshya::MeshMorphTargets& targets, std::span<const Kakshya::MeshVertex> base)
+{
+    std::vector<float> offsets(std::max<size_t>(1, targets.size() * base.size() * 9), 0.0F);
+    for (size_t t = 0; t < targets.size(); ++t) {
+        const auto& shape = targets[t].second;
+        for (size_t v = 0; shape.size() == base.size() && v < base.size(); ++v) {
+            float* out = offsets.data() + (t * base.size() + v) * 9;
+            for (glm::length_t c = 0; c < 3; ++c) {
+                out[c] = shape[v].position[c] - base[v].position[c];
+                out[3 + c] = shape[v].normal[c] - base[v].normal[c];
+                out[6 + c] = shape[v].tangent[c] - base[v].tangent[c];
+            }
+        }
+    }
+    return offsets;
+}
 
 Portal::Graphics::ShaderSpec skin_spec(uint32_t workgroup)
 {
@@ -72,7 +89,7 @@ SkinProcessor::SkinProcessor(
 
     std::vector<Kakshya::MeshVertex> base(vertices);
     std::memcpy(base.data(), rest_vertices.data(), rest_vertices.size());
-    m_deltas = Kinesis::morph_deltas(m_morphs ? *m_morphs : Kakshya::MeshMorphTargets {}, base);
+    m_deltas = shape_offsets(m_morphs ? *m_morphs : Kakshya::MeshMorphTargets {}, base);
 
     if (target_count() > 0) {
         std::vector<float> initial;

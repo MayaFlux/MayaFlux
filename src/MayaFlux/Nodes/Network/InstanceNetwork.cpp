@@ -5,7 +5,7 @@
 #include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
 #include "MayaFlux/Kakshya/NDData/SpatialAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
-#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/AffineBlend.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 #include "MayaFlux/Nodes/Graphics/PointCollectionNode.hpp"
 
@@ -169,7 +169,7 @@ std::shared_ptr<InstanceNetwork> make_instance_network(
             for (const uint64_t joint : *skeleton) {
                 joints.push_back(world[joint]);
             }
-            slot.palette = Kinesis::skin_palette(world[row], joints, skin->inverse_bind);
+            slot.palette = Kinesis::relative_transforms(world[row], joints, skin->inverse_bind);
         }
         if (morphs) {
             for (const auto& [name, shape] : *morphs) {

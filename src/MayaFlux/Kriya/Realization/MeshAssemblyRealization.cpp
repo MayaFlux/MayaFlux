@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
-#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/AffineBlend.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 
 namespace MayaFlux::Kriya {
@@ -191,7 +191,7 @@ MotionReflow::Sink MeshAssemblyRealization::placement_sink(size_t part) const
                         joints.push_back(frame->world[joint]);
                     }
                 }
-                auto palette = Kinesis::skin_palette(frame->world[entry.row], joints, entry.skin->inverse_bind);
+                auto palette = Kinesis::relative_transforms(frame->world[entry.row], joints, entry.skin->inverse_bind);
                 if (!palette.empty()) {
                     buffer->set_slot_palette(entry.slot, std::move(palette));
                 }
@@ -244,7 +244,7 @@ MotionReflow::Sink MeshAssemblyRealization::placement_sink(size_t part) const
                         joints.push_back(frame->world[joint]);
                     }
                 }
-                auto palette = Kinesis::skin_palette(frame->world[entry.row], joints, skin->inverse_bind);
+                auto palette = Kinesis::relative_transforms(frame->world[entry.row], joints, skin->inverse_bind);
                 if (!palette.empty() && palette != slot.palette) {
                     slot.palette = std::move(palette);
                     slot.dirty = true;

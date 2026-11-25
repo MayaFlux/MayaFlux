@@ -128,7 +128,7 @@ public:
      * @brief Publish the palette of a skinned slot, one matrix for each joint, in the space of the slot's mesh.
      * @return False when the slot has no skin pass wired yet or the count is not its skin's joint count.
      *
-     * Safe from any thread (see Kinesis::skin_palette). A slot that names its joint slots has its
+     * Safe from any thread (see Kinesis::relative_transforms). A slot that names its joint slots has its
      * palette recomputed from them every cycle, which replaces what is published here.
      */
     bool set_slot_palette(uint32_t slot, std::vector<glm::mat4> palette);

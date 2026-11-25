@@ -550,6 +550,7 @@ void RenderProcessor::set_view_transform(
 {
     m_view_transform = vt;
     m_view_transform_source = nullptr;
+    m_view_cell.reset();
     m_view_transform_active = true;
 
     if (enable_depth && !m_depth_enabled) {
@@ -566,7 +567,28 @@ void RenderProcessor::set_view_transform_source(
 {
     m_view_transform_source = std::move(fn);
     m_view_transform.reset();
+    m_view_cell.reset();
     m_view_transform_active = true;
+
+    if (enable_depth && !m_depth_enabled) {
+        enable_depth_test();
+    }
+
+    set_cull_mode(cull);
+}
+
+void RenderProcessor::set_view_cell(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view,
+    bool enable_depth,
+    Portal::Graphics::CullMode cull)
+{
+    m_view_cell = view;
+    m_view_transform.reset();
+    m_view_transform_source = nullptr;
+    m_view_transform_active = view != nullptr;
+    if (!view) {
+        return;
+    }
 
     if (enable_depth && !m_depth_enabled) {
         enable_depth_test();
@@ -640,6 +662,15 @@ bool RenderProcessor::has_destination_view(const DestinationView& destination) c
 void RenderProcessor::apply_lane_view()
 {
     if (!has_view(*m_lane)) {
+        if (m_view_cell) {
+            const DestinationInfo destination = describe();
+            const vk::Rect2D filled = resolve_area_rect(m_lane->area, destination.width, destination.height);
+            const auto [placement, frustum] = m_view_cell->read();
+            const float aspect = filled.extent.height > 0
+                ? static_cast<float>(filled.extent.width) / static_cast<float>(filled.extent.height)
+                : 1.0F;
+            m_published_render_transform.view_transform = Kinesis::view_from_frustum(placement, frustum, aspect);
+        }
         return;
     }
 
@@ -1136,7 +1167,7 @@ const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
 const Kinesis::RenderTransform& RenderProcessor::resolve_render_transform()
 {
     Kinesis::RenderTransform transform;
-    if (m_view_transform_active) {
+    if (m_view_transform_active && !m_view_cell) {
         transform.view_transform = m_view_transform_source
             ? m_view_transform_source()
             : m_view_transform.value_or(Kinesis::ViewTransform {});

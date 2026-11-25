@@ -1676,7 +1676,7 @@ std::optional<double> SpatialReader::camera_time(const std::string& camera_name,
     return static_cast<double>(it->second.time_sampling->getSampleTime(static_cast<index_t>(index)));
 }
 
-std::optional<Kinesis::Lens> SpatialReader::read_lens(const std::string& camera_name, size_t index) const
+std::optional<Kakshya::MeshAssemblyLens> SpatialReader::read_lens(const std::string& camera_name, size_t index) const
 {
     if (!m_impl->archive.valid()) {
         set_error("read_lens: no archive open");
@@ -1693,7 +1693,7 @@ std::optional<Kinesis::Lens> SpatialReader::read_lens(const std::string& camera_
         CameraSample sample;
         it->second.object.getSchema().get(sample, ISampleSelector(static_cast<index_t>(index)));
 
-        Kinesis::Lens lens;
+        Kakshya::MeshAssemblyLens lens;
         lens.focal_length = sample.getFocalLength();
         lens.horizontal_aperture = sample.getHorizontalAperture();
         lens.vertical_aperture = sample.getVerticalAperture();
@@ -1707,7 +1707,8 @@ std::optional<Kinesis::Lens> SpatialReader::read_lens(const std::string& camera_
         double left {};
         double right {};
         sample.getScreenWindow(top, bottom, left, right);
-        lens.window = { .left = left, .right = right, .bottom = bottom, .top = top };
+        lens.window = { .min = { static_cast<float>(left), static_cast<float>(bottom) },
+            .max = { static_cast<float>(right), static_cast<float>(top) } };
 
         const auto user = it->second.object.getSchema().getUserProperties();
         if (user.valid() && user.getPropertyHeader(alembic::k_orthographic_property)) {

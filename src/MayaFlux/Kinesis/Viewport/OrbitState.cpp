@@ -84,4 +84,27 @@ void snap_orbit_ortho(OrbitState& st, int view)
     }
 }
 
+Viewpoint viewpoint_of(const OrbitState& st)
+{
+    const Frustum frustum = frustum_from_fov(st.fov_radians, 1.5, st.near_plane, st.far_plane);
+    return { glm::inverse(glm::lookAt(orbit_eye(st), st.focal, glm::vec3(0.0F, 1.0F, 0.0F))), frustum };
+}
+
+void set_viewpoint(OrbitState& st, const Viewpoint& view)
+{
+    if (same_viewpoint(view, viewpoint_of(st))) {
+        return;
+    }
+
+    const auto& [placement, frustum] = view;
+    const glm::vec3 forward = -glm::normalize(glm::vec3(placement[2]));
+
+    st.focal = glm::vec3(placement[3]) + forward * st.distance;
+    st.azimuth = std::atan2(-forward.x, -forward.z);
+    st.elevation = std::asin(glm::clamp(-forward.y, -1.0F, 1.0F));
+    st.fov_radians = static_cast<float>(frustum_vertical_fov(frustum));
+    st.near_plane = static_cast<float>(frustum.near);
+    st.far_plane = static_cast<float>(frustum.far);
+}
+
 } // namespace MayaFlux::Kinesis

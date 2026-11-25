@@ -185,4 +185,40 @@ MotionReflow::Sink placement_sink(const std::shared_ptr<Buffers::RecordedGeometr
     };
 }
 
+MotionReflow::Sink viewpoint_sink(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view, uint32_t driver, uint64_t row,
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly)
+{
+    std::optional<Kinesis::Frustum> still;
+    if (assembly) {
+        const auto placement = assembly->placement(row);
+        if (placement && placement->source && !assembly->lens_frames(*placement->source)) {
+            if (const auto* lens = assembly->lens(*placement->source)) {
+                still = Kakshya::frustum_of(*lens);
+            }
+        }
+    }
+
+    return [target = std::weak_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>(view), driver, row, still](
+               const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame, const FrameContext&) {
+        const auto cell = target.lock();
+        if (!frame || !cell || row >= frame->world.size() || !cell->drives(driver)) {
+            return;
+        }
+        cell->write(driver, { frame->world[row], still ? *still : cell->read().second });
+    };
+}
+
+Reflow<Kakshya::MeshAssemblyLens>::Sink frustum_sink(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view, uint32_t driver)
+{
+    return [target = std::weak_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>(view), driver](
+               const std::shared_ptr<const Kakshya::MeshAssemblyLens>& frame, const FrameContext&) {
+        const auto cell = target.lock();
+        if (frame && cell && cell->drives(driver)) {
+            cell->write(driver, { cell->read().first, Kakshya::frustum_of(*frame) });
+        }
+    };
+}
+
 } // namespace MayaFlux::Kriya

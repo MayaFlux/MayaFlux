@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
-#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
+#include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -254,7 +254,7 @@ void InstanceSSBOProcessor::upload_deformation_template()
 
     std::vector<Kakshya::MeshVertex> base(vertices);
     std::memcpy(base.data(), data.data(), data.size());
-    const auto deltas = Kinesis::morph_deltas(first.morphs ? *first.morphs : Kakshya::MeshMorphTargets {}, base);
+    const auto deltas = shape_offsets(first.morphs ? *first.morphs : Kakshya::MeshMorphTargets {}, base);
     write_stream(m_deltas, deltas.data(), deltas.size() * sizeof(float));
 
     m_joint_count = first.skin ? static_cast<uint32_t>(first.skin->joint_count()) : 0;

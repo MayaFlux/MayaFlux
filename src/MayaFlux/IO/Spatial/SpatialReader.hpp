@@ -3,7 +3,6 @@
 #include "SpatialCache.hpp"
 
 #include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
-#include "MayaFlux/Kinesis/Viewport/Lens.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -228,7 +227,7 @@ public:
      * @return The lens, or nullopt for an unknown camera, an index out of range or a read failure;
      *         the reason is in get_last_error().
      */
-    [[nodiscard]] std::optional<Kinesis::Lens> read_lens(const std::string& camera_name, size_t index) const;
+    [[nodiscard]] std::optional<Kakshya::MeshAssemblyLens> read_lens(const std::string& camera_name, size_t index) const;
 
     /**
      * @brief Read one sample of a mesh object as triangles.

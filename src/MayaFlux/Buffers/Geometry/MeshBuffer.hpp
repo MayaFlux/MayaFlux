@@ -226,7 +226,7 @@ public:
      * @brief Publish the palette the skin pass reads, one matrix for each joint, in the space of the mesh.
      * @return False when no skin pass is wired yet or the count is not the skin's joint count.
      *
-     * Safe from any thread (see Kinesis::skin_palette).
+     * Safe from any thread (see Kinesis::relative_transforms).
      */
     bool set_palette(std::vector<glm::mat4> palette);
 

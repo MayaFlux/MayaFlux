@@ -183,7 +183,7 @@ namespace {
      * @brief A camera sample whose screen window is the lens's, found through the overscan
      *        of each edge, which the window follows linearly.
      */
-    CameraSample camera_sample(const Kinesis::Lens& lens)
+    CameraSample camera_sample(const Kakshya::MeshAssemblyLens& lens)
     {
         CameraSample out;
         out.setFocalLength(lens.focal_length);
@@ -214,10 +214,10 @@ namespace {
         const auto solve = [](double target, double base, double probed) {
             return probed != base ? (target - base) / (probed - base) : 0.0;
         };
-        out.setOverScanTop(solve(lens.window.top, top, probe_top));
-        out.setOverScanBottom(solve(lens.window.bottom, bottom, probe_bottom));
-        out.setOverScanLeft(solve(lens.window.left, left, probe_left));
-        out.setOverScanRight(solve(lens.window.right, right, probe_right));
+        out.setOverScanTop(solve(lens.window.max.y, top, probe_top));
+        out.setOverScanBottom(solve(lens.window.min.y, bottom, probe_bottom));
+        out.setOverScanLeft(solve(lens.window.min.x, left, probe_left));
+        out.setOverScanRight(solve(lens.window.max.x, right, probe_right));
         return out;
     }
 
@@ -556,7 +556,7 @@ namespace {
                 }
             } else if (const auto* spatial = std::get_if<Kakshya::SpatialData>(&source.geometry)) {
                 write_spatial(parent, name, md, index, *spatial, wants_user, made, user_compound);
-            } else if (const auto* lens = std::get_if<Kinesis::Lens>(&source.geometry)) {
+            } else if (const auto* lens = std::get_if<Kakshya::MeshAssemblyLens>(&source.geometry)) {
                 write_camera(parent, name, md, index, *lens, wants_user, made, user_compound);
             } else if (const auto* light = std::get_if<Kakshya::MeshAssemblyLight>(&source.geometry)) {
                 write_light(parent, name, md, *light, wants_user, made, user_compound);
@@ -912,7 +912,7 @@ namespace {
         }
 
         void write_camera(OObject& parent, const std::string& name, const MetaData& md, uint64_t index,
-            const Kinesis::Lens& first, bool wants_user, OObject& made, OCompoundProperty& user)
+            const Kakshya::MeshAssemblyLens& first, bool wants_user, OObject& made, OCompoundProperty& user)
         {
             OCamera camera(parent, name, md);
             made = camera;

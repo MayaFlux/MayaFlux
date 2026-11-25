@@ -3,7 +3,7 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
-#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/AffineBlend.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
@@ -271,7 +271,7 @@ void MeshNetworkBuffer::wire_skin_passes(size_t record_bytes)
                     for (const uint32_t joint : deformed.joints) {
                         joints.push_back(all[joint].world_transform);
                     }
-                    return Kinesis::skin_palette(deformed.world_transform, joints, deformed.skin->inverse_bind);
+                    return Kinesis::relative_transforms(deformed.world_transform, joints, deformed.skin->inverse_bind);
                 });
         }
 

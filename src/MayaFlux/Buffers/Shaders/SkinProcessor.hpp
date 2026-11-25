@@ -18,6 +18,16 @@ class StateFieldBuffer;
 [[nodiscard]] MAYAFLUX_API Portal::Graphics::ShaderSpec skin_spec(uint32_t workgroup = 256);
 
 /**
+ * @brief What each morph target adds to a mesh, as the deforming shaders read it.
+ * @param targets The shapes, each with a record for every vertex of base.
+ * @param base The mesh as it is.
+ * @return Nine floats (position, normal, tangent) for every vertex of every target, target after
+ *         target, and zeros for a target of another vertex count. One zero when there is nothing.
+ */
+[[nodiscard]] MAYAFLUX_API std::vector<float> shape_offsets(
+    const Kakshya::MeshMorphTargets& targets, std::span<const Kakshya::MeshVertex> base);
+
+/**
  * @class SkinProcessor
  * @brief Compute pass that morphs and skins the vertices of an attached StateFieldBuffer.
  *
@@ -31,7 +41,7 @@ class StateFieldBuffer;
  * the deformed surface.
  *
  * The palette is published from any thread by set_palette, one matrix for each joint in the
- * skin's order, in the space of the mesh (Kinesis::skin_palette), and morph weights by
+ * skin's order, in the space of the mesh (Kinesis::relative_transforms), and morph weights by
  * set_morph_weights. A skin without a palette does not run and the mesh stays as uploaded. With
  * morph targets the pass runs from the start, with the targets' own weights and the mesh as bound.
  * The matrices must be affine: the last row is not read.

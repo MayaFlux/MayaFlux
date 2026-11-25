@@ -163,7 +163,7 @@ namespace {
 
 } // namespace
 
-std::optional<Welding> weld_positions(std::span<const glm::vec3> positions, float tolerance)
+std::optional<Coincidence> merge_coincident_positions(std::span<const glm::vec3> positions, float tolerance)
 {
     if (!(tolerance >= 0.0F) || !std::isfinite(tolerance)
         || positions.size() > std::numeric_limits<uint32_t>::max()) {
@@ -177,7 +177,7 @@ std::optional<Welding> weld_positions(std::span<const glm::vec3> positions, floa
         merge_near(positions, static_cast<double>(tolerance), roots);
     }
 
-    Welding result;
+    Coincidence result;
     result.vertex_map.resize(positions.size());
     for (uint32_t i = 0; i < positions.size(); ++i) {
         const uint32_t root = roots.find(i);

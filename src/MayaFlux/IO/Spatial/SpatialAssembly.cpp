@@ -32,7 +32,7 @@ std::shared_ptr<Kakshya::MeshAssemblyContainer> open_spatial_assembly(const std:
         if (std::holds_alternative<Kakshya::MeshData>(source.geometry)) {
             const auto frames = MeshFileFrames::create(archive, source.origin);
             attached = frames && assembly->set_mesh_frames(index, frames);
-        } else if (std::holds_alternative<Kinesis::Lens>(source.geometry)) {
+        } else if (std::holds_alternative<Kakshya::MeshAssemblyLens>(source.geometry)) {
             const auto frames = CameraFileFrames::create(archive, source.origin);
             attached = frames && assembly->set_lens_frames(index, frames);
         } else if (std::holds_alternative<Kakshya::SpatialData>(source.geometry)) {

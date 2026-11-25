@@ -227,10 +227,10 @@ public:
      * row and each further mesh a child row, an identity scene root with no row unless
      * an animation targets it, and meshes no node references as root rows.
      *
-     * A camera becomes a Kinesis::Lens source, perspective or orthographic, and a light a
+     * A camera becomes a Kakshya::MeshAssemblyLens source, perspective or orthographic, and a light a
      * MeshAssemblyLight source. Either sits on the row of its name when that row shows
      * nothing else and it is at the row's origin facing -Z, otherwise on a child row carrying its
-     * own frame. Both look along -Z with +Y up, as Kinesis::view_from_lens expects. Every
+     * own frame. Both look along -Z with +Y up, as Kinesis::view_from_frustum expects. Every
      * material property is in the material's MeshAssemblyProperties. Where several rows
      * share a name, a channel or bone naming it takes the first in tree order.
      *

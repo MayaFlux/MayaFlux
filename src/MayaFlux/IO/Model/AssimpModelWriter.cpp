@@ -481,20 +481,20 @@ namespace {
         mesh.mBones = array_of(bones);
     }
 
-    aiCamera* camera_of(const Kinesis::Lens& lens, const std::string& name)
+    aiCamera* camera_of(const Kakshya::MeshAssemblyLens& lens, const std::string& name)
     {
         auto* camera = new aiCamera();
         camera->mName = aiString(name);
         camera->mLookAt = aiVector3D(0.0F, 0.0F, -1.0F);
         camera->mUp = aiVector3D(0.0F, 1.0F, 0.0F);
-        camera->mAspect = static_cast<float>(lens.window.width() / lens.window.height());
+        camera->mAspect = (lens.window.max.x - lens.window.min.x) / (lens.window.max.y - lens.window.min.y);
         camera->mClipPlaneNear = static_cast<float>(lens.near);
         camera->mClipPlaneFar = static_cast<float>(lens.far);
         if (lens.orthographic_width > 0.0) {
             camera->mHorizontalFOV = 0.0F;
             camera->mOrthographicWidth = static_cast<float>(0.5 * lens.orthographic_width);
         } else {
-            camera->mHorizontalFOV = static_cast<float>(2.0 * std::atan(Kinesis::lens_half_tangent(lens)));
+            camera->mHorizontalFOV = static_cast<float>(2.0 * std::atan(Kakshya::lens_half_tangent(lens)));
         }
         return camera;
     }

@@ -7,7 +7,7 @@
 #include "SpatialData.hpp"
 
 #include "MayaFlux/Kinesis/Temporal/TimedValues.hpp"
-#include "MayaFlux/Kinesis/Viewport/Lens.hpp"
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -25,6 +25,56 @@ enum class TopologyVariance : uint8_t {
     Homogeneous,
     Heterogeneous
 };
+
+/**
+ * @struct MeshAssemblyLens
+ * @brief A camera's optics as a file writes them: focal length, film back and clip planes.
+ *
+ * The defaults are Alembic's: a 35 mm lens on a 3.6 by 2.4 cm film back. Lengths of the film are in
+ * centimetres and the focal length in millimetres. window is the rectangle the lens looks through in
+ * half widths of the film back, with film offset, overscan and squeeze already applied. f_stop and
+ * focus_distance do not affect the projection. frustum_of() gives the geometry.
+ */
+struct MeshAssemblyLens {
+    double focal_length { 35.0 };
+    double horizontal_aperture { 3.6 };
+    double vertical_aperture { 2.4 };
+    Kinesis::AABB2D window { .min = { -1.0F, -2.0F / 3.0F }, .max = { 1.0F, 2.0F / 3.0F } };
+    double near { 0.1 };
+    double far { 100000.0 };
+    double f_stop { 5.6 };
+    double focus_distance { 5.0 };
+    double orthographic_width {}; ///< Above zero the lens is orthographic and the window spans this many scene units.
+};
+
+/** @brief The tangent of half the horizontal field of view a lens gives its film back. */
+[[nodiscard]] inline double lens_half_tangent(const MeshAssemblyLens& lens) noexcept
+{
+    return lens.horizontal_aperture * 10.0 / (2.0 * lens.focal_length);
+}
+
+/**
+ * @brief The frustum a lens sees through, covering an output of any aspect.
+ *
+ * A lens that is not usable gives an empty window, whose projection is the identity.
+ */
+[[nodiscard]] inline Kinesis::Frustum frustum_of(const MeshAssemblyLens& lens) noexcept
+{
+    const bool orthographic = lens.orthographic_width > 0.0;
+    const double width = static_cast<double>(lens.window.max.x) - lens.window.min.x;
+    const double reach = lens_half_tangent(lens);
+    const double scale = orthographic
+        ? (width > 0.0 ? lens.orthographic_width / width : 0.0)
+        : (lens.focal_length > 0.0 && reach > 0.0 ? reach : 0.0);
+    const auto s = static_cast<float>(scale);
+    return {
+        .window = { .min = lens.window.min * s, .max = lens.window.max * s },
+        .near = lens.near,
+        .far = lens.far,
+        .orthographic = orthographic,
+        .fit = Kinesis::AspectFit::Cover
+    };
+}
 
 /** @brief What kind of light source a file describes. */
 enum class MeshAssemblyLightKind : uint8_t {
@@ -73,7 +123,7 @@ struct MeshAssemblyLight {
  * reader reads it by, empty for geometry made in code.
  */
 struct MeshAssemblySource {
-    std::variant<MeshData, SpatialData, Kinesis::Lens, MeshAssemblyLight> geometry;
+    std::variant<MeshData, SpatialData, Kakshya::MeshAssemblyLens, MeshAssemblyLight> geometry;
     std::string name;
     std::string origin;
     std::optional<Kinesis::TimeSampling> time;

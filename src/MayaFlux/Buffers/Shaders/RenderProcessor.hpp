@@ -1,7 +1,8 @@
 #pragma once
 
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
-#include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
+#include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewportArea.hpp"
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
@@ -363,6 +364,25 @@ public:
         Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
 
     /**
+     * @brief Draw every destination from an owned viewpoint, each with the aspect of its own size.
+     *
+     * Whoever drives the view moves what this processor draws. Replaces set_view_transform and
+     * set_view_transform_source, and either replaces it. A destination with its own view keeps
+     * that. Null returns to no view of the processor.
+     *
+     * @param view The viewpoint.
+     * @param enable_depth Enable the depth test if it is not already on.
+     * @param cull Face culling mode.
+     */
+    void set_view_cell(
+        const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view,
+        bool enable_depth = true,
+        Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
+
+    /** @brief The viewpoint cell drawn from, or null. */
+    [[nodiscard]] const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& get_view_cell() const { return m_view_cell; }
+
+    /**
      * @brief Give one destination its own view.
      *
      * That destination draws with it, and the others keep theirs or the view of
@@ -706,6 +726,7 @@ private:
 
     std::optional<Kinesis::ViewTransform> m_view_transform;
     std::function<Kinesis::ViewTransform()> m_view_transform_source;
+    std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>> m_view_cell;
     Kinesis::RenderTransform m_published_render_transform {};
     std::optional<glm::mat4> m_geometry_transform;
     std::function<glm::mat4()> m_geometry_transform_source;

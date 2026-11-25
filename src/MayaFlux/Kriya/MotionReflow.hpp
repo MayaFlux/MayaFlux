@@ -1,7 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Semantic/MeshAssemblyMotionFrames.hpp"
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Kriya/Reflow.hpp"
+#include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
 
 namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
@@ -12,6 +14,8 @@ enum class MeshPartPlacement : uint8_t;
 namespace MayaFlux::Buffers {
 class RecordedGeometryBuffer;
 }
+
+
 
 namespace MayaFlux::Kriya {
 
@@ -97,5 +101,33 @@ using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const Fram
  */
 [[nodiscard]] MAYAFLUX_API MotionReflow::Sink placement_sink(
     const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer, uint64_t row);
+
+/**
+ * @brief A sink that drives a viewpoint cell with a camera row of an assembly.
+ * @param view The viewpoint, held weakly.
+ * @param driver An id the cell's join() gave. Nothing is written until the cell is handed to it.
+ * @param row The row that places the camera. The frame needs its world placements.
+ * @param assembly When given and the row's lens has no frames of its own, that lens's frustum is
+ *        written with each placement. Otherwise only the placement is, and frustum_sink writes
+ *        the frustum.
+ *
+ * @code
+ * const auto path = view->join();
+ * builder.sink(viewpoint_sink(view, path, camera_row, assembly));
+ * view->hand_to(path);
+ * @endcode
+ */
+[[nodiscard]] MAYAFLUX_API MotionReflow::Sink viewpoint_sink(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view, uint32_t driver, uint64_t row,
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly = nullptr);
+
+/**
+ * @brief A sink that writes the frustum of each frame of a camera's lens into a viewpoint cell,
+ *        such as an assembly's lens_frames played by a Reflow<Kakshya::MeshAssemblyLens>.
+ * @param view The viewpoint, held weakly.
+ * @param driver The id that drives it, the one its viewpoint_sink was given.
+ */
+[[nodiscard]] MAYAFLUX_API Reflow<Kakshya::MeshAssemblyLens>::Sink frustum_sink(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view, uint32_t driver);
 
 } // namespace MayaFlux::Kriya

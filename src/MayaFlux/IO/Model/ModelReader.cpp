@@ -5,7 +5,7 @@
 #include "MayaFlux/Kinesis/Polyhedral/VertexRecords.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
-#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/AffineBlend.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
@@ -317,24 +317,30 @@ namespace {
         return surface;
     }
 
-    std::optional<Kinesis::Lens> lens_of(const aiCamera& camera)
+    std::optional<Kakshya::MeshAssemblyLens> lens_of(const aiCamera& camera)
     {
         const bool orthographic = camera.mOrthographicWidth > 0.0F;
         if (!orthographic && !(camera.mHorizontalFOV > 0.0F)) {
             return std::nullopt;
         }
 
-        const Kinesis::Lens defaults;
-        const double aspect = camera.mAspect > 0.0F ? camera.mAspect : defaults.window.width() / defaults.window.height();
+        const Kakshya::MeshAssemblyLens defaults;
+        const double aspect = camera.mAspect > 0.0F ? camera.mAspect : static_cast<double>(defaults.window.max.x - defaults.window.min.x) / (defaults.window.max.y - defaults.window.min.y);
         const bool clipped = camera.mClipPlaneNear > 0.0F && camera.mClipPlaneFar > camera.mClipPlaneNear;
         const double near = clipped ? camera.mClipPlaneNear : defaults.near;
         const double far = clipped ? camera.mClipPlaneFar : defaults.far;
 
         const double vertical = orthographic
-            ? defaults.window.height()
+            ? static_cast<double>(defaults.window.max.y - defaults.window.min.y)
             : 2.0 * std::atan(std::tan(camera.mHorizontalFOV * 0.5) / aspect);
 
-        Kinesis::Lens lens = Kinesis::lens_from_fov(vertical, aspect, near, far);
+        Kakshya::MeshAssemblyLens lens;
+        lens.vertical_aperture = lens.horizontal_aperture / aspect;
+        lens.focal_length = lens.vertical_aperture * 10.0 / (2.0 * std::tan(vertical * 0.5));
+        const auto half = static_cast<float>(1.0 / aspect);
+        lens.window = { .min = { -1.0F, -half }, .max = { 1.0F, half } };
+        lens.near = near;
+        lens.far = far;
         if (orthographic) {
             lens.orthographic_width = 2.0 * camera.mOrthographicWidth;
         }
@@ -883,7 +889,7 @@ ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
             for (const uint64_t joint : *skeleton) {
                 joints.push_back(world[joint]);
             }
-            palette = Kinesis::skin_palette(glm::mat4(1.0F), joints, skin->inverse_bind);
+            palette = Kinesis::relative_transforms(glm::mat4(1.0F), joints, skin->inverse_bind);
         }
 
         std::shared_ptr<Kakshya::MeshMorphTargets> morphs;
@@ -1146,13 +1152,13 @@ ModelReader::assemble(bool beside_the_tree) const
         return assembly->add_placement(row_of(std::move(name), parent, source, mesh_index, local));
     };
 
-    struct Viewpoint {
+    struct NamedPlacement {
         uint64_t source;
         glm::mat4 local;
         std::string name;
     };
 
-    std::unordered_map<std::string, std::vector<Viewpoint>> attachments;
+    std::unordered_map<std::string, std::vector<NamedPlacement>> attachments;
 
     for (unsigned int i = 0; i < s->mNumCameras; ++i) {
         const aiCamera& camera = *s->mCameras[i];
@@ -1176,7 +1182,7 @@ ModelReader::assemble(bool beside_the_tree) const
             .name = name });
     }
 
-    const auto take_attachments = [&attachments](const std::string& entry_name) -> std::vector<Viewpoint> {
+    const auto take_attachments = [&attachments](const std::string& entry_name) -> std::vector<NamedPlacement> {
         const auto found = attachments.find(entry_name);
         if (found == attachments.end()) {
             return {};
@@ -1188,7 +1194,7 @@ ModelReader::assemble(bool beside_the_tree) const
 
     std::vector<Kakshya::MeshAssemblyPlacement> trailing;
 
-    const auto add_camera_row = [&trailing](const Viewpoint& view, std::optional<uint64_t> parent) {
+    const auto add_camera_row = [&trailing](const NamedPlacement& view, std::optional<uint64_t> parent) {
         trailing.push_back({ .name = view.name,
             .parent = parent,
             .source = view.source,
