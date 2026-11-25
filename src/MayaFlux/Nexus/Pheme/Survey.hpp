@@ -50,7 +50,9 @@ MAYAFLUX_API std::optional<glm::vec3> read_anchor(
  * Other mesh buffers are read as read_anchor reads them.
  *
  * For a MeshNetworkBuffer or InstanceNetworkBuffer, @p collection is a slot, bounded
- * in the slot's own coordinates; a skinned instance covers its joints as well.
+ * in the slot's own coordinates; a skinned instance covers its joints as well. An
+ * instance with a weight for every morph target of the template is bounded with
+ * those targets applied, at the cost of a pass over the template's vertices.
  * Blocks for a ComputeMeshBuffer and for a buffer a field processor drives: call it
  * from a FRAME_ACCURATE metro or the main thread, never the graphics thread.
  *

@@ -329,6 +329,31 @@ namespace {
         return positions && !positions->empty() ? std::optional<Kinesis::AABB3D> { Kinesis::aabb(*positions) } : std::nullopt;
     }
 
+    /** Bounds of a template with the offsets of @p targets added at @p weights, as an instance draws it. */
+    std::optional<Kinesis::AABB3D> morphed_bounds(
+        const std::vector<Kakshya::MeshVertex>& base,
+        const Kakshya::MeshMorphTargets& targets,
+        std::span<const float> weights)
+    {
+        if (base.empty()) {
+            return std::nullopt;
+        }
+
+        std::vector<glm::vec3> positions;
+        positions.reserve(base.size());
+        for (size_t v = 0; v < base.size(); ++v) {
+            glm::vec3 position = base[v].position;
+            for (size_t t = 0; t < targets.size(); ++t) {
+                const auto& shape = targets[t].second;
+                if (shape.size() == base.size()) {
+                    position += weights[t] * (shape[v].position - base[v].position);
+                }
+            }
+            positions.push_back(position);
+        }
+        return Kinesis::aabb(positions);
+    }
+
     /** The union of every slot as placed, or the one slot @p only in its own coordinates. */
     std::optional<Kinesis::AABB3D> instance_bounds(
         const std::shared_ptr<Buffers::InstanceNetworkBuffer>& buffer,
@@ -349,6 +374,8 @@ namespace {
             return std::nullopt;
         }
 
+        const auto mesh = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(first.node);
+
         std::optional<Kinesis::AABB3D> total;
         for (uint32_t i = 0; i < network->slot_count(); ++i) {
             if (only && only != i) {
@@ -356,6 +383,14 @@ namespace {
             }
             const auto& slot = network->get_slot(i);
             const glm::mat4 base = only ? glm::mat4(1.0F) : slot.transform;
+
+            auto shape = local;
+            if (mesh && first.morphs && !first.morphs->empty() && slot.morph_weights.size() == first.morphs->size()) {
+                shape = morphed_bounds(mesh->get_mesh_vertices(), *first.morphs, slot.morph_weights);
+            }
+            if (!shape) {
+                continue;
+            }
 
             std::vector<glm::mat4> poses { base };
             if (first.skin && slot.palette.size() == first.skin->joint_count()) {
@@ -367,9 +402,9 @@ namespace {
             for (const auto& pose : poses) {
                 for (int corner = 0; corner < 8; ++corner) {
                     const glm::vec3 point {
-                        (corner & 1) != 0 ? local->max.x : local->min.x,
-                        (corner & 2) != 0 ? local->max.y : local->min.y,
-                        (corner & 4) != 0 ? local->max.z : local->min.z,
+                        (corner & 1) != 0 ? shape->max.x : shape->min.x,
+                        (corner & 2) != 0 ? shape->max.y : shape->min.y,
+                        (corner & 4) != 0 ? shape->max.z : shape->min.z,
                     };
                     const glm::vec3 placed = glm::vec3(pose * glm::vec4(point, 1.0F));
                     total = total

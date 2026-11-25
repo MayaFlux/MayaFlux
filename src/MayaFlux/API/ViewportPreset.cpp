@@ -25,9 +25,23 @@ namespace {
         return std::to_string(reinterpret_cast<uintptr_t>(window.get())) + "_" + name;
     }
 
-    std::string event_name(const std::string& prefix, const char* suffix)
+    /**
+     * Start the record of a preset on a window, ending whatever it still had bound.
+     * The function returned names a handler, unique to the window, and records it.
+     */
+    auto open_record(const std::shared_ptr<Core::Window>& window, const std::string& name)
     {
-        return "vp_" + prefix + "_" + suffix;
+        const std::string key = make_key(window, name);
+        PresetRecord& record = s_registry[key];
+        record.saved_config = window->get_input_config();
+        for (const auto& ev : record.registered_events) {
+            cancel_event_handler(ev);
+        }
+        record.registered_events.clear();
+
+        return [&record, key](const char* suffix) {
+            return record.registered_events.emplace_back("vp_" + key + "_" + suffix);
+        };
     }
 
     using Processors = std::vector<std::shared_ptr<Buffers::RenderProcessor>>;
@@ -68,40 +82,38 @@ namespace {
         const Kinesis::FlyKeyMap& key_map,
         const std::string& name)
     {
-        auto& record = s_registry[make_key(window, name)];
-        record.saved_config = window->get_input_config();
-        record.registered_events.clear();
+        const auto named = open_record(window, name);
 
         auto st = std::make_shared<Kinesis::NavigationState>(
             Kinesis::make_navigation_state(config));
 
         on_mouse_pressed(window, IO::MouseButtons::Right, [st](double /*x*/, double /*y*/) {
             st->rmb_held    = true;
-            st->first_mouse = true; }, event_name(name, "rmb_dn"));
+            st->first_mouse = true; }, named("rmb_dn"));
 
-        on_mouse_released(window, IO::MouseButtons::Right, [st](double /*x*/, double /*y*/) { st->rmb_held = false; }, event_name(name, "rmb_up"));
+        on_mouse_released(window, IO::MouseButtons::Right, [st](double /*x*/, double /*y*/) { st->rmb_held = false; }, named("rmb_up"));
 
-        on_key_pressed(window, key_map.forward, [st] { st->forward_held = true; }, event_name(name, "fwd_dn"));
-        on_key_released(window, key_map.forward, [st] { st->forward_held = false; }, event_name(name, "fwd_up"));
-        on_key_pressed(window, key_map.back, [st] { st->back_held = true; }, event_name(name, "bck_dn"));
-        on_key_released(window, key_map.back, [st] { st->back_held = false; }, event_name(name, "bck_up"));
-        on_key_pressed(window, key_map.left, [st] { st->left_held = true; }, event_name(name, "lft_dn"));
-        on_key_released(window, key_map.left, [st] { st->left_held = false; }, event_name(name, "lft_up"));
-        on_key_pressed(window, key_map.right, [st] { st->right_held = true; }, event_name(name, "rgt_dn"));
-        on_key_released(window, key_map.right, [st] { st->right_held = false; }, event_name(name, "rgt_up"));
-        on_key_pressed(window, key_map.down, [st] { st->down_held = true; }, event_name(name, "dwn_dn"));
-        on_key_released(window, key_map.down, [st] { st->down_held = false; }, event_name(name, "dwn_up"));
-        on_key_pressed(window, key_map.up, [st] { st->up_held = true; }, event_name(name, "up_dn"));
-        on_key_released(window, key_map.up, [st] { st->up_held = false; }, event_name(name, "up_up"));
+        on_key_pressed(window, key_map.forward, [st] { st->forward_held = true; }, named("fwd_dn"));
+        on_key_released(window, key_map.forward, [st] { st->forward_held = false; }, named("fwd_up"));
+        on_key_pressed(window, key_map.back, [st] { st->back_held = true; }, named("bck_dn"));
+        on_key_released(window, key_map.back, [st] { st->back_held = false; }, named("bck_up"));
+        on_key_pressed(window, key_map.left, [st] { st->left_held = true; }, named("lft_dn"));
+        on_key_released(window, key_map.left, [st] { st->left_held = false; }, named("lft_up"));
+        on_key_pressed(window, key_map.right, [st] { st->right_held = true; }, named("rgt_dn"));
+        on_key_released(window, key_map.right, [st] { st->right_held = false; }, named("rgt_up"));
+        on_key_pressed(window, key_map.down, [st] { st->down_held = true; }, named("dwn_dn"));
+        on_key_released(window, key_map.down, [st] { st->down_held = false; }, named("dwn_up"));
+        on_key_pressed(window, key_map.up, [st] { st->up_held = true; }, named("up_dn"));
+        on_key_released(window, key_map.up, [st] { st->up_held = false; }, named("up_up"));
 
         if (key_map.ortho_front)
-            on_key_pressed(window, *key_map.ortho_front, [st] { Kinesis::snap_ortho(*st, 0); }, event_name(name, "kp_front"));
+            on_key_pressed(window, *key_map.ortho_front, [st] { Kinesis::snap_ortho(*st, 0); }, named("kp_front"));
         if (key_map.ortho_right)
-            on_key_pressed(window, *key_map.ortho_right, [st] { Kinesis::snap_ortho(*st, 1); }, event_name(name, "kp_right"));
+            on_key_pressed(window, *key_map.ortho_right, [st] { Kinesis::snap_ortho(*st, 1); }, named("kp_right"));
         if (key_map.ortho_top)
-            on_key_pressed(window, *key_map.ortho_top, [st] { Kinesis::snap_ortho(*st, 2); }, event_name(name, "kp_top"));
+            on_key_pressed(window, *key_map.ortho_top, [st] { Kinesis::snap_ortho(*st, 2); }, named("kp_top"));
         if (key_map.ortho_flip)
-            on_key_pressed(window, *key_map.ortho_flip, [st] { Kinesis::snap_ortho(*st, 3); }, event_name(name, "kp_flip"));
+            on_key_pressed(window, *key_map.ortho_flip, [st] { Kinesis::snap_ortho(*st, 3); }, named("kp_flip"));
 
         on_mouse_move(window, [st](double x, double y) {
             if (!st->rmb_held) {
@@ -118,9 +130,9 @@ namespace {
                 static_cast<float>(x - st->last_x),
                 static_cast<float>(y - st->last_y));
             st->last_x = x;
-            st->last_y = y; }, event_name(name, "mouse"));
+            st->last_y = y; }, named("mouse"));
 
-        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_scroll(*st, static_cast<float>(dy)); }, named("scroll"));
 
         return hold(st, processors, [](Kinesis::NavigationState& state) { Kinesis::advance_navigation(state); });
     }
@@ -132,17 +144,15 @@ namespace {
         const Kinesis::OrbitKeyMap& key_map,
         const std::string& name)
     {
-        auto& record = s_registry[make_key(window, name)];
-        record.saved_config = window->get_input_config();
-        record.registered_events.clear();
+        const auto named = open_record(window, name);
 
         auto st = std::make_shared<Kinesis::OrbitState>(Kinesis::make_orbit_state(config));
 
         on_mouse_pressed(window, IO::MouseButtons::Middle, [st](double /*x*/, double /*y*/) {
             st->mmb_held    = true;
-            st->first_mouse = true; }, event_name(name, "mmb_dn"));
+            st->first_mouse = true; }, named("mmb_dn"));
 
-        on_mouse_released(window, IO::MouseButtons::Middle, [st](double /*x*/, double /*y*/) { st->mmb_held = false; }, event_name(name, "mmb_up"));
+        on_mouse_released(window, IO::MouseButtons::Middle, [st](double /*x*/, double /*y*/) { st->mmb_held = false; }, named("mmb_up"));
 
         const IO::Keys pan_key = key_map.pan_modifier;
         const IO::Modifiers pan_flag = IO::modifier_of(pan_key);
@@ -175,18 +185,18 @@ namespace {
                 Kinesis::apply_orbit_pan(*st, dx, dy);
             } else {
                 Kinesis::apply_orbit_rotate(*st, dx, dy); 
-    } }, event_name(name, "mouse"));
+    } }, named("mouse"));
 
-        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_orbit_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_orbit_scroll(*st, static_cast<float>(dy)); }, named("scroll"));
 
         if (key_map.ortho_front)
-            on_key_pressed(window, *key_map.ortho_front, [st] { Kinesis::snap_orbit_ortho(*st, 0); }, event_name(name, "kp_front"));
+            on_key_pressed(window, *key_map.ortho_front, [st] { Kinesis::snap_orbit_ortho(*st, 0); }, named("kp_front"));
         if (key_map.ortho_right)
-            on_key_pressed(window, *key_map.ortho_right, [st] { Kinesis::snap_orbit_ortho(*st, 1); }, event_name(name, "kp_right"));
+            on_key_pressed(window, *key_map.ortho_right, [st] { Kinesis::snap_orbit_ortho(*st, 1); }, named("kp_right"));
         if (key_map.ortho_top)
-            on_key_pressed(window, *key_map.ortho_top, [st] { Kinesis::snap_orbit_ortho(*st, 2); }, event_name(name, "kp_top"));
+            on_key_pressed(window, *key_map.ortho_top, [st] { Kinesis::snap_orbit_ortho(*st, 2); }, named("kp_top"));
         if (key_map.ortho_flip)
-            on_key_pressed(window, *key_map.ortho_flip, [st] { Kinesis::snap_orbit_ortho(*st, 3); }, event_name(name, "kp_flip"));
+            on_key_pressed(window, *key_map.ortho_flip, [st] { Kinesis::snap_orbit_ortho(*st, 3); }, named("kp_flip"));
 
         return hold(st, processors, [](auto&) { });
     }
@@ -198,17 +208,15 @@ namespace {
         const Kinesis::PanZoom2DKeyMap& key_map,
         const std::string& name)
     {
-        auto& record = s_registry[make_key(window, name)];
-        record.saved_config = window->get_input_config();
-        record.registered_events.clear();
+        const auto named = open_record(window, name);
 
         auto st = std::make_shared<Kinesis::PanZoom2DState>(Kinesis::make_pan_zoom_state(config));
 
         on_mouse_pressed(window, key_map.drag_button, [st](double /*x*/, double /*y*/) {
             st->drag_held    = true;
-            st->first_mouse  = true; }, event_name(name, "drag_dn"));
+            st->first_mouse  = true; }, named("drag_dn"));
 
-        on_mouse_released(window, key_map.drag_button, [st](double /*x*/, double /*y*/) { st->drag_held = false; }, event_name(name, "drag_up"));
+        on_mouse_released(window, key_map.drag_button, [st](double /*x*/, double /*y*/) { st->drag_held = false; }, named("drag_up"));
 
         on_mouse_move(window, [st, window_weak = std::weak_ptr<Core::Window>(window)](double x, double y) {
             if (!st->drag_held) {
@@ -234,9 +242,9 @@ namespace {
                 Kinesis::apply_pan_zoom_pan(*st, dx, dy,
                     static_cast<float>(ws.current_width),
                     static_cast<float>(ws.current_height));
-            } }, event_name(name, "mouse"));
+            } }, named("mouse"));
 
-        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_pan_zoom_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_pan_zoom_scroll(*st, static_cast<float>(dy)); }, named("scroll"));
 
         return hold(st, processors, [](auto&) { });
     }
@@ -248,18 +256,16 @@ namespace {
         const Kinesis::ScreenspaceKeyMap& key_map,
         const std::string& name)
     {
-        auto& record = s_registry[make_key(window, name)];
-        record.saved_config = window->get_input_config();
-        record.registered_events.clear();
+        const auto named = open_record(window, name);
 
         auto st = std::make_shared<Kinesis::NavigationState>(
             Kinesis::make_navigation_state(config));
 
         on_mouse_pressed(window, key_map.drag_button, [st](double /*x*/, double /*y*/) {
             st->rmb_held    = true;
-            st->first_mouse = true; }, event_name(name, "drag_dn"));
+            st->first_mouse = true; }, named("drag_dn"));
 
-        on_mouse_released(window, key_map.drag_button, [st](double /*x*/, double /*y*/) { st->rmb_held = false; }, event_name(name, "drag_up"));
+        on_mouse_released(window, key_map.drag_button, [st](double /*x*/, double /*y*/) { st->rmb_held = false; }, named("drag_up"));
 
         on_mouse_move(window, [st](double x, double y) {
             if (!st->rmb_held) {
@@ -286,9 +292,9 @@ namespace {
             const glm::vec3 up    = glm::normalize(glm::cross(right, forward));
 
             st->eye -= right * (dx * st->mouse_sensitivity);
-            st->eye += up    * (dy * st->mouse_sensitivity); }, event_name(name, "mouse"));
+            st->eye += up    * (dy * st->mouse_sensitivity); }, named("mouse"));
 
-        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_scroll(*st, static_cast<float>(dy)); }, event_name(name, "scroll"));
+        on_scroll(window, [st](double /*dx*/, double dy) { Kinesis::apply_scroll(*st, static_cast<float>(dy)); }, named("scroll"));
 
         return hold(st, processors, [](auto&) { });
     }

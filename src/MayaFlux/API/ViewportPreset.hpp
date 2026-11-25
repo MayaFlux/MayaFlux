@@ -56,7 +56,7 @@ enum class ViewportPresetMode : uint8_t {
  * controller, call bind_fly_preset(), bind_orbit_preset(), or
  * bind_pan_zoom_preset() directly.
  *
- * Registers event handlers under the prefix "vp_<name>_".
+ * Registers event handlers named for this window and @p name, so one name may be bound on several windows.
  *
  * Mode defaults:
  *   Fly       - WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
@@ -94,7 +94,7 @@ MAYAFLUX_API ViewportBinding bind_viewport_preset(
 /**
  * @brief Bind the fly navigation controller to a window and render processor.
  *
- * Registers event handlers under the prefix "vp_<name>_". Key assignments
+ * Registers event handlers named for this window and @p name, so one name may be bound on several windows. Key assignments
  * default to WASD/QE translation with KP ortho snaps; pass a FlyKeyMap to
  * override any or all bindings. Ortho snap slots set to std::nullopt are
  * silently skipped.
@@ -134,7 +134,7 @@ MAYAFLUX_API ViewportBinding bind_fly_preset(
 /**
  * @brief Bind the orbit navigation controller to a window and render processor.
  *
- * Registers event handlers under the prefix "vp_<name>_". MMB drag rotates
+ * Registers event handlers named for this window and @p name, so one name may be bound on several windows. MMB drag rotates
  * around the focal point; holding key_map.pan_modifier during MMB drag pans
  * the focal point instead. Scroll dollies the distance. Ortho snap slots set
  * to std::nullopt are silently skipped.

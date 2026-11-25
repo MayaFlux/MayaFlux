@@ -1,5 +1,8 @@
 #version 460
+#extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_nonuniform_qualifier : enable
+
+#include "include/influence_facing.glsl"
 
 layout(location = 0) in vec3 in_color;
 layout(location = 1) in vec2 in_uv;
@@ -27,6 +30,6 @@ void main()
     float attenuation = clamp(1.0 - (dist / radius), 0.0, 1.0);
     attenuation *= attenuation;
 
-    vec3 lit = tex.rgb + (color * intensity * attenuation);
+    vec3 lit = tex.rgb + (color * intensity * attenuation * influence_facing(in_normal, position - in_world_pos));
     out_color = vec4(clamp(lit, 0.0, 1.0), tex.a);
 }
