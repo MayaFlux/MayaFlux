@@ -45,6 +45,7 @@
 #include "Image/ImageExport.hpp"
 #include "Image/STBImageWriter.hpp"
 
+#include "Model/AlembicModelWriter.hpp"
 #include "Model/AssimpModelWriter.hpp"
 #include "Model/ModelExport.hpp"
 #include "Model/ModelReader.hpp"
@@ -101,6 +102,7 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     EXRWriter::register_with_registry();
     VDBWriter::register_with_registry();
     AssimpModelWriter::register_with_registry();
+    AlembicModelWriter::register_with_registry();
     SafetensorsReader::register_with_registry();
     NpyReader::register_with_registry();
     NpzReader::register_with_registry();

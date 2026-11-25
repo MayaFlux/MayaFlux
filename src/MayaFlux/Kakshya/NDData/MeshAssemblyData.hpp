@@ -237,6 +237,102 @@ struct MeshAssemblyWeights {
 };
 
 /**
+ * @struct MeshAssemblyAttributes
+ * @brief The named per element values of a geometry source that have no place in its
+ *        vertices, kept in its facets.
+ *
+ * A Varying attribute has one value per vertex, a Uniform one per polygon and a
+ * Constant one exactly one.
+ */
+struct MeshAssemblyAttributes {
+    std::vector<SpatialAttribute> values;
+};
+
+/**
+ * @struct MeshAssemblyPointMap
+ * @brief The file point each vertex of a mesh source was split from, kept in its facets
+ *        when seams or hard edges made more vertices than points.
+ */
+struct MeshAssemblyPointMap {
+    std::vector<uint32_t> of_vertex;
+    uint32_t point_count {};
+};
+
+/** @brief A named set of polygons of a mesh source, with the material it shows, if its own. */
+struct MeshAssemblyFaceSet {
+    std::string name;
+    std::vector<uint32_t> faces;
+    bool exclusive {};
+    std::optional<uint64_t> material;
+};
+
+/** @brief The face sets of a mesh source, kept in its facets. */
+struct MeshAssemblyFaceSets {
+    std::vector<MeshAssemblyFaceSet> sets;
+};
+
+/**
+ * @struct MeshAssemblySubdivision
+ * @brief Marks a mesh source as the cage of a subdivision surface, kept in its facets.
+ *
+ * Crease and corner indices name points as MeshAssemblyPointMap numbers them, or
+ * vertices when the source has no map. Holes name polygons.
+ */
+struct MeshAssemblySubdivision {
+    std::string scheme { "catmull-clark" };
+    std::vector<int32_t> crease_indices;
+    std::vector<int32_t> crease_lengths;
+    std::vector<float> crease_sharpness;
+    std::vector<int32_t> corner_indices;
+    std::vector<float> corner_sharpness;
+    std::vector<int32_t> holes;
+    int32_t face_varying_boundary {};
+    int32_t face_varying_corners {};
+    int32_t boundary {};
+};
+
+enum class MeshAssemblyCurveType : uint8_t {
+    Cubic,
+    Linear,
+    VariableOrder
+};
+
+enum class MeshAssemblyCurveBasis : uint8_t {
+    None,
+    Bezier,
+    Bspline,
+    CatmullRom,
+    Hermite,
+    Power
+};
+
+/** @brief How the control points of a curve source are meant to be read, kept in its facets. */
+struct MeshAssemblyCurveForm {
+    MeshAssemblyCurveType type { MeshAssemblyCurveType::Linear };
+    MeshAssemblyCurveBasis basis { MeshAssemblyCurveBasis::None };
+    bool periodic {};
+    std::vector<uint8_t> orders;
+    std::vector<float> knots;
+};
+
+/**
+ * @struct MeshAssemblyVisibility
+ * @brief The rows a file shows or hides explicitly, kept in the assembly's facets.
+ *
+ * A row without an entry inherits from its parent. keys, when present, holds 1 for
+ * shown and 0 for hidden over time, each held until the next.
+ */
+struct MeshAssemblyVisibility {
+    struct Entry {
+        uint64_t row {};
+        bool visible { true };
+        std::optional<Kinesis::TimedValues<float>> keys;
+    };
+
+    std::vector<Entry> entries;
+};
+
+/**
  * @struct MeshAssemblyMetadata
  * @brief The named values a file attaches to its scene and rows, uninterpreted, kept in the assembly's facets.
  *

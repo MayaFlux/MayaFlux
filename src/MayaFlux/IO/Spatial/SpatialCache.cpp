@@ -1,24 +1,13 @@
 #include "SpatialCache.hpp"
 
+#include "AlembicShared.hpp"
+
 #include "MayaFlux/IO/FileWriter.hpp"
 
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-#include <windows.h>
-#endif
-
-#include <Alembic/Abc/All.h>
-#include <Alembic/AbcCoreOgawa/All.h>
-#include <Alembic/AbcGeom/All.h>
-
-#ifdef MAYAFLUX_PLATFORM_WINDOWS
-#ifdef ERROR
-#undef ERROR
-#endif
-#endif // MAYAFLUX_PLATFORM_WINDOWS
 
 namespace MayaFlux::IO {
 
@@ -26,19 +15,9 @@ namespace {
 
     using namespace Alembic::AbcGeom;
     using Portal::Graphics::PrimitiveTopology;
-
-    GeometryScope to_alembic_scope(Kakshya::SpatialScope scope)
-    {
-        switch (scope) {
-        case Kakshya::SpatialScope::Constant:
-            return kConstantScope;
-        case Kakshya::SpatialScope::Uniform:
-            return kUniformScope;
-        case Kakshya::SpatialScope::Varying:
-            return kVaryingScope;
-        }
-        return kConstantScope;
-    }
+    using alembic::GeomParamVariant;
+    using alembic::set_attribute;
+    using alembic::to_alembic_scope;
 
     /**
      * @brief True for a topology written through Alembic's Curves schema
@@ -53,15 +32,6 @@ namespace {
             || topology == PrimitiveTopology::LINE_STRIP;
     }
 
-    /** @brief A float GeomParam declared with array extent 4, kept apart from a scalar float param. */
-    struct OFloat4GeomParam {
-        OFloatGeomParam param;
-    };
-
-    using GeomParamVariant = std::variant<
-        OFloatGeomParam, OV2fGeomParam, OV3fGeomParam, OC3fGeomParam, ON3fGeomParam, OUInt32GeomParam,
-        OC4fGeomParam, OFloat4GeomParam>;
-
     struct VertexStream {
         OPoints object;
         std::unordered_map<std::string, GeomParamVariant> geom_params;
@@ -71,141 +41,6 @@ namespace {
         OCurves object;
         std::unordered_map<std::string, GeomParamVariant> geom_params;
     };
-
-    /**
-     * @brief Find or declare @p attr's OGeomParam, then set this sample's values.
-     *
-     * A vec3 attribute named "color" or "normal" is declared through
-     * Alembic's dedicated OC3fGeomParam/ON3fGeomParam rather than a plain
-     * OV3fGeomParam: those are MayaFlux's own fixed vertex field names
-     * (PointVertex/LineVertex/MeshVertex all use them for these exact
-     * roles), and the dedicated type, not the value's shape (three floats
-     * either way), is what tells an importer this is actually color or
-     * normal data rather than an arbitrary vector. Any other vec3 name
-     * (e.g. "tangent") stays a generic vector, matching what Alembic
-     * itself offers no dedicated type for.
-     *
-     * A vec4 "color" is declared as OC4fGeomParam (RGBA). Any other vec4
-     * name is a float GeomParam with array extent 4.
-     *
-     * @return False if @p attr.values holds a DataVariant alternative with no
-     *         Alembic GeomParam counterpart, its size doesn't match
-     *         @p expected_count, or attr.name was already declared with a
-     *         different type.
-     */
-    bool set_attribute(
-        std::unordered_map<std::string, GeomParamVariant>& params,
-        const OCompoundProperty& arb_params,
-        const Kakshya::SpatialAttribute& attr,
-        size_t expected_count)
-    {
-        const auto scope = to_alembic_scope(attr.scope);
-        auto it = params.find(attr.name);
-
-        if (const auto* floats = std::get_if<std::vector<float>>(&attr.values)) {
-            if (floats->size() != expected_count) {
-                return false;
-            }
-            if (it == params.end()) {
-                it = params.emplace(attr.name, OFloatGeomParam(arb_params, attr.name, false, scope, 1)).first;
-            }
-            auto* param = std::get_if<OFloatGeomParam>(&it->second);
-            if (!param) {
-                return false;
-            }
-            param->set(OFloatGeomParam::Sample(FloatArraySample(floats->data(), floats->size()), scope));
-            return true;
-        }
-        if (const auto* uvs = std::get_if<std::vector<glm::vec2>>(&attr.values)) {
-            if (uvs->size() != expected_count) {
-                return false;
-            }
-            if (it == params.end()) {
-                it = params.emplace(attr.name, OV2fGeomParam(arb_params, attr.name, false, scope, 1)).first;
-            }
-            auto* param = std::get_if<OV2fGeomParam>(&it->second);
-            if (!param) {
-                return false;
-            }
-            param->set(OV2fGeomParam::Sample(
-                V2fArraySample(reinterpret_cast<const V2f*>(uvs->data()), uvs->size()), scope));
-            return true;
-        }
-        if (const auto* vecs = std::get_if<std::vector<glm::vec3>>(&attr.values)) {
-            if (vecs->size() != expected_count) {
-                return false;
-            }
-
-            if (it == params.end()) {
-                if (attr.name == "color") {
-                    it = params.emplace(attr.name, OC3fGeomParam(arb_params, attr.name, false, scope, 1)).first;
-                } else if (attr.name == "normal") {
-                    it = params.emplace(attr.name, ON3fGeomParam(arb_params, attr.name, false, scope, 1)).first;
-                } else {
-                    it = params.emplace(attr.name, OV3fGeomParam(arb_params, attr.name, false, scope, 1)).first;
-                }
-            }
-
-            if (auto* color_param = std::get_if<OC3fGeomParam>(&it->second)) {
-                color_param->set(OC3fGeomParam::Sample(
-                    C3fArraySample(reinterpret_cast<const C3f*>(vecs->data()), vecs->size()), scope));
-                return true;
-            }
-            if (auto* normal_param = std::get_if<ON3fGeomParam>(&it->second)) {
-                normal_param->set(ON3fGeomParam::Sample(
-                    N3fArraySample(reinterpret_cast<const N3f*>(vecs->data()), vecs->size()), scope));
-                return true;
-            }
-            if (auto* vector_param = std::get_if<OV3fGeomParam>(&it->second)) {
-                vector_param->set(OV3fGeomParam::Sample(
-                    V3fArraySample(reinterpret_cast<const V3f*>(vecs->data()), vecs->size()), scope));
-                return true;
-            }
-            return false;
-        }
-        if (const auto* quads = std::get_if<std::vector<glm::vec4>>(&attr.values)) {
-            if (quads->size() != expected_count) {
-                return false;
-            }
-
-            if (it == params.end()) {
-                if (attr.name == "color") {
-                    it = params.emplace(attr.name, OC4fGeomParam(arb_params, attr.name, false, scope, 1)).first;
-                } else {
-                    it = params.emplace(attr.name,
-                                   OFloat4GeomParam { OFloatGeomParam(arb_params, attr.name, false, scope, 4) })
-                             .first;
-                }
-            }
-
-            if (auto* color_param = std::get_if<OC4fGeomParam>(&it->second)) {
-                color_param->set(OC4fGeomParam::Sample(
-                    C4fArraySample(reinterpret_cast<const C4f*>(quads->data()), quads->size()), scope));
-                return true;
-            }
-            if (auto* vector_param = std::get_if<OFloat4GeomParam>(&it->second)) {
-                vector_param->param.set(OFloatGeomParam::Sample(
-                    FloatArraySample(reinterpret_cast<const float*>(quads->data()), quads->size() * 4), scope));
-                return true;
-            }
-            return false;
-        }
-        if (const auto* uints = std::get_if<std::vector<uint32_t>>(&attr.values)) {
-            if (uints->size() != expected_count) {
-                return false;
-            }
-            if (it == params.end()) {
-                it = params.emplace(attr.name, OUInt32GeomParam(arb_params, attr.name, false, scope, 1)).first;
-            }
-            auto* param = std::get_if<OUInt32GeomParam>(&it->second);
-            if (!param) {
-                return false;
-            }
-            param->set(OUInt32GeomParam::Sample(UInt32ArraySample(uints->data(), uints->size()), scope));
-            return true;
-        }
-        return false;
-    }
 
     size_t vertex_attribute_count(Kakshya::SpatialScope scope, size_t point_count)
     {
@@ -316,7 +151,8 @@ bool SpatialCache::write_vertex_sample(const std::string& stream_name, const Spa
 
     for (const auto& attr : sample.attributes) {
         const size_t expected = vertex_attribute_count(attr.scope, sample.positions.size());
-        if (!set_attribute(stream.geom_params, schema.getArbGeomParams(), attr, expected)) {
+        if (!set_attribute(stream.geom_params, schema.getArbGeomParams(), attr.name, attr.values,
+                to_alembic_scope(attr.scope), expected, attr.name == "color")) {
             set_error("write: attribute '" + attr.name + "' has an unsupported type, wrong "
                 + "element count, or was redeclared with a different type");
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
@@ -365,7 +201,8 @@ bool SpatialCache::write_curves_sample(const std::string& stream_name, const Spa
     for (const auto& attr : sample.attributes) {
         const size_t expected = curves_attribute_count(
             attr.scope, sample.positions.size(), sample.vertex_counts_per_curve.size());
-        if (!set_attribute(stream.geom_params, schema.getArbGeomParams(), attr, expected)) {
+        if (!set_attribute(stream.geom_params, schema.getArbGeomParams(), attr.name, attr.values,
+                to_alembic_scope(attr.scope), expected, attr.name == "color")) {
             set_error("write: attribute '" + attr.name + "' has an unsupported type, wrong "
                 + "element count, or was redeclared with a different type");
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
