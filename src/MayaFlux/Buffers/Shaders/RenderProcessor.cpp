@@ -176,6 +176,8 @@ void RenderProcessor::drop_lane(Lane& lane, const std::shared_ptr<VKBuffer>& buf
 
     lane.window.reset();
     lane.image.reset();
+    lane.view.reset();
+    lane.view_source = nullptr;
     lane.enabled = true;
     m_descriptor_set_ids.clear();
     m_descriptors_ready = false;
@@ -570,6 +572,85 @@ void RenderProcessor::set_view_transform_source(
     }
 
     set_cull_mode(cull);
+}
+
+RenderProcessor::Lane* RenderProcessor::find_view_lane(const DestinationView& destination) const
+{
+    if (destination.window && destination.target) {
+        return nullptr;
+    }
+    if (destination.window) {
+        return find_lane(destination.window);
+    }
+    if (destination.target) {
+        return find_lane(destination.target);
+    }
+    return nullptr;
+}
+
+bool RenderProcessor::set_destination_view(const DestinationView& view)
+{
+    if (view.transform.has_value() == static_cast<bool>(view.source)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_destination_view: give either a transform or a source");
+        return false;
+    }
+
+    auto* lane = find_view_lane(view);
+    if (!lane) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_destination_view: name one window or image target this processor draws into");
+        return false;
+    }
+
+    lane->view = view.transform;
+    lane->view_source = view.source;
+
+    if (view.enable_depth && !m_depth_enabled) {
+        enable_depth_test();
+    }
+    set_cull_mode(view.cull);
+
+    if (lane->image) {
+        lane->image->request_redraw();
+    }
+    return true;
+}
+
+void RenderProcessor::clear_destination_view(const DestinationView& destination)
+{
+    auto* lane = find_view_lane(destination);
+    if (!lane || !has_view(*lane)) {
+        return;
+    }
+    lane->view.reset();
+    lane->view_source = nullptr;
+    if (lane->image) {
+        lane->image->request_redraw();
+    }
+}
+
+bool RenderProcessor::has_destination_view(const DestinationView& destination) const
+{
+    const auto* lane = find_view_lane(destination);
+    return lane && has_view(*lane);
+}
+
+void RenderProcessor::apply_lane_view()
+{
+    if (!has_view(*m_lane)) {
+        return;
+    }
+
+    if (!m_lane->view_source) {
+        m_published_render_transform.view_transform = *m_lane->view;
+        return;
+    }
+
+    const DestinationInfo destination = describe();
+    const vk::Rect2D filled = resolve_area_rect(m_lane->area, destination.width, destination.height);
+    m_published_render_transform.view_transform = m_lane->view_source(
+        glm::uvec2 { filled.extent.width, filled.extent.height });
 }
 
 void RenderProcessor::set_geometry_transform(const glm::mat4& transform)
@@ -1041,6 +1122,7 @@ void RenderProcessor::set_buffer_vertex_layout(
 const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
 {
     resolve_render_transform();
+    apply_lane_view();
     write_render_transform();
     return m_published_render_transform;
 }
@@ -1239,8 +1321,8 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
         runs = m_mill_fill_runs;
     }
 
-    glm::vec3 eye = m_view_transform_active
-        ? glm::vec3(glm::inverse(published_render_transform().view_transform.view)[3])
+    glm::vec3 eye = m_view_transform_active || has_view(*m_lane)
+        ?glm::vec3(glm::inverse(published_render_transform().view_transform.view)[3])
         : glm::vec3(0.0F, 0.0F, 1.0e4F);
 
     if (m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
@@ -1344,7 +1426,7 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         return;
     }
 
-    resolve_render_transform();
+    const Kinesis::RenderTransform shared_transform = resolve_render_transform();
 
     bool geometry_ready = false;
     for (size_t i = 0; i < m_lanes.size(); ++i) {
@@ -1360,6 +1442,8 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
             continue;
         }
 
+        m_published_render_transform = shared_transform;
+        apply_lane_view();
         write_render_transform();
         if (!geometry_ready) {
             prepare_geometry(buffer, *state);

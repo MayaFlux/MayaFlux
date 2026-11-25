@@ -14,6 +14,35 @@ class VKImage;
 namespace MayaFlux::Buffers {
 
 /**
+ * @struct DestinationView
+ * @brief The view one destination of a RenderProcessor draws with.
+ *
+ * Names the destination with exactly one of @c window and @c target, and the
+ * view with exactly one of @c transform and @c source. A source runs once per
+ * cycle for its destination and is given the pixel size of what that
+ * destination fills: the window, the target, or the part of the target its
+ * area names, so one source gets the aspect right everywhere.
+ *
+ * @code
+ * rp->set_destination_view({ .window = window, .transform = camera });
+ * rp->set_destination_view({ .target = target, .source = [](glm::uvec2 size) {
+ *     return look_at_origin(static_cast<float>(size.x) / static_cast<float>(size.y));
+ * } });
+ * @endcode
+ *
+ * @c enable_depth and @c cull are as RenderProcessor::set_view_transform takes
+ * them. They are state of the processor, so they apply to every destination.
+ */
+struct DestinationView {
+    std::shared_ptr<Core::Window> window;
+    std::shared_ptr<Portal::Graphics::ImageTarget> target;
+    std::optional<Kinesis::ViewTransform> transform;
+    std::function<Kinesis::ViewTransform(glm::uvec2)> source;
+    bool enable_depth { true };
+    Portal::Graphics::CullMode cull { Portal::Graphics::CullMode::BACK };
+};
+
+/**
  * @class RenderShaderProcessor
  * @brief Graphics rendering processor - inherits from ShaderProcessor
  *
@@ -327,6 +356,31 @@ public:
         bool enable_depth = true,
         Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
 
+    /**
+     * @brief Give one destination its own view.
+     *
+     * That destination draws with it, and the others keep theirs or the view of
+     * set_view_transform and set_view_transform_source. Setting it again
+     * replaces it, and it goes when the destination is removed. An image target
+     * redraws. The geometry a world facing ribbon or billboard is turned by is
+     * generated once for all destinations, towards the eye of the first one drawn.
+     *
+     * @return False, changing nothing, when the destination is not one of this
+     *         processor's, or the description does not name exactly one
+     *         destination and exactly one view.
+     */
+    bool set_destination_view(const DestinationView& view);
+
+    /**
+     * @brief Return a destination to the view of the processor.
+     *
+     * Only @c window or @c target of @p destination is read.
+     */
+    void clear_destination_view(const DestinationView& destination);
+
+    /** @brief Whether a destination draws with its own view. Only @c window or @c target is read. */
+    [[nodiscard]] bool has_destination_view(const DestinationView& destination) const;
+
     /** @brief Get current static view transform, if set */
     const std::optional<Kinesis::ViewTransform>& get_view_transform() const { return m_view_transform; }
 
@@ -508,6 +562,8 @@ private:
         std::shared_ptr<Core::Window> window;
         std::shared_ptr<Portal::Graphics::ImageTarget> image;
         Portal::Graphics::TargetArea area;
+        std::optional<Kinesis::ViewTransform> view;
+        std::function<Kinesis::ViewTransform(glm::uvec2)> view_source;
         Portal::Graphics::RenderPipelineID pipeline { Portal::Graphics::INVALID_RENDER_PIPELINE };
         Portal::Graphics::SlotArena transform_arena;
         size_t transform_slot {};
@@ -555,6 +611,11 @@ private:
     }
 
     [[nodiscard]] Lane& claim_lane();
+    [[nodiscard]] Lane* find_view_lane(const DestinationView& destination) const;
+    [[nodiscard]] static bool has_view(const Lane& lane) noexcept { return lane.view || lane.view_source; }
+
+    /** @brief Put the current destination's own view, when it has one, into the published transform. */
+    void apply_lane_view();
     void clear_destinations(const std::shared_ptr<VKBuffer>& buffer);
     void drop_lane(Lane& lane, const std::shared_ptr<VKBuffer>& buffer);
     void release_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
