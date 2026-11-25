@@ -29,8 +29,8 @@ InspectResult Inspector::event(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -58,8 +58,8 @@ InspectResult& Inspector::event_manager(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), root_entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, root_entrys.size());
 
     auto root_group = make_entry_group(root_entrys, "EventManager", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
@@ -88,8 +88,8 @@ InspectResult& Inspector::event_manager(
             },
         };
 
-        auto ev_hbuf = make_header_buffer(surface.window());
-        auto ev_rbufs = make_row_buffers(surface.window(), entrys.size());
+        auto ev_hbuf = make_header_buffer(surface);
+        auto ev_rbufs = make_row_buffers(surface, entrys.size());
 
         auto ev_group = make_entry_group(entrys, header_label, std::move(ev_hbuf), ev_rbufs,
             surface, cursor, x_min, x_max, row_h, false);

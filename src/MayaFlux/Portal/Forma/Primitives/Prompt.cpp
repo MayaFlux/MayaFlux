@@ -65,7 +65,7 @@ namespace internal {
         state->validator = std::move(validator);
         state->window = surface.window();
 
-        const glm::uvec2 dims { surface.window()->get_create_info().width, row_px };
+        const glm::uvec2 dims { surface.extent().x, row_px };
         auto params = std::make_shared<Text::PressParams>(row_press_params(dims, row_idle_color()));
 
         const auto tint = [params, state](std::string_view text) {

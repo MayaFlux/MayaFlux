@@ -287,16 +287,18 @@ private:
      *        make_entry_group's rows. Empty when @p count is zero.
      */
     [[nodiscard]] std::vector<EntryBuffer> make_row_buffers(
-        const std::shared_ptr<Core::Window>& window,
+        const Surface& surface,
         size_t count) const;
 
     /**
      * @brief A "text"-slotted buffer, registered with the BufferManager. Used
      *        as make_entry_group's header, whose label Collapsible::place()
      *        draws itself, and as the buffer make_row_buffers slices.
+     *
+     * Draws where @p surface does: its window, or its image and area.
      */
     [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> make_header_buffer(
-        const std::shared_ptr<Core::Window>& window) const;
+        const Surface& surface) const;
 
     InspectResult inspect_modulator_tree(
         const Nodes::ModulatorTree& tree,

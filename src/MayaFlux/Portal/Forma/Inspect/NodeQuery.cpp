@@ -52,8 +52,8 @@ InspectResult Inspector::inspect_modulator_tree(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -95,8 +95,8 @@ InspectResult Inspector::node(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -141,8 +141,8 @@ InspectResult Inspector::root_node(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -189,8 +189,8 @@ InspectResult Inspector::root_node(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
@@ -246,8 +246,8 @@ InspectResult Inspector::node_network(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -283,8 +283,8 @@ InspectResult& Inspector::node_graph_manager(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), root_entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, root_entrys.size());
 
     auto root_group = make_entry_group(root_entrys, root_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -310,8 +310,8 @@ InspectResult& Inspector::node_graph_manager(
             },
         };
 
-        auto tok_hbuf = make_header_buffer(surface.window());
-        auto tok_rbufs = make_row_buffers(surface.window(), tok_entrys.size());
+        auto tok_hbuf = make_header_buffer(surface);
+        auto tok_rbufs = make_row_buffers(surface, tok_entrys.size());
 
         auto tok_group = make_entry_group(tok_entrys, tok_label, std::move(tok_hbuf), tok_rbufs,
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
@@ -322,7 +322,7 @@ InspectResult& Inspector::node_graph_manager(
 
         // ----- Networks section -----
         {
-            auto net_hbuf = make_header_buffer(surface.window());
+            auto net_hbuf = make_header_buffer(surface);
             auto net_group = make_entry_group({}, "Networks", std::move(net_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
@@ -332,7 +332,7 @@ InspectResult& Inspector::node_graph_manager(
 
             if (multichannel) {
                 for (const auto ch : channels) {
-                    auto ch_hbuf = make_header_buffer(surface.window());
+                    auto ch_hbuf = make_header_buffer(surface);
                     auto ch_group = make_entry_group({}, "ch " + std::to_string(ch), std::move(ch_hbuf), {},
                         surface, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
 
@@ -365,7 +365,7 @@ InspectResult& Inspector::node_graph_manager(
 
         // ----- Nodes section -----
         {
-            auto nodes_hbuf = make_header_buffer(surface.window());
+            auto nodes_hbuf = make_header_buffer(surface);
             auto nodes_group = make_entry_group({}, "Nodes", std::move(nodes_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 

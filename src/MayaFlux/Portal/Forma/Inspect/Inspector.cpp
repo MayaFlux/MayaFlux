@@ -1,7 +1,9 @@
 #include "Inspector.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Forma/Surface.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -25,20 +27,25 @@ Inspector::Inspector(const std::shared_ptr<Nodes::NodeGraphManager>& ngm,
 }
 
 std::shared_ptr<Buffers::FormaBuffer> Inspector::make_header_buffer(
-    const std::shared_ptr<Core::Window>& window) const
+    const Surface& surface) const
 {
     auto buf = std::make_shared<Buffers::FormaBuffer>(
         k_row_buffer_capacity, Graphics::PrimitiveTopology::TRIANGLE_LIST);
     m_bm->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
-    buf->setup_rendering({
-        .target_window = window,
+    buf->setup_rendering(surface.render_config({
         .additional_textures = { { "text", nullptr } },
-    });
+    }));
+
+    if (surface.image()) {
+        if (const auto processor = buf->get_render_processor()) {
+            processor->set_target_area(surface.image(), surface.area());
+        }
+    }
     return buf;
 }
 
 std::vector<EntryBuffer> Inspector::make_row_buffers(
-    const std::shared_ptr<Core::Window>& window,
+    const Surface& surface,
     size_t count) const
 {
     std::vector<EntryBuffer> rows;
@@ -46,7 +53,7 @@ std::vector<EntryBuffer> Inspector::make_row_buffers(
         return rows;
     }
 
-    const auto buf = make_header_buffer(window);
+    const auto buf = make_header_buffer(surface);
 
     rows.reserve(count);
     for (size_t i = 0; i < count; ++i) {
