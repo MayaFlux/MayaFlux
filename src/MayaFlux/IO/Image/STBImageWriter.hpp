@@ -44,6 +44,15 @@ public:
      */
     static void register_with_registry();
 
+    /**
+     * @brief Encode 8-bit image data as a PNG in memory.
+     * @param data    Image whose pixels are uint8.
+     * @param options compression and flip_vertically are honoured.
+     * @return The PNG's bytes, empty when the data is not uint8 or cannot be encoded.
+     */
+    [[nodiscard]] static std::vector<uint8_t> encode_png(
+        const ImageData& data, const ImageWriteOptions& options = {});
+
 private:
     mutable std::string m_last_error;
 

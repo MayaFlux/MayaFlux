@@ -42,12 +42,16 @@ namespace MayaFlux::IO {
  *   .json -> "assjson"    (Assimp's own scene dump, round-trips through
  *                          Assimp faithfully; not a general DCC target)
  *
- * Textures: only a diffuse texture path is written (AI_MATKEY_TEXTURE,
- * aiTextureType_DIFFUSE), taken verbatim from the source submesh Region's
- * diffuse_path attribute. No image bytes are embedded and no path
- * resolution or copying happens. The caller is responsible for the
- * referenced file existing relative to the exported model, same contract
- * ModelReader expects on the way back in via its TextureResolver.
+ * Textures: a path is written as the material has it. A texture an assembly holds as pixels is
+ * embedded for gltf and glb and written as a PNG beside the file otherwise.
+ *
+ * Texture coordinates are flipped back on the way out, so a model read, written and read again
+ * keeps them.
+ *
+ * What survives is what Assimp's exporter for the format writes. With 6.0.6, gltf keeps the
+ * hierarchy, shared meshes, materials, skins, node animation and morph targets, and drops
+ * cameras, lights and morph animation. obj, ply and stl keep geometry. Rows sharing a name are
+ * given distinct ones. Step and cubic spline keys are written as linear.
  */
 class MAYAFLUX_API AssimpModelWriter : public ModelWriter {
 public:
@@ -59,6 +63,11 @@ public:
     bool write(
         const std::string& filepath,
         const std::vector<Kakshya::MeshData>& meshes,
+        const ModelWriteOptions& options = {}) override;
+
+    bool write(
+        const std::string& filepath,
+        const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
         const ModelWriteOptions& options = {}) override;
 
     [[nodiscard]] std::vector<std::string> get_supported_extensions() const override;

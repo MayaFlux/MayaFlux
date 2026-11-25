@@ -210,16 +210,12 @@ bool STBImageWriter::write(
 // Format dispatch
 // ============================================================================
 
-bool STBImageWriter::write_png(
-    const std::string& filepath,
-    const ImageData& data,
-    const ImageWriteOptions& options)
+std::vector<uint8_t> STBImageWriter::encode_png(
+    const ImageData& data, const ImageWriteOptions& options)
 {
     const auto* src = data.as_uint8();
-    if (!src) {
-        m_last_error = "PNG requires uint8 ImageData";
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
-        return false;
+    if (!src || src->empty()) {
+        return {};
     }
 
     const int compression = (options.compression >= 0 && options.compression <= 9)
@@ -242,7 +238,26 @@ bool STBImageWriter::write_png(
         pixels,
         stride);
 
-    if (!ok || encoded.empty()) {
+    if (!ok) {
+        return {};
+    }
+    return encoded;
+}
+
+bool STBImageWriter::write_png(
+    const std::string& filepath,
+    const ImageData& data,
+    const ImageWriteOptions& options)
+{
+    const auto* src = data.as_uint8();
+    if (!src) {
+        m_last_error = "PNG requires uint8 ImageData";
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
+        return false;
+    }
+
+    const auto encoded = encode_png(data, options);
+    if (encoded.empty()) {
         m_last_error = "stbi_write_png_to_func failed";
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
         return false;

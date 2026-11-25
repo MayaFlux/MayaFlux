@@ -38,6 +38,7 @@ class VideoStreamContainer;
 class VideoFileContainer;
 class SoundFileContainer;
 class CameraContainer;
+class MeshAssemblyContainer;
 class AudioOutputContainer;
 class CompositeContainer;
 }
@@ -789,13 +790,24 @@ public:
         const IO::ModelWriteOptions& options = {});
 
     /**
+     * @brief Save a whole MeshAssembly to disk asynchronously.
+     *
+     * Hierarchy, shared geometry, materials, skins, motions, cameras and lights are written
+     * as far as the format holds them. Returns once the task is queued.
+     */
+    bool save_mesh(
+        const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+        const std::string& filepath,
+        const IO::ModelWriteOptions& options = {});
+
+    /**
      * @brief Save a MeshNetwork's current slots to disk asynchronously.
      *
      * Slot data lives on MeshWriterNode, CPU-resident the same way
      * MeshBuffer's is, whether or not the network is wrapped in a
-     * MeshNetworkBuffer or has ever been rendered. Each slot's vertices are
-     * baked into world space from its current world_transform. Returns
-     * once the task is queued.
+     * MeshNetworkBuffer or has ever been rendered. The slots are written as a
+     * hierarchy with their current local transforms. Returns once the task
+     * is queued.
      *
      * @param network  Source network.
      * @param filepath Destination path with extension.

@@ -1137,6 +1137,25 @@ bool IOManager::save_mesh(
 }
 
 bool IOManager::save_mesh(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    if (!assembly) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh: null assembly");
+        return false;
+    }
+
+    track_save_task(std::async(std::launch::async,
+        [assembly, filepath, options]() -> bool {
+            return IO::save_mesh(assembly, filepath, options);
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh(
     const std::shared_ptr<Buffers::ComputeMeshBuffer>& buffer,
     const std::string& filepath,
     const IO::ModelWriteOptions& options)

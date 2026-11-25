@@ -2,6 +2,10 @@
 
 #include "ModelWriter.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::Buffers {
 class MeshBuffer;
 class MeshNetworkBuffer;
@@ -37,15 +41,21 @@ namespace MayaFlux::IO {
     const ModelWriteOptions& options = {});
 
 /**
+ * @brief Write a whole assembly, hierarchy and everything it carries, as far as the format holds it.
+ */
+[[nodiscard]] MAYAFLUX_API bool save_mesh(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::string& filepath,
+    const ModelWriteOptions& options = {});
+
+/**
  * @brief Save a MeshNetworkBuffer's current slots to disk as one multi-mesh
  *        file, one aiMesh per slot.
  *
- * Each slot's vertices (position, normal, tangent) are baked into world
- * space from that slot's current world_transform before export, so an
- * exploded/rotated network exports in the pose it is actually in, not its
- * local rest pose. A slot with no node, or a node with no vertices yet, is
- * skipped rather than failing the whole export; the export fails only if
- * every slot is empty.
+ * The slots are written as a hierarchy, each with its parent and current
+ * local transform, so the file shows the pose the network is actually in.
+ * A slot with no node, or a node with no vertices yet, is written as an
+ * empty row; the export fails only if every slot is empty.
  *
  * @param network_buffer Source network buffer.
  * @param filepath       Destination path with extension.
@@ -60,8 +70,7 @@ namespace MayaFlux::IO {
 /**
  * @brief Save a MeshNetwork's current slots to disk as one multi-mesh file.
  *
- * Same shape as the MeshNetworkBuffer overload (each slot's vertices baked
- * into world space from its current world_transform), but works directly
+ * Same shape as the MeshNetworkBuffer overload, but works directly
  * on the network: slot data lives on MeshNetwork itself, not on the GPU
  * buffer, so a network never wrapped in a MeshNetworkBuffer, or not yet
  * rendered, is still exportable. The MeshNetworkBuffer overload forwards
