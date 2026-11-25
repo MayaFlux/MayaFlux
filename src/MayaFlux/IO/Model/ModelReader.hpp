@@ -4,6 +4,10 @@
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
+namespace MayaFlux::Kakshya {
+struct MeshAssemblyMaterial;
+}
+
 namespace MayaFlux::Core {
 class VKImage;
 }
@@ -131,6 +135,20 @@ public:
      * @return One MeshData per aiMesh in the scene.
      */
     [[nodiscard]] std::vector<Kakshya::MeshData> extract_meshes() const;
+
+    /**
+     * @brief The texture of a material that is cut out by an opacity map: its base colour with
+     *        the map as alpha, which the textured mesh shaders discard below one half.
+     * @param material A material of an assembly this reader's kind of file produced.
+     * @param model_path The model file, whose directory the texture paths are relative to.
+     * @return The uploaded image, or null when the material has no base colour, no opacity map of
+     *         its own, or either cannot be read as 8 bit pixels. The caller holds it as any other
+     *         texture from a resolver.
+     *
+     * A map the file connected as transparency (FBX) is read inverted.
+     */
+    [[nodiscard]] static std::shared_ptr<Core::VKImage> load_cutout_texture(
+        const Kakshya::MeshAssemblyMaterial& material, const std::string& model_path);
 
     /**
      * @brief Construct one MeshBuffer per placed mesh of the currently loaded scene.

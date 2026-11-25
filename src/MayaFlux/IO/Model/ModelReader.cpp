@@ -78,6 +78,41 @@ namespace {
         return decoded.emplace(texture, decode_embedded(*texture)).first->second;
     }
 
+    std::shared_ptr<const Kakshya::ImageData> pixels_of(
+        const Kakshya::MeshAssemblyTexture& texture, const std::filesystem::path& base)
+    {
+        if (texture.image) {
+            return texture.image;
+        }
+        std::string named = texture.path;
+        std::ranges::replace(named, '\\', '/');
+        const auto leaf = std::filesystem::path(named).filename();
+        for (const auto& candidate : { base / named, base / "textures" / leaf, base / leaf }) {
+            if (std::filesystem::exists(candidate)) {
+                auto loaded = ImageReader::load(candidate);
+                return loaded ? std::make_shared<const Kakshya::ImageData>(std::move(*loaded)) : nullptr;
+            }
+        }
+        return nullptr;
+    }
+
+    /** The first channel of an 8 bit image at a point of the unit square, between its four nearest texels. */
+    float sample_first_channel(const Kakshya::ImageData& image, const std::vector<uint8_t>& pixels, float u, float v)
+    {
+        const float x = std::clamp(u * static_cast<float>(image.width) - 0.5F, 0.0F, static_cast<float>(image.width - 1));
+        const float y = std::clamp(v * static_cast<float>(image.height) - 0.5F, 0.0F, static_cast<float>(image.height - 1));
+        const auto x0 = static_cast<uint32_t>(x);
+        const auto y0 = static_cast<uint32_t>(y);
+        const uint32_t x1 = std::min(x0 + 1, image.width - 1);
+        const uint32_t y1 = std::min(y0 + 1, image.height - 1);
+        const auto at = [&](uint32_t column, uint32_t row) {
+            return static_cast<float>(pixels[(static_cast<size_t>(row) * image.width + column) * image.channels]);
+        };
+        const float fx = x - static_cast<float>(x0);
+        const float fy = y - static_cast<float>(y0);
+        return glm::mix(glm::mix(at(x0, y0), at(x1, y0), fx), glm::mix(at(x0, y1), at(x1, y1), fx), fy);
+    }
+
     std::shared_ptr<Core::VKImage> upload(const std::shared_ptr<const Kakshya::ImageData>& image)
     {
         if (!image) {
@@ -710,6 +745,7 @@ struct ModelReader::Impl {
     Assimp::Importer importer;
     const aiScene* scene { nullptr };
     EmbeddedImages embedded;
+    std::string path;
 };
 
 // =============================================================================
@@ -780,6 +816,45 @@ std::vector<Kakshya::MeshData> ModelReader::extract_meshes() const
     return result;
 }
 
+std::shared_ptr<Core::VKImage> ModelReader::load_cutout_texture(
+    const Kakshya::MeshAssemblyMaterial& material, const std::string& model_path)
+{
+    const auto* maps = material.facets.get<Kakshya::MeshAssemblyMaps>();
+    if (!maps || !maps->base_color || !maps->opacity || maps->opacity->path == maps->base_color->path) {
+        return nullptr;
+    }
+
+    const auto base = std::filesystem::path(model_path).parent_path();
+    const auto color = pixels_of(*maps->base_color, base);
+    const auto mask = pixels_of(*maps->opacity, base);
+    const auto* color_bytes = color ? color->as_uint8() : nullptr;
+    const auto* mask_bytes = mask ? mask->as_uint8() : nullptr;
+    if (!color_bytes || !mask_bytes || color->channels != 4 || mask->channels == 0 || mask->width == 0 || mask->height == 0) {
+        MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+            "ModelReader: material '{}' has an opacity map that could not be combined with its colour", material.name);
+        return nullptr;
+    }
+
+    const auto* properties = material.facets.get<Kakshya::MeshAssemblyProperties>();
+    const bool transparency = properties && std::ranges::any_of(properties->entries, [](const auto& entry) {
+        return entry.key == "$raw.TransparencyFactor|file" || entry.key == "$raw.TransparentColor|file";
+    });
+
+    auto combined = std::make_shared<Kakshya::ImageData>(*color);
+    auto& out = *combined->as_uint8();
+    for (uint32_t row = 0; row < combined->height; ++row) {
+        const float v = (static_cast<float>(row) + 0.5F) / static_cast<float>(combined->height);
+        for (uint32_t column = 0; column < combined->width; ++column) {
+            const float u = (static_cast<float>(column) + 0.5F) / static_cast<float>(combined->width);
+            const float value = sample_first_channel(*mask, *mask_bytes, u, v);
+            const float opacity = (transparency ? 255.0F - value : value) / 255.0F;
+            auto& alpha = out[(static_cast<size_t>(row) * combined->width + column) * 4 + 3];
+            alpha = static_cast<uint8_t>(static_cast<float>(alpha) * opacity + 0.5F);
+        }
+    }
+    return upload(combined);
+}
+
 std::vector<std::shared_ptr<Buffers::MeshBuffer>>
 ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
 {
@@ -845,9 +920,14 @@ ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
         if (resolver) {
             const auto raw = get_diffuse_path(mesh_data);
             if (!raw.empty()) {
-                auto image = is_embedded(*m_impl->scene, raw)
-                    ? upload(embedded_image(*m_impl->scene, raw, m_impl->embedded))
-                    : resolver(raw);
+                auto image = placement->material
+                    ? load_cutout_texture(assembly->get_data().materials[*placement->material], m_impl->path)
+                    : nullptr;
+                if (!image) {
+                    image = is_embedded(*m_impl->scene, raw)
+                        ? upload(embedded_image(*m_impl->scene, raw, m_impl->embedded))
+                        : resolver(raw);
+                }
                 if (image) {
                     buf->bind_diffuse_texture(image);
                 } else {
@@ -891,9 +971,12 @@ ModelReader::create_mesh_network(const TextureResolver& resolver) const
                 continue;
             }
 
-            auto image = material.diffuse_embedded
-                ? upload(embedded_image(*m_impl->scene, material.diffuse_path, m_impl->embedded))
-                : resolver(material.diffuse_path);
+            auto image = load_cutout_texture(material, m_impl->path);
+            if (!image) {
+                image = material.diffuse_embedded
+                    ? upload(embedded_image(*m_impl->scene, material.diffuse_path, m_impl->embedded))
+                    : resolver(material.diffuse_path);
+            }
             if (image) {
                 net->set_slot_texture(slot, std::move(image));
             } else {
@@ -1573,6 +1656,7 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
     }
 
     m_is_open = true;
+    m_impl->path = resolved;
     MF_INFO(Journal::Component::IO, Journal::Context::FileIO,
         "ModelReader: opened '{}' — {} meshes, {} materials",
         std::filesystem::path(resolved).filename().string(),

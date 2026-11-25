@@ -15,5 +15,8 @@ layout(location = 0) out vec4 out_color;
 void main()
 {
     vec4 tex = texture(diffuseTex[nonuniformEXT(in_texture)], in_uv);
+    if (tex.a < 0.5) {
+        discard;
+    }
     out_color = vec4(tex.rgb * in_color, tex.a);
 }
