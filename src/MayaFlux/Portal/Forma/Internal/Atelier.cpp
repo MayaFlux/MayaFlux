@@ -172,9 +172,42 @@ std::shared_ptr<Core::VKImage> Atelier::text_image()
     return m_text_fallback;
 }
 
+namespace {
+
+    /**
+     * A batch follows the view of the layer it belongs to, and draws into, and
+     * measures its line widths against, the part of the image its surface names.
+     */
+    void follow_surface(const std::shared_ptr<Buffers::FormaBuffer>& batch, const Surface& surface)
+    {
+        const auto processor = batch ? batch->get_render_processor() : nullptr;
+        if (!processor) {
+            return;
+        }
+
+        processor->set_view_transform_source(
+            [layer = std::weak_ptr<Layer>(surface.layer_ptr())]() {
+                const auto held = layer.lock();
+                return held && held->view() ? *held->view() : Kinesis::ViewTransform {};
+            },
+            false, Graphics::CullMode::NONE);
+
+        if (surface.image()) {
+            processor->set_target_area(surface.image(), surface.area());
+
+            Graphics::MillSpec spec = processor->get_mill_spec();
+            spec.width_scale = 2.0F / static_cast<float>(std::max(surface.extent().y, 1U));
+            processor->set_mill_spec(spec);
+        }
+    }
+
+}
+
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface, int64_t priority)
 {
-    return create_batch(surface.render_config(), priority);
+    auto batch = create_batch(surface.render_config(), priority);
+    follow_surface(batch, surface);
+    return batch;
 }
 
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(Graphics::RenderConfig render, int64_t priority)
@@ -214,11 +247,13 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(
             continue;
         if (!buffer || buffer->needs_removal()) {
             buffer = create_batch(surface.image_config(target));
+            follow_surface(buffer, surface);
         }
         return buffer;
     }
 
     auto buffer = create_batch(surface.image_config(target));
+    follow_surface(buffer, surface);
     layer.m_image_batches.emplace_back(target, buffer);
     return buffer;
 }
@@ -255,12 +290,12 @@ Surface Atelier::create_surface(SurfaceConfig config)
         config.layer = config.ctx->layer();
     } else if (config.layer && !config.ctx) {
         config.ctx = windowless
-            ? std::make_shared<Context>(config.layer, config.image)
+            ? std::make_shared<Context>(config.layer, config.image, config.area)
             : std::make_shared<Context>(config.layer, config.window, m_event_manager, config.name);
         MayaFlux::store(config.ctx);
     } else if (!config.layer && windowless) {
         config.layer = std::make_shared<Layer>();
-        config.ctx = std::make_shared<Context>(config.layer, config.image);
+        config.ctx = std::make_shared<Context>(config.layer, config.image, config.area);
         MayaFlux::store(config.ctx);
     } else if (!config.layer) {
         auto [layer, ctx] = create_layer(config.window, config.name);

@@ -96,9 +96,12 @@ Context::Context(std::shared_ptr<Layer> layer,
     register_handlers();
 }
 
-Context::Context(std::shared_ptr<Layer> layer, std::shared_ptr<Portal::Graphics::ImageTarget> image)
+Context::Context(std::shared_ptr<Layer> layer,
+    std::shared_ptr<Portal::Graphics::ImageTarget> image,
+    const Kinesis::ViewportArea& area)
     : m_layer(std::move(layer))
     , m_image(std::move(image))
+    , m_area(area)
 {
     if (!m_image) {
         error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
@@ -122,7 +125,8 @@ glm::uvec2 Context::extent() const noexcept
         return { state.current_width, state.current_height };
     }
     if (m_image) {
-        return { m_image->width(), m_image->height() };
+        const auto filled = m_area.pixels(m_image->width(), m_image->height());
+        return { filled.width(), filled.height() };
     }
     return { 0U, 0U };
 }
@@ -656,10 +660,13 @@ void Context::cancel_handlers(bool cancel_close)
 glm::vec2 Context::to_ndc(double px, double py) const noexcept
 {
     const auto size = extent();
-    return {
-        (static_cast<float>(px) / static_cast<float>(size.x)) * 2.0F - 1.0F,
-        1.0F - (static_cast<float>(py) / static_cast<float>(size.y)) * 2.0F
-    };
+    if (!m_window && m_image) {
+        const auto filled = m_area.pixels(m_image->width(), m_image->height());
+        px -= filled.x0;
+        py -= filled.y0;
+    }
+    return m_layer->from_view({ (static_cast<float>(px) / static_cast<float>(size.x)) * 2.0F - 1.0F,
+        1.0F - (static_cast<float>(py) / static_cast<float>(size.y)) * 2.0F });
 }
 
 Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) const noexcept

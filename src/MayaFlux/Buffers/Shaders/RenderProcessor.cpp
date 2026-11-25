@@ -207,7 +207,7 @@ void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& win
 void RenderProcessor::set_target_image(
     const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
     const std::shared_ptr<VKBuffer>& buffer,
-    const Portal::Graphics::TargetArea& area)
+    const Kinesis::ViewportArea& area)
 {
     if (!image) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -279,7 +279,7 @@ void RenderProcessor::add_target_window(const std::shared_ptr<Core::Window>& win
 void RenderProcessor::add_target_image(
     const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
     const std::shared_ptr<VKBuffer>& /*buffer*/,
-    const Portal::Graphics::TargetArea& area)
+    const Kinesis::ViewportArea& area)
 {
     if (!image) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -305,7 +305,7 @@ void RenderProcessor::add_target_image(
 
 void RenderProcessor::set_target_area(
     const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
-    const Portal::Graphics::TargetArea& area)
+    const Kinesis::ViewportArea& area)
 {
     auto* lane = find_lane(image);
     if (!lane || area.layer >= image->layers()) {
@@ -315,11 +315,11 @@ void RenderProcessor::set_target_area(
     image->request_clear();
 }
 
-Portal::Graphics::TargetArea RenderProcessor::get_target_area(
+Kinesis::ViewportArea RenderProcessor::get_target_area(
     const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const
 {
     const auto* lane = find_lane(image);
-    return lane ? lane->area : Portal::Graphics::TargetArea {};
+    return lane ? lane->area : Kinesis::ViewportArea {};
 }
 
 void RenderProcessor::remove_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
@@ -1170,49 +1170,16 @@ void RenderProcessor::set_triangulate(bool enabled)
     invalidate_all_mills();
 }
 
-namespace {
-
-    vk::Rect2D pixel_rect(const Kinesis::AABB2D& bounds, uint32_t width, uint32_t height) noexcept;
-
-}
-
 vk::Rect2D RenderProcessor::resolve_area_rect(
-    const Portal::Graphics::TargetArea& area, uint32_t width, uint32_t height) noexcept
+    const Kinesis::ViewportArea& area, uint32_t width, uint32_t height) noexcept
 {
-    if (!area.area) {
-        return { { 0, 0 }, { width, height } };
-    }
-    return pixel_rect(area.area->bounds, width, height);
+    const auto rect = area.pixels(width, height);
+    return { { static_cast<int32_t>(rect.x0), static_cast<int32_t>(rect.y0) }, { rect.width(), rect.height() } };
 }
 
 vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept
 {
-    if (!m_scissor) {
-        return { { 0, 0 }, { width, height } };
-    }
-    return pixel_rect(m_scissor->bounds, width, height);
-}
-
-namespace {
-
-vk::Rect2D pixel_rect(const Kinesis::AABB2D& bounds, uint32_t width, uint32_t height) noexcept
-{
-    const auto fw = static_cast<float>(width);
-    const auto fh = static_cast<float>(height);
-
-    const float x0 = std::clamp((bounds.min.x * 0.5F + 0.5F) * fw, 0.F, fw);
-    const float x1 = std::clamp((bounds.max.x * 0.5F + 0.5F) * fw, 0.F, fw);
-    const float y0 = std::clamp((1.F - bounds.max.y) * 0.5F * fh, 0.F, fh);
-    const float y1 = std::clamp((1.F - bounds.min.y) * 0.5F * fh, 0.F, fh);
-
-    const auto px = static_cast<int32_t>(x0);
-    const auto py = static_cast<int32_t>(y0);
-    const auto pw = static_cast<uint32_t>(x1 - x0);
-    const auto ph = static_cast<uint32_t>(y1 - y0);
-
-    return { { px, py }, { pw, ph } };
-}
-
+    return resolve_area_rect({ .area = m_scissor }, width, height);
 }
 
 void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)

@@ -74,26 +74,38 @@ namespace {
 
 glm::uvec2 Surface::extent_of(
     const std::shared_ptr<Core::Window>& window,
-    const std::shared_ptr<Portal::Graphics::ImageTarget>& image) noexcept
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const Kinesis::ViewportArea& area) noexcept
 {
     if (window) {
         const auto& state = window->get_state();
         return { state.current_width, state.current_height };
     }
     if (image) {
-        return { image->width(), image->height() };
+        const auto filled = area.pixels(image->width(), image->height());
+        return { filled.width(), filled.height() };
     }
     return { 0U, 0U };
+}
+
+void Surface::set_view(const std::optional<Kinesis::ViewTransform>& view)
+{
+    m_layer->set_view(view);
+    if (m_image) {
+        m_image->request_redraw();
+    }
 }
 
 Surface::Surface(SurfaceConfig config)
     : m_window_ownership(std::make_shared<WindowOwnership>(std::move(config.window)))
     , m_image(std::move(config.image))
+    , m_area(config.area)
     , m_layer(std::move(config.layer))
     , m_ctx(std::move(config.ctx))
 {
     if (m_window_ownership->window) {
         m_image.reset();
+        m_area = {};
     }
 
     if (!m_window_ownership->window) {

@@ -47,6 +47,27 @@ struct AABB1D {
 };
 
 // =============================================================================
+// PixelRect
+// =============================================================================
+
+/**
+ * @struct PixelRect
+ * @brief Half-open rectangle of whole pixels, [x0, x1) x [y0, y1), top-left origin.
+ *
+ * Pixel y runs downward, unlike NDC. The four members in this order are laid
+ * out as shaders read them from a push constant block.
+ */
+struct PixelRect {
+    uint32_t x0 {};
+    uint32_t y0 {};
+    uint32_t x1 {};
+    uint32_t y1 {};
+
+    [[nodiscard]] uint32_t width() const noexcept { return x1 - x0; }
+    [[nodiscard]] uint32_t height() const noexcept { return y1 - y0; }
+};
+
+// =============================================================================
 // AABB2D
 // =============================================================================
 

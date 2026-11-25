@@ -38,6 +38,14 @@ struct SurfaceConfig {
     std::shared_ptr<Portal::Graphics::ImageTarget> image;
 
     /**
+     * @brief Part of @c image, and layer of it, that a Surface with no window draws into.
+     *
+     * The Surface's extent is that part's size, its batches draw into it, and
+     * input routed to it is mapped into it. Unset is the whole first layer.
+     */
+    Kinesis::ViewportArea area;
+
+    /**
      * @brief Unique name scoping the Context's event coroutines.
      *
      * Only consulted when @c layer/@c ctx are unset and need to be built.
@@ -196,9 +204,25 @@ public:
     [[nodiscard]] const std::shared_ptr<Portal::Graphics::ImageTarget>& image() const noexcept { return m_image; }
 
     /**
-     * @brief Pixel size of the canvas: the window's, or the image's.
+     * @brief Pixel size of the canvas: the window's, or that of the part of the image it draws into.
      */
-    [[nodiscard]] glm::uvec2 extent() const noexcept { return extent_of(window(), m_image); }
+    [[nodiscard]] glm::uvec2 extent() const noexcept { return extent_of(window(), m_image, m_area); }
+
+    /** @brief The layer and part of image() this Surface draws into. */
+    [[nodiscard]] const Kinesis::ViewportArea& area() const noexcept { return m_area; }
+
+    /**
+     * @brief Draw and hit test this Surface through a view.
+     *
+     * Elements stay placed in the z = 0 plane in NDC units; the view moves
+     * what shows. Its batches draw with it, and the pointer, drags and
+     * callbacks come back in element coordinates, for the Surface's own window
+     * input and for input routed into it. std::nullopt removes it. The batches
+     * and images redraw.
+     */
+    void set_view(const std::optional<Kinesis::ViewTransform>& view);
+
+    [[nodiscard]] const std::optional<Kinesis::ViewTransform>& view() const noexcept { return m_layer->view(); }
 
     /**
      * @brief Pixel size of a canvas given by its window or, without one, its image.
@@ -207,7 +231,8 @@ public:
      */
     [[nodiscard]] static glm::uvec2 extent_of(
         const std::shared_ptr<Core::Window>& window,
-        const std::shared_ptr<Portal::Graphics::ImageTarget>& image) noexcept;
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const Kinesis::ViewportArea& area = {}) noexcept;
 
     /**
      * @brief Send input that reaches an on-screen element into this Surface.
@@ -390,6 +415,7 @@ private:
 
     std::shared_ptr<WindowOwnership> m_window_ownership;
     std::shared_ptr<Portal::Graphics::ImageTarget> m_image;
+    Kinesis::ViewportArea m_area;
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Context> m_ctx;
 };

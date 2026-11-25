@@ -48,28 +48,6 @@ struct ImageCacheEntry {
 };
 
 /**
- * @struct TargetArea
- * @brief Where in an image target one destination draws.
- *
- * The layer is the array layer or cube face drawn into. The area is the part of
- * that layer the destination's view fills, in the NDC convention of
- * Kinesis::Scissor, so it stays right when the target is resized. Unset is the
- * whole layer. The viewport maps clip space onto the area and the draw is
- * clipped to it, together with the processor's own scissor, which is resolved
- * against the area.
- */
-struct TargetArea {
-    uint32_t layer {};
-    std::optional<Kinesis::Scissor> area;
-
-    [[nodiscard]] bool operator==(const TargetArea& other) const noexcept
-    {
-        return layer == other.layer && area.has_value() == other.area.has_value()
-            && (!area || *area == *other.area);
-    }
-};
-
-/**
  * @class ImageTarget
  * @brief An image that draws land in instead of a window.
  *

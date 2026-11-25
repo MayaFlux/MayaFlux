@@ -59,10 +59,10 @@ ColorPicker& ColorPicker::place(
     const Kinesis::AABB2D hue_rect { .min = { x_min + width * 0.66F, y_min }, .max = { x_min + width * 0.78F, y_max } };
     const Kinesis::AABB2D swatch_rect { .min = { x_min + width * 0.82F, y_min }, .max = { x_max, y_max } };
 
-    GeometryFn<glm::vec3> geometry = [square_rect, hue_rect, swatch_rect, window = std::weak_ptr<Core::Window>(surface.window()), image = surface.image()](
+    GeometryFn<glm::vec3> geometry = [square_rect, hue_rect, swatch_rect, window = std::weak_ptr<Core::Window>(surface.window()), image = surface.image(), area = surface.area()](
                                          glm::vec3 value, std::vector<uint8_t>& out, Element&) {
         float aspect = 1.F;
-        const auto size = Surface::extent_of(window.lock(), image);
+        const auto size = Surface::extent_of(window.lock(), image, area);
         if (size.x > 0)
             aspect = static_cast<float>(size.y) / static_cast<float>(size.x);
         const glm::vec2 marker { k_marker_half_height * aspect, k_marker_half_height };

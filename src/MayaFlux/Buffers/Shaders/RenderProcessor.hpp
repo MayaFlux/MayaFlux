@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
+#include "MayaFlux/Kinesis/Viewport/ViewportArea.hpp"
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
@@ -80,7 +81,7 @@ public:
     void set_target_image(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
         const std::shared_ptr<VKBuffer>& buffer,
-        const Portal::Graphics::TargetArea& area = {});
+        const Kinesis::ViewportArea& area = {});
 
     /**
      * @brief Make a window and image targets the destinations of this processor.
@@ -105,7 +106,7 @@ public:
     void add_target_image(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
         const std::shared_ptr<VKBuffer>& buffer,
-        const Portal::Graphics::TargetArea& area = {});
+        const Kinesis::ViewportArea& area = {});
 
     /**
      * @brief Change the layer and part of an image target this processor draws into.
@@ -115,10 +116,10 @@ public:
      */
     void set_target_area(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
-        const Portal::Graphics::TargetArea& area);
+        const Kinesis::ViewportArea& area);
 
     /** @brief Where this processor draws into an image target. The whole first layer when it is not a destination. */
-    [[nodiscard]] Portal::Graphics::TargetArea get_target_area(
+    [[nodiscard]] Kinesis::ViewportArea get_target_area(
         const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const;
 
     /** @brief Stop drawing into a window and release its pipeline. */
@@ -529,7 +530,7 @@ protected:
 
     /** @brief The pixel rect of a destination's area inside a target of the given size. The whole target when the area is unset. */
     [[nodiscard]] static vk::Rect2D resolve_area_rect(
-        const Portal::Graphics::TargetArea& area, uint32_t width, uint32_t height) noexcept;
+        const Kinesis::ViewportArea& area, uint32_t width, uint32_t height) noexcept;
 
 private:
     struct BufferState {
@@ -561,7 +562,7 @@ private:
     struct Lane {
         std::shared_ptr<Core::Window> window;
         std::shared_ptr<Portal::Graphics::ImageTarget> image;
-        Portal::Graphics::TargetArea area;
+        Kinesis::ViewportArea area;
         std::optional<Kinesis::ViewTransform> view;
         std::function<Kinesis::ViewTransform(glm::uvec2)> view_source;
         Portal::Graphics::RenderPipelineID pipeline { Portal::Graphics::INVALID_RENDER_PIPELINE };

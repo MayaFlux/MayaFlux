@@ -69,6 +69,36 @@ struct HitResult {
     return { .origin = near_w, .direction = glm::normalize(far_w - near_w) };
 }
 
+/**
+ * @brief The point of the z = 0 plane that shows at an NDC position through a view.
+ *
+ * The inverse of drawing a flat point with projection * view, so a pointer can
+ * be tested against geometry that was placed in that plane.
+ *
+ * @param ndc Position on screen, x and y in [-1, 1], +y up.
+ * @param vt  The view the plane is drawn with.
+ * @return std::nullopt when the view sees the plane edge on, or the point
+ *         lies behind the eye.
+ */
+[[nodiscard]] inline std::optional<glm::vec2> view_plane_point(
+    glm::vec2 ndc, const ViewTransform& vt)
+{
+    const Ray ray = screen_to_ray(
+        static_cast<double>(ndc.x) + 1.0, 1.0 - static_cast<double>(ndc.y), 2U, 2U, vt);
+
+    if (std::abs(ray.direction.z) < 1e-6F) {
+        return std::nullopt;
+    }
+
+    const glm::vec3 met = ray.origin - ray.direction * (ray.origin.z / ray.direction.z);
+    const glm::vec4 clip = vt.projection * vt.view * glm::vec4(met.x, met.y, 0.0F, 1.0F);
+    if (clip.w <= 0.0F) {
+        return std::nullopt;
+    }
+
+    return glm::vec2(met.x, met.y);
+}
+
 // =========================================================================
 // Point-to-ray distance
 // =========================================================================

@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Kinesis/Viewport/ViewportArea.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux::Core {
@@ -88,9 +89,14 @@ public:
      *
      * @param layer Layer to hit-test against. Must outlive Context.
      * @param image Target the Layer is drawn into.
+     * @param area Part of the image the Layer fills, as a destination of a
+     *        RenderProcessor takes it. The extent is then that part's size, and
+     *        fed pixels are still pixels of the whole image.
      * @throws std::invalid_argument If image is null.
      */
-    Context(std::shared_ptr<Layer> layer, std::shared_ptr<Portal::Graphics::ImageTarget> image);
+    Context(std::shared_ptr<Layer> layer,
+        std::shared_ptr<Portal::Graphics::ImageTarget> image,
+        const Kinesis::ViewportArea& area = {});
 
     /**
      * @brief Cancel all registered event coroutines.
@@ -545,6 +551,7 @@ private:
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
     std::shared_ptr<Portal::Graphics::ImageTarget> m_image;
+    Kinesis::ViewportArea m_area;
     std::shared_ptr<Vruta::EventManager> m_event_manager;
     std::string m_name;
 
