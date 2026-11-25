@@ -53,14 +53,18 @@ namespace {
             && filter.matches_modifiers(data);
     }
 
-    Vruta::Event subscribed_key_events(std::shared_ptr<Core::Window> window, IO::Keys key,
+    bool is_key_event(Core::WindowEventType type)
+    {
+        return type == Core::WindowEventType::KEY_PRESSED
+            || type == Core::WindowEventType::KEY_RELEASED
+            || type == Core::WindowEventType::KEY_REPEAT;
+    }
+
+    Vruta::Event subscribed_key_events(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter,
         std::function<void(const Core::WindowEvent&)> callback)
     {
         auto& promise = co_await Kriya::GetEventPromise {};
         auto& source = window->get_event_source();
-
-        Vruta::WindowEventFilter filter;
-        filter.key_code = key;
 
         while (true) {
             if (promise.should_terminate)
@@ -238,12 +242,21 @@ void Context::feed_key(IO::Keys key, Core::WindowEventType type, IO::Modifiers h
         handle_key_held(chord);
     }
 
+    Core::WindowEvent event;
+    event.type = type;
+    event.data = Core::WindowEvent::KeyData { .key = static_cast<int16_t>(key), .scancode = 0, .mods = held };
+
     if (m_subscribed_keys.contains(static_cast<int>(key))) {
-        Core::WindowEvent event;
-        event.type = type;
-        event.data = Core::WindowEvent::KeyData { .key = static_cast<int16_t>(key), .scancode = 0, .mods = held };
         handle_subscribed_key(key, event);
     }
+    if (m_any_key_types.contains(static_cast<int>(type))) {
+        handle_any_key(event);
+    }
+}
+
+void Context::feed_modifiers(IO::Modifiers held)
+{
+    m_fed_modifiers = held;
 }
 
 // =============================================================================
@@ -296,7 +309,6 @@ bool Context::receives(const Vruta::WindowEventFilter& filter) noexcept
     case Type::KEY_PRESSED:
     case Type::KEY_RELEASED:
     case Type::KEY_REPEAT:
-        return filter.key_code.has_value();
     case Type::MOUSE_MOTION:
     case Type::MOUSE_BUTTON_PRESSED:
     case Type::MOUSE_BUTTON_RELEASED:
@@ -323,9 +335,19 @@ bool Context::subscribe(uint32_t id, Vruta::WindowEventFilter filter, Subscriber
         if (m_subscribed_keys.insert(key_code).second && m_window) {
             m_event_manager->add_event(
                 std::make_shared<Vruta::Event>(
-                    subscribed_key_events(m_window, key,
+                    subscribed_key_events(m_window, Vruta::WindowEventFilter(key),
                         [this, key](const Core::WindowEvent& event) { handle_subscribed_key(key, event); })),
                 m_name + "_subscribed_key_" + std::to_string(key_code));
+        }
+    } else if (filter.event_type && is_key_event(*filter.event_type)) {
+        const Core::WindowEventType type = *filter.event_type;
+        const int type_code = static_cast<int>(type);
+        if (m_any_key_types.insert(type_code).second && m_window) {
+            m_event_manager->add_event(
+                std::make_shared<Vruta::Event>(
+                    subscribed_key_events(m_window, Vruta::WindowEventFilter(type),
+                        [this](const Core::WindowEvent& event) { handle_any_key(event); })),
+                m_name + "_any_key_" + std::to_string(type_code));
         }
     }
 
@@ -413,6 +435,7 @@ void Context::detach_window(bool cancel_close)
         drag.reset();
     m_registered_keys.clear();
     m_subscribed_keys.clear();
+    m_any_key_types.clear();
     m_callbacks.clear();
 }
 
@@ -642,6 +665,9 @@ void Context::cancel_handlers(bool cancel_close)
     for (const int key_code : m_subscribed_keys)
         m_event_manager->cancel_event(m_name + "_subscribed_key_" + std::to_string(key_code));
 
+    for (const int type_code : m_any_key_types)
+        m_event_manager->cancel_event(m_name + "_any_key_" + std::to_string(type_code));
+
     for (const auto& [key_code, handlers] : m_registered_keys) {
         const std::string key_name = std::to_string(key_code);
         if (handlers.has_press)
@@ -738,7 +764,7 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
         if (it != m_callbacks.end())
             notify(callback_for(it->second.press, btn_idx), pressed, ndc);
         dispatch(pressed, Core::WindowEventType::MOUSE_BUTTON_PRESSED, ndc,
-            Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), 0 }, btn);
+            Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), modifiers() }, btn);
     }
 }
 
@@ -757,7 +783,7 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     if (it != m_callbacks.end())
         notify(callback_for(it->second.release, btn_idx), released, ndc);
     dispatch(released, Core::WindowEventType::MOUSE_BUTTON_RELEASED, ndc,
-        Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), 0 }, btn);
+        Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), modifiers() }, btn);
 }
 
 void Context::handle_drags(double px, double py)
@@ -879,12 +905,29 @@ void Context::handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event
     if (!m_focused)
         return;
 
-    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt, key);
+    const bool keyless_listens = m_any_key_types.contains(static_cast<int>(event.type));
+    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt, key,
+        keyless_listens ? std::optional<bool>(true) : std::nullopt);
+}
+
+void Context::handle_any_key(const Core::WindowEvent& event)
+{
+    const auto* data = std::get_if<Core::WindowEvent::KeyData>(&event.data);
+    if (!data)
+        return;
+
+    sync_size();
+    if (!m_focused)
+        return;
+
+    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt,
+        static_cast<IO::Keys>(data->key), false);
 }
 
 void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
     Core::WindowEvent::EventData data, std::optional<IO::MouseButtons> button,
-    std::optional<IO::Keys> key)
+    std::optional<IO::Keys> key,
+    std::optional<bool> names_key)
 {
     const auto found = m_callbacks.find(id);
     if (found == m_callbacks.end())
@@ -895,6 +938,8 @@ void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
     event.type = type;
     event.data = std::move(data);
     for (const auto& subscription : subscribers) {
+        if (names_key && subscription.filter.key_code.has_value() != *names_key)
+            continue;
         if (matches(subscription.filter, type, button, key, event.data))
             subscription.fn(id, event, ndc);
     }

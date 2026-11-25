@@ -153,7 +153,15 @@ public:
     void feed_key(IO::Keys key, Core::WindowEventType type, IO::Modifiers held = IO::Modifiers::None);
 
     /**
-     * @brief Modifiers held now: the window's, or the last passed to feed_key().
+     * @brief Say which modifiers are down, for a Context without a window.
+     *
+     * feed_key() sets them too. The pointer feeds carry none, so call this
+     * before them when a modifier may have changed since the last key.
+     */
+    void feed_modifiers(IO::Modifiers held);
+
+    /**
+     * @brief Modifiers held now: the window's, or the last passed to feed_modifiers() or feed_key().
      */
     [[nodiscard]] IO::Modifiers modifiers() const;
 
@@ -250,8 +258,8 @@ public:
      *   starts on press, as on_drag does.
      * - MOUSE_ENTERED and MOUSE_EXITED when the pointer enters or leaves it.
      * - MOUSE_SCROLLED while the pointer is over it.
-     * - KEY_PRESSED, KEY_RELEASED and KEY_REPEAT of a key, while it has focus.
-     *   A filter for these must name the key.
+     * - KEY_PRESSED, KEY_RELEASED and KEY_REPEAT while it has focus: of the key
+     *   a filter names, or of every key when it names none.
      * - TEXT_INPUT while it has focus.
      * - WINDOW_FOCUS_GAINED and WINDOW_FOCUS_LOST when it gains or loses focus.
      *
@@ -265,8 +273,7 @@ public:
     /**
      * @brief Whether an element can receive what a filter asks for.
      *
-     * False for a key event without a key and for an event an element never
-     * receives, such as a window resize.
+     * False for an event an element never receives, such as a window resize.
      */
     [[nodiscard]] static bool receives(const Vruta::WindowEventFilter& filter) noexcept;
 
@@ -547,6 +554,7 @@ private:
     };
     std::unordered_map<int, KeyHandlerState> m_registered_keys;
     std::unordered_set<int> m_subscribed_keys;
+    std::unordered_set<int> m_any_key_types;
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
@@ -579,8 +587,10 @@ private:
     void dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
         Core::WindowEvent::EventData data = {},
         std::optional<IO::MouseButtons> button = std::nullopt,
-        std::optional<IO::Keys> key = std::nullopt);
+        std::optional<IO::Keys> key = std::nullopt,
+        std::optional<bool> names_key = std::nullopt);
     void handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event);
+    void handle_any_key(const Core::WindowEvent& event);
     void handle_key_press(int key_code);
     void handle_key_release(IO::Keys key);
     void handle_key_held(int key_code);

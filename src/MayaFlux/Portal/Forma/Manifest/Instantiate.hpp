@@ -496,7 +496,9 @@ namespace Detail {
                 filter.key_code = *key;
             }
 
-            if (!Context::receives(filter)) {
+            const bool unnamed_key = !filter.key_code
+                && (event == Type::KEY_PRESSED || event == Type::KEY_RELEASED || event == Type::KEY_REPEAT);
+            if (unnamed_key || !Context::receives(filter)) {
                 return fail(on, "<on> event " + std::string(*event_text)
                         + " is not delivered to an element, or needs a key attribute");
             }

@@ -155,6 +155,7 @@ bool Surface::route_input_from(Surface& host, uint32_t element)
 
     subscribe(Type::MOUSE_MOTION, std::nullopt,
         [map, fed, host_ctx](uint32_t, const Core::WindowEvent&, glm::vec2 ndc) {
+            fed->feed_modifiers(host_ctx->modifiers());
             settle_buttons(*fed, *host_ctx);
             if (const auto at = map.pixel(ndc))
                 fed->feed_move(at->x, at->y);
@@ -162,16 +163,18 @@ bool Surface::route_input_from(Surface& host, uint32_t element)
 
     for (const auto btn : k_buttons) {
         subscribe(Type::MOUSE_MOTION, btn,
-            [map, fed](uint32_t, const Core::WindowEvent&, glm::vec2 ndc) {
+            [map, fed, host_ctx](uint32_t, const Core::WindowEvent&, glm::vec2 ndc) {
                 if (map.inside(ndc))
                     return;
+                fed->feed_modifiers(host_ctx->modifiers());
                 if (const auto at = map.pixel(ndc))
                     fed->feed_move(at->x, at->y);
             });
     }
 
     subscribe(Type::MOUSE_BUTTON_PRESSED, std::nullopt,
-        [map, fed](uint32_t, const Core::WindowEvent& event, glm::vec2 ndc) {
+        [map, fed, host_ctx](uint32_t, const Core::WindowEvent& event, glm::vec2 ndc) {
+            fed->feed_modifiers(host_ctx->modifiers());
             const auto* data = std::get_if<Core::WindowEvent::MouseButtonData>(&event.data);
             const auto at = map.pixel(ndc);
             if (data && at)
@@ -179,7 +182,8 @@ bool Surface::route_input_from(Surface& host, uint32_t element)
         });
 
     subscribe(Type::MOUSE_BUTTON_RELEASED, std::nullopt,
-        [map, fed](uint32_t, const Core::WindowEvent& event, glm::vec2 ndc) {
+        [map, fed, host_ctx](uint32_t, const Core::WindowEvent& event, glm::vec2 ndc) {
+            fed->feed_modifiers(host_ctx->modifiers());
             const auto* data = std::get_if<Core::WindowEvent::MouseButtonData>(&event.data);
             const auto at = map.pixel(ndc);
             if (data && at)
@@ -187,7 +191,8 @@ bool Surface::route_input_from(Surface& host, uint32_t element)
         });
 
     subscribe(Type::MOUSE_SCROLLED, std::nullopt,
-        [fed](uint32_t, const Core::WindowEvent& event, glm::vec2) {
+        [fed, host_ctx](uint32_t, const Core::WindowEvent& event, glm::vec2) {
+            fed->feed_modifiers(host_ctx->modifiers());
             if (const auto* data = std::get_if<Core::WindowEvent::ScrollData>(&event.data))
                 fed->feed_scroll(data->x_offset, data->y_offset);
         });
@@ -196,10 +201,19 @@ bool Surface::route_input_from(Surface& host, uint32_t element)
         [fed](uint32_t, const Core::WindowEvent&, glm::vec2) { fed->feed_leave(); });
 
     subscribe(Type::TEXT_INPUT, std::nullopt,
-        [fed](uint32_t, const Core::WindowEvent& event, glm::vec2) {
+        [fed, host_ctx](uint32_t, const Core::WindowEvent& event, glm::vec2) {
+            fed->feed_modifiers(host_ctx->modifiers());
             if (const auto* data = std::get_if<Core::WindowEvent::TextData>(&event.data))
                 fed->feed_text(data->codepoint);
         });
+
+    for (const auto type : { Type::KEY_PRESSED, Type::KEY_RELEASED, Type::KEY_REPEAT }) {
+        subscribe(type, std::nullopt,
+            [fed](uint32_t, const Core::WindowEvent& event, glm::vec2) {
+                if (const auto* data = std::get_if<Core::WindowEvent::KeyData>(&event.data))
+                    fed->feed_key(static_cast<IO::Keys>(data->key), event.type, data->mods);
+            });
+    }
 
     subscribe(Type::WINDOW_FOCUS_LOST, std::nullopt,
         [fed](uint32_t, const Core::WindowEvent&, glm::vec2) { fed->clear_focus(); });

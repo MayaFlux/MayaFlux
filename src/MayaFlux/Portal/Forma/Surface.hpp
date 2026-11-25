@@ -238,12 +238,13 @@ public:
      * @brief Send input that reaches an on-screen element into this Surface.
      *
      * For a Surface made from an image: @p element of @p host shows the image,
-     * and the pointer, buttons, scroll and text that reach it are mapped from
-     * its bounds to this Surface's extent and passed to the Context's feed_*
-     * calls. A drag that began on the element keeps arriving after the pointer
-     * leaves it, and losing focus on the host clears focus here. The mapping
-     * takes the image to fill the element's bounds_hint, top edge to top edge.
-     * Keys are not forwarded: pass them to ctx().feed_key().
+     * and the pointer, buttons, scroll, text and keys that reach it are passed
+     * to the Context's feed_* calls, the pointer mapped from its bounds to this
+     * Surface's extent, with the host's modifiers. Keys reach it while the
+     * element has focus. A drag that began on the element keeps arriving after
+     * the pointer leaves it, and losing focus on the host clears focus here.
+     * The mapping takes the image to fill the element's bounds_hint, top edge
+     * to top edge.
      *
      * @return False, routing nothing, when this Surface has a window or the
      *         element is missing or has no bounds_hint.
