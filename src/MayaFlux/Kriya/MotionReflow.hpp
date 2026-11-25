@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Semantic/MeshAssemblyMotionFrames.hpp"
+#include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
 #include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Kriya/Reflow.hpp"
 #include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
@@ -44,6 +45,28 @@ using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const Fram
  */
 [[nodiscard]] MAYAFLUX_API FrameOperation<Kakshya::MeshAssemblyLocals> placement_edit(
     const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly, PlacementEdit edit);
+
+/**
+ * @brief An operation that gives every row its own playhead, from where the row is placed.
+ *
+ * The offset field is sampled at each row's composed placement in the frame and answers clock
+ * seconds. A row with a nonzero answer takes its local placement and morph weights from @p sampled
+ * at Course::time_at of that offset, so the course's edge and time map apply to it, and the world
+ * placements are resolved again. A wave of delay then crosses a segmented asset, or a region of the
+ * field holds its rows behind the rest. Rows answering zero keep the frame's own.
+ *
+ * Needs the frame to come from one course: where several have been mixed it is returned unchanged,
+ * so give it to the route or the single course it belongs to. Each distinct offset costs one sample
+ * of the whole source per cycle.
+ *
+ * @param assembly Resolves the world placements.
+ * @param sampled Source of the rows at other times, usually the one the course plays.
+ * @param offset Clock seconds by position. Null or empty arguments return frames unchanged.
+ */
+[[nodiscard]] MAYAFLUX_API FrameOperation<Kakshya::MeshAssemblyLocals> placement_time_offset(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::shared_ptr<const Kakshya::SampledFrames<Kakshya::MeshAssemblyLocals>>& sampled,
+    Kinesis::SpatialField offset);
 
 /**
  * @brief A sink that writes each frame's placements into the slots of a MeshNetwork.

@@ -72,6 +72,18 @@ template <typename Operator>
 }
 
 /**
+ * @brief A field to hand to anything that takes one by value, with the target that replaces it.
+ * @tparam Field A Tendency such as Kinesis::SpatialField.
+ * @return The field, answering zero until the target is first given one, and the target.
+ */
+template <typename Field>
+[[nodiscard]] std::pair<Field, typename Influence<Field>::Target> forwarded_field()
+{
+    auto cell = std::make_shared<Field>();
+    return { detail::forwarding(cell), [cell](const Field& field) { *cell = field; } };
+}
+
+/**
  * @brief Target that feeds an influence of vector fields into one instance's position.
  * @param op   InstanceFieldOperator, as a raw pointer or a shared_ptr.
  * @param slot Instance slot the field drives.

@@ -26,6 +26,59 @@ FrameOperation<Kakshya::MeshAssemblyLocals> placement_edit(
         });
 }
 
+FrameOperation<Kakshya::MeshAssemblyLocals> placement_time_offset(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::shared_ptr<const Kakshya::SampledFrames<Kakshya::MeshAssemblyLocals>>& sampled,
+    Kinesis::SpatialField offset)
+{
+    return FrameOperation<Kakshya::MeshAssemblyLocals>::transform(
+        [assembly, sampled, offset = std::move(offset)](const FrameContext& context, std::shared_ptr<const Kakshya::MeshAssemblyLocals> frame)
+            -> std::shared_ptr<const Kakshya::MeshAssemblyLocals> {
+            if (!frame || !assembly || !sampled || !offset.fn || !context.course) {
+                return frame;
+            }
+
+            std::vector<glm::mat4> locals = frame->matrices;
+            auto weights = frame->weights;
+            std::map<double, std::shared_ptr<const Kakshya::MeshAssemblyLocals>> read;
+            bool moved = false;
+
+            const size_t rows = std::min(locals.size(), frame->world.size());
+            for (size_t row = 0; row < rows; ++row) {
+                const float seconds = offset(glm::vec3(frame->world[row][3]));
+                if (seconds == 0.0F) {
+                    continue;
+                }
+                const auto time = context.course->time_at(seconds);
+                if (!time) {
+                    continue;
+                }
+
+                auto [held, missing] = read.try_emplace(*time);
+                if (missing) {
+                    held->second = sampled->sample(*time);
+                }
+                const auto& other = held->second;
+                if (!other || row >= other->matrices.size()) {
+                    continue;
+                }
+
+                locals[row] = other->matrices[row];
+                if (row < other->weights.size() && row < weights.size()) {
+                    weights[row] = other->weights[row];
+                }
+                moved = true;
+            }
+
+            if (!moved) {
+                return frame;
+            }
+            auto offsetted = Kakshya::resolve_world(*assembly, std::move(locals));
+            offsetted.weights = std::move(weights);
+            return std::make_shared<const Kakshya::MeshAssemblyLocals>(std::move(offsetted));
+        });
+}
+
 MotionReflow::Sink slot_sink(const std::shared_ptr<Nodes::Network::MeshNetwork>& network)
 {
     return [target = std::weak_ptr<Nodes::Network::MeshNetwork>(network), warned = std::make_shared<bool>(false)](
