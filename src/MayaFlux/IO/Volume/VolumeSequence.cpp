@@ -107,6 +107,8 @@ std::shared_ptr<const VolumeFileSequence> VolumeFileSequence::create(
     auto signature = signature_of<Signature>(*first);
 
     Kinesis::Lattice3D pinned = first->lattice;
+    const auto* placed = first->facets.get(Kakshya::volume_placement);
+    options.read.placement = options.read.placement.value_or(placed ? *placed : glm::mat4(1.0F));
 
     if (const auto* given = std::get_if<Kinesis::Lattice3D>(&lattice)) {
         if (given->resolution.x == 0 || given->resolution.y == 0 || given->resolution.z == 0) {

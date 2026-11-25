@@ -148,7 +148,8 @@ bool upload_volume(
 
         const size_t stride = volume->get_field_stride(field.name);
 
-        if (const auto* scalars = field.as_scalar()) {
+        const auto narrowed = field.narrowed();
+        if (const auto* scalars = std::get_if<std::vector<float>>(&narrowed)) {
             if (stride != sizeof(float)) {
                 MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                     "upload_volume: field '{}' has stride {}, but VolumeData holds a scalar "
@@ -161,7 +162,7 @@ bool upload_volume(
             continue;
         }
 
-        const auto* vectors = field.as_vector();
+        const auto* vectors = std::get_if<std::vector<glm::vec3>>(&narrowed);
         if (stride != sizeof(glm::vec4)) {
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
                 "upload_volume: field '{}' has stride {}, but VolumeData holds a vector "

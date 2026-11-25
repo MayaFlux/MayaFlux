@@ -48,7 +48,8 @@ struct VolumeSequenceOptions {
  * @brief A FrameSource of VolumeData over numbered .vdb files, read lazily.
  *
  * Frame i is the file the pattern names at first_number + i * stride, read onto the
- * sequence's one lattice. Each file is read when asked for, by a reader of its own,
+ * sequence's one lattice, in the first file's placement. A later file with another voxel
+ * size, offset or orientation is resampled onto it. Each file is read when asked for, by a reader of its own,
  * so any number of threads may read. A frame that something still holds is shared by
  * later reads of the same index; a frame nobody holds is read again.
  *

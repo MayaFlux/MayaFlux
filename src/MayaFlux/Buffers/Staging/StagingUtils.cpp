@@ -216,7 +216,8 @@ TransferHandle upload_back_buffer_async(
     const VKBufferResources::GenerationSlot& slot,
     const void* data,
     size_t size,
-    std::shared_ptr<VKBuffer>& staging)
+    std::shared_ptr<VKBuffer>& staging,
+    size_t staging_offset)
 {
     if (!data || size == 0)
         return {};
@@ -242,8 +243,8 @@ TransferHandle upload_back_buffer_async(
             "upload_back_buffer_async: BufferService unavailable");
     }
 
-    if (!staging || staging->get_size_bytes() < size)
-        staging = create_staging_buffer(size);
+    if (!staging || staging->get_size_bytes() < staging_offset + size)
+        staging = create_staging_buffer(staging_offset + size);
 
     void* ptr = staging->get_mapped_ptr();
     if (!ptr) {
@@ -254,15 +255,15 @@ TransferHandle upload_back_buffer_async(
             "upload_back_buffer_async: staging buffer has no mapped pointer");
     }
 
-    std::memcpy(ptr, data, size);
+    std::memcpy(static_cast<uint8_t*>(ptr) + staging_offset, data, size);
 
     auto& resources = staging->get_buffer_resources();
-    buffer_service->flush_range(resources.memory, 0, size);
+    buffer_service->flush_range(resources.memory, staging_offset, size);
 
     auto handle = buffer_service->copy_buffer_fenced(
         static_cast<void*>(staging->get_buffer()),
         static_cast<void*>(slot.buffer),
-        size, 0, 0);
+        size, staging_offset, 0);
 
     if (!handle) {
         error<std::runtime_error>(

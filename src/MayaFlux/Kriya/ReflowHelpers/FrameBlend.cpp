@@ -51,12 +51,14 @@ namespace {
 
         auto out = std::make_shared<Kakshya::VolumeData>(*base.frame);
         for (auto& field : out->fields) {
+            field.values = field.narrowed();
             if (auto* scalar = field.as_scalar()) {
                 std::vector<float> mean(scalar->size(), 0.0F);
                 double used = 0.0;
                 for (const auto& pick : picks) {
                     const auto* other = pick.frame->find(field.name);
-                    const auto* values = other ? other->as_scalar() : nullptr;
+                    const auto narrowed = other ? other->narrowed() : Kakshya::VolumeField::ValueStorage {};
+                    const auto* values = other ? std::get_if<std::vector<float>>(&narrowed) : nullptr;
                     if (values && values->size() == mean.size()) {
                         accumulate(mean, *values, pick.weight);
                         used += pick.weight;
@@ -73,7 +75,8 @@ namespace {
                 double used = 0.0;
                 for (const auto& pick : picks) {
                     const auto* other = pick.frame->find(field.name);
-                    const auto* values = other ? other->as_vector() : nullptr;
+                    const auto narrowed = other ? other->narrowed() : Kakshya::VolumeField::ValueStorage {};
+                    const auto* values = other ? std::get_if<std::vector<glm::vec3>>(&narrowed) : nullptr;
                     if (values && values->size() == mean.size()) {
                         accumulate(mean, *values, pick.weight);
                         used += pick.weight;

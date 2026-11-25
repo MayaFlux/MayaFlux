@@ -86,6 +86,9 @@ MAYAFLUX_API void upload_back_buffer(
  *        before returning, so the caller may free it immediately.
  * @param size Byte count to copy.
  * @param staging Persistent staging buffer, grown if too small.
+ * @param staging_offset Byte offset within @p staging the data is copied through, so several
+ *        uploads share one staging buffer and overlap. As download_back_buffer_async, size
+ *        the staging before a batch.
  * @return Handle to pass to resolve_transfer, or null for host-visible
  *         slots where the write was a direct memcpy.
  *
@@ -97,7 +100,8 @@ MAYAFLUX_API TransferHandle upload_back_buffer_async(
     const VKBufferResources::GenerationSlot& slot,
     const void* data,
     size_t size,
-    std::shared_ptr<VKBuffer>& staging);
+    std::shared_ptr<VKBuffer>& staging,
+    size_t staging_offset = 0);
 
 /**
  * @brief Wait for a transfer and release its resources.
