@@ -221,7 +221,16 @@ void SDFMeshProcessor::on_after_execute(
     const auto n = *static_cast<const uint32_t*>(m_counter_buf->get_mapped_ptr());
 
     if (auto rp = buffer->get_render_processor()) {
-        buffer->get_render_processor()->set_vertex_range(0, n);
+        rp->set_vertex_range(0, n);
+        if (!is_deferred_submission()) {
+            if (n == 0 && rp->is_visible(buffer)) {
+                rp->set_visible(false, buffer);
+                m_empty_suppressed = true;
+            } else if (n > 0 && m_empty_suppressed) {
+                rp->set_visible(true, buffer);
+                m_empty_suppressed = false;
+            }
+        }
     } else {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "SDFMeshProcessor: no render processor attached to buffer, cannot set vertex count");

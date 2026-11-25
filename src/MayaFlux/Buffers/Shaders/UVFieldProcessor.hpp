@@ -126,6 +126,10 @@ protected:
     bool on_before_execute(
         Portal::Graphics::CommandBufferID cmd_id,
         const std::shared_ptr<VKBuffer>& buffer) override;
+    bool on_iteration(
+        Portal::Graphics::CommandBufferID cmd_id,
+        const std::shared_ptr<VKBuffer>& buffer,
+        uint32_t index) override;
 
 private:
     struct PushConstants {
