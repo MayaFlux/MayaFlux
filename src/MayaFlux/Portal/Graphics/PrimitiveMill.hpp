@@ -262,30 +262,4 @@ private:
     std::vector<FenceID> m_in_flight;
 };
 
-/**
- * @brief Host equivalent of PrimitiveMill::mill, over raw bytes.
- * @param src Source vertex bytes. Must be four byte aligned.
- * @param layout Describes @p src. The result carries the same attributes.
- * @param runs Spans to mill, in output order.
- * @param spec Shaping parameters, as for the device path.
- * @param view Viewpoint, as for the device path.
- * @param dst Resized to hold the result.
- * @param indices When non-empty, triangle spans address these indices instead of vertices.
- * @return Layout describing @p dst, which is @p layout with a new vertex_count.
- *
- * Gives the kernel a reference to be tested against, and a route for a caller
- * with no compute queue available. It builds the unjoined ribbon form only (no
- * miter, no width averaging across shared positions), so use it to check span
- * indexing and vertex counts rather than ribbon geometry. Not a general geometry
- * utility, and not intended for per-frame use at scale.
- */
-MAYAFLUX_API Kakshya::VertexLayout mill_on_host(
-    std::span<const uint8_t> src,
-    const Kakshya::VertexLayout& layout,
-    std::span<const DrawRun> runs,
-    const MillSpec& spec,
-    const MillView& view,
-    std::vector<uint8_t>& dst,
-    std::span<const uint32_t> indices = {});
-
 } // namespace MayaFlux::Portal::Graphics
