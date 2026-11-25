@@ -588,7 +588,7 @@ namespace {
             const auto* subdivision = source.facets.get<Kakshya::MeshAssemblySubdivision>();
             const bool compact = !map || count == 1;
 
-            if (m_assembly.skin(index) || source.facets.get<Kakshya::MeshAssemblyMorphs>()) {
+            if (m_assembly.skin(index) || source.facets.get<Kakshya::MeshMorphTargets>()) {
                 MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                     "AlembicModelWriter: '{}' has a skin or morph targets, only its base shape is written", name);
             }

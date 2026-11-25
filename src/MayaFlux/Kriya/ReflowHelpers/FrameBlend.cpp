@@ -393,10 +393,27 @@ FrameOperation<Kakshya::MeshAssemblyLocals> placement_blend(
                 locals[row] = compose({ .translation = translation, .scale = scale, .rotation = blended });
             }
 
-            if (!assembly) {
-                return std::make_shared<const Kakshya::MeshAssemblyLocals>(Kakshya::MeshAssemblyLocals { .matrices = std::move(locals), .world = {} });
+            std::vector<std::vector<float>> weights = base.frame->weights;
+            for (size_t row = 0; row < weights.size(); ++row) {
+                auto& mixed = weights[row];
+                std::vector<float> sum(mixed.size(), 0.0F);
+                for (const auto* pick : used) {
+                    const auto w = static_cast<float>(pick->weight / total);
+                    const auto& other = row < pick->frame->weights.size() && pick->frame->weights[row].size() == mixed.size()
+                        ? pick->frame->weights[row]
+                        : mixed;
+                    for (size_t t = 0; t < mixed.size(); ++t) {
+                        sum[t] += other[t] * w;
+                    }
+                }
+                mixed = std::move(sum);
             }
-            return std::make_shared<const Kakshya::MeshAssemblyLocals>(Kakshya::resolve_world(*assembly, std::move(locals)));
+
+            auto blended = assembly
+                ? Kakshya::resolve_world(*assembly, std::move(locals))
+                : Kakshya::MeshAssemblyLocals { .matrices = std::move(locals), .world = {} };
+            blended.weights = std::move(weights);
+            return std::make_shared<const Kakshya::MeshAssemblyLocals>(std::move(blended));
         });
 }
 

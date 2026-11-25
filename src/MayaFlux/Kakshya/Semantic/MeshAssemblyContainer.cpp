@@ -7,6 +7,58 @@
 
 namespace MayaFlux::Kakshya {
 
+namespace detail {
+
+    void renumber_materials(Facets& facets, std::span<const uint64_t> materials)
+    {
+        const auto* held = facets.get<MeshAssemblyFaceSets>();
+        if (!held) {
+            return;
+        }
+        MeshAssemblyFaceSets face_sets = *held;
+        for (auto& set : face_sets.sets) {
+            if (!set.material) {
+                continue;
+            }
+            set.material = *set.material < materials.size()
+                ? std::optional<uint64_t> { materials[*set.material] }
+                : std::nullopt;
+        }
+        facets.set(std::move(face_sets));
+    }
+
+    MeshAssemblyVisibility renumber_rows(
+        const MeshAssemblyVisibility& held, std::span<const std::optional<uint64_t>> rows)
+    {
+        MeshAssemblyVisibility out;
+        for (const auto& entry : held.entries) {
+            if (entry.row < rows.size() && rows[entry.row]) {
+                out.entries.push_back(entry);
+                out.entries.back().row = *rows[entry.row];
+            }
+        }
+        return out;
+    }
+
+    MeshAssemblyMetadata renumber_rows(
+        const MeshAssemblyMetadata& held, std::span<const std::optional<uint64_t>> rows, bool keep_scene)
+    {
+        MeshAssemblyMetadata out;
+        for (const auto& entry : held.entries) {
+            if (!entry.row) {
+                if (keep_scene) {
+                    out.entries.push_back(entry);
+                }
+            } else if (*entry.row < rows.size() && rows[*entry.row]) {
+                out.entries.push_back(entry);
+                out.entries.back().row = rows[*entry.row];
+            }
+        }
+        return out;
+    }
+
+}
+
 namespace {
 
     ContainerDataStructure assembly_structure()
@@ -34,6 +86,14 @@ namespace {
         rows.reserve(count);
         std::vector<bool> source_used(data.sources.size(), false);
         std::vector<bool> material_used(data.materials.size(), false);
+        std::vector<bool> skeleton_used(data.skeletons.size(), false);
+
+        std::vector<std::optional<uint64_t>> row_map(data.placements.size());
+        for (size_t row = start; row < start + count; ++row) {
+            row_map[row] = row - start;
+        }
+
+        size_t unbound = 0;
         for (size_t row = start; row < start + count; ++row) {
             auto placement = read_placement(data.placements, row);
             if (!placement) {
@@ -45,24 +105,70 @@ namespace {
             if (placement->material) {
                 material_used[*placement->material] = true;
             }
+            if (placement->skeleton) {
+                const auto& joints = data.skeletons[*placement->skeleton];
+                if (std::ranges::all_of(joints, [&](uint64_t joint) { return row_map[joint].has_value(); })) {
+                    skeleton_used[*placement->skeleton] = true;
+                } else {
+                    placement->skeleton.reset();
+                    ++unbound;
+                }
+            }
             rows.push_back(std::move(*placement));
+        }
+        if (unbound > 0) {
+            MF_WARN(Journal::Component::Kakshya, Journal::Context::Configuration,
+                "MeshAssemblyContainer: {} copied rows have joints outside the region, so they are copied without a skeleton",
+                unbound);
+        }
+
+        for (size_t i = 0; i < data.sources.size(); ++i) {
+            const auto* face_sets = source_used[i] ? data.sources[i].facets.get<MeshAssemblyFaceSets>() : nullptr;
+            if (!face_sets) {
+                continue;
+            }
+            for (const auto& set : face_sets->sets) {
+                if (set.material && *set.material < data.materials.size()) {
+                    material_used[*set.material] = true;
+                }
+            }
         }
 
         MeshAssemblyData out;
         out.facets = data.facets;
+        if (const auto* held = data.facets.get<MeshAssemblyVisibility>()) {
+            out.facets.set(detail::renumber_rows(*held, row_map));
+        }
+        if (const auto* held = data.facets.get<MeshAssemblyMetadata>()) {
+            out.facets.set(detail::renumber_rows(*held, row_map, true));
+        }
+
         std::vector<uint64_t> source_map(data.sources.size());
         std::vector<uint64_t> material_map(data.materials.size());
-        for (size_t i = 0; i < data.sources.size(); ++i) {
-            if (source_used[i]) {
-                source_map[i] = out.sources.size();
-                out.sources.push_back(data.sources[i]);
-            }
-        }
+        std::vector<uint64_t> skeleton_map(data.skeletons.size());
         for (size_t i = 0; i < data.materials.size(); ++i) {
             if (material_used[i]) {
                 material_map[i] = out.materials.size();
                 out.materials.push_back(data.materials[i]);
             }
+        }
+        for (size_t i = 0; i < data.sources.size(); ++i) {
+            if (source_used[i]) {
+                source_map[i] = out.sources.size();
+                out.sources.push_back(data.sources[i]);
+                detail::renumber_materials(out.sources.back().facets, material_map);
+            }
+        }
+        for (size_t i = 0; i < data.skeletons.size(); ++i) {
+            if (!skeleton_used[i]) {
+                continue;
+            }
+            skeleton_map[i] = out.skeletons.size();
+            auto skeleton = data.skeletons[i];
+            for (auto& joint : skeleton) {
+                joint = *row_map[joint];
+            }
+            out.skeletons.push_back(std::move(skeleton));
         }
 
         CompositeInsertion insertion(out.placements);
@@ -76,6 +182,9 @@ namespace {
             }
             if (placement.material) {
                 placement.material = material_map[*placement.material];
+            }
+            if (placement.skeleton) {
+                placement.skeleton = skeleton_map[*placement.skeleton];
             }
             if (!write_described(insertion, insertion.append(), placement, error)) {
                 return std::nullopt;
@@ -176,6 +285,18 @@ bool MeshAssemblyContainer::validate(const MeshAssemblyData& data, std::string& 
             error = "a material index is out of range";
             return false;
         }
+        if (placement->skeleton && *placement->skeleton >= data.skeletons.size()) {
+            error = "a skeleton index is out of range";
+            return false;
+        }
+    }
+
+    for (const auto& skeleton : data.skeletons) {
+        if (skeleton.empty()
+            || std::ranges::any_of(skeleton, [rows](uint64_t joint) { return joint >= rows; })) {
+            error = "a skeleton has no joints or names a row that does not exist";
+            return false;
+        }
     }
 
     return std::ranges::all_of(data.motions, [&](const MeshAssemblyMotion& motion) {
@@ -258,11 +379,43 @@ size_t MeshAssemblyContainer::add_material(MeshAssemblyMaterial material)
     return m_data.materials.size() - 1;
 }
 
+std::optional<size_t> MeshAssemblyContainer::add_skeleton(std::vector<uint64_t> joints)
+{
+    const size_t rows = m_data.placements.size();
+    if (joints.empty()
+        || std::ranges::any_of(joints, [rows](uint64_t joint) { return joint >= rows; })) {
+        return std::nullopt;
+    }
+    m_data.skeletons.push_back(std::move(joints));
+    return m_data.skeletons.size() - 1;
+}
+
+bool MeshAssemblyContainer::set_row_skeleton(size_t row, std::optional<uint64_t> skeleton)
+{
+    if (skeleton && *skeleton >= m_data.skeletons.size()) {
+        return false;
+    }
+    auto held = read_placement(m_data.placements, row);
+    if (!held) {
+        return false;
+    }
+    CompositeInsertion insertion(m_data.placements);
+    held->skeleton = skeleton;
+    std::string reason;
+    return write_described(insertion, row, *held, reason);
+}
+
+const std::vector<uint64_t>* MeshAssemblyContainer::skeleton(size_t index) const noexcept
+{
+    return index < m_data.skeletons.size() ? &m_data.skeletons[index] : nullptr;
+}
+
 std::optional<size_t> MeshAssemblyContainer::add_placement(const MeshAssemblyPlacement& placement)
 {
     if ((placement.parent && *placement.parent >= m_data.placements.size())
         || (placement.source && *placement.source >= m_data.sources.size())
-        || (placement.material && *placement.material >= m_data.materials.size())) {
+        || (placement.material && *placement.material >= m_data.materials.size())
+        || (placement.skeleton && *placement.skeleton >= m_data.skeletons.size())) {
         return std::nullopt;
     }
 

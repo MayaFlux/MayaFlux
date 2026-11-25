@@ -21,6 +21,14 @@ struct MeshAssemblyLocals {
      * made by hand, until resolve_world fills it.
      */
     std::vector<glm::mat4> world;
+
+    /**
+     * @brief The morph target weights of every row at this time, in its source's target order.
+     *
+     * One entry per row, empty for a row the motion gives no weights. Empty altogether for a
+     * frame with no weighted row.
+     */
+    std::vector<std::vector<float>> weights {};
 };
 
 /**
@@ -43,7 +51,8 @@ struct MeshAssemblyLocals {
  *
  * Every time of the motion's range answers with the placements the motion's keys give there, cubic
  * splines and any key spacing included, so a Reflow plays a motion without baking it to frames.
- * The range runs from the earliest key of any channel to the latest.
+ * The range runs from the earliest key of any channel or morph weight to the latest. A weight
+ * outside its keys under Absent is the target's own weight.
  *
  * Holds the assembly, so the motion stays readable for as long as the source lives. The assembly
  * must not be changed while the source is read.

@@ -81,7 +81,7 @@ using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const Fram
  * @param instances The network, such as one made by Nodes::Network::make_instance_network.
  * @param rows rows[i] is the row instance slot i shows, in the order of the group the network was made from.
  *
- * Marks an instance dirty only when its transform changes. The network is held weakly.
+ * Marks an instance dirty only when its transform or morph weights change. The network is held weakly.
  */
 [[nodiscard]] MAYAFLUX_API MotionReflow::Sink instance_sink(
     const std::shared_ptr<Nodes::Network::InstanceNetwork>& instances, std::vector<uint64_t> rows);

@@ -7,6 +7,24 @@
 
 namespace MayaFlux::Kakshya {
 
+namespace detail {
+
+    /** @brief Point every face set of a source's facets at its material's new index. */
+    void renumber_materials(Facets& facets, std::span<const uint64_t> materials);
+
+    /** @brief The visibility entries whose row has a new number, renumbered. */
+    [[nodiscard]] MeshAssemblyVisibility renumber_rows(
+        const MeshAssemblyVisibility& held, std::span<const std::optional<uint64_t>> rows);
+
+    /**
+     * @brief The metadata entries whose row has a new number, renumbered.
+     * @param keep_scene Whether the entries that name no row are kept too.
+     */
+    [[nodiscard]] MeshAssemblyMetadata renumber_rows(
+        const MeshAssemblyMetadata& held, std::span<const std::optional<uint64_t>> rows, bool keep_scene);
+
+}
+
 /**
  * @class MeshAssemblyContainer
  * @brief Owns a MeshAssemblyData and keeps its references valid: geometry sources placed
@@ -29,8 +47,8 @@ namespace MayaFlux::Kakshya {
  * It has no frame axis.
  *
  * Every add_* call checks what it is given against what is already held, so a parent
- * always precedes its child, every source and material index is in range and a motion
- * never targets a row twice. The forest therefore always indexes.
+ * always precedes its child, every source, material, skeleton and joint index is in range and
+ * a motion never targets a row twice. The forest therefore always indexes.
  *
  * Usage:
  * @code
@@ -61,8 +79,8 @@ public:
 
     /**
      * @brief Whether data is consistent: the placement table has the placement layout,
-     *        every parent is an earlier row, every source and material index is in
-     *        range, and no motion targets a row twice or one that is missing.
+     *        every parent is an earlier row, every source, material, skeleton and joint
+     *        index is in range, and no motion targets a row twice or one that is missing.
      * @param error Receives the reason when false is returned.
      */
     [[nodiscard]] static bool validate(const MeshAssemblyData& data, std::string& error);
@@ -83,10 +101,25 @@ public:
     size_t add_material(MeshAssemblyMaterial material);
 
     /**
+     * @brief Add a skeleton: the rows that are a skin's joints, in its order.
+     * @return The skeleton's index, or nullopt when it has no joints or one is a missing row.
+     */
+    [[nodiscard]] std::optional<size_t> add_skeleton(std::vector<uint64_t> joints);
+
+    /**
+     * @brief Say which skeleton a row follows, as a reader does once the joint rows exist.
+     * @return false when the row or the skeleton is out of range.
+     */
+    bool set_row_skeleton(size_t row, std::optional<uint64_t> skeleton);
+
+    /** @brief The joint rows of the skeleton at an index, or nullptr when out of range. */
+    [[nodiscard]] const std::vector<uint64_t>* skeleton(size_t index) const noexcept;
+
+    /**
      * @brief Append a placement row.
-     * @param placement The row. Its parent must be an earlier row, and its source and
-     *        material must exist.
-     * @return The row index, or nullopt when parent, source or material is out of range.
+     * @param placement The row. Its parent must be an earlier row, and its source,
+     *        material and skeleton must exist.
+     * @return The row index, or nullopt when parent, source, material or skeleton is out of range.
      */
     [[nodiscard]] std::optional<size_t> add_placement(const MeshAssemblyPlacement& placement);
 
@@ -235,10 +268,12 @@ public:
     /**
      * @brief Copy the rows of a one-dimensional Region into a self-contained MeshAssemblyData.
      *
-     * A parent outside the region leaves its child a root. Only the sources and
-     * materials the rows use are kept, in their original order, with their facets, and
-     * the motions keep the channels that target a copied row. The file-level facets are
-     * kept whole.
+     * A parent outside the region leaves its child a root. Only the sources, materials
+     * (a row's or a face set's) and skeletons the rows use are kept, in their original
+     * order, renumbered, and the motions keep the channels that target a copied row. A row
+     * whose skeleton has a joint outside the region loses its skeleton and keeps its
+     * source's skin. The file-level facets are kept whole, except that visibility and
+     * metadata entries of rows outside the region are dropped and the rest renumbered.
      *
      * @return One value, or empty when the region is invalid.
      */

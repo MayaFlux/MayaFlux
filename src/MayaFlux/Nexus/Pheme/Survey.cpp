@@ -9,6 +9,7 @@
 #include "MayaFlux/Buffers/Network/NetworkGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/VertexFieldProcessor.hpp"
 #include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
@@ -25,13 +26,90 @@ namespace MayaFlux::Nexus {
 
 namespace {
 
+    bool deformed_on_device(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    {
+        const auto chain = buffer->get_processing_chain();
+        return chain && buffer->is_initialized()
+            && (chain->get_processor<Buffers::SkinProcessor>(buffer)
+                || chain->get_processor<Buffers::VertexFieldProcessor>(buffer));
+    }
+
+    std::vector<uint8_t> download_records(const std::shared_ptr<Buffers::VKBuffer>& buffer, size_t bytes)
+    {
+        std::vector<uint8_t> records(std::min(bytes, buffer->get_size_bytes()));
+        std::shared_ptr<Buffers::VKBuffer> staging;
+        Buffers::download_back_buffer(
+            Buffers::generation_slot(Buffers::gpu_buffer_handle(buffer)), records.data(), records.size(), staging);
+        return records;
+    }
+
+    /** Slot by slot in the order the buffer concatenates them, placed where each slot draws. */
+    std::optional<Kakshya::MeshData> deformed_network_mesh(const std::shared_ptr<Buffers::MeshNetworkBuffer>& buffer)
+    {
+        const auto network = buffer->get_network();
+        const auto layout = buffer->get_vertex_layout();
+        if (!network || !layout || layout->stride_bytes < sizeof(Kakshya::MeshVertex)) {
+            return std::nullopt;
+        }
+
+        const auto& slots = network->slots();
+        size_t total = 0;
+        for (const uint32_t index : network->sorted_indices()) {
+            if (slots[index].node) {
+                total += slots[index].node->get_mesh_vertex_count();
+            }
+        }
+        const auto records = download_records(buffer, total * layout->stride_bytes);
+        if (total == 0 || records.size() < total * layout->stride_bytes) {
+            return std::nullopt;
+        }
+
+        std::vector<uint8_t> vertices(total * sizeof(Kakshya::MeshVertex));
+        std::vector<uint32_t> indices;
+        size_t first = 0;
+        for (const uint32_t index : network->sorted_indices()) {
+            const auto& slot = slots[index];
+            if (!slot.node) {
+                continue;
+            }
+            for (size_t v = 0; v < slot.node->get_mesh_vertex_count(); ++v) {
+                Kakshya::MeshVertex vertex {};
+                std::memcpy(&vertex, records.data() + (first + v) * layout->stride_bytes, sizeof(vertex));
+                vertex.position = glm::vec3(slot.world_transform * glm::vec4(vertex.position, 1.0F));
+                std::memcpy(vertices.data() + (first + v) * sizeof(vertex), &vertex, sizeof(vertex));
+            }
+            for (const uint32_t i : slot.node->get_mesh_indices()) {
+                indices.push_back(static_cast<uint32_t>(first) + i);
+            }
+            first += slot.node->get_mesh_vertex_count();
+        }
+
+        auto mesh = Kakshya::MeshData::empty();
+        mesh.vertex_variant = std::move(vertices);
+        mesh.index_variant = std::move(indices);
+        mesh.layout = Kakshya::VertexLayout::for_meshes(sizeof(Kakshya::MeshVertex));
+        mesh.layout.vertex_count = static_cast<uint32_t>(total);
+        return mesh;
+    }
+
     std::optional<Kakshya::MeshData> snapshot_mesh(const std::shared_ptr<Buffers::VKBuffer>& buffer)
     {
         if (const auto mesh = std::dynamic_pointer_cast<Buffers::MeshBuffer>(buffer)) {
-            return mesh->get_mesh_data();
+            auto data = mesh->get_mesh_data();
+            auto* vertices = std::get_if<std::vector<uint8_t>>(&data.vertex_variant);
+            if (vertices && !vertices->empty() && deformed_on_device(buffer)) {
+                auto records = download_records(buffer, vertices->size());
+                if (records.size() == vertices->size()) {
+                    *vertices = std::move(records);
+                }
+            }
+            return data;
         }
 
         if (const auto network_buffer = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buffer)) {
+            if (deformed_on_device(buffer)) {
+                return deformed_network_mesh(network_buffer);
+            }
             const auto network = network_buffer->get_network();
             return network ? network->get_world_mesh_data() : std::nullopt;
         }
@@ -239,16 +317,25 @@ namespace {
         for (uint32_t i = 0; i < network->slot_count(); ++i) {
             const auto& slot = network->get_slot(i);
 
-            for (int corner = 0; corner < 8; ++corner) {
-                const glm::vec3 point {
-                    (corner & 1) != 0 ? local->max.x : local->min.x,
-                    (corner & 2) != 0 ? local->max.y : local->min.y,
-                    (corner & 4) != 0 ? local->max.z : local->min.z,
-                };
-                const glm::vec3 placed = glm::vec3(slot.transform * glm::vec4(point, 1.0F));
-                total = total
-                    ? Kinesis::AABB3D { .min = glm::min(total->min, placed), .max = glm::max(total->max, placed) }
-                    : Kinesis::AABB3D { .min = placed, .max = placed };
+            std::vector<glm::mat4> poses { slot.transform };
+            if (first.skin && slot.palette.size() == first.skin->joint_count()) {
+                for (const auto& joint : slot.palette) {
+                    poses.push_back(slot.transform * joint);
+                }
+            }
+
+            for (const auto& pose : poses) {
+                for (int corner = 0; corner < 8; ++corner) {
+                    const glm::vec3 point {
+                        (corner & 1) != 0 ? local->max.x : local->min.x,
+                        (corner & 2) != 0 ? local->max.y : local->min.y,
+                        (corner & 4) != 0 ? local->max.z : local->min.z,
+                    };
+                    const glm::vec3 placed = glm::vec3(pose * glm::vec4(point, 1.0F));
+                    total = total
+                        ? Kinesis::AABB3D { .min = glm::min(total->min, placed), .max = glm::max(total->max, placed) }
+                        : Kinesis::AABB3D { .min = placed, .max = placed };
+                }
             }
         }
         return total;

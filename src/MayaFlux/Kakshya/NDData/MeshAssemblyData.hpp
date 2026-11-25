@@ -211,25 +211,6 @@ struct MeshAssemblyVertexSets {
     std::vector<std::vector<glm::vec4>> colors;
 };
 
-/**
- * @struct MeshAssemblyMorphTarget
- * @brief One shape a mesh can take: replacement values for its vertices, not offsets.
- *
- * Empty normals or tangents mean the target leaves them as they are. weight is the file's rest weight.
- */
-struct MeshAssemblyMorphTarget {
-    std::string name;
-    float weight {};
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec3> tangents;
-};
-
-/** @brief The morph targets of a mesh source, kept in its facets. */
-struct MeshAssemblyMorphs {
-    std::vector<MeshAssemblyMorphTarget> targets;
-};
-
 /** @brief The keyed weights of one row's morph targets, in the order of its source's targets. */
 struct MeshAssemblyWeights {
     uint64_t row {};
@@ -397,15 +378,18 @@ MF_DESCRIBE(MeshAssemblyGroup)
  * The table's layout is derived from this description, so a column is named by the
  * member that declares it. parent is the row of the parent and is always an earlier
  * row, absent for a root. source indexes MeshAssemblyData::sources and is absent for a
- * joint. material indexes MeshAssemblyData::materials and is absent for none. local is
- * the placement relative to the parent. Two rows may name the same source, which is
- * how a shared mesh is kept shared.
+ * joint. material indexes MeshAssemblyData::materials and is absent for none. skeleton
+ * indexes MeshAssemblyData::skeletons and says which rows move the source's MeshSkin,
+ * absent for a row drawn unskinned. local is the placement relative to the parent. Two
+ * rows may name the same source, which is how a shared mesh is kept shared, and each
+ * may follow a skeleton of its own.
  */
 struct MeshAssemblyPlacement {
     std::string name;
     std::optional<uint64_t> parent;
     std::optional<uint64_t> source;
     std::optional<uint64_t> material;
+    std::optional<uint64_t> skeleton;
     glm::mat4 local { 1.0F };
 };
 
@@ -416,7 +400,7 @@ MF_DESCRIBE(MeshAssemblyPlacement)
  * @brief Geometry sources placed in a hierarchy: what a model file or an
  *        Alembic archive holds, as one passive value.
  *
- * Sources and materials are stored once. The placement table has one row per
+ * Sources, materials and skeletons are stored once. The placement table has one row per
  * MeshAssemblyPlacement. Motions move rows by keys over time. facets holds what
  * describes the whole file (its path, application, units, up axis), by typed key
  * or as whole structs, so no such fact is a member.
@@ -436,6 +420,7 @@ struct MAYAFLUX_API MeshAssemblyData {
 
     std::vector<MeshAssemblySource> sources;
     std::vector<MeshAssemblyMaterial> materials;
+    std::vector<std::vector<uint64_t>> skeletons; ///< Each the joint rows of a skin, in its joint order.
     CompositeArray placements { placement_layout() };
     std::vector<MeshAssemblyMotion> motions;
     Facets facets;

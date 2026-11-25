@@ -6,6 +6,14 @@
 namespace MayaFlux::Kakshya {
 
 /**
+ * @brief The shapes a mesh can take: each a name and a whole replacement record for every vertex.
+ *
+ * In a target, MeshVertex::weight is the weight the file shows that target at. Kept in a mesh
+ * source's facets.
+ */
+using MeshMorphTargets = std::vector<std::pair<std::string, std::vector<MeshVertex>>>;
+
+/**
  * @struct MeshData
  * @brief Owning CPU-side representation of a loaded or generated mesh.
  *

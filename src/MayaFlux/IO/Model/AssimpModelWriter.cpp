@@ -371,29 +371,24 @@ namespace {
         }
         set_faces(*mesh, faces);
 
-        if (const auto* morphs = source.facets.get<Kakshya::MeshAssemblyMorphs>()) {
+        if (const auto* morphs = source.facets.get<Kakshya::MeshMorphTargets>()) {
             std::vector<aiAnimMesh*> targets;
-            for (const auto& target : morphs->targets) {
-                if (target.positions.size() != count) {
+            for (const auto& [name, vertices] : *morphs) {
+                if (vertices.size() != count) {
                     continue;
                 }
                 auto* shape = new aiAnimMesh();
-                shape->mName = aiString(target.name);
-                shape->mWeight = target.weight;
+                shape->mName = aiString(name);
+                shape->mWeight = count > 0 ? vertices.front().weight : 0.0F;
                 shape->mNumVertices = static_cast<unsigned int>(count);
-                const auto copy = [count](const std::vector<glm::vec3>& from) -> aiVector3D* {
-                    if (from.size() != count) {
-                        return nullptr;
-                    }
-                    auto* out = new aiVector3D[count];
-                    for (size_t v = 0; v < count; ++v) {
-                        out[v] = to_ai(from[v]);
-                    }
-                    return out;
-                };
-                shape->mVertices = copy(target.positions);
-                shape->mNormals = copy(target.normals);
-                shape->mTangents = copy(target.tangents);
+                shape->mVertices = new aiVector3D[count];
+                shape->mNormals = new aiVector3D[count];
+                shape->mTangents = new aiVector3D[count];
+                for (size_t v = 0; v < count; ++v) {
+                    shape->mVertices[v] = to_ai(vertices[v].position);
+                    shape->mNormals[v] = to_ai(vertices[v].normal);
+                    shape->mTangents[v] = to_ai(glm::vec3(vertices[v].tangent));
+                }
                 targets.push_back(shape);
             }
             mesh->mNumAnimMeshes = static_cast<unsigned int>(targets.size());
@@ -457,9 +452,10 @@ namespace {
         return mesh;
     }
 
-    void attach_bones(aiMesh& mesh, const Kakshya::MeshSkin& skin, const std::vector<std::string>& names)
+    void attach_bones(aiMesh& mesh, const Kakshya::MeshSkin& skin,
+        const std::vector<uint64_t>& skeleton, const std::vector<std::string>& names)
     {
-        std::vector<std::vector<aiVertexWeight>> weights(skin.joints.size());
+        std::vector<std::vector<aiVertexWeight>> weights(skin.joint_count());
         for (size_t v = 0; v < skin.influence_joints.size() && v < mesh.mNumVertices; ++v) {
             for (glm::length_t c = 0; c < 4; ++c) {
                 const float weight = skin.influence_weights[v][c];
@@ -470,12 +466,12 @@ namespace {
         }
 
         std::vector<aiBone*> bones;
-        for (size_t joint = 0; joint < skin.joints.size(); ++joint) {
-            if (skin.joints[joint] >= names.size()) {
+        for (size_t joint = 0; joint < skin.joint_count() && joint < skeleton.size(); ++joint) {
+            if (skeleton[joint] >= names.size()) {
                 continue;
             }
             auto* bone = new aiBone();
-            bone->mName = aiString(names[skin.joints[joint]]);
+            bone->mName = aiString(names[skeleton[joint]]);
             bone->mOffsetMatrix = to_ai(skin.inverse_bind[joint]);
             bone->mNumWeights = static_cast<unsigned int>(weights[joint].size());
             bone->mWeights = array_of(weights[joint]);
@@ -719,9 +715,9 @@ namespace {
         };
 
         std::vector<aiMesh*> meshes;
-        std::map<std::pair<uint64_t, std::optional<uint64_t>>, std::optional<unsigned int>> mesh_of;
-        const auto mesh_index = [&](uint64_t source, std::optional<uint64_t> material) {
-            const auto key = std::pair { source, material };
+        std::map<std::tuple<uint64_t, std::optional<uint64_t>, std::optional<uint64_t>>, std::optional<unsigned int>> mesh_of;
+        const auto mesh_index = [&](uint64_t source, std::optional<uint64_t> material, std::optional<uint64_t> skeleton) {
+            const auto key = std::tuple { source, material, skeleton };
             if (const auto found = mesh_of.find(key); found != mesh_of.end()) {
                 return found->second;
             }
@@ -730,8 +726,8 @@ namespace {
             aiMesh* mesh = nullptr;
             if (const auto* triangles = std::get_if<Kakshya::MeshData>(&held.geometry)) {
                 mesh = triangle_mesh(*triangles, held);
-                if (const auto skin = assembly.skin(source)) {
-                    attach_bones(*mesh, *skin, names);
+                if (const auto skin = assembly.skin(source); skin && skeleton) {
+                    attach_bones(*mesh, *skin, *assembly.skeleton(*skeleton), names);
                 }
             } else if (const auto* spatial = std::get_if<Kakshya::SpatialData>(&held.geometry)) {
                 mesh = spatial_mesh(*spatial);
@@ -773,7 +769,7 @@ namespace {
                     cameras.push_back(camera_of(*lens, names[row]));
                 } else if (const auto* light = assembly.light(*placement->source)) {
                     lights.push_back(light_of(*light, names[row]));
-                } else if (const auto index = mesh_index(*placement->source, placement->material)) {
+                } else if (const auto index = mesh_index(*placement->source, placement->material, placement->skeleton)) {
                     node->mNumMeshes = 1;
                     node->mMeshes = new unsigned int[1] { *index };
                 }

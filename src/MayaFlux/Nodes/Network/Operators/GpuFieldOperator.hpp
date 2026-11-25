@@ -445,6 +445,9 @@ public:
      */
     [[nodiscard]] size_t binding_count() const { return m_bindings.size(); }
 
+    /** @brief Every target any bound field writes. */
+    [[nodiscard]] FieldTarget bound_targets() const;
+
     /**
      * @brief Whether build_spec() needs a per-vertex cluster id this cycle.
      * @return True only if at least one current binding was given a cluster

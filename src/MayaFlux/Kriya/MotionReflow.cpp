@@ -20,7 +20,9 @@ FrameOperation<Kakshya::MeshAssemblyLocals> placement_edit(
             }
             std::vector<glm::mat4> locals = frame->matrices;
             edit(std::span<glm::mat4>(locals), context);
-            return std::make_shared<const Kakshya::MeshAssemblyLocals>(Kakshya::resolve_world(*assembly, std::move(locals)));
+            auto edited = Kakshya::resolve_world(*assembly, std::move(locals));
+            edited.weights = frame->weights;
+            return std::make_shared<const Kakshya::MeshAssemblyLocals>(std::move(edited));
         });
 }
 
@@ -49,6 +51,9 @@ MotionReflow::Sink slot_sink(const std::shared_ptr<Nodes::Network::MeshNetwork>&
         for (size_t i = 0; i < count; ++i) {
             auto& slot = held->get_slot(static_cast<uint32_t>(i));
             slot.local_transform = frame->matrices[i];
+            if (i < frame->weights.size() && !frame->weights[i].empty()) {
+                slot.morph_weights = frame->weights[i];
+            }
             slot.dirty = true;
         }
     };
@@ -82,6 +87,9 @@ MotionReflow::Sink slot_sink(
                 continue;
             }
             auto& slot = held->get_slot(static_cast<uint32_t>(i));
+            if (rows[i] < frame->weights.size() && !frame->weights[rows[i]].empty()) {
+                slot.morph_weights = frame->weights[rows[i]];
+            }
             if (slot.local_transform != matrices[rows[i]]) {
                 slot.local_transform = matrices[rows[i]];
                 slot.dirty = true;
@@ -116,6 +124,11 @@ MotionReflow::Sink instance_sink(
                 continue;
             }
             auto& slot = held->get_slot(static_cast<uint32_t>(i));
+            if (rows[i] < frame->weights.size() && !frame->weights[rows[i]].empty()
+                && slot.morph_weights != frame->weights[rows[i]]) {
+                slot.morph_weights = frame->weights[rows[i]];
+                slot.dirty = true;
+            }
             if (slot.transform != frame->world[rows[i]]) {
                 slot.transform = frame->world[rows[i]];
                 slot.dirty = true;

@@ -105,13 +105,8 @@ std::shared_ptr<MeshAssemblyRealization> MeshAssemblyRealization::create(
             made.placement = placement;
             made.rows = std::move(built->rows);
             made.network_buffer = std::make_shared<Buffers::MeshNetworkBuffer>(built->network);
-            for (size_t slot = 0; slot < made.rows.size(); ++slot) {
-                const auto shown = assembly->placement(made.rows[slot]);
-                const auto skin = shown && shown->source ? assembly->skin(*shown->source) : nullptr;
-                if (skin) {
-                    made.network_buffer->set_slot_skin(static_cast<uint32_t>(slot), skin);
-                    made.skinned.push_back({ .slot = static_cast<uint32_t>(slot), .row = made.rows[slot], .skin = skin });
-                }
+            for (auto& slot : built->network->slots()) {
+                slot.joints.clear();
             }
             made.network = std::move(built->network);
             realization->m_parts.push_back(std::move(made));
@@ -161,12 +156,27 @@ MotionReflow::Sink MeshAssemblyRealization::placement_sink(size_t part) const
     const auto& held = m_parts[part];
     if (held.network) {
         auto placed = slot_sink(held.network, held.rows, held.placement);
-        if (held.skinned.empty()) {
+        struct Skinned {
+            uint32_t slot;
+            uint64_t row;
+            std::shared_ptr<const Kakshya::MeshSkin> skin;
+            std::vector<uint64_t> joints;
+        };
+        std::vector<Skinned> skinned;
+        for (uint32_t slot = 0; slot < held.rows.size(); ++slot) {
+            const auto& skin = held.network->get_slot(slot).skin;
+            const auto shown = m_assembly->placement(held.rows[slot]);
+            const auto* joints = shown->skeleton ? m_assembly->skeleton(*shown->skeleton) : nullptr;
+            if (skin && joints) {
+                skinned.push_back({ slot, held.rows[slot], skin, *joints });
+            }
+        }
+        if (skinned.empty()) {
             return placed;
         }
 
-        MotionReflow::Sink skinning = [buffer = held.network_buffer, skinned = held.skinned](
-                                          const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame, const FrameContext&) {
+        MotionReflow::Sink deforming = [buffer = held.network_buffer, skinned = std::move(skinned)](
+                                           const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame, const FrameContext&) {
             if (!frame) {
                 return;
             }
@@ -175,8 +185,8 @@ MotionReflow::Sink MeshAssemblyRealization::placement_sink(size_t part) const
                     continue;
                 }
                 std::vector<glm::mat4> joints;
-                joints.reserve(entry.skin->joints.size());
-                for (const uint64_t joint : entry.skin->joints) {
+                joints.reserve(entry.joints.size());
+                for (const uint64_t joint : entry.joints) {
                     if (joint < frame->world.size()) {
                         joints.push_back(frame->world[joint]);
                     }
@@ -187,10 +197,61 @@ MotionReflow::Sink MeshAssemblyRealization::placement_sink(size_t part) const
                 }
             }
         };
-        return fan_out<Kakshya::MeshAssemblyLocals>(std::vector<MotionReflow::Sink> { std::move(placed), std::move(skinning) });
+        return fan_out<Kakshya::MeshAssemblyLocals>(std::vector<MotionReflow::Sink> { std::move(placed), std::move(deforming) });
     }
     if (held.instances) {
-        return instance_sink(held.instances, held.rows);
+        auto placed = instance_sink(held.instances, held.rows);
+        if (held.instances->slot_count() == 0) {
+            return placed;
+        }
+        const auto& first = held.instances->get_slot(0);
+        if (!first.skin) {
+            return placed;
+        }
+
+        struct Deformed {
+            uint64_t row;
+            std::vector<uint64_t> joints;
+        };
+        std::vector<Deformed> deformed;
+        deformed.reserve(held.rows.size());
+        for (const uint64_t row : held.rows) {
+            const auto shown = m_assembly->placement(row);
+            const auto* joints = shown->skeleton ? m_assembly->skeleton(*shown->skeleton) : nullptr;
+            deformed.push_back({ row, joints ? *joints : std::vector<uint64_t> {} });
+        }
+
+        MotionReflow::Sink deforming = [target = std::weak_ptr<Nodes::Network::InstanceNetwork>(held.instances),
+                                           skin = first.skin, deformed = std::move(deformed)](
+                                           const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame, const FrameContext&) {
+            const auto network = target.lock();
+            if (!frame || !network) {
+                return;
+            }
+            for (size_t i = 0; i < std::min(deformed.size(), network->slot_count()); ++i) {
+                const auto& entry = deformed[i];
+                if (entry.row >= frame->world.size()) {
+                    continue;
+                }
+                auto& slot = network->get_slot(static_cast<uint32_t>(i));
+                if (entry.joints.empty()) {
+                    continue;
+                }
+                std::vector<glm::mat4> joints;
+                joints.reserve(entry.joints.size());
+                for (const uint64_t joint : entry.joints) {
+                    if (joint < frame->world.size()) {
+                        joints.push_back(frame->world[joint]);
+                    }
+                }
+                auto palette = Kinesis::skin_palette(frame->world[entry.row], joints, skin->inverse_bind);
+                if (!palette.empty() && palette != slot.palette) {
+                    slot.palette = std::move(palette);
+                    slot.dirty = true;
+                }
+            }
+        };
+        return fan_out<Kakshya::MeshAssemblyLocals>(std::vector<MotionReflow::Sink> { std::move(placed), std::move(deforming) });
     }
 
     std::vector<MotionReflow::Sink> sinks;

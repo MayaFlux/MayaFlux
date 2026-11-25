@@ -61,15 +61,17 @@ enum class KernelTemplate : uint8_t {
                      ///< Values compare by the library order key with every NaN smallest, so a
                      ///< NaN never wins. A segment with no non-NaN value yields a NaN and the
                      ///< index 0xFFFFFFFF.
-    Skin, ///< Skins the vertices of a MeshVertex buffer, one thread per vertex, from rest
+    Skin, ///< Morphs and skins the vertices of a MeshVertex buffer, one thread per vertex, from rest
           ///< records, joint indices and weights and a palette of affine joint matrices.
           ///< Bindings in order: rest (FLOAT32, ten words per vertex: position, normal, tangent),
           ///< joints (UINT32, four per vertex), weights (FLOAT32, four per vertex), palette
-          ///< (FLOAT32, sixteen per joint, column major) and vertices (FLOAT32, the buffer that is
-          ///< drawn). Four UINT32 push constants: first_vertex (record of the buffer the first
-          ///< thread writes), vertex_count, stride_words (words of one record of the buffer) and
-          ///< palette_base (the first joint of the skin in the palette). Position, normal and
-          ///< tangent are written and every other word of a record is left alone.
+          ///< (FLOAT32, sixteen per joint, column major), vertices (FLOAT32, the buffer that is
+          ///< drawn), deltas (FLOAT32, nine words per vertex per morph target, target after target)
+          ///< and morph_weights (FLOAT32, one per target). Five UINT32 push constants:
+          ///< first_vertex (record of the buffer the first thread writes), vertex_count,
+          ///< stride_words (words of one record of the buffer), palette_base (the first joint of
+          ///< the skin in the palette) and target_count. Position, normal and tangent are written
+          ///< and every other word of a record is left alone.
 };
 
 /**

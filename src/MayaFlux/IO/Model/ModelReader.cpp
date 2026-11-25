@@ -5,6 +5,7 @@
 #include "MayaFlux/Kinesis/Polyhedral/VertexRecords.hpp"
 
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/SkinPalette.hpp"
 
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 #include "MayaFlux/Nodes/Network/PointCloudNetwork.hpp"
@@ -357,19 +358,6 @@ namespace {
         return { v.x, v.y, v.z };
     }
 
-    std::vector<glm::vec3> to_glm_vec3s(const aiVector3D* values, unsigned int count)
-    {
-        std::vector<glm::vec3> out;
-        if (!values) {
-            return out;
-        }
-        out.reserve(count);
-        for (unsigned int i = 0; i < count; ++i) {
-            out.push_back(to_glm_vec3(values[i]));
-        }
-        return out;
-    }
-
     /** The faces of @p corners indices, 1 for points and 2 for lines, as vertices in face order. */
     std::optional<Kakshya::SpatialData> spatial_of(const aiMesh& mesh, unsigned int corners)
     {
@@ -425,7 +413,28 @@ namespace {
         return data;
     }
 
-    Facets mesh_facets(const aiMesh& mesh)
+    /** Each target's vertices start as the mesh's own and take what the target replaces. */
+    std::vector<Kakshya::MeshVertex> shape_of(const aiAnimMesh& target, std::span<const uint8_t> base)
+    {
+        std::vector<Kakshya::MeshVertex> shape(target.mNumVertices);
+        std::memcpy(shape.data(), base.data(), base.size());
+        for (unsigned int v = 0; v < target.mNumVertices; ++v) {
+            auto& vertex = shape[v];
+            if (target.mVertices) {
+                vertex.position = { target.mVertices[v].x, target.mVertices[v].y, target.mVertices[v].z };
+            }
+            if (target.mNormals) {
+                vertex.normal = { target.mNormals[v].x, target.mNormals[v].y, target.mNormals[v].z };
+            }
+            if (target.mTangents) {
+                vertex.tangent = { target.mTangents[v].x, target.mTangents[v].y, target.mTangents[v].z, vertex.tangent.w };
+            }
+            vertex.weight = target.mWeight;
+        }
+        return shape;
+    }
+
+    Facets mesh_facets(const aiMesh& mesh, std::span<const uint8_t> vertices)
     {
         Facets facets;
 
@@ -449,23 +458,20 @@ namespace {
             facets.set(std::move(sets));
         }
 
-        Kakshya::MeshAssemblyMorphs morphs;
+        Kakshya::MeshMorphTargets morphs;
         for (unsigned int t = 0; t < mesh.mNumAnimMeshes; ++t) {
             const aiAnimMesh& target = *mesh.mAnimMeshes[t];
-            if (target.mNumVertices != mesh.mNumVertices) {
+            if (target.mNumVertices != mesh.mNumVertices
+                || vertices.size() != mesh.mNumVertices * sizeof(Kakshya::MeshVertex)) {
                 MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                     "ModelReader: morph target '{}' does not match its mesh, so the mesh's targets are skipped",
                     target.mName.C_Str());
-                morphs.targets.clear();
+                morphs.clear();
                 break;
             }
-            morphs.targets.push_back({ .name = target.mName.C_Str(),
-                .weight = target.mWeight,
-                .positions = to_glm_vec3s(target.mVertices, target.mNumVertices),
-                .normals = to_glm_vec3s(target.mNormals, target.mNumVertices),
-                .tangents = to_glm_vec3s(target.mTangents, target.mNumVertices) });
+            morphs.emplace_back(target.mName.C_Str(), shape_of(target, vertices));
         }
-        if (!morphs.targets.empty()) {
+        if (!morphs.empty()) {
             facets.set(std::move(morphs));
         }
 
@@ -793,7 +799,35 @@ ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
         }
 
         Kakshya::MeshData mesh_data = *mesh;
-        if (!is_identity(world[row])
+        const auto skin = assembly->skin(*placement->source);
+        const auto* skeleton = placement->skeleton ? assembly->skeleton(*placement->skeleton) : nullptr;
+        std::vector<glm::mat4> palette;
+        if (skin && skeleton) {
+            std::vector<glm::mat4> joints;
+            joints.reserve(skeleton->size());
+            for (const uint64_t joint : *skeleton) {
+                joints.push_back(world[joint]);
+            }
+            palette = Kinesis::skin_palette(glm::mat4(1.0F), joints, skin->inverse_bind);
+        }
+
+        std::shared_ptr<Kakshya::MeshMorphTargets> morphs;
+        if (const auto* held = assembly->get_data().sources[*placement->source].facets.get<Kakshya::MeshMorphTargets>()) {
+            morphs = std::make_shared<Kakshya::MeshMorphTargets>(*held);
+        }
+        if (morphs && palette.empty() && !is_identity(world[row])) {
+            const glm::mat3 linear(world[row]);
+            const glm::mat3 normals = glm::transpose(glm::inverse(linear));
+            for (auto& [name, shape] : *morphs) {
+                for (auto& vertex : shape) {
+                    vertex.position = glm::vec3(world[row] * glm::vec4(vertex.position, 1.0F));
+                    vertex.normal = glm::normalize(normals * vertex.normal);
+                    vertex.tangent = glm::vec4(glm::normalize(linear * glm::vec3(vertex.tangent)), vertex.tangent.w);
+                }
+            }
+        }
+
+        if (palette.empty() && !is_identity(world[row])
             && !Kakshya::place_vertices(
                 std::get<std::vector<uint8_t>>(mesh_data.vertex_variant), mesh_data.layout, world[row])) {
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
@@ -801,6 +835,12 @@ ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
         }
 
         auto buf = std::make_shared<Buffers::MeshBuffer>(mesh_data);
+        if (!palette.empty()) {
+            buf->set_skin(skin, std::move(palette));
+        }
+        if (morphs) {
+            buf->set_morphs(std::move(morphs));
+        }
 
         if (resolver) {
             const auto raw = get_diffuse_path(mesh_data);
@@ -977,8 +1017,9 @@ ModelReader::assemble(bool beside_the_tree) const
                 if (data.is_valid() && std::get_if<std::vector<uint8_t>>(&data.vertex_variant)
                     && std::get_if<std::vector<uint32_t>>(&data.index_variant)) {
                     source_name[index] = name;
+                    auto facets = mesh_facets(*ai_mesh, std::get<std::vector<uint8_t>>(data.vertex_variant));
                     source_of[index] = assembly->add_source(
-                        { .geometry = std::move(data), .name = name, .facets = mesh_facets(*ai_mesh) });
+                        { .geometry = std::move(data), .name = name, .facets = std::move(facets) });
                 } else {
                     MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
                         "ModelReader::create_mesh_assembly: skipping invalid mesh '{}'", name);
@@ -1220,6 +1261,7 @@ ModelReader::assemble(bool beside_the_tree) const
         skin.influence_joints.assign(ai_mesh->mNumVertices, glm::uvec4(0));
         skin.influence_weights.assign(ai_mesh->mNumVertices, glm::vec4(0.0F));
         std::vector<unsigned int> used(ai_mesh->mNumVertices, 0U);
+        std::vector<uint64_t> skeleton;
         bool resolved = true;
 
         for (unsigned int b = 0; resolved && b < ai_mesh->mNumBones; ++b) {
@@ -1233,8 +1275,8 @@ ModelReader::assemble(bool beside_the_tree) const
                 break;
             }
 
-            const auto joint = static_cast<uint32_t>(skin.joints.size());
-            skin.joints.push_back(row->second.front());
+            const auto joint = static_cast<uint32_t>(skin.inverse_bind.size());
+            skeleton.push_back(row->second.front());
             skin.inverse_bind.push_back(to_glm(bone->mOffsetMatrix));
 
             for (unsigned int w = 0; w < bone->mNumWeights; ++w) {
@@ -1284,6 +1326,17 @@ ModelReader::assemble(bool beside_the_tree) const
         Facets facets = assembly->get_data().sources[*source_of[i]].facets;
         facets.set(std::make_shared<const Kakshya::MeshSkin>(std::move(skin)));
         assembly->set_source_facets(*source_of[i], std::move(facets));
+
+        const auto& held = assembly->get_data().skeletons;
+        const auto same = std::ranges::find(held, skeleton);
+        const std::optional<size_t> index = same != held.end()
+            ? std::optional<size_t> { static_cast<size_t>(same - held.begin()) }
+            : assembly->add_skeleton(std::move(skeleton));
+        for (size_t row = 0; index && row < assembly->get_total_elements(); ++row) {
+            if (assembly->placement(row)->source == source_of[i]) {
+                assembly->set_row_skeleton(row, *index);
+            }
+        }
     }
 
     for (unsigned int a = 0; a < s->mNumAnimations; ++a) {
@@ -1333,10 +1386,10 @@ ModelReader::assemble(bool beside_the_tree) const
             }
         }
 
-        const auto morphs_of = [&](uint64_t row) -> const Kakshya::MeshAssemblyMorphs* {
+        const auto morphs_of = [&](uint64_t row) -> const Kakshya::MeshMorphTargets* {
             const auto placement = assembly->placement(row);
             return placement && placement->source
-                ? assembly->get_data().sources[*placement->source].facets.get<Kakshya::MeshAssemblyMorphs>()
+                ? assembly->get_data().sources[*placement->source].facets.get<Kakshya::MeshMorphTargets>()
                 : nullptr;
         };
 
@@ -1364,7 +1417,7 @@ ModelReader::assemble(bool beside_the_tree) const
                 if (!morphs || weighted.contains(row)) {
                     continue;
                 }
-                auto keyed = morph_weights(*channel, morphs->targets.size(), ticks_per_second);
+                auto keyed = morph_weights(*channel, morphs->size(), ticks_per_second);
                 if (keyed.empty()) {
                     continue;
                 }
@@ -1388,7 +1441,7 @@ ModelReader::assemble(bool beside_the_tree) const
                 }
 
                 std::vector<Kinesis::TimedValues<float>> keyed;
-                for (size_t target = 0; target < morphs->targets.size(); ++target) {
+                for (size_t target = 0; target < morphs->size(); ++target) {
                     std::vector<double> times;
                     std::vector<float> values;
                     for (unsigned int k = 0; k < channel->mNumKeys; ++k) {
@@ -1408,7 +1461,7 @@ ModelReader::assemble(bool beside_the_tree) const
                     keyed.push_back(std::move(*step));
                 }
 
-                if (keyed.size() == morphs->targets.size()) {
+                if (keyed.size() == morphs->size()) {
                     weighted.insert(row);
                     motion.weights.push_back({ .row = row, .targets = std::move(keyed) });
                 }
@@ -1488,9 +1541,21 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
         | aiProcess_JoinIdenticalVertices
         | aiProcess_LimitBoneWeights;
 
-    const unsigned int flags = (m_keep_polygons ? polygons : triangles_only)
-        | (m_flatten ? static_cast<unsigned int>(aiProcess_PreTransformVertices) : 0U);
-    m_impl->scene = m_impl->importer.ReadFile(resolved, flags);
+    m_impl->scene = m_impl->importer.ReadFile(resolved, m_keep_polygons ? polygons : triangles_only);
+    if (m_flatten && m_impl->scene) {
+        const bool skinned = std::any_of(m_impl->scene->mMeshes, m_impl->scene->mMeshes + m_impl->scene->mNumMeshes,
+            [](const aiMesh* mesh) { return mesh->mNumBones > 0; });
+        const bool morphed = std::any_of(m_impl->scene->mMeshes, m_impl->scene->mMeshes + m_impl->scene->mNumMeshes,
+            [](const aiMesh* mesh) { return mesh->mNumAnimMeshes > 0; });
+        if (skinned || morphed || m_impl->scene->mNumAnimations > 0) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "ModelReader: flattening '{}' drops its {}{}{}, so it is a static scene",
+                std::filesystem::path(resolved).filename().string(),
+                skinned ? "skins " : "", morphed ? "morph targets " : "",
+                m_impl->scene->mNumAnimations > 0 ? "animations" : "");
+        }
+        m_impl->scene = m_impl->importer.ApplyPostProcessing(aiProcess_PreTransformVertices);
+    }
     m_polygons_imported = m_keep_polygons;
 
     if (!m_impl->scene

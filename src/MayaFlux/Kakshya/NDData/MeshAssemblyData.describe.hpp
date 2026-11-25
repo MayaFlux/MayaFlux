@@ -77,6 +77,7 @@ struct Description<::MayaFlux::Kakshya::MeshAssemblyPlacement> {
             Member<&::MayaFlux::Kakshya::MeshAssemblyPlacement::parent> { "parent" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyPlacement::source> { "source" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyPlacement::material> { "material" },
+            Member<&::MayaFlux::Kakshya::MeshAssemblyPlacement::skeleton> { "skeleton" },
             Member<&::MayaFlux::Kakshya::MeshAssemblyPlacement::local> { "local" },
         };
     }

@@ -212,13 +212,15 @@ public:
     /**
      * @brief Skin the vertices on the GPU from a palette of joint matrices.
      * @param skin Joints and per vertex weights covering the buffer's vertices, or null for none.
+     * @param palette Matrices the pass starts from, one for each joint, or empty to leave the
+     *        mesh as bound until set_palette.
      *
      * Call before setup_rendering, which wires the pass ahead of the field pass, so a field
-     * displaces the skinned surface. The mesh the buffer holds is the rest pose. Frames written
-     * with write_frame are not skinned from, since the pass writes position, normal and tangent
-     * from the rest pose, so a skinned buffer is driven by its palette.
+     * displaces the skinned surface. The mesh the buffer holds is the rest pose, and so is every
+     * frame written with write_frame or set by the mutators, which is skinned as the first was.
+     * Geometry with another vertex count than the skin covers is shown undeformed.
      */
-    void set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin);
+    void set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin, std::vector<glm::mat4> palette = {});
 
     /**
      * @brief Publish the palette the skin pass reads, one matrix for each joint, in the space of the mesh.
@@ -227,6 +229,21 @@ public:
      * Safe from any thread (see Kinesis::skin_palette).
      */
     bool set_palette(std::vector<glm::mat4> palette);
+
+    /**
+     * @brief Morph the vertices on the GPU toward the shapes of a set of targets.
+     * @param morphs Targets with a position for each of the buffer's vertices, or null for none.
+     *
+     * Call before setup_rendering. The targets are blended into the rest pose by their weights,
+     * the file's own to start with, in the same pass that skins, before the skin.
+     */
+    void set_morphs(std::shared_ptr<const Kakshya::MeshMorphTargets> morphs);
+
+    /**
+     * @brief Publish the weight of every morph target. Safe from any thread.
+     * @return False when no pass is wired yet or the count is not the target count.
+     */
+    bool set_morph_weights(std::vector<float> weights);
 
     /** @brief Whether a wired field pass displaces the vertices in place every cycle. */
     [[nodiscard]] bool restores_vertices() const;
@@ -287,12 +304,15 @@ private:
 
     void wire_field_pass();
     void wire_skin_pass();
+    void update_skin_rest();
 
     Kakshya::MeshData m_mesh_data;
     std::shared_ptr<Nodes::GpuSync::MeshWriterNode> m_node;
     std::shared_ptr<Nodes::Network::GpuFieldOperator> m_field_op;
     bool m_field_wired {};
     std::shared_ptr<const Kakshya::MeshSkin> m_skin;
+    std::vector<glm::mat4> m_initial_palette;
+    std::shared_ptr<const Kakshya::MeshMorphTargets> m_morphs;
     std::shared_ptr<SkinProcessor> m_skin_processor;
     Memory::SnapshotCell<std::shared_ptr<const Kakshya::MeshData>> m_pending;
     std::shared_ptr<Core::VKImage> m_diffuse_texture;
@@ -300,6 +320,7 @@ private:
 
     std::atomic<bool> m_vertices_dirty { true };
     std::atomic<bool> m_indices_dirty { true };
+    std::atomic<bool> m_rest_dirty { false };
 
     std::shared_ptr<MeshProcessor> m_mesh_processor;
 };

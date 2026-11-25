@@ -68,7 +68,9 @@ std::optional<MeshAssemblyGraft> MeshAssemblyInsertion::graft(const MeshAssembly
     }
 
     for (size_t i = 0; i < data.sources.size(); ++i) {
-        const auto index = m_target->add_source(data.sources[i]);
+        MeshAssemblySource source = data.sources[i];
+        detail::renumber_materials(source.facets, result.materials);
+        const auto index = m_target->add_source(std::move(source));
         result.sources.push_back(index);
         if (const auto frames = other.mesh_frames(i)) {
             std::ignore = m_target->set_mesh_frames(index, frames);
@@ -102,7 +104,48 @@ std::optional<MeshAssemblyGraft> MeshAssemblyInsertion::graft(const MeshAssembly
         if (placement.material) {
             placement.material = result.materials[*placement.material];
         }
+        placement.skeleton.reset();
         result.rows.push_back(m_target->add_placement(placement).value());
+    }
+
+    for (const auto& skeleton : data.skeletons) {
+        auto moved = skeleton;
+        for (auto& joint : moved) {
+            joint = result.rows[joint];
+        }
+        result.skeletons.push_back(m_target->add_skeleton(std::move(moved)).value());
+    }
+    for (size_t row = 0; row < rows; ++row) {
+        if (const auto skeleton = other.placement(row)->skeleton) {
+            m_target->set_row_skeleton(result.rows[row], result.skeletons[*skeleton]);
+        }
+    }
+
+    const std::vector<std::optional<uint64_t>> row_map(result.rows.begin(), result.rows.end());
+    Facets facets = m_target->get_data().facets;
+    bool facets_changed = false;
+    if (const auto* held = data.facets.get<MeshAssemblyVisibility>()) {
+        const auto moved = detail::renumber_rows(*held, row_map);
+        if (!moved.entries.empty()) {
+            const auto* own = facets.get<MeshAssemblyVisibility>();
+            MeshAssemblyVisibility joined = own ? *own : MeshAssemblyVisibility {};
+            joined.entries.insert(joined.entries.end(), moved.entries.begin(), moved.entries.end());
+            facets.set(std::move(joined));
+            facets_changed = true;
+        }
+    }
+    if (const auto* held = data.facets.get<MeshAssemblyMetadata>()) {
+        const auto moved = detail::renumber_rows(*held, row_map, false);
+        if (!moved.entries.empty()) {
+            const auto* own = facets.get<MeshAssemblyMetadata>();
+            MeshAssemblyMetadata joined = own ? *own : MeshAssemblyMetadata {};
+            joined.entries.insert(joined.entries.end(), moved.entries.begin(), moved.entries.end());
+            facets.set(std::move(joined));
+            facets_changed = true;
+        }
+    }
+    if (facets_changed) {
+        m_target->set_facets(std::move(facets));
     }
 
     for (const auto& motion : data.motions) {

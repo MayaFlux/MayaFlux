@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/MeshData.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshSkin.hpp"
 #include "MayaFlux/Nodes/Graphics/GeometryWriterNode.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -19,6 +21,11 @@ namespace MayaFlux::Nodes::Network {
  * buffer's instance textures and must stay below their count, and scalar is a free parameter: instance_point.vert scales the point
  * size by it and every instance vertex shader passes it on to the fragment
  * stage. The defaults (white, 0, 1) leave a template as authored.
+ *
+ * A mesh template with a skin or morph targets is deformed instance by instance: skin and morphs
+ * are the template's, read from the first slot like its node, and palette and morph_weights are
+ * each instance's own. palette holds one matrix per joint in the space of the template, and an
+ * instance with another count is drawn unskinned.
  */
 struct GeometrySlot {
     uint32_t index {};
@@ -28,6 +35,10 @@ struct GeometrySlot {
     glm::vec3 tint { 1.0F };
     float scalar { 1.0F };
     uint32_t texture {};
+    std::shared_ptr<const Kakshya::MeshSkin> skin;
+    std::shared_ptr<const Kakshya::MeshMorphTargets> morphs;
+    std::vector<glm::mat4> palette;
+    std::vector<float> morph_weights;
     bool dirty { true };
 };
 

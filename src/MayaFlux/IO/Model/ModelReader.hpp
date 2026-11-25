@@ -101,7 +101,8 @@ public:
      *
      * Applies to the next open(). Off by default. On, Assimp (aiProcess_PreTransformVertices)
      * places every mesh where its node put it and leaves one root, so the scene has no
-     * hierarchy to animate, and it drops the scene's animations and bones. Use it for a static
+     * hierarchy to animate, and it drops the scene's animations, bones and morph targets, which
+     * open() warns about when the file has any. Use it for a static
      * scene that should be one flat set of placed meshes.
      */
     void set_flatten(bool flatten) noexcept { m_flatten = flatten; }
@@ -135,7 +136,9 @@ public:
      * @brief Construct one MeshBuffer per placed mesh of the currently loaded scene.
      *
      * Built from create_mesh_assembly(): each buffer's vertices are where its row places
-     * them at rest, and a mesh several rows use gets a buffer for each. Returns empty if
+     * them at rest, and a mesh several rows use gets a buffer for each. A skinned row's buffer
+     * keeps its vertices as bound and is given the skin with the palette of the joints at
+     * rest in the scene's space, so MeshBuffer::set_palette moves it. Returns empty if
      * no scene is loaded.
      * setup_processors() and setup_rendering() are left to the caller.
      *
@@ -215,7 +218,7 @@ public:
      *
      * A mesh of only points or only lines becomes a SpatialData source with color, uv and
      * normal attributes. UV and colour sets past the first are the source's
-     * MeshAssemblyVertexSets, and its morph targets its MeshAssemblyMorphs. Scene and row
+     * MeshAssemblyVertexSets, and its morph targets its MeshMorphTargets. Scene and row
      * metadata is the assembly's MeshAssemblyMetadata, uninterpreted: no unit or axis
      * conversion is applied.
      *

@@ -10,6 +10,27 @@
 
 namespace MayaFlux::Nodes::Network {
 
+namespace {
+
+    /** @brief Give a slot the morph targets its row's source keeps, once per source. */
+    void adopt_morphs(MeshSlot& slot, const Kakshya::MeshAssemblyContainer& assembly,
+        const std::optional<uint64_t>& source,
+        std::map<uint64_t, std::shared_ptr<const Kakshya::MeshMorphTargets>>& held)
+    {
+        if (!slot.node || !source) {
+            return;
+        }
+        const auto [it, inserted] = held.try_emplace(*source);
+        if (inserted) {
+            if (const auto* morphs = assembly.get_data().sources[*source].facets.get<Kakshya::MeshMorphTargets>()) {
+                it->second = std::make_shared<const Kakshya::MeshMorphTargets>(*morphs);
+            }
+        }
+        slot.morphs = it->second;
+    }
+
+}
+
 // =============================================================================
 // Construction
 // =============================================================================
@@ -389,6 +410,19 @@ std::shared_ptr<MeshNetwork> make_mesh_network(
         slot.local_transform = placement->local;
         slot.world_transform = world[row];
     }
+
+    std::map<uint64_t, std::shared_ptr<const Kakshya::MeshMorphTargets>> morphs;
+    for (size_t row = 0; row < rows; ++row) {
+        const auto placement = assembly->placement(row);
+        auto& slot = network->get_slot(static_cast<uint32_t>(row));
+        adopt_morphs(slot, *assembly, placement->source, morphs);
+        const auto* skeleton = placement->skeleton ? assembly->skeleton(*placement->skeleton) : nullptr;
+        const auto skin = placement->source ? assembly->skin(*placement->source) : nullptr;
+        if (slot.node && skin && skeleton && skeleton->size() == skin->joint_count()) {
+            slot.skin = skin;
+            slot.joints.assign(skeleton->begin(), skeleton->end());
+        }
+    }
     return network;
 }
 
@@ -470,6 +504,26 @@ std::optional<MeshNetworkPart> make_mesh_network(
 
     if (!any_mesh) {
         return std::nullopt;
+    }
+
+    std::map<uint64_t, std::shared_ptr<const Kakshya::MeshMorphTargets>> morphs;
+    for (size_t index = 0; index < part.rows.size(); ++index) {
+        const auto held = assembly->placement(part.rows[index]);
+        auto& slot = part.network->get_slot(static_cast<uint32_t>(index));
+        adopt_morphs(slot, *assembly, held->source, morphs);
+        const auto* skeleton = held->skeleton ? assembly->skeleton(*held->skeleton) : nullptr;
+        const auto skin = held->source ? assembly->skin(*held->source) : nullptr;
+        if (!slot.node || !skin || !skeleton || skeleton->size() != skin->joint_count()) {
+            continue;
+        }
+
+        slot.skin = skin;
+        const bool chained = placement == MeshPartPlacement::Chained;
+        if (chained && std::ranges::all_of(*skeleton, [&](uint64_t joint) { return slot_of[joint].has_value(); })) {
+            for (const uint64_t joint : *skeleton) {
+                slot.joints.push_back(*slot_of[joint]);
+            }
+        }
     }
     return part;
 }

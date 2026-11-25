@@ -262,6 +262,7 @@ void MeshBuffer::set_vertex_data(std::span<const uint8_t> bytes)
     }
 
     m_vertices_dirty.store(true, std::memory_order_release);
+    m_rest_dirty.store(true, std::memory_order_release);
 }
 
 void MeshBuffer::set_index_data(std::span<const uint32_t> indices)
@@ -278,11 +279,22 @@ void MeshBuffer::set_index_data(std::span<const uint32_t> indices)
     m_indices_dirty.store(true, std::memory_order_release);
 }
 
+void MeshBuffer::update_skin_rest()
+{
+    if (!m_skin_processor) {
+        return;
+    }
+    if (const auto* bytes = std::get_if<std::vector<uint8_t>>(&m_mesh_data.vertex_variant)) {
+        m_skin_processor->set_rest(*bytes);
+    }
+}
+
 void MeshBuffer::set_mesh_data(Kakshya::MeshData data)
 {
     m_mesh_data = std::move(data);
     m_vertices_dirty.store(true, std::memory_order_release);
     m_indices_dirty.store(true, std::memory_order_release);
+    m_rest_dirty.store(true, std::memory_order_release);
 }
 
 // =============================================================================
@@ -302,7 +314,7 @@ std::shared_ptr<const Kakshya::MeshData> MeshBuffer::current_frame() const
     return nullptr;
 }
 
-void MeshBuffer::set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin)
+void MeshBuffer::set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin, std::vector<glm::mat4> palette)
 {
     if (m_render_processor) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
@@ -310,6 +322,23 @@ void MeshBuffer::set_skin(std::shared_ptr<const Kakshya::MeshSkin> skin)
         return;
     }
     m_skin = std::move(skin);
+    m_initial_palette = std::move(palette);
+}
+
+void MeshBuffer::set_morphs(std::shared_ptr<const Kakshya::MeshMorphTargets> morphs)
+{
+    if (m_render_processor) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer::set_morphs: rendering is already set up, the morph pass is wired there");
+        return;
+    }
+    m_morphs = std::move(morphs);
+}
+
+bool MeshBuffer::set_morph_weights(std::vector<float> weights)
+{
+    const auto processor = m_skin_processor;
+    return processor && processor->set_morph_weights(std::move(weights));
 }
 
 bool MeshBuffer::set_palette(std::vector<glm::mat4> palette)
@@ -320,7 +349,7 @@ bool MeshBuffer::set_palette(std::vector<glm::mat4> palette)
 
 void MeshBuffer::wire_skin_pass()
 {
-    if (!m_skin) {
+    if (!m_skin && !m_morphs) {
         return;
     }
 
@@ -335,17 +364,23 @@ void MeshBuffer::wire_skin_pass()
     }
 
     try {
-        m_skin_processor = std::make_shared<SkinProcessor>(m_skin, std::span<const uint8_t>(*bytes));
+        m_skin_processor = std::make_shared<SkinProcessor>(m_skin, std::span<const uint8_t>(*bytes), std::string {}, m_morphs);
     } catch (const std::invalid_argument& e) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "MeshBuffer: the skin does not fit the mesh, so no skin pass is wired: {}", e.what());
+            "MeshBuffer: the skin or morph targets do not fit the mesh, so no skin pass is wired: {}", e.what());
         return;
+    }
+
+    if (!m_initial_palette.empty() && !m_skin_processor->set_palette(std::move(m_initial_palette))) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshBuffer: the starting palette does not have one matrix for each joint, so it is ignored");
     }
 
     get_processing_chain()->add_processor(m_skin_processor, shared_from_this());
 
     MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "MeshBuffer: skin pass wired, {} joints", m_skin->joints.size());
+        "MeshBuffer: skin pass wired, {} joints, {} morph targets",
+        m_skin ? m_skin->joint_count() : 0, m_morphs ? m_morphs->size() : 0);
 }
 
 void MeshBuffer::set_field_operator(std::shared_ptr<Nodes::Network::GpuFieldOperator> field_op)
@@ -360,7 +395,16 @@ void MeshBuffer::set_field_operator(std::shared_ptr<Nodes::Network::GpuFieldOper
 
 bool MeshBuffer::restores_vertices() const
 {
-    return m_field_wired && m_field_op && m_field_op->demands_full_vertex_restore();
+    if (!m_field_wired || !m_field_op || !m_field_op->demands_full_vertex_restore()) {
+        return false;
+    }
+    if (!m_skin_processor || !m_skin_processor->is_active()) {
+        return true;
+    }
+
+    using Kinesis::FieldTarget;
+    constexpr auto deformed = FieldTarget::POSITION | FieldTarget::NORMAL | FieldTarget::TANGENT;
+    return any_flag(m_field_op->bound_targets() & ~deformed);
 }
 
 void MeshBuffer::wire_field_pass()

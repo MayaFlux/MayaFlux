@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MayaFlux/Kakshya/NDData/MeshData.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshSkin.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 
 namespace MayaFlux::Core {
@@ -30,6 +32,13 @@ namespace MayaFlux::Nodes::Network {
  * writing local_transform is cheap. The flag is still needed: a transform
  * written without it is not looked at.
  *
+ * skin, when set before the buffer's setup_rendering, makes MeshNetworkBuffer deform the
+ * node's vertices by it. joints names the slot that is each of the skin's joints, and the
+ * buffer then recomputes the palette from those slots' world transforms every cycle, so
+ * moving a joint slot bends the mesh. With joints empty the palette is whatever is
+ * published with MeshNetworkBuffer::set_slot_palette. morphs likewise gives the slot a pass
+ * that blends its targets by morph_weights, or by the file's weights while that is empty.
+ *
  * diffuse_texture is optional. When set, MeshNetworkBuffer binds it to the
  * shader's diffuse slot for this slot's draw range. Slots sharing the same
  * texture share one descriptor. Slots with distinct textures require the
@@ -56,6 +65,18 @@ struct MeshSlot {
 
     /// @brief Indices of child slots. Populated by MeshNetwork::add_slot().
     std::vector<uint32_t> child_indices;
+
+    /// @brief Optional skin of the node's mesh, read when the buffer sets up rendering.
+    std::shared_ptr<const Kakshya::MeshSkin> skin;
+
+    /// @brief Slot indices of the skin's joints, in the skin's order, or empty.
+    std::vector<uint32_t> joints;
+
+    /// @brief Optional morph targets of the node's mesh, read when the buffer sets up rendering.
+    std::shared_ptr<const Kakshya::MeshMorphTargets> morphs;
+
+    /// @brief Weight of each morph target, read every cycle. Written by slot_sink from a motion.
+    std::vector<float> morph_weights;
 
     /// @brief Set when local_transform or slot config changes since last upload.
     bool dirty { true };
