@@ -27,7 +27,7 @@ public:
     using SliceId = SliceSet::SliceId;
 
     explicit FormaProcessor(Portal::Graphics::PrimitiveTopology topology);
-    ~FormaProcessor() override = default;
+    ~FormaProcessor() override;
 
     /**
      * @brief Replace the default slice with new vertex bytes.

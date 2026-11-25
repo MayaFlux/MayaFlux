@@ -231,7 +231,8 @@ MAYAFLUX_API bool repress(
  * @brief Re-composite a UTF-8 string into an existing GPU texture.
  *
  * Uploads in-place when content fits within the existing image dimensions.
- * Reallocates and updates @p target when content height exceeds image height.
+ * Reallocates and updates @p target when content height exceeds image height,
+ * releasing the image it replaces.
  *
  * @param target  VKImage to update. May be replaced on reallocation.
  * @param text    UTF-8 string to composite.

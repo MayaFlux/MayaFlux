@@ -9,6 +9,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -49,10 +50,19 @@ void FormaBuffer::setup_processors(ProcessingToken token)
         m_pending_geometry.clear();
     }
 
-    for (auto& [img, binding] : m_pending_textures)
-        m_processor->set_texture(std::move(img), std::move(binding));
+    for (auto& [img, binding] : m_pending_textures) {
+        m_processor->set_texture(img, std::move(binding));
+        Portal::Graphics::get_texture_manager().release_image(img);
+    }
 
     m_pending_textures.clear();
+}
+
+FormaBuffer::~FormaBuffer()
+{
+    for (const auto& [img, binding] : m_pending_textures) {
+        Portal::Graphics::get_texture_manager().release_image(img);
+    }
 }
 
 void FormaBuffer::setup_rendering(const RenderConfig& config)
@@ -234,6 +244,7 @@ void FormaBuffer::send_slice_to_back(SliceId id)
 void FormaBuffer::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
 {
     if (!m_processor) {
+        Portal::Graphics::get_texture_manager().retain_image(image);
         m_pending_textures.emplace_back(std::move(image), std::move(binding));
         MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "FormaBuffer::set_texture called before setup_processors, storing texture for later submission");

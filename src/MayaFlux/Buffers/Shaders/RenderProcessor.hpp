@@ -57,6 +57,7 @@ public:
     ~RenderProcessor() override
     {
         cleanup();
+        release_bound_images();
     }
 
     void set_geometry_shader(const std::string& geometry_path);
@@ -233,6 +234,10 @@ public:
      * it. A binding made with a target is bound again to target->image() on the
      * next execute after the target is resized. Nothing is bound, and an error
      * is logged, for an unknown name, a missing image, or both image and target.
+     *
+     * The processor holds a bound image through TextureLoom until the binding
+     * takes another or the processor is destroyed, so its creator can release
+     * it at any time.
      */
     void bind_texture(const Portal::Graphics::SampledTexture& texture);
 
@@ -659,6 +664,9 @@ private:
 
     /** @brief Bind an image at a binding with the sampler the binding has, forgetting any target it followed. */
     void bind_image(uint32_t binding, const std::shared_ptr<Core::VKImage>& texture);
+
+    /** @brief Give up the hold taken on every bound image. */
+    void release_bound_images();
     std::unordered_map<uint32_t, vk::Sampler> m_binding_samplers;
 
     std::optional<Portal::Graphics::BlendAttachmentConfig> m_blend_attachment;

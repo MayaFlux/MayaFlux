@@ -4,6 +4,7 @@
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexLayout.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 
 namespace MayaFlux::Buffers {
 
@@ -131,8 +132,20 @@ void FormaProcessor::on_detach(const std::shared_ptr<Buffer>& /*buffer*/)
     m_pending_runs.reset();
 }
 
+FormaProcessor::~FormaProcessor()
+{
+    if (m_pending_texture) {
+        Portal::Graphics::get_texture_manager().release_image(m_pending_texture->image);
+    }
+}
+
 void FormaProcessor::set_texture(std::shared_ptr<Core::VKImage> image, std::string binding)
 {
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(image);
+    if (m_pending_texture) {
+        loom.release_image(m_pending_texture->image);
+    }
     m_pending_texture = PendingTexture { .image = std::move(image), .binding = std::move(binding) };
     m_texture_dirty.test_and_set(std::memory_order_release);
 }
@@ -145,6 +158,7 @@ void FormaProcessor::processing_function(const std::shared_ptr<Buffer>& buffer)
             if (auto rp = vk->get_render_processor()) {
                 if (m_pending_texture) {
                     rp->bind_texture({ .name = m_pending_texture->binding, .image = m_pending_texture->image });
+                    Portal::Graphics::get_texture_manager().release_image(m_pending_texture->image);
                 }
                 m_pending_texture.reset();
                 m_texture_dirty.clear(std::memory_order_release);

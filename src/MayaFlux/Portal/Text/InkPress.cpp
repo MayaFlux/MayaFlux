@@ -549,9 +549,11 @@ bool repress(
     }
 
     if (needs_realloc) {
-        target = loom.create_2d_uninitialized(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8, 1);
-        if (!target)
+        auto made = loom.create_2d_uninitialized(buf_w, new_h, Portal::Graphics::ImageFormat::RGBA8, 1);
+        if (!made)
             return false;
+        loom.release_image(target);
+        target = std::move(made);
         if (staging) {
             loom.upload_data(target, pixels.data(), buf_bytes, staging, true);
         } else {

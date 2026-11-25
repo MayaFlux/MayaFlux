@@ -6,6 +6,11 @@
 
 namespace MayaFlux::Portal::Text {
 
+AtlasImage::~AtlasImage()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_image);
+}
+
 std::shared_ptr<Core::VKImage> AtlasImage::sync(GlyphAtlas& atlas)
 {
     auto& loom = Portal::Graphics::get_texture_manager();
@@ -17,7 +22,9 @@ std::shared_ptr<Core::VKImage> AtlasImage::sync(GlyphAtlas& atlas)
     const uint32_t size = atlas.atlas_size();
 
     if (!m_image || !m_image->is_initialized() || m_atlas != &atlas || m_size != size) {
-        m_image = loom.create_2d(size, size, Portal::Graphics::ImageFormat::R8, pixels.data(), 1);
+        auto made = loom.create_2d(size, size, Portal::Graphics::ImageFormat::R8, pixels.data(), 1);
+        loom.release_image(m_image);
+        m_image = std::move(made);
         if (!m_image) {
             MF_ERROR(Journal::Component::Portal, Journal::Context::API,
                 "AtlasImage: could not create a {}x{} atlas image", size, size);

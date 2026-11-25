@@ -68,6 +68,7 @@ void Atelier::shutdown()
     m_bridge.reset();
     m_inspect.reset();
     m_atlas_images.clear();
+    Graphics::get_texture_manager().release_image(m_text_fallback);
     m_text_fallback.reset();
 
     m_node_graph_manager = nullptr;

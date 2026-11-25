@@ -6,6 +6,7 @@
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -679,6 +680,11 @@ void RenderProcessor::bind_image(uint32_t binding, const std::shared_ptr<Core::V
         : Portal::Graphics::SamplerForge::instance().get_or_create(
               { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
 
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(texture);
+    if (const auto previous = m_texture_bindings.find(binding); previous != m_texture_bindings.end()) {
+        loom.release_image(previous->second.texture);
+    }
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
     m_target_bindings.erase(binding);
     m_needs_descriptor_rebuild = true;
@@ -1746,6 +1752,16 @@ void RenderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
     std::erase(m_hidden_buffers, vk_buffer.get());
     m_buffer_info.erase(vk_buffer);
     ShaderProcessor::on_detach(buffer);
+}
+
+void RenderProcessor::release_bound_images()
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& [binding, held] : m_texture_bindings) {
+        loom.release_image(held.texture);
+    }
+    m_texture_bindings.clear();
+    m_target_bindings.clear();
 }
 
 void RenderProcessor::cleanup()
