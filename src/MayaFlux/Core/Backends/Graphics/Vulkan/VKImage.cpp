@@ -60,7 +60,7 @@ vk::ImageUsageFlags VKImage::get_usage_flags() const
         break;
     }
 
-    return flags;
+    return flags | m_extra_usage;
 }
 
 vk::ImageAspectFlags VKImage::get_aspect_flags() const

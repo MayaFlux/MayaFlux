@@ -1,8 +1,11 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Yantra/Executors/VisionGpuDispatch.hpp"
 
 namespace MayaFlux::Yantra::VisionInternal {
+
+using Kinesis::PixelRect;
 
 constexpr uint32_t CC_BACKGROUND_HOST = 0xFFFFFFFFU;
 constexpr uint32_t CC_UNCLAIMED_HOST = 0U;
@@ -73,14 +76,6 @@ struct IngestPC {
     uint32_t width;
     uint32_t height;
 };
-/** Half-open pixel rectangle [x0, x1) x [y0, y1) */
-struct PixelRect {
-    uint32_t x0;
-    uint32_t y0;
-    uint32_t x1;
-    uint32_t y1;
-};
-
 /**
  * @brief Pixel rectangle of a normalised region over a w x h image, clamped
  *        to the image. No region is the whole image. A region that clamps to

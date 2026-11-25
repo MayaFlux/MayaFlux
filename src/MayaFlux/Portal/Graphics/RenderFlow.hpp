@@ -150,6 +150,64 @@ public:
      */
     void end_rendering(CommandBufferID cmd_id, const std::shared_ptr<Core::Window>& window);
 
+    /**
+     * @brief Begin dynamic rendering into an image target
+     * @param cmd_id Primary command buffer ID
+     * @param target Target to draw into
+     * @param use_depth Attach the target's depth image. Pass false when no buffer drawn
+     *        in this scope enables depth, so the scope matches the formats they recorded.
+     *
+     * @param layer The array layer or cube face to draw into. Every color image of the target
+     *        is attached, each as that layer.
+     * @param clear Whether the scope clears. Unset asks the target, which consumes a pending
+     *        clear request, so a caller drawing several layers of one target decides once.
+     *
+     * Moves each color image from the use its tracked layout says, such as shader read or
+     * a compute pass's storage use, to color attachment, and clears the first to the
+     * target's clear color and the others to zero. A depth image, when the target has one,
+     * is cleared to 1.0, and kept for sampling only when the target was made with
+     * sample_depth. Secondary command buffers recorded for the target's formats execute inside.
+     */
+    void begin_rendering(
+        CommandBufferID cmd_id,
+        ImageTarget& target,
+        bool use_depth = true,
+        uint32_t layer = 0,
+        std::optional<bool> clear = std::nullopt);
+
+    /**
+     * @brief End dynamic rendering into an image target
+     * @param cmd_id Primary command buffer ID
+     * @param target Target begun with begin_rendering
+     * @param layer The layer begun with
+     * @param depth_kept Whether the depth image was attached and the target keeps it for sampling
+     *
+     * Returns the color images, and a kept depth image, to shader read, so a later pass
+     * can sample them.
+     */
+    void end_rendering(CommandBufferID cmd_id, ImageTarget& target, uint32_t layer = 0, bool depth_kept = false);
+
+    /**
+     * @brief Draw recorded secondary command buffers into an image target and submit
+     * @param target Target to draw into
+     * @param secondary_ids Secondary command buffers recorded for the target's formats
+     * @param use_depth Attach the target's depth image, as begin_rendering takes it
+     * @param layer The layer to draw into, as begin_rendering takes it
+     * @param clear Whether the scope clears, as begin_rendering takes it
+     * @return The point the submission completes at, or an empty point when nothing was submitted
+     *
+     * One scope: begin rendering, execute the secondaries, end rendering, submit on the
+     * graphics queue and note the point as produced, so a later submission that samples
+     * the image waits for it. A target with a mip chain gets its chain generated right
+     * after. The caller notes its buffers' use of the point.
+     */
+    Core::TimelinePoint draw_image_target(
+        ImageTarget& target,
+        const std::vector<CommandBufferID>& secondary_ids,
+        bool use_depth = true,
+        uint32_t layer = 0,
+        std::optional<bool> clear = std::nullopt);
+
     //==========================================================================
     // Command Recording
     //==========================================================================

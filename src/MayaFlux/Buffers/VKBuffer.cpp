@@ -6,6 +6,7 @@
 #include "Shaders/RenderProcessor.hpp"
 
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
@@ -363,10 +364,23 @@ void VKBuffer::apply_render_config(const RenderConfig& config, const ShaderConfi
     apply_render_config(m_render_processor, config, shader_config);
 }
 
+void VKBuffer::remove_pipeline_image(RenderPipelineID id)
+{
+    const auto it = m_image_pipelines.find(id);
+    if (it == m_image_pipelines.end()) {
+        return;
+    }
+    if (it->second) {
+        it->second->request_redraw();
+    }
+    m_image_pipelines.erase(it);
+    m_image_pipeline_layers.erase(id);
+}
+
 std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID id)
 {
     auto default_render = std::dynamic_pointer_cast<RenderProcessor>(m_default_processor);
-    if (default_render && default_render->get_render_pipeline_id() == id)
+    if (default_render && default_render->owns_pipeline(id))
         return default_render;
 
     if (!m_processing_chain)
@@ -375,7 +389,7 @@ std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID
     auto buffer = shared_from_this();
     for (const auto& processor : m_processing_chain->get_processors(buffer)) {
         auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
-        if (render && render->get_render_pipeline_id() == id)
+        if (render && render->owns_pipeline(id))
             return render;
     }
 
@@ -384,7 +398,7 @@ std::shared_ptr<RenderProcessor> VKBuffer::get_render_processor(RenderPipelineID
              m_processing_chain->get_postprocessor(buffer),
              m_processing_chain->get_final_processor(buffer) }) {
         auto render = std::dynamic_pointer_cast<RenderProcessor>(processor);
-        if (render && render->get_render_pipeline_id() == id)
+        if (render && render->owns_pipeline(id))
             return render;
     }
     return nullptr;
@@ -429,8 +443,8 @@ void VKBuffer::apply_render_config(
 
     render_processor->set_fragment_shader(config.fragment_shader);
 
-    render_processor->set_target_window(
-        config.target_window,
+    render_processor->set_destinations(
+        config.target_window, config.target_images,
         std::dynamic_pointer_cast<VKBuffer>(shared_from_this()));
 
     render_processor->set_primitive_topology(config.topology);
@@ -445,6 +459,7 @@ void VKBuffer::apply_render_config(
 
 void VKBuffer::mark_dirty_range(size_t offset, size_t size)
 {
+    m_content_dirty.store(true, std::memory_order_release);
     if (is_host_visible()) {
         m_dirty_ranges.emplace_back(offset, size);
     }

@@ -102,9 +102,18 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: fedora43-build
-          max-size: "1G"
-          ccache-options: |
-            sloppiness = pch_defines,time_macros,include_file_mtime,include_file_ctime
+          max-size: "2G"
+
+      - name: Configure ccache
+        shell: bash
+        run: |
+          ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+          ccache --set-config=compiler_check=content
+          ccache --set-config=base_dir="$GITHUB_WORKSPACE"
+          ccache --set-config=hash_dir=false
+
+      - name: ccache zero stats
+        run: ccache -z
 
       - name: Configure CMake
         run: |
@@ -120,6 +129,10 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build --preset "${{ env.PRESET }}"
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}

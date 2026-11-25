@@ -77,8 +77,8 @@ InspectResult Inspector::buffer(
         });
     }
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
@@ -97,7 +97,7 @@ InspectResult Inspector::root_audio_buffer(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
-    auto root = m_bm.get_root_audio_buffer(token, channel);
+    auto root = m_bm->get_root_audio_buffer(token, channel);
     if (!root)
         return {};
 
@@ -117,8 +117,8 @@ InspectResult Inspector::root_audio_buffer(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
@@ -152,22 +152,21 @@ InspectResult Inspector::root_audio_buffer(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
-    const uint32_t ch_count = m_bm.get_num_channels(token);
+    const uint32_t ch_count = m_bm->get_num_channels(token);
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = std::string(Reflect::enum_to_string(token))
         + " [" + std::to_string(ch_count) + " ch]";
 
-    auto& bm = m_bm;
     std::vector<EntrySpec> entrys {
         EntrySpec {
             .label = "channels",
-            .reader = [&bm, token] { return std::to_string(bm.get_num_channels(token)); },
+            .reader = reader_over(m_bm, [token](Buffers::BufferManager& bm) { return std::to_string(bm.get_num_channels(token)); }),
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
@@ -196,7 +195,7 @@ InspectResult Inspector::root_graphics_buffer(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
-    auto root = m_bm.get_root_graphics_buffer(token);
+    auto root = m_bm->get_root_graphics_buffer(token);
     if (!root)
         return {};
 
@@ -213,8 +212,8 @@ InspectResult Inspector::root_graphics_buffer(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
@@ -251,23 +250,22 @@ InspectResult& Inspector::buffer_manager(
         return *m_buffer_result;
     }
 
-    const auto tokens = m_bm.get_active_tokens();
-    const uint32_t in_count = m_bm.get_num_input_channels();
+    const auto tokens = m_bm->get_active_tokens();
+    const uint32_t in_count = m_bm->get_num_input_channels();
     const std::string header_label = "BufferManager";
-    auto& bm = m_bm;
     std::vector<EntrySpec> entrys {
         EntrySpec {
             .label = "tokens",
-            .reader = [&bm] { return std::to_string(bm.get_active_tokens().size()); },
+            .reader = reader_over(m_bm, [](Buffers::BufferManager& bm) { return std::to_string(bm.get_active_tokens().size()); }),
         },
         EntrySpec {
             .label = "inputs",
-            .reader = [&bm] { return std::to_string(bm.get_num_input_channels()); },
+            .reader = reader_over(m_bm, [](Buffers::BufferManager& bm) { return std::to_string(bm.get_num_input_channels()); }),
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -287,7 +285,7 @@ InspectResult& Inspector::buffer_manager(
 
     if (in_count > 0) {
         const std::string in_label = "inputs [" + std::to_string(in_count) + "]";
-        auto in_hbuf = make_header_buffer(surface.window());
+        auto in_hbuf = make_header_buffer(surface);
         auto in_group = make_entry_group({}, in_label, std::move(in_hbuf), {},
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
 
@@ -296,7 +294,7 @@ InspectResult& Inspector::buffer_manager(
         surface.layer().relate(result.group.header.header_id, in_result.group.header.header_id);
 
         for (uint32_t ch = 0; ch < in_count; ++ch) {
-            auto buf = m_bm.get_input_buffer(ch);
+            auto buf = m_bm->get_input_buffer(ch);
             auto buf_result = buffer(
                 std::dynamic_pointer_cast<Buffers::Buffer>(buf), surface, cursor,
                 x_min, x_max, row_h, 2);

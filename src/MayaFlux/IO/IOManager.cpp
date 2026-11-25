@@ -189,8 +189,10 @@ void IOManager::shutdown()
 
     wait_for_pending_saves();
 
-    Registry::BackendRegistry::instance()
-        .unregister_service<Registry::Service::IOService>();
+    auto& registry = Registry::BackendRegistry::instance();
+    if (m_io_service && registry.get_service<Registry::Service::IOService>() == m_io_service.get()) {
+        registry.unregister_service<Registry::Service::IOService>();
+    }
 
     m_io_service.reset();
 
@@ -456,7 +458,13 @@ std::shared_ptr<Kakshya::SoundFileContainer> IOManager::load_audio(const std::st
         return nullptr;
     }
 
-    configure_audio_processor(sound_container);
+    try {
+        configure_audio_processor(sound_container);
+    } catch (const std::exception& e) {
+        MF_ERROR(Journal::Component::API, Journal::Context::Runtime,
+            "Failed to configure audio processor for '{}': {}", filepath, e.what());
+        return nullptr;
+    }
 
     m_audio_readers.push_back(std::move(reader));
 
@@ -547,8 +555,9 @@ uint32_t IOManager::capture_output(const std::string& filepath, AVCodecID codec_
     }
 
     if (!m_audio_backend_service) {
-        error<std::runtime_error>(Journal::Component::IO, Journal::Context::FileIO, std::source_location::current(),
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
             "capture_output: AudioBackendService unavailable");
+        return 0;
     }
 
     auto ct = std::make_shared<Kakshya::AudioOutputContainer>(m_stream_info);

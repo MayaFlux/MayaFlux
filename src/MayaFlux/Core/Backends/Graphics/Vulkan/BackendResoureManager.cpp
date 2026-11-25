@@ -31,6 +31,134 @@ namespace {
         cmd.pipelineBarrier2(dependency);
     }
 
+    void record_access_barrier(
+        vk::CommandBuffer cmd,
+        vk::Image image,
+        const vk::ImageSubresourceRange& range,
+        ImageAccess from,
+        ImageAccess to)
+    {
+        record_image_barrier(cmd, image, range, from, to);
+    }
+
+    vk::ImageSubresourceRange full_range(const VKImage& image)
+    {
+        return { image.get_aspect_flags(), 0, image.get_mip_levels(), 0, image.get_array_layers() };
+    }
+
+    /**
+     * @brief Barrier between two layouts of an image.
+     *
+     * A layout no ImageAccess describes gets a barrier over all commands and memory.
+     */
+    void record_layout_transition(
+        vk::CommandBuffer cmd,
+        vk::Image image,
+        const vk::ImageSubresourceRange& range,
+        vk::ImageLayout old_layout,
+        vk::ImageLayout new_layout)
+    {
+        const auto from = image_access_of(old_layout);
+        const auto to = image_access_of(new_layout);
+        if (from && to) {
+            record_access_barrier(cmd, image, range, *from, *to);
+            return;
+        }
+
+        vk::ImageMemoryBarrier2 barrier {};
+        barrier.oldLayout = old_layout;
+        barrier.newLayout = new_layout;
+        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        barrier.image = image;
+        barrier.subresourceRange = range;
+        barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+        barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+
+        MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "Using generic image layout transition");
+
+        record_barrier(cmd, barrier,
+            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eAllCommands);
+    }
+
+    /**
+     * @brief The use an image in @p layout was last put to, as a barrier source.
+     *
+     * A host readback or upload waits for the work submitted so far before it
+     * records, so the source names that last use and no more. A layout no
+     * ImageAccess describes waits for every access.
+     */
+    ImageAccessInfo last_use(vk::ImageLayout layout)
+    {
+        if (const auto access = image_access_of(layout)) {
+            return image_access_info(*access);
+        }
+        return { layout,
+            vk::PipelineStageFlagBits2::eAllCommands,
+            vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite };
+    }
+
+    /**
+     * @brief The use an image restored to @p layout is put to next, as a barrier destination.
+     *
+     * The caller's @p stage joins the stages of the layout's own use, for a
+     * consumer that reads the image in a stage the layout does not name.
+     */
+    ImageAccessInfo restored_use(vk::ImageLayout layout, vk::PipelineStageFlags2 stage)
+    {
+        if (const auto access = image_access_of(layout)) {
+            ImageAccessInfo info = image_access_info(*access);
+            info.stages |= stage;
+            return info;
+        }
+        return { layout, stage, vk::AccessFlagBits2::eMemoryRead };
+    }
+
+    /** @brief The subresource range of @p range inside @p image, or none if it lies outside. */
+    std::optional<vk::ImageSubresourceRange> resolve_range(const VKImage& image, const ImageRange& range)
+    {
+        const uint32_t mips = image.get_mip_levels();
+        const uint32_t layers = image.get_array_layers();
+        if (range.base_mip >= mips || range.base_layer >= layers) {
+            return std::nullopt;
+        }
+
+        const uint32_t mip_count = range.mip_count == VK_REMAINING_MIP_LEVELS
+            ? mips - range.base_mip
+            : range.mip_count;
+        const uint32_t layer_count = range.layer_count == VK_REMAINING_ARRAY_LAYERS
+            ? layers - range.base_layer
+            : range.layer_count;
+        if (mip_count == 0 || layer_count == 0
+            || mip_count > mips - range.base_mip
+            || layer_count > layers - range.base_layer) {
+            return std::nullopt;
+        }
+
+        return vk::ImageSubresourceRange {
+            image.get_aspect_flags(), range.base_mip, mip_count, range.base_layer, layer_count
+        };
+    }
+
+    vk::ImageViewType default_view_type(const VKImage& image, uint32_t layer_count)
+    {
+        switch (image.get_type()) {
+        case VKImage::Type::TYPE_1D:
+            return layer_count > 1 ? vk::ImageViewType::e1DArray : vk::ImageViewType::e1D;
+        case VKImage::Type::TYPE_3D:
+            return vk::ImageViewType::e3D;
+        case VKImage::Type::TYPE_CUBE:
+            if (layer_count == 6) {
+                return vk::ImageViewType::eCube;
+            }
+            return layer_count > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D;
+        case VKImage::Type::TYPE_2D:
+            break;
+        }
+        return layer_count > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D;
+    }
+
     /** @brief Host image copy takes one aspect: color, or depth for a depth-only format. */
     bool host_copy_aspect(const VKImage& image)
     {
@@ -461,6 +589,9 @@ BackendResourceManager::BufferAllocation::~BufferAllocation()
 
 BackendResourceManager::ImageAllocation::~ImageAllocation()
 {
+    for (const auto& [key, sub_view] : sub_views) {
+        device.destroyImageView(sub_view);
+    }
     if (view) {
         device.destroyImageView(view);
     }
@@ -829,39 +960,15 @@ void BackendResourceManager::transition_host_image(
         return;
     }
 
-    vk::AccessFlags2 source_access {};
-    vk::PipelineStageFlags2 source_stage = vk::PipelineStageFlagBits2::eNone;
+    const ImageAccessInfo source = old_layout == vk::ImageLayout::eGeneral
+        ? image_access_info(ImageAccess::HOST)
+        : last_use(old_layout);
+    const ImageAccessInfo destination = new_layout == vk::ImageLayout::eGeneral
+        ? image_access_info(ImageAccess::HOST)
+        : restored_use(new_layout, restore_stage);
 
-    if (old_layout == vk::ImageLayout::eGeneral) {
-        source_access = vk::AccessFlagBits2::eHostWrite;
-        source_stage = vk::PipelineStageFlagBits2::eHost;
-    } else if (old_layout != vk::ImageLayout::eUndefined) {
-        source_access = vk::AccessFlagBits2::eMemoryRead
-            | vk::AccessFlagBits2::eMemoryWrite;
-        source_stage = vk::PipelineStageFlagBits2::eAllCommands;
-    }
-
-    const bool needs_host_access = new_layout == vk::ImageLayout::eGeneral;
-    const vk::AccessFlags2 destination_access = needs_host_access
-        ? vk::AccessFlagBits2::eHostRead | vk::AccessFlagBits2::eHostWrite
-        : vk::AccessFlags2(vk::AccessFlagBits2::eMemoryRead);
-    const vk::PipelineStageFlags2 destination_stage = needs_host_access
-        ? vk::PipelineStageFlags2(vk::PipelineStageFlagBits2::eHost)
-        : restore_stage;
-
-    const auto record_command = [handle = image->get_image(), old_layout, new_layout, range,
-                                    source_access, destination_access, source_stage, destination_stage](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.image = handle;
-        barrier.oldLayout = old_layout;
-        barrier.newLayout = new_layout;
-        barrier.subresourceRange = range;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.srcAccessMask = source_access;
-        barrier.dstAccessMask = destination_access;
-
-        record_barrier(cmd, barrier, source_stage, destination_stage);
+    const auto record_command = [handle = image->get_image(), range, source, destination](vk::CommandBuffer cmd) {
+        record_image_barrier(cmd, handle, range, source, destination);
     };
 
     switch (mode) {
@@ -1045,20 +1152,11 @@ void BackendResourceManager::download_image_host(
         ? old_layout
         : vk::ImageLayout::eGeneral;
 
-    execute_immediate_commands([&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.image = image->get_image();
-        barrier.oldLayout = old_layout;
-        barrier.newLayout = copy_layout;
-        barrier.subresourceRange = range;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eHostRead;
+    ImageAccessInfo readable = image_access_info(ImageAccess::HOST);
+    readable.layout = copy_layout;
 
-        record_barrier(cmd, barrier,
-            vk::PipelineStageFlagBits2::eAllCommands,
-            vk::PipelineStageFlagBits2::eHost);
+    execute_immediate_commands([&](vk::CommandBuffer cmd) {
+        record_image_barrier(cmd, image->get_image(), range, last_use(old_layout), readable);
     });
 
     vk::ImageToMemoryCopy region {};
@@ -1129,68 +1227,7 @@ void BackendResourceManager::transition_image_layout(
 
     const vk::Image handle = image->get_image();
     const auto record_command = [handle, old_layout, new_layout, range](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.oldLayout = old_layout;
-        barrier.newLayout = new_layout;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = handle;
-        barrier.subresourceRange = range;
-
-        vk::PipelineStageFlags2 src_stage;
-        vk::PipelineStageFlags2 dst_stage;
-
-        if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eTransferDstOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags2 {};
-            barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
-            src_stage = vk::PipelineStageFlagBits2::eNone;
-            dst_stage = vk::PipelineStageFlagBits2::eTransfer;
-        } else if (old_layout == vk::ImageLayout::eTransferDstOptimal && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits2::eTransfer;
-            dst_stage = vk::PipelineStageFlagBits2::eFragmentShader;
-        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags2 {};
-            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits2::eNone;
-            dst_stage = vk::PipelineStageFlagBits2::eFragmentShader;
-        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eColorAttachmentOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags2 {};
-            barrier.dstAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite;
-            src_stage = vk::PipelineStageFlagBits2::eNone;
-            dst_stage = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
-        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-            barrier.srcAccessMask = vk::AccessFlags2 {};
-            barrier.dstAccessMask = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
-            src_stage = vk::PipelineStageFlagBits2::eNone;
-            dst_stage = vk::PipelineStageFlagBits2::eEarlyFragmentTests;
-        } else if (old_layout == vk::ImageLayout::eUndefined && new_layout == vk::ImageLayout::eGeneral) {
-            barrier.srcAccessMask = vk::AccessFlags2 {};
-            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead | vk::AccessFlagBits2::eShaderWrite;
-            src_stage = vk::PipelineStageFlagBits2::eNone;
-            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
-        } else if (old_layout == vk::ImageLayout::eGeneral && new_layout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-            barrier.srcAccessMask = vk::AccessFlagBits2::eShaderWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
-            src_stage = vk::PipelineStageFlagBits2::eComputeShader;
-            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
-        } else if (old_layout == vk::ImageLayout::eShaderReadOnlyOptimal && new_layout == vk::ImageLayout::eGeneral) {
-            barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
-            barrier.dstAccessMask = vk::AccessFlagBits2::eShaderWrite;
-            src_stage = vk::PipelineStageFlagBits2::eComputeShader;
-            dst_stage = vk::PipelineStageFlagBits2::eComputeShader;
-        } else {
-            barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
-            barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
-            src_stage = vk::PipelineStageFlagBits2::eAllCommands;
-            dst_stage = vk::PipelineStageFlagBits2::eAllCommands;
-
-            MF_WARN(Journal::Component::Core, Journal::Context::GraphicsBackend,
-                "Using generic image layout transition");
-        }
-
-        record_barrier(cmd, barrier, src_stage, dst_stage);
+        record_layout_transition(cmd, handle, range, old_layout, new_layout);
     };
 
     switch (mode) {
@@ -1212,6 +1249,107 @@ void BackendResourceManager::transition_image_layout(
     MF_DEBUG(Journal::Component::Core, Journal::Context::GraphicsBackend,
         "Image layout transitioned: {} -> {}",
         vk::to_string(old_layout), vk::to_string(new_layout));
+}
+
+void BackendResourceManager::record_image_transition(
+    vk::CommandBuffer cmd,
+    const std::shared_ptr<VKImage>& image,
+    ImageAccess from,
+    ImageAccess to,
+    const ImageRange& range)
+{
+    if (!cmd || !image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "record_image_transition: command buffer is null or image is not initialized");
+        return;
+    }
+
+    const auto subresource = resolve_range(*image, range);
+    if (!subresource) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "record_image_transition: range lies outside the image ({} mips, {} layers)",
+            image->get_mip_levels(), image->get_array_layers());
+        return;
+    }
+
+    record_access_barrier(cmd, image->get_image(), *subresource, from, to);
+
+    const bool whole = subresource->baseMipLevel == 0
+        && subresource->levelCount == image->get_mip_levels()
+        && subresource->baseArrayLayer == 0
+        && subresource->layerCount == image->get_array_layers();
+    if (whole) {
+        image->set_current_layout(image_access_info(to).layout);
+    }
+}
+
+vk::ImageView BackendResourceManager::get_image_view(
+    const std::shared_ptr<VKImage>& image,
+    const ImageViewKey& key)
+{
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "get_image_view: image is null or not initialized");
+        return {};
+    }
+
+    const auto allocation = m_image_allocations.find(image);
+    if (allocation == m_image_allocations.end()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "get_image_view: image is not managed by this backend");
+        return {};
+    }
+
+    const auto subresource = resolve_range(*image, key.range);
+    if (!subresource) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "get_image_view: range lies outside the image ({} mips, {} layers)",
+            image->get_mip_levels(), image->get_array_layers());
+        return {};
+    }
+
+    ImageViewKey resolved = key;
+    resolved.range = ImageRange {
+        .base_mip = subresource->baseMipLevel,
+        .mip_count = subresource->levelCount,
+        .base_layer = subresource->baseArrayLayer,
+        .layer_count = subresource->layerCount
+    };
+    if (resolved.aspect == vk::ImageAspectFlags {}) {
+        resolved.aspect = image->get_aspect_flags();
+    }
+    if (!resolved.type) {
+        resolved.type = default_view_type(*image, resolved.range.layer_count);
+    }
+
+    auto& views = allocation->second->sub_views;
+    for (const auto& [existing, view] : views) {
+        if (existing == resolved) {
+            return view;
+        }
+    }
+
+    vk::ImageViewCreateInfo view_info {};
+    view_info.image = image->get_image();
+    view_info.viewType = *resolved.type;
+    view_info.format = image->get_format();
+    view_info.subresourceRange = vk::ImageSubresourceRange {
+        resolved.aspect,
+        resolved.range.base_mip, resolved.range.mip_count,
+        resolved.range.base_layer, resolved.range.layer_count
+    };
+
+    vk::ImageView view;
+    try {
+        view = m_context.get_device().createImageView(view_info);
+    } catch (const vk::SystemError& e) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "get_image_view: could not create the view: {}", e.what());
+        return {};
+    }
+
+    views.emplace_back(resolved, view);
+    return view;
 }
 
 void BackendResourceManager::upload_image_data(
@@ -1273,21 +1411,8 @@ void BackendResourceManager::upload_image_data(
     }
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.oldLayout = image->get_current_layout();
-        barrier.newLayout = vk::ImageLayout::eTransferDstOptimal;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image->get_image();
-        barrier.subresourceRange = {
-            image->get_aspect_flags(), 0,
-            image->get_mip_levels(), 0,
-            image->get_array_layers()
-        };
-        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferWrite;
-
-        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader, vk::PipelineStageFlagBits2::eTransfer);
+        record_layout_transition(cmd, image->get_image(), full_range(*image),
+            image->get_current_layout(), vk::ImageLayout::eTransferDstOptimal);
 
         vk::BufferImageCopy region {};
         region.imageSubresource.aspectMask = image->get_aspect_flags();
@@ -1305,12 +1430,8 @@ void BackendResourceManager::upload_image_data(
             vk::ImageLayout::eTransferDstOptimal,
             1, &region);
 
-        barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-        barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferWrite;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eShaderRead;
-
-        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eFragmentShader);
+        record_layout_transition(cmd, image->get_image(), full_range(*image),
+            vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
     };
 
     record_deferred_commands(record_command, { image, staging });
@@ -1347,21 +1468,8 @@ void BackendResourceManager::download_image_data(
     initialize_buffer(staging);
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        vk::ImageMemoryBarrier2 barrier {};
-        barrier.oldLayout = image->get_current_layout();
-        barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
-        barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        barrier.image = image->get_image();
-        barrier.subresourceRange.aspectMask = image->get_aspect_flags();
-        barrier.subresourceRange.baseMipLevel = 0;
-        barrier.subresourceRange.levelCount = image->get_mip_levels();
-        barrier.subresourceRange.baseArrayLayer = 0;
-        barrier.subresourceRange.layerCount = image->get_array_layers();
-        barrier.srcAccessMask = vk::AccessFlagBits2::eShaderWrite | vk::AccessFlagBits2::eShaderRead;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eTransferRead;
-
-        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eFragmentShader | vk::PipelineStageFlagBits2::eComputeShader, vk::PipelineStageFlagBits2::eTransfer);
+        record_layout_transition(cmd, image->get_image(), full_range(*image),
+            image->get_current_layout(), vk::ImageLayout::eTransferSrcOptimal);
 
         vk::BufferImageCopy region {};
         region.bufferOffset = 0;
@@ -1384,12 +1492,8 @@ void BackendResourceManager::download_image_data(
             staging->get_buffer(),
             1, &region);
 
-        barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
-        barrier.newLayout = restore_layout;
-        barrier.srcAccessMask = vk::AccessFlagBits2::eTransferRead;
-        barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead;
-
-        record_barrier(cmd, barrier, vk::PipelineStageFlagBits2::eTransfer, restore_stage);
+        record_image_barrier(cmd, image->get_image(), full_range(*image),
+            image_access_info(ImageAccess::TRANSFER_SRC), restored_use(restore_layout, restore_stage));
     };
 
     auto device = m_context.get_device();
@@ -1477,6 +1581,28 @@ bool BackendResourceManager::supports_blit(
         || static_cast<bool>(src_features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
 }
 
+bool BackendResourceManager::supports_render_target(vk::Format format, bool storage) const
+{
+    const auto features = m_context.get_physical_device().getFormatProperties(format).optimalTilingFeatures;
+    vk::FormatFeatureFlags required = vk::FormatFeatureFlagBits::eColorAttachment
+        | vk::FormatFeatureFlagBits::eSampledImage;
+    if (storage) {
+        required |= vk::FormatFeatureFlagBits::eStorageImage;
+    }
+    return (features & required) == required;
+}
+
+bool BackendResourceManager::supports_color_blend(vk::Format format) const
+{
+    const auto features = m_context.get_physical_device().getFormatProperties(format).optimalTilingFeatures;
+    return static_cast<bool>(features & vk::FormatFeatureFlagBits::eColorAttachmentBlend);
+}
+
+bool BackendResourceManager::supports_independent_blend() const
+{
+    return m_context.get_physical_device().getFeatures().independentBlend == VK_TRUE;
+}
+
 bool BackendResourceManager::blit_image(
     const std::shared_ptr<VKImage>& src,
     const std::shared_ptr<VKImage>& dst,
@@ -1508,50 +1634,20 @@ bool BackendResourceManager::blit_image(
     const auto dst_restore = settled_layout(dst);
 
     auto record_command = [&](vk::CommandBuffer cmd) {
-        const auto transition = [&cmd](
-                                    const std::shared_ptr<VKImage>& image,
-                                    vk::ImageLayout from,
-                                    vk::ImageLayout to,
-                                    vk::AccessFlags2 src_access,
-                                    vk::AccessFlags2 dst_access,
-                                    vk::PipelineStageFlags2 src_stage,
-                                    vk::PipelineStageFlags2 dst_stage) {
-            vk::ImageMemoryBarrier2 barrier {};
-            barrier.oldLayout = from;
-            barrier.newLayout = to;
-            barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            barrier.image = image->get_image();
-            barrier.subresourceRange = {
-                image->get_aspect_flags(), 0,
-                image->get_mip_levels(), 0,
-                image->get_array_layers()
-            };
-            barrier.srcAccessMask = src_access;
-            barrier.dstAccessMask = dst_access;
-            record_barrier(cmd, barrier, src_stage, dst_stage);
-        };
-
-        constexpr auto any_access = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
-
-        transition(src, src->get_current_layout(), vk::ImageLayout::eTransferSrcOptimal,
-            any_access, vk::AccessFlagBits2::eTransferRead,
-            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eTransfer);
-        transition(dst, dst->get_current_layout(), vk::ImageLayout::eTransferDstOptimal,
-            any_access, vk::AccessFlagBits2::eTransferWrite,
-            vk::PipelineStageFlagBits2::eAllCommands, vk::PipelineStageFlagBits2::eTransfer);
+        record_layout_transition(cmd, src->get_image(), full_range(*src),
+            src->get_current_layout(), vk::ImageLayout::eTransferSrcOptimal);
+        record_layout_transition(cmd, dst->get_image(), full_range(*dst),
+            dst->get_current_layout(), vk::ImageLayout::eTransferDstOptimal);
 
         cmd.blitImage(
             src->get_image(), vk::ImageLayout::eTransferSrcOptimal,
             dst->get_image(), vk::ImageLayout::eTransferDstOptimal,
             1, &region, filter);
 
-        transition(src, vk::ImageLayout::eTransferSrcOptimal, src_restore,
-            vk::AccessFlagBits2::eTransferRead, any_access,
-            vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
-        transition(dst, vk::ImageLayout::eTransferDstOptimal, dst_restore,
-            vk::AccessFlagBits2::eTransferWrite, any_access,
-            vk::PipelineStageFlagBits2::eTransfer, vk::PipelineStageFlagBits2::eAllCommands);
+        record_layout_transition(cmd, src->get_image(), full_range(*src),
+            vk::ImageLayout::eTransferSrcOptimal, src_restore);
+        record_layout_transition(cmd, dst->get_image(), full_range(*dst),
+            vk::ImageLayout::eTransferDstOptimal, dst_restore);
     };
 
     switch (mode) {
@@ -1570,6 +1666,113 @@ bool BackendResourceManager::blit_image(
 
     src->set_current_layout(src_restore);
     dst->set_current_layout(dst_restore);
+
+    return true;
+}
+
+bool BackendResourceManager::generate_mip_chain(
+    const std::shared_ptr<VKImage>& image,
+    vk::Filter filter,
+    SubmitMode mode)
+{
+    if (!image || !image->is_initialized()) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: image is null or not initialized");
+        return false;
+    }
+
+    const uint32_t levels = image->get_mip_levels();
+    if (levels < 2) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: image has one mip level");
+        return false;
+    }
+
+    if (image->get_aspect_flags() != vk::ImageAspectFlagBits::eColor) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: only color images have a mip chain to generate");
+        return false;
+    }
+
+    if (!supports_blit(image->get_format(), image->get_format(), filter)) {
+        MF_ERROR(Journal::Component::Core, Journal::Context::GraphicsBackend,
+            "generate_mip_chain: format {} does not support a {} blit",
+            vk::to_string(image->get_format()), vk::to_string(filter));
+        return false;
+    }
+
+    const vk::ImageLayout old_layout = image->get_current_layout();
+    const auto old_access = image_access_of(old_layout);
+    const bool transient = !old_access
+        || *old_access == ImageAccess::UNDEFINED
+        || *old_access == ImageAccess::TRANSFER_SRC
+        || *old_access == ImageAccess::TRANSFER_DST;
+    const ImageAccess settled = transient ? ImageAccess::SHADER_READ : *old_access;
+
+    auto record_command = [&](vk::CommandBuffer cmd) {
+        const vk::Image handle = image->get_image();
+        const vk::ImageAspectFlags aspect = image->get_aspect_flags();
+        const uint32_t layers = image->get_array_layers();
+        const auto level_range = [aspect, layers](uint32_t base, uint32_t count) {
+            return vk::ImageSubresourceRange { aspect, base, count, 0, layers };
+        };
+
+        record_layout_transition(cmd, handle, level_range(0, 1),
+            old_layout, vk::ImageLayout::eTransferSrcOptimal);
+        record_access_barrier(cmd, handle, level_range(1, levels - 1),
+            ImageAccess::UNDEFINED, ImageAccess::TRANSFER_DST);
+
+        auto width = static_cast<int32_t>(image->get_width());
+        auto height = static_cast<int32_t>(image->get_height());
+        auto depth = static_cast<int32_t>(image->get_depth());
+
+        for (uint32_t level = 1; level < levels; ++level) {
+            const int32_t next_width = std::max(1, width / 2);
+            const int32_t next_height = std::max(1, height / 2);
+            const int32_t next_depth = std::max(1, depth / 2);
+
+            vk::ImageBlit region {};
+            region.srcSubresource = { aspect, level - 1, 0, layers };
+            region.srcOffsets = std::array<vk::Offset3D, 2> { vk::Offset3D { 0, 0, 0 }, vk::Offset3D { width, height, depth } };
+            region.dstSubresource = { aspect, level, 0, layers };
+            region.dstOffsets = std::array<vk::Offset3D, 2> { vk::Offset3D { 0, 0, 0 }, vk::Offset3D { next_width, next_height, next_depth } };
+
+            cmd.blitImage(
+                handle, vk::ImageLayout::eTransferSrcOptimal,
+                handle, vk::ImageLayout::eTransferDstOptimal,
+                1, &region, filter);
+
+            record_access_barrier(cmd, handle, level_range(level - 1, 1),
+                ImageAccess::TRANSFER_SRC, settled);
+            if (level + 1 < levels) {
+                record_access_barrier(cmd, handle, level_range(level, 1),
+                    ImageAccess::TRANSFER_DST, ImageAccess::TRANSFER_SRC);
+            }
+
+            width = next_width;
+            height = next_height;
+            depth = next_depth;
+        }
+
+        record_access_barrier(cmd, handle, level_range(levels - 1, 1),
+            ImageAccess::TRANSFER_DST, settled);
+    };
+
+    switch (mode) {
+    case SubmitMode::DEFERRED:
+        record_deferred_commands(record_command, { image });
+        break;
+    case SubmitMode::ASYNC:
+        if (!execute_async(record_command, { image })) {
+            return false;
+        }
+        break;
+    case SubmitMode::IMMEDIATE:
+        execute_immediate_commands(record_command);
+        break;
+    }
+
+    image->set_current_layout(image_access_info(settled).layout);
 
     return true;
 }

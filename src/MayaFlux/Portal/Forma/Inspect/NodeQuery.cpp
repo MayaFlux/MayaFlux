@@ -52,8 +52,8 @@ InspectResult Inspector::inspect_modulator_tree(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -95,8 +95,8 @@ InspectResult Inspector::node(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -127,7 +127,7 @@ InspectResult Inspector::root_node(
     LayoutCursor& cursor,
     float x_min, float x_max, float row_h, int depth)
 {
-    auto& root = m_ngm.get_root_node(token, channel);
+    auto& root = m_ngm->get_root_node(token, channel);
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = token == Nodes::ProcessingToken::AUDIO_RATE
@@ -141,8 +141,8 @@ InspectResult Inspector::root_node(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -176,22 +176,21 @@ InspectResult Inspector::root_node(
     if (token != Nodes::ProcessingToken::AUDIO_RATE)
         return root_node(token, 0, surface, cursor, x_min, x_max, row_h, depth);
 
-    auto channels = m_ngm.get_all_channels(token);
+    auto channels = m_ngm->get_all_channels(token);
     std::ranges::sort(channels);
 
     const float ind = x_min + static_cast<float>(depth) * k_inspect_indent;
     const std::string header_label = "root [" + std::to_string(channels.size()) + " ch]";
 
-    auto& ngm = m_ngm;
     std::vector<EntrySpec> entrys {
         EntrySpec {
             .label = "channels",
-            .reader = [&ngm, token] { return std::to_string(ngm.get_all_channels(token).size()); },
+            .reader = reader_over(m_ngm, [token](Nodes::NodeGraphManager& ngm) { return std::to_string(ngm.get_all_channels(token).size()); }),
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
 
@@ -247,8 +246,8 @@ InspectResult Inspector::node_network(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, ind, x_max, row_h, false);
@@ -271,22 +270,21 @@ InspectResult& Inspector::node_graph_manager(
         return *m_node_graph_result;
     }
 
-    const auto tokens = m_ngm.get_active_tokens();
+    const auto tokens = m_ngm->get_active_tokens();
 
     const std::string root_label = "NodeGraphManager ["
         + std::to_string(tokens.size()) + " token"
         + (tokens.size() == 1 ? "" : "s") + "]";
 
-    auto& ngm = m_ngm;
     std::vector<EntrySpec> root_entrys {
         EntrySpec {
             .label = "tokens",
-            .reader = [&ngm] { return std::to_string(ngm.get_active_tokens().size()); },
+            .reader = reader_over(m_ngm, [](Nodes::NodeGraphManager& ngm) { return std::to_string(ngm.get_active_tokens().size()); }),
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), root_entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, root_entrys.size());
 
     auto root_group = make_entry_group(root_entrys, root_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -297,23 +295,23 @@ InspectResult& Inspector::node_graph_manager(
     for (const auto tok : tokens) {
         const std::string tok_label = std::string(Reflect::enum_to_string(tok));
         const bool multichannel = tok == Nodes::ProcessingToken::AUDIO_RATE;
-        auto channels = m_ngm.get_all_channels(tok);
+        auto channels = m_ngm->get_all_channels(tok);
         if (multichannel)
             std::ranges::sort(channels);
 
         std::vector<EntrySpec> tok_entrys {
             EntrySpec {
                 .label = "nodes",
-                .reader = [&ngm, tok] { return std::to_string(ngm.get_node_count(tok)); },
+                .reader = reader_over(m_ngm, [tok](Nodes::NodeGraphManager& ngm) { return std::to_string(ngm.get_node_count(tok)); }),
             },
             EntrySpec {
                 .label = "networks",
-                .reader = [&ngm, tok] { return std::to_string(ngm.get_network_count(tok)); },
+                .reader = reader_over(m_ngm, [tok](Nodes::NodeGraphManager& ngm) { return std::to_string(ngm.get_network_count(tok)); }),
             },
         };
 
-        auto tok_hbuf = make_header_buffer(surface.window());
-        auto tok_rbufs = make_row_buffers(surface.window(), tok_entrys.size());
+        auto tok_hbuf = make_header_buffer(surface);
+        auto tok_rbufs = make_row_buffers(surface, tok_entrys.size());
 
         auto tok_group = make_entry_group(tok_entrys, tok_label, std::move(tok_hbuf), tok_rbufs,
             surface, cursor, x_min + k_inspect_indent, x_max, row_h, false);
@@ -324,7 +322,7 @@ InspectResult& Inspector::node_graph_manager(
 
         // ----- Networks section -----
         {
-            auto net_hbuf = make_header_buffer(surface.window());
+            auto net_hbuf = make_header_buffer(surface);
             auto net_group = make_entry_group({}, "Networks", std::move(net_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 
@@ -334,7 +332,7 @@ InspectResult& Inspector::node_graph_manager(
 
             if (multichannel) {
                 for (const auto ch : channels) {
-                    auto ch_hbuf = make_header_buffer(surface.window());
+                    auto ch_hbuf = make_header_buffer(surface);
                     auto ch_group = make_entry_group({}, "ch " + std::to_string(ch), std::move(ch_hbuf), {},
                         surface, cursor, x_min + 3.F * k_inspect_indent, x_max, row_h, false);
 
@@ -342,7 +340,7 @@ InspectResult& Inspector::node_graph_manager(
                     ch_result.group = std::move(ch_group);
                     surface.layer().relate(net_section.group.header.header_id, ch_result.group.header.header_id);
 
-                    for (const auto& net : m_ngm.get_networks(tok, ch)) {
+                    for (const auto& net : m_ngm->get_networks(tok, ch)) {
                         if (!net)
                             continue;
                         auto nr = node_network(net, surface, cursor, x_min, x_max, row_h, 4);
@@ -353,7 +351,7 @@ InspectResult& Inspector::node_graph_manager(
                     net_section.children.push_back(std::move(ch_result));
                 }
             } else {
-                for (const auto& net : m_ngm.get_networks(tok, 0)) {
+                for (const auto& net : m_ngm->get_networks(tok, 0)) {
                     if (!net)
                         continue;
                     auto nr = node_network(net, surface, cursor, x_min, x_max, row_h, 3);
@@ -367,7 +365,7 @@ InspectResult& Inspector::node_graph_manager(
 
         // ----- Nodes section -----
         {
-            auto nodes_hbuf = make_header_buffer(surface.window());
+            auto nodes_hbuf = make_header_buffer(surface);
             auto nodes_group = make_entry_group({}, "Nodes", std::move(nodes_hbuf), {},
                 surface, cursor, x_min + 2.F * k_inspect_indent, x_max, row_h, false);
 

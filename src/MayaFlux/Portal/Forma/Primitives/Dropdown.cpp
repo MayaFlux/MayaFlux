@@ -42,7 +42,7 @@ Dropdown& Dropdown::place(
     const auto labels = std::make_shared<std::vector<std::string>>(m_labels);
     const size_t initial = std::min(m_initial, labels->size() - 1);
     const auto dims = std::make_shared<glm::uvec2>(
-        row_pixel_dims(surface.window(), x_min, x_max, row_h));
+        row_pixel_dims(surface.extent(), x_min, x_max, row_h));
 
     auto header = internal::add_text_row(surface, header_label(labels->at(initial), false), header_rect, *dims);
     const uint32_t hid = header.first;
@@ -122,8 +122,8 @@ Dropdown& Dropdown::place(
         [open_state, set_open](uint32_t, glm::vec2) { set_open(!open_state->value); });
 
     ctx.on_resize(hid,
-        [window = surface.window(), x_min, x_max, row_h, dims, labels, rows, refresh_header](uint32_t, uint32_t) {
-            *dims = row_pixel_dims(window, x_min, x_max, row_h);
+        [window = surface.window(), image = surface.image(), area = surface.area(), x_min, x_max, row_h, dims, labels, rows, refresh_header](uint32_t, uint32_t) {
+            *dims = row_pixel_dims(Surface::extent_of(window, image, area), x_min, x_max, row_h);
             refresh_header();
             const auto idle = internal::row_press_params(*dims, internal::row_idle_color());
             for (size_t i = 0; i < rows->size(); ++i)

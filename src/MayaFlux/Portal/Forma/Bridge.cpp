@@ -15,11 +15,15 @@
 namespace MayaFlux::Portal::Forma {
 
 Bridge::Bridge(
-    Vruta::TaskScheduler& scheduler,
-    Buffers::BufferManager& buffer_manager)
+    const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+    const std::shared_ptr<Buffers::BufferManager>& buffer_manager)
     : m_scheduler(scheduler)
     , m_buffer_manager(buffer_manager)
 {
+    if (!m_scheduler || !m_buffer_manager) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(), "Forma::Bridge requires a scheduler and a buffer manager");
+    }
 }
 
 Bridge::~Bridge()
@@ -33,7 +37,7 @@ Bridge::~Bridge()
 
     for (auto& [layer, tasks] : m_layer_tasks) {
         for (const auto& name : tasks)
-            m_scheduler.cancel_task(name);
+            m_scheduler->cancel_task(name);
     }
 }
 
@@ -99,7 +103,7 @@ void Bridge::write(
 
     if (!rec->bindings) {
         rec->bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
-        m_buffer_manager.add_processor(rec->bindings, target_buffer,
+        m_buffer_manager->add_processor(rec->bindings, target_buffer,
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
@@ -124,7 +128,7 @@ void Bridge::write(
 
     if (!rec->bindings) {
         rec->bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
-        m_buffer_manager.add_processor(rec->bindings, target_buffer,
+        m_buffer_manager->add_processor(rec->bindings, target_buffer,
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
@@ -155,7 +159,7 @@ void Bridge::write(
 
     if (!rec->bindings) {
         rec->bindings = std::make_shared<Buffers::FormaBindingsProcessor>(shader_path);
-        m_buffer_manager.add_processor(rec->bindings, target_buffer,
+        m_buffer_manager->add_processor(rec->bindings, target_buffer,
             Buffers::ProcessingToken::GRAPHICS_BACKEND);
     }
 
@@ -288,7 +292,7 @@ void Bridge::stop_sync(Layer& layer)
         return;
 
     for (const auto& name : it->second)
-        m_scheduler.cancel_task(name);
+        m_scheduler->cancel_task(name);
 
     m_layer_tasks.erase(it);
 }
@@ -322,7 +326,7 @@ std::string Bridge::make_layer_task_name(const char* suffix) const
 void Bridge::cancel_inbound(ElementRecord& rec)
 {
     if (!rec.inbound_task.empty()) {
-        m_scheduler.cancel_task(rec.inbound_task);
+        m_scheduler->cancel_task(rec.inbound_task);
         rec.inbound_task.clear();
     }
 }
@@ -330,7 +334,7 @@ void Bridge::cancel_inbound(ElementRecord& rec)
 void Bridge::cancel_outbound(ElementRecord& rec)
 {
     for (const auto& name : rec.outbound_tasks) {
-        m_scheduler.cancel_task(name);
+        m_scheduler->cancel_task(name);
     }
     rec.outbound_tasks.clear();
 
@@ -355,7 +359,7 @@ void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn
 void Bridge::spawn_each(const std::string& name, std::function<void()> cycle)
 {
     if (auto routine = Kriya::each_cycle(std::move(cycle))) {
-        m_scheduler.add_task(routine, name, false);
+        m_scheduler->add_task(routine, name, false);
     }
 }
 

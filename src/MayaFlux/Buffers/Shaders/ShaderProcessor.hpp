@@ -702,6 +702,9 @@ protected:
      */
     bool m_descriptors_ready {};
 
+    /** @brief Fingerprint of the layout the current pipeline was created for. */
+    std::optional<uint64_t> m_created_layout;
+
     virtual void initialize_pipeline(const std::shared_ptr<VKBuffer>& buffer) = 0;
     virtual void initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer) = 0;
     virtual void execute_shader(const std::shared_ptr<VKBuffer>& buffer) = 0;
@@ -736,8 +739,6 @@ private:
     };
 
     std::unordered_map<std::string, Feed> m_feeds;
-
-    std::optional<uint64_t> m_created_layout;
 
     void initialize_shader();
     [[nodiscard]] uint64_t layout_fingerprint(const std::shared_ptr<VKBuffer>& buffer) const;

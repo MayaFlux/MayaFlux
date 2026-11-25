@@ -5,6 +5,8 @@
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
+#include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "MayaFlux/Portal/Graphics/ShaderFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/SamplerForge.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
@@ -29,6 +31,8 @@ RenderProcessor::RenderProcessor(const ShaderConfig& config)
     : ShaderProcessor(config)
 {
     m_set_zero_is_push = true;
+    m_lanes.push_back(std::make_unique<Lane>());
+    m_lane = m_lanes.front().get();
     m_shader_id = Portal::Graphics::get_shader_foundry().load_shader(config.shader_path, Portal::Graphics::ShaderStage::VERTEX, config.entry_point);
 }
 
@@ -36,34 +40,431 @@ void RenderProcessor::set_fragment_shader(const std::string& fragment_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     m_fragment_shader_id = foundry.load_shader(fragment_path, Portal::Graphics::ShaderStage::FRAGMENT);
-    m_needs_pipeline_rebuild = true;
+    invalidate_pipelines();
 }
 
 void RenderProcessor::set_geometry_shader(const std::string& geometry_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     m_geometry_shader_id = foundry.load_shader(geometry_path, Portal::Graphics::ShaderStage::GEOMETRY);
-    m_needs_pipeline_rebuild = true;
+    invalidate_pipelines();
 }
 
 void RenderProcessor::set_tess_control_shader(const std::string& tess_control_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     m_tess_control_shader_id = foundry.load_shader(tess_control_path, Portal::Graphics::ShaderStage::TESS_CONTROL);
-    m_needs_pipeline_rebuild = true;
+    invalidate_pipelines();
 }
 
 void RenderProcessor::set_tess_eval_shader(const std::string& tess_eval_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     m_tess_eval_shader_id = foundry.load_shader(tess_eval_path, Portal::Graphics::ShaderStage::TESS_EVALUATION);
+    invalidate_pipelines();
+}
+
+RenderProcessor::ActiveLane::ActiveLane(RenderProcessor& owner, Lane& lane)
+    : m_owner(owner)
+    , m_previous(owner.m_lane)
+    , m_swapped(&lane != owner.m_lanes.front().get())
+{
+    if (m_swapped) {
+        m_owner.exchange_shader_state(lane);
+    }
+    m_owner.m_lane = &lane;
+}
+
+RenderProcessor::ActiveLane::~ActiveLane()
+{
+    if (m_swapped) {
+        m_owner.exchange_shader_state(*m_owner.m_lane);
+    }
+    m_owner.m_lane = m_previous;
+}
+
+void RenderProcessor::exchange_shader_state(Lane& lane)
+{
+    std::swap(m_descriptor_set_ids, lane.descriptor_sets);
+    std::swap(m_created_layout, lane.created_layout);
+    std::swap(m_initialized, lane.initialized);
+    std::swap(m_descriptors_ready, lane.descriptors_ready);
+    std::swap(m_needs_pipeline_rebuild, lane.needs_pipeline);
+    std::swap(m_needs_descriptor_rebuild, lane.needs_descriptors);
+}
+
+void RenderProcessor::clear_destinations(const std::shared_ptr<VKBuffer>& buffer)
+{
+    for (const auto& image : get_target_images()) {
+        remove_target_image(image, buffer);
+    }
+    while (const auto window = get_target_window()) {
+        remove_target_window(window, buffer);
+    }
+}
+
+RenderProcessor::Lane& RenderProcessor::claim_lane()
+{
+    auto& primary = *m_lanes.front();
+    if (!primary.window && !primary.image) {
+        m_needs_pipeline_rebuild = true;
+        m_needs_descriptor_rebuild = true;
+        return primary;
+    }
+
+    auto lane = std::make_unique<Lane>();
+    lane->initialized = true;
+    m_lanes.push_back(std::move(lane));
+    return *m_lanes.back();
+}
+
+void RenderProcessor::release_window(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    for (const auto& [id, other] : buffer->get_render_pipelines()) {
+        if (other == window) {
+            return;
+        }
+    }
+
+    const auto uses = [this, &window](const std::shared_ptr<RenderProcessor>& render) {
+        return render && render.get() != this && render->find_lane(window) != nullptr;
+    };
+
+    if (uses(buffer->get_render_processor())) {
+        return;
+    }
+    for (const auto& render : buffer->get_additional_render_processors()) {
+        if (uses(render)) {
+            return;
+        }
+    }
+
+    window->unregister_rendering_buffer(buffer);
+}
+
+void RenderProcessor::drop_lane(Lane& lane, const std::shared_ptr<VKBuffer>& buffer)
+{
+    const auto window = lane.window;
+    const auto image = lane.image;
+    const bool primary = &lane == m_lanes.front().get();
+
+    {
+        ActiveLane scope(*this, lane);
+        retire_current_pipeline();
+    }
+
+    if (window && buffer) {
+        buffer->request_presentation_refresh(window);
+        release_window(window, buffer);
+    }
+    if (image) {
+        image->request_clear();
+    }
+
+    if (!primary) {
+        std::erase_if(m_lanes, [&lane](const auto& held) { return held.get() == &lane; });
+        return;
+    }
+
+    if (m_lanes.size() > 1) {
+        m_lanes.erase(m_lanes.begin());
+        m_lane = m_lanes.front().get();
+        exchange_shader_state(*m_lane);
+        return;
+    }
+
+    lane.window.reset();
+    lane.image.reset();
+    lane.view.reset();
+    lane.view_source = nullptr;
+    lane.enabled = true;
+    m_descriptor_set_ids.clear();
+    m_descriptors_ready = false;
+    m_created_layout.reset();
     m_needs_pipeline_rebuild = true;
+    m_needs_descriptor_rebuild = true;
 }
 
 void RenderProcessor::set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
 {
-    m_target_window = window;
+    if (!window) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_target_window: window is null");
+        return;
+    }
+
+    if (m_lanes.size() == 1 && m_lanes.front()->window == window) {
+        window->register_rendering_buffer(buffer);
+        return;
+    }
+
+    clear_destinations(buffer);
+    m_lane->window = window;
     window->register_rendering_buffer(buffer);
+}
+
+void RenderProcessor::set_target_image(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const std::shared_ptr<VKBuffer>& buffer,
+    const Kinesis::ViewportArea& area)
+{
+    if (!image) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_target_image: image target is null");
+        return;
+    }
+
+    if (area.layer >= image->layers()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_target_image: layer {} of a target with {}", area.layer, image->layers());
+        return;
+    }
+
+    if (m_lanes.size() == 1 && m_lanes.front()->image == image) {
+        const bool moved = !(m_lanes.front()->area == area);
+        m_lanes.front()->area = area;
+        if (moved) {
+            image->request_clear();
+        } else {
+            image->request_redraw();
+        }
+        return;
+    }
+
+    clear_destinations(buffer);
+    m_lane->image = image;
+    m_lane->area = area;
+    image->request_clear();
+}
+
+void RenderProcessor::set_destinations(
+    const std::shared_ptr<Core::Window>& window,
+    const std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>>& images,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (window) {
+        set_target_window(window, buffer);
+        for (const auto& image : images) {
+            add_target_image(image, buffer);
+        }
+        return;
+    }
+
+    if (images.empty()) {
+        set_target_window(window, buffer);
+        return;
+    }
+
+    set_target_image(images.front(), buffer);
+    for (size_t i = 1; i < images.size(); ++i) {
+        add_target_image(images[i], buffer);
+    }
+}
+
+void RenderProcessor::add_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (!window) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "add_target_window: window is null");
+        return;
+    }
+
+    if (!find_lane(window)) {
+        claim_lane().window = window;
+    }
+    window->register_rendering_buffer(buffer);
+}
+
+void RenderProcessor::add_target_image(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const std::shared_ptr<VKBuffer>& /*buffer*/,
+    const Kinesis::ViewportArea& area)
+{
+    if (!image) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "add_target_image: image target is null");
+        return;
+    }
+
+    if (area.layer >= image->layers()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "add_target_image: layer {} of a target with {}", area.layer, image->layers());
+        return;
+    }
+
+    if (auto* existing = find_lane(image)) {
+        existing->area = area;
+    } else {
+        auto& lane = claim_lane();
+        lane.image = image;
+        lane.area = area;
+    }
+    image->request_clear();
+}
+
+void RenderProcessor::set_target_area(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const Kinesis::ViewportArea& area)
+{
+    auto* lane = find_lane(image);
+    if (!lane || area.layer >= image->layers()) {
+        return;
+    }
+    lane->area = area;
+    image->request_clear();
+}
+
+Kinesis::ViewportArea RenderProcessor::get_target_area(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const
+{
+    const auto* lane = find_lane(image);
+    return lane ? lane->area : Kinesis::ViewportArea {};
+}
+
+void RenderProcessor::remove_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (auto* lane = find_lane(window)) {
+        drop_lane(*lane, buffer);
+    }
+}
+
+void RenderProcessor::remove_target_image(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+    const std::shared_ptr<VKBuffer>& buffer)
+{
+    if (auto* lane = find_lane(image)) {
+        drop_lane(*lane, buffer);
+    }
+}
+
+void RenderProcessor::set_window_enabled(bool enabled)
+{
+    for (const auto& lane : m_lanes) {
+        if (lane->window && lane->enabled != enabled) {
+            lane->enabled = enabled;
+            for (const auto& entry : m_buffer_info) {
+                request_refresh(entry.first);
+            }
+        }
+    }
+}
+
+void RenderProcessor::set_target_enabled(const std::shared_ptr<Portal::Graphics::ImageTarget>& image, bool enabled)
+{
+    if (auto* lane = find_lane(image); lane && lane->enabled != enabled) {
+        lane->enabled = enabled;
+        for (const auto& entry : m_buffer_info) {
+            request_refresh(entry.first);
+        }
+    }
+}
+
+std::shared_ptr<Core::Window> RenderProcessor::get_target_window() const
+{
+    for (const auto& lane : m_lanes) {
+        if (lane->window) {
+            return lane->window;
+        }
+    }
+    return nullptr;
+}
+
+std::shared_ptr<Portal::Graphics::ImageTarget> RenderProcessor::get_target_image() const
+{
+    for (const auto& lane : m_lanes) {
+        if (lane->image) {
+            return lane->image;
+        }
+    }
+    return nullptr;
+}
+
+std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> RenderProcessor::get_target_images() const
+{
+    std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> images;
+    for (const auto& lane : m_lanes) {
+        if (lane->image) {
+            images.push_back(lane->image);
+        }
+    }
+    return images;
+}
+
+bool RenderProcessor::owns_pipeline(Portal::Graphics::RenderPipelineID id) const
+{
+    return id != Portal::Graphics::INVALID_RENDER_PIPELINE
+        && std::ranges::any_of(m_lanes, [id](const auto& lane) { return lane->pipeline == id; });
+}
+
+void RenderProcessor::invalidate_pipelines()
+{
+    m_needs_pipeline_rebuild = true;
+    for (size_t i = 1; i < m_lanes.size(); ++i) {
+        m_lanes[i]->needs_pipeline = true;
+    }
+}
+
+bool RenderProcessor::destination_ready(const Lane& lane) const
+{
+    if (!lane.enabled) {
+        return false;
+    }
+    if (lane.window) {
+        return lane.window->is_graphics_registered();
+    }
+    return lane.image && lane.image->active();
+}
+
+RenderProcessor::DestinationInfo RenderProcessor::describe() const
+{
+    DestinationInfo info;
+
+    if (m_lane->image) {
+        info.colors = m_lane->image->color_formats();
+        info.width = m_lane->image->width();
+        info.height = m_lane->image->height();
+        info.depth = m_depth_enabled ? m_lane->image->depth_format() : vk::Format::eUndefined;
+        return info;
+    }
+
+    info.colors = { vk::Format {} };
+    if (m_lane->window && m_display_service) {
+        info.colors.front() = static_cast<vk::Format>(m_display_service->get_swapchain_format(m_lane->window));
+        m_display_service->get_swapchain_extent(m_lane->window, info.width, info.height);
+    }
+    info.depth = m_depth_enabled ? vk::Format::eD32Sfloat : vk::Format::eUndefined;
+    return info;
+}
+
+std::string RenderProcessor::destination_name() const
+{
+    if (m_lane->window) {
+        return "window '" + m_lane->window->get_create_info().title + "'";
+    }
+    return "an image target";
+}
+
+void RenderProcessor::request_refresh(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    for (const auto& lane : m_lanes) {
+        if (lane->image) {
+            lane->image->request_clear();
+        }
+        if (lane->window) {
+            buffer->request_presentation_refresh(lane->window);
+        }
+    }
+}
+
+void RenderProcessor::register_pipeline(const std::shared_ptr<VKBuffer>& buffer) const
+{
+    if (m_lane->image) {
+        buffer->set_pipeline_image(m_lane->pipeline, m_lane->image, m_lane->area.layer);
+        return;
+    }
+    buffer->set_pipeline_window(m_lane->pipeline, m_lane->window);
 }
 
 void RenderProcessor::set_visible(bool visible, const std::shared_ptr<VKBuffer>& buffer)
@@ -81,7 +482,7 @@ void RenderProcessor::set_visible(bool visible, const std::shared_ptr<VKBuffer>&
             return;
         m_hidden_buffers.push_back(buffer.get());
     }
-    buffer->request_presentation_refresh(m_target_window);
+    request_refresh(buffer);
 }
 
 bool RenderProcessor::is_visible(const std::shared_ptr<VKBuffer>& buffer) const
@@ -121,7 +522,7 @@ void RenderProcessor::disable_depth_test()
     }
 
     m_depth_stencil = next;
-    m_needs_pipeline_rebuild = true;
+    invalidate_pipelines();
 }
 
 void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
@@ -139,7 +540,7 @@ void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
     }
 
     m_depth_stencil = next;
-    m_needs_pipeline_rebuild = true;
+    invalidate_pipelines();
 }
 
 void RenderProcessor::set_view_transform(
@@ -174,6 +575,85 @@ void RenderProcessor::set_view_transform_source(
     set_cull_mode(cull);
 }
 
+RenderProcessor::Lane* RenderProcessor::find_view_lane(const DestinationView& destination) const
+{
+    if (destination.window && destination.target) {
+        return nullptr;
+    }
+    if (destination.window) {
+        return find_lane(destination.window);
+    }
+    if (destination.target) {
+        return find_lane(destination.target);
+    }
+    return nullptr;
+}
+
+bool RenderProcessor::set_destination_view(const DestinationView& view)
+{
+    if (view.transform.has_value() == static_cast<bool>(view.source)) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_destination_view: give either a transform or a source");
+        return false;
+    }
+
+    auto* lane = find_view_lane(view);
+    if (!lane) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_destination_view: name one window or image target this processor draws into");
+        return false;
+    }
+
+    lane->view = view.transform;
+    lane->view_source = view.source;
+
+    if (view.enable_depth && !m_depth_enabled) {
+        enable_depth_test();
+    }
+    set_cull_mode(view.cull);
+
+    if (lane->image) {
+        lane->image->request_redraw();
+    }
+    return true;
+}
+
+void RenderProcessor::clear_destination_view(const DestinationView& destination)
+{
+    auto* lane = find_view_lane(destination);
+    if (!lane || !has_view(*lane)) {
+        return;
+    }
+    lane->view.reset();
+    lane->view_source = nullptr;
+    if (lane->image) {
+        lane->image->request_redraw();
+    }
+}
+
+bool RenderProcessor::has_destination_view(const DestinationView& destination) const
+{
+    const auto* lane = find_view_lane(destination);
+    return lane && has_view(*lane);
+}
+
+void RenderProcessor::apply_lane_view()
+{
+    if (!has_view(*m_lane)) {
+        return;
+    }
+
+    if (!m_lane->view_source) {
+        m_published_render_transform.view_transform = *m_lane->view;
+        return;
+    }
+
+    const DestinationInfo destination = describe();
+    const vk::Rect2D filled = resolve_area_rect(m_lane->area, destination.width, destination.height);
+    m_published_render_transform.view_transform = m_lane->view_source(
+        glm::uvec2 { filled.extent.width, filled.extent.height });
+}
+
 void RenderProcessor::set_geometry_transform(const glm::mat4& transform)
 {
     m_geometry_transform = transform;
@@ -186,10 +666,7 @@ void RenderProcessor::set_geometry_transform_source(std::function<glm::mat4()> f
     m_geometry_transform.reset();
 }
 
-void RenderProcessor::bind_texture(
-    uint32_t binding,
-    const std::shared_ptr<Core::VKImage>& texture,
-    vk::Sampler sampler)
+void RenderProcessor::bind_image(uint32_t binding, const std::shared_ptr<Core::VKImage>& texture)
 {
     if (!texture || !texture->is_initialized() || !texture->get_image_view()) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
@@ -197,18 +674,22 @@ void RenderProcessor::bind_texture(
         return;
     }
 
-    if (!sampler) {
-        const auto chosen = m_binding_samplers.find(binding);
-        sampler = chosen != m_binding_samplers.end()
-            ? chosen->second
-            : Portal::Graphics::SamplerForge::instance().get_or_create(
-                  { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
-    }
+    const auto chosen = m_binding_samplers.find(binding);
+    const vk::Sampler sampler = chosen != m_binding_samplers.end()
+        ? chosen->second
+        : Portal::Graphics::SamplerForge::instance().get_or_create(
+              { .enable_mipmaps = true, .border_color = Portal::Graphics::BorderColor::OPAQUE_BLACK });
 
+    auto& loom = Portal::Graphics::get_texture_manager();
+    loom.retain_image(texture);
+    if (const auto previous = m_texture_bindings.find(binding); previous != m_texture_bindings.end()) {
+        loom.release_image(previous->second.texture);
+    }
     m_texture_bindings[binding] = { .texture = texture, .sampler = sampler };
+    m_target_bindings.erase(binding);
     m_needs_descriptor_rebuild = true;
 
-    if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
+    if (m_lane->pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE && !m_descriptor_set_ids.empty()) {
 
         auto& foundry = Portal::Graphics::get_shader_foundry();
         auto cfg_it = std::ranges::find_if(m_config.bindings,
@@ -237,45 +718,79 @@ void RenderProcessor::bind_texture(
         "Bound texture to binding {}", binding);
 }
 
-void RenderProcessor::bind_texture(
-    const std::string& descriptor_name,
-    const std::shared_ptr<Core::VKImage>& texture,
-    vk::Sampler sampler)
+bool RenderProcessor::samples(const std::shared_ptr<Portal::Graphics::ImageTarget>& target) const
 {
-    auto binding_it = m_config.bindings.find(descriptor_name);
-    if (binding_it == m_config.bindings.end()) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "No binding configured for descriptor '{}'", descriptor_name);
-        return;
+    if (!target) {
+        return false;
     }
 
-    bind_texture(binding_it->second.binding, texture, sampler);
+    const bool by_target = std::ranges::any_of(m_target_bindings,
+        [&target](const auto& entry) { return entry.second == target; });
+    if (by_target) {
+        return true;
+    }
+
+    return std::ranges::any_of(m_texture_bindings, [&target](const auto& entry) {
+        const auto& bound = entry.second.texture;
+        if (bound == target->depth_image()) {
+            return static_cast<bool>(bound);
+        }
+        for (size_t index = 0; index < target->attachment_count(); ++index) {
+            if (bound == target->image(index)) {
+                return true;
+            }
+        }
+        return false;
+    });
 }
 
-void RenderProcessor::bind_texture(
-    uint32_t binding,
-    const std::shared_ptr<Core::VKImage>& texture,
-    const Portal::Graphics::SamplerConfig& sampler)
+void RenderProcessor::follow_target_images()
 {
-    set_binding_sampler(binding, sampler);
-    bind_texture(binding, texture, vk::Sampler {});
-}
+    std::vector<std::pair<uint32_t, std::shared_ptr<Portal::Graphics::ImageTarget>>> stale;
+    for (const auto& [binding, target] : m_target_bindings) {
+        const auto bound = m_texture_bindings.find(binding);
+        if (bound == m_texture_bindings.end() || bound->second.texture != target->image()) {
+            stale.emplace_back(binding, target);
+        }
+    }
 
-void RenderProcessor::bind_texture(
-    const std::string& descriptor_name,
-    const std::shared_ptr<Core::VKImage>& texture,
-    const Portal::Graphics::SamplerConfig& sampler)
-{
-    set_binding_sampler(descriptor_name, sampler);
-    bind_texture(descriptor_name, texture, vk::Sampler {});
+    for (const auto& [binding, target] : stale) {
+        bind_image(binding, target->image());
+        m_target_bindings[binding] = target;
+    }
 }
 
 void RenderProcessor::bind_texture(const Portal::Graphics::SampledTexture& texture)
 {
-    if (texture.sampler) {
-        set_binding_sampler(texture.name, *texture.sampler);
+    if (texture.target && texture.image) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Cannot bind both an image and an image target to '{}'", texture.name);
+        return;
     }
-    bind_texture(texture.name, texture.image, vk::Sampler {});
+
+    uint32_t binding {};
+    if (texture.binding) {
+        binding = *texture.binding;
+    } else {
+        const auto binding_it = m_config.bindings.find(texture.name);
+        if (binding_it == m_config.bindings.end()) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "No binding configured for descriptor '{}'", texture.name);
+            return;
+        }
+        binding = binding_it->second.binding;
+    }
+
+    if (texture.sampler) {
+        set_binding_sampler(binding, *texture.sampler);
+    }
+
+    if (texture.target) {
+        bind_image(binding, texture.target->image());
+        m_target_bindings[binding] = texture.target;
+        return;
+    }
+    bind_image(binding, texture.image);
 }
 
 void RenderProcessor::set_binding_sampler(uint32_t binding, const Portal::Graphics::SamplerConfig& config)
@@ -320,9 +835,14 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         return;
     }
 
-    if (!m_target_window) {
+    if (!has_destination()) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Target window not set");
+            "Target window or image not set");
+        return;
+    }
+
+    if (!destination_ready(*m_lane)) {
+        m_needs_pipeline_rebuild = true;
         return;
     }
 
@@ -336,7 +856,9 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     auto& flow = Portal::Graphics::get_render_flow();
 
-    Portal::Graphics::get_render_flow().register_window_for_rendering(m_target_window);
+    if (m_lane->window) {
+        flow.register_window_for_rendering(m_lane->window);
+    }
 
     Portal::Graphics::RenderPipelineConfig pipeline_config;
     pipeline_config.vertex_shader = m_shader_id;
@@ -357,6 +879,10 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     if (m_blend_attachment.has_value()) {
         pipeline_config.blend_attachments.push_back(m_blend_attachment.value());
     } else {
+        pipeline_config.blend_attachments.emplace_back();
+    }
+    const size_t attachment_count = describe().colors.size();
+    for (size_t extra = 1; extra < attachment_count; ++extra) {
         pipeline_config.blend_attachments.emplace_back();
     }
 
@@ -418,7 +944,7 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     if (!unregistered.empty()) {
         constexpr uint32_t k_binding_grace_ticks = 30;
-        const bool waiting = m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE
+        const bool waiting = m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE
             && m_binding_wait_ticks < k_binding_grace_ticks;
 
         for (const auto& used : unregistered) {
@@ -461,23 +987,19 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
         pipeline_config.descriptor_sets.push_back(set_bindings);
     }
 
-    vk::Format swapchain_format = static_cast<vk::Format>(
-        m_display_service->get_swapchain_format(m_target_window));
-
-    vk::Format depth_format = m_depth_enabled
-        ? vk::Format::eD32Sfloat
-        : vk::Format::eUndefined;
+    const DestinationInfo destination = describe();
+    const vk::Format depth_format = destination.depth;
 
     retire_current_pipeline();
 
-    m_pipeline_id = flow.create_pipeline(pipeline_config, { swapchain_format }, depth_format, 0U,
+    m_lane->pipeline = flow.create_pipeline(pipeline_config, destination.colors, depth_format, 0U,
         { { 0U, m_triangulate ? 1U : 0U },
             { 1U, m_triangulate && m_mill_spec.billboard_instances
                     && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
                 ? 1U
                 : 0U } });
 
-    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+    if (m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Failed to create render pipeline");
         return;
@@ -490,12 +1012,12 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     m_needs_descriptor_rebuild = m_descriptor_set_ids.empty();
     m_needs_pipeline_rebuild = false;
 
-    on_pipeline_created(m_pipeline_id);
+    on_pipeline_created(m_lane->pipeline);
 }
 
 void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& buffer)
 {
-    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+    if (m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         if (!m_needs_pipeline_rebuild) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
                 "Cannot allocate descriptor sets without pipeline");
@@ -508,17 +1030,17 @@ void RenderProcessor::initialize_descriptors(const std::shared_ptr<VKBuffer>& bu
     auto& flow = Portal::Graphics::get_render_flow();
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
-    auto transform_layout = flow.get_view_transform_layout(m_pipeline_id);
+    auto transform_layout = flow.get_view_transform_layout(m_lane->pipeline);
     if (transform_layout) {
-        m_render_transform_arena.initialize(sizeof(Kinesis::RenderTransform), Portal::Graphics::BufferUsageHint::UNIFORM);
-        m_render_transform_slot = 0;
-        m_written_render_transform.reset();
+        m_lane->transform_arena.initialize(sizeof(Kinesis::RenderTransform), Portal::Graphics::BufferUsageHint::UNIFORM);
+        m_lane->transform_slot = 0;
+        m_lane->written_transform.reset();
 
         MF_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "RenderTransform UBO allocated (pipeline {})", m_pipeline_id);
+            "RenderTransform UBO allocated (pipeline {})", m_lane->pipeline);
     }
 
-    m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_pipeline_id, 1);
+    m_descriptor_set_ids = flow.allocate_pipeline_descriptors(m_lane->pipeline, 1);
 
     for (const auto& [binding, tex_binding] : m_texture_bindings) {
         if (!tex_binding.texture
@@ -599,11 +1121,19 @@ void RenderProcessor::set_buffer_vertex_layout(
     state.use_reflection = false;
 
     if (changed) {
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
     }
 }
 
 const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
+{
+    resolve_render_transform();
+    apply_lane_view();
+    write_render_transform();
+    return m_published_render_transform;
+}
+
+const Kinesis::RenderTransform& RenderProcessor::resolve_render_transform()
 {
     Kinesis::RenderTransform transform;
     if (m_view_transform_active) {
@@ -616,21 +1146,23 @@ const Kinesis::RenderTransform& RenderProcessor::publish_render_transform()
         : m_geometry_transform.value_or(glm::mat4 { 1.0F });
 
     m_published_render_transform = transform;
+    return m_published_render_transform;
+}
 
-    if (m_render_transform_arena.is_initialized()) {
+void RenderProcessor::write_render_transform()
+{
+    if (m_lane->transform_arena.is_initialized()) {
         const auto& next = m_published_render_transform;
-        const auto& written = m_written_render_transform;
+        const auto& written = m_lane->written_transform;
         if (!written
             || written->view_transform.view != next.view_transform.view
             || written->view_transform.projection != next.view_transform.projection
             || written->geometry != next.geometry) {
-            m_render_transform_slot = m_render_transform_arena.acquire();
-            m_render_transform_arena.write(m_render_transform_slot, &next, sizeof(Kinesis::RenderTransform));
-            m_written_render_transform = next;
+            m_lane->transform_slot = m_lane->transform_arena.acquire();
+            m_lane->transform_arena.write(m_lane->transform_slot, &next, sizeof(Kinesis::RenderTransform));
+            m_lane->written_transform = next;
         }
     }
-
-    return m_published_render_transform;
 }
 
 void RenderProcessor::set_triangulate(bool enabled)
@@ -640,31 +1172,20 @@ void RenderProcessor::set_triangulate(bool enabled)
     }
 
     m_triangulate = enabled;
-    m_needs_pipeline_rebuild = true;
+    invalidate_pipelines();
     invalidate_all_mills();
+}
+
+vk::Rect2D RenderProcessor::resolve_area_rect(
+    const Kinesis::ViewportArea& area, uint32_t width, uint32_t height) noexcept
+{
+    const auto rect = area.pixels(width, height);
+    return { { static_cast<int32_t>(rect.x0), static_cast<int32_t>(rect.y0) }, { rect.width(), rect.height() } };
 }
 
 vk::Rect2D RenderProcessor::resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept
 {
-    if (!m_scissor) {
-        return { { 0, 0 }, { width, height } };
-    }
-
-    const auto& bounds = m_scissor->bounds;
-    const auto fw = static_cast<float>(width);
-    const auto fh = static_cast<float>(height);
-
-    const float x0 = std::clamp((bounds.min.x * 0.5F + 0.5F) * fw, 0.F, fw);
-    const float x1 = std::clamp((bounds.max.x * 0.5F + 0.5F) * fw, 0.F, fw);
-    const float y0 = std::clamp((1.F - bounds.max.y) * 0.5F * fh, 0.F, fh);
-    const float y1 = std::clamp((1.F - bounds.min.y) * 0.5F * fh, 0.F, fh);
-
-    const auto px = static_cast<int32_t>(x0);
-    const auto py = static_cast<int32_t>(y0);
-    const auto pw = static_cast<uint32_t>(x1 - x0);
-    const auto ph = static_cast<uint32_t>(y1 - y0);
-
-    return { { px, py }, { pw, ph } };
+    return resolve_area_rect({ .area = m_scissor }, width, height);
 }
 
 void RenderProcessor::set_runs(std::vector<Portal::Graphics::DrawRun> runs)
@@ -680,7 +1201,7 @@ void RenderProcessor::set_mill_spec(const Portal::Graphics::MillSpec& spec)
             && value.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing;
     };
     if (billboards(m_mill_spec) != billboards(spec)) {
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
     }
 
     m_mill_spec = spec;
@@ -773,8 +1294,8 @@ uint32_t RenderProcessor::mill_runs(const std::shared_ptr<VKBuffer>& buffer, Por
         runs = m_mill_fill_runs;
     }
 
-    glm::vec3 eye = m_view_transform_active
-        ? glm::vec3(glm::inverse(published_render_transform().view_transform.view)[3])
+    glm::vec3 eye = m_view_transform_active || has_view(*m_lane)
+        ?glm::vec3(glm::inverse(published_render_transform().view_transform.view)[3])
         : glm::vec3(0.0F, 0.0F, 1.0e4F);
 
     if (m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
@@ -846,24 +1367,28 @@ bool RenderProcessor::on_before_execute(Portal::Graphics::CommandBufferID /*cmd_
     if (!is_visible(buffer))
         return false;
 
-    if (!m_target_window) {
+    if (m_lane == m_lanes.front().get()) {
+        follow_target_images();
+        if (m_needs_descriptor_rebuild) {
+            for (size_t i = 1; i < m_lanes.size(); ++i) {
+                m_lanes[i]->needs_descriptors = true;
+            }
+        }
+    }
+
+    if (!std::ranges::any_of(m_lanes, [](const auto& lane) { return lane->window || lane->image; })) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-            "Target window not set");
+            "Target window or image not set");
         return false;
     }
-    return m_target_window->is_graphics_registered();
+    return std::ranges::any_of(m_lanes, [this](const auto& lane) { return destination_ready(*lane); });
 }
 
 void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
 {
     collect_retired_pipelines();
 
-    if (!is_visible(buffer) || !m_target_window
-        || !m_target_window->is_graphics_registered()) {
-        return;
-    }
-
-    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+    if (!is_visible(buffer) || !std::ranges::any_of(m_lanes, [this](const auto& lane) { return destination_ready(*lane); })) {
         return;
     }
 
@@ -874,33 +1399,69 @@ void RenderProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         return;
     }
 
-    publish_render_transform();
-    prepare_geometry(buffer, *state);
-    record_draw(buffer, *state);
+    const Kinesis::RenderTransform shared_transform = resolve_render_transform();
+
+    bool geometry_ready = false;
+    for (size_t i = 0; i < m_lanes.size(); ++i) {
+        ActiveLane scope(*this, *m_lanes[i]);
+
+        if (!destination_ready(*m_lane)) {
+            continue;
+        }
+        if (i > 0) {
+            prepare_for(buffer);
+        }
+        if (m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+            continue;
+        }
+
+        m_published_render_transform = shared_transform;
+        apply_lane_view();
+        write_render_transform();
+        if (!geometry_ready) {
+            prepare_geometry(buffer, *state);
+            geometry_ready = true;
+        }
+        record_draw(buffer, *state);
+    }
 }
 
 void RenderProcessor::retire_current_pipeline()
 {
-    if (m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+    if (m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         return;
     }
 
     for (const auto& entry : m_buffer_info) {
-        entry.first->remove_pipeline_window(m_pipeline_id);
+        entry.first->remove_pipeline_window(m_lane->pipeline);
+    }
+
+    if (!m_lane->window) {
+        auto retired = std::make_shared<RetiredPipeline>(RetiredPipeline {
+            .pipeline = m_lane->pipeline,
+            .window = nullptr,
+            .transform_ubo = m_lane->transform_arena.detach(),
+            .after_frame = 0 });
+        Portal::Graphics::get_shader_foundry().release_after_submit([retired] {
+            Portal::Graphics::get_render_flow().destroy_pipeline(retired->pipeline);
+        });
+        m_lane->written_transform.reset();
+        m_lane->pipeline = Portal::Graphics::INVALID_RENDER_PIPELINE;
+        return;
     }
 
     uint64_t after_frame = std::numeric_limits<uint64_t>::max();
-    if (m_display_service && m_display_service->get_submitted_frame_count && m_target_window) {
-        after_frame = m_display_service->get_submitted_frame_count(m_target_window);
+    if (m_display_service && m_display_service->get_submitted_frame_count && m_lane->window) {
+        after_frame = m_display_service->get_submitted_frame_count(m_lane->window);
     }
 
-    m_retired.push_back({ .pipeline = m_pipeline_id,
-        .window = m_target_window,
-        .transform_ubo = m_render_transform_arena.detach(),
+    m_retired.push_back({ .pipeline = m_lane->pipeline,
+        .window = m_lane->window,
+        .transform_ubo = m_lane->transform_arena.detach(),
         .after_frame = after_frame });
-    m_written_render_transform.reset();
+    m_lane->written_transform.reset();
 
-    m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+    m_lane->pipeline = Portal::Graphics::INVALID_RENDER_PIPELINE;
 }
 
 void RenderProcessor::collect_retired_pipelines()
@@ -920,11 +1481,18 @@ void RenderProcessor::collect_retired_pipelines()
     });
 }
 
-void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer)
+void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::RenderPipelineID pipeline)
 {
-    if (!m_initialized || !is_visible(buffer) || !m_target_window
-        || !m_target_window->is_graphics_registered()
-        || m_pipeline_id == Portal::Graphics::INVALID_RENDER_PIPELINE)
+    const auto lane = std::ranges::find_if(m_lanes, [pipeline](const auto& held) {
+        return held->pipeline == pipeline;
+    });
+    if (lane == m_lanes.end()) {
+        return;
+    }
+
+    ActiveLane scope(*this, **lane);
+    if (!m_initialized || !is_visible(buffer) || !destination_ready(*m_lane)
+        || m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE)
         return;
 
     const auto it = m_buffer_info.find(buffer);
@@ -945,9 +1513,9 @@ void RenderProcessor::collect_engine_writes(
     image_infos.reserve(m_texture_bindings.size());
     writes.reserve(1 + engine_bindings.size() + m_texture_bindings.size());
 
-    if (m_render_transform_arena.is_initialized()) {
-        buffer_infos.emplace_back(m_render_transform_arena.info(m_render_transform_slot));
-        leases.push_back(m_render_transform_arena.lease(m_render_transform_slot));
+    if (m_lane->transform_arena.is_initialized()) {
+        buffer_infos.emplace_back(m_lane->transform_arena.info(m_lane->transform_slot));
+        leases.push_back(m_lane->transform_arena.lease(m_lane->transform_slot));
         vk::WriteDescriptorSet write {};
         write.dstBinding = 0;
         write.descriptorCount = 1;
@@ -1014,49 +1582,48 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
 
-    if (const auto missing = flow.first_unwritten_push_binding(m_pipeline_id, engine_writes)) {
+    if (const auto missing = flow.first_unwritten_push_binding(m_lane->pipeline, engine_writes)) {
         MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
             "Set 0 binding {} is used by the shaders but has nothing to write; draw skipped", *missing);
         return;
     }
 
-    buffer->set_pipeline_window(m_pipeline_id, m_target_window);
+    register_pipeline(buffer);
 
-    vk::Format color_format = static_cast<vk::Format>(
-        m_display_service->get_swapchain_format(m_target_window));
+    const DestinationInfo destination = describe();
+    const vk::Format depth_format = destination.depth;
 
-    vk::Format depth_format = m_depth_enabled
-        ? vk::Format::eD32Sfloat
-        : vk::Format::eUndefined;
-
-    auto cmd_id = foundry.begin_secondary_commands(color_format, depth_format);
+    auto cmd_id = foundry.begin_secondary_commands(std::span<const vk::Format> { destination.colors }, depth_format);
     auto cmd = foundry.get_command_buffer(cmd_id);
 
     for (const auto& [binding, texture] : m_texture_bindings) {
         foundry.hold_image(cmd_id, texture.texture);
     }
 
-    uint32_t width = 0, height = 0;
-    m_display_service->get_swapchain_extent(m_target_window, width, height);
+    const uint32_t width = destination.width;
+    const uint32_t height = destination.height;
 
-    if (width > 0 && height > 0) {
+    const vk::Rect2D region = resolve_area_rect(m_lane->area, width, height);
+    if (region.extent.width > 0 && region.extent.height > 0) {
         auto cmd = foundry.get_command_buffer(cmd_id);
 
         vk::Viewport viewport {
-            0.0F,
-            static_cast<float>(height),
-            static_cast<float>(width),
-            -static_cast<float>(height),
+            static_cast<float>(region.offset.x),
+            static_cast<float>(region.offset.y) + static_cast<float>(region.extent.height),
+            static_cast<float>(region.extent.width),
+            -static_cast<float>(region.extent.height),
             0.0F,
             1.0F
         };
         cmd.setViewport(0, 1, &viewport);
 
-        const vk::Rect2D scissor = resolve_scissor_rect(width, height);
+        vk::Rect2D scissor = resolve_scissor_rect(region.extent.width, region.extent.height);
+        scissor.offset.x += region.offset.x;
+        scissor.offset.y += region.offset.y;
         cmd.setScissor(0, 1, &scissor);
     }
 
-    flow.bind_pipeline(cmd_id, m_pipeline_id);
+    flow.bind_pipeline(cmd_id, m_lane->pipeline);
 
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
     if (!descriptor_bindings.empty()) {
@@ -1078,11 +1645,11 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         }
     }
 
-    flow.push_descriptors(cmd_id, m_pipeline_id, engine_writes, engine_leases);
+    flow.push_descriptors(cmd_id, m_lane->pipeline, engine_writes, engine_leases);
 
     if (!m_descriptor_set_ids.empty()) {
         flow.bind_descriptor_sets(
-            cmd_id, m_pipeline_id,
+            cmd_id, m_lane->pipeline,
             m_descriptor_set_ids,
             1);
     }
@@ -1090,7 +1657,7 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
     const auto push_data = resolve_push_constants(buffer);
     if (!push_data.empty()) {
         flow.push_constants(
-            cmd_id, m_pipeline_id, push_data.data(), push_data.size());
+            cmd_id, m_lane->pipeline, push_data.data(), push_data.size());
     }
 
     on_before_execute(cmd_id, buffer);
@@ -1117,12 +1684,14 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
 
     foundry.end_commands(cmd_id);
 
-    buffer->set_pipeline_command(m_pipeline_id, cmd_id);
-    m_target_window->track_frame_command(cmd_id);
+    buffer->set_pipeline_command(m_lane->pipeline, cmd_id);
+    if (m_lane->window) {
+        m_lane->window->track_frame_command(cmd_id);
+    }
 
     MF_RT_TRACE(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-        "Recorded secondary command buffer {} for window '{}'",
-        cmd_id, m_target_window->get_create_info().title);
+        "Recorded secondary command buffer {} for {}",
+        cmd_id, destination_name());
 }
 
 void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
@@ -1145,7 +1714,7 @@ void RenderProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
                 vertex_layout->vertex_count,
                 vertex_layout->attributes.size());
 
-            m_needs_pipeline_rebuild = true;
+            invalidate_pipelines();
             auto& state = m_buffer_info[vk_buffer];
             state.semantic_layout = vertex_layout.value();
             state.use_reflection = false;
@@ -1168,34 +1737,16 @@ void RenderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
     if (!vk_buffer)
         return;
 
-    vk_buffer->remove_pipeline_window(m_pipeline_id);
-
-    if (m_target_window) {
-        bool has_other_pipeline = false;
-        for (const auto& [id, window] : vk_buffer->get_render_pipelines()) {
-            if (window == m_target_window) {
-                has_other_pipeline = true;
-                break;
-            }
+    for (const auto& lane : m_lanes) {
+        vk_buffer->remove_pipeline_window(lane->pipeline);
+        if (lane->image) {
+            lane->image->request_clear();
         }
-
-        if (!has_other_pipeline) {
-            auto primary = vk_buffer->get_render_processor();
-            has_other_pipeline = primary && primary.get() != this
-                && primary->get_target_window() == m_target_window;
-
-            if (!has_other_pipeline) {
-                for (const auto& render : vk_buffer->get_additional_render_processors()) {
-                    if (render.get() != this && render->get_target_window() == m_target_window) {
-                        has_other_pipeline = true;
-                        break;
-                    }
-                }
-            }
+    }
+    for (const auto& lane : m_lanes) {
+        if (lane->window) {
+            release_window(lane->window, vk_buffer);
         }
-
-        if (!has_other_pipeline)
-            m_target_window->unregister_rendering_buffer(vk_buffer);
     }
 
     std::erase(m_hidden_buffers, vk_buffer.get());
@@ -1203,14 +1754,26 @@ void RenderProcessor::on_detach(const std::shared_ptr<Buffer>& buffer)
     ShaderProcessor::on_detach(buffer);
 }
 
+void RenderProcessor::release_bound_images()
+{
+    auto& loom = Portal::Graphics::get_texture_manager();
+    for (const auto& [binding, held] : m_texture_bindings) {
+        loom.release_image(held.texture);
+    }
+    m_texture_bindings.clear();
+    m_target_bindings.clear();
+}
+
 void RenderProcessor::cleanup()
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
     auto& flow = Portal::Graphics::get_render_flow();
 
-    if (m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE) {
-        flow.destroy_pipeline(m_pipeline_id);
-        m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
+    for (const auto& lane : m_lanes) {
+        if (lane->pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE) {
+            flow.destroy_pipeline(lane->pipeline);
+            lane->pipeline = Portal::Graphics::INVALID_RENDER_PIPELINE;
+        }
     }
 
     for (const auto& retired : m_retired) {
@@ -1252,14 +1815,19 @@ void RenderProcessor::cleanup()
     m_mill_passes = 0;
     m_runs.clear();
 
-    m_render_transform_arena.release();
-    m_written_render_transform.reset();
     m_view_transform_active = false;
 
-    if (m_target_window) {
-        flow.unregister_window(m_target_window);
-        m_target_window.reset();
+    for (const auto& lane : m_lanes) {
+        lane->transform_arena.release();
+        lane->written_transform.reset();
+        if (lane->window) {
+            flow.unregister_window(lane->window);
+            lane->window.reset();
+        }
+        lane->image.reset();
     }
+    m_lanes.resize(1);
+    m_lane = m_lanes.front().get();
 
     ShaderProcessor::cleanup();
 

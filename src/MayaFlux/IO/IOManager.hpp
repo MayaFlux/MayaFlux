@@ -249,7 +249,8 @@ public:
      *
      * @param filepath Path to the audio file.
      * @param config LoadConfig struct containing audio read options.
-     * @return Loaded SoundFileContainer, or nullptr on failure.
+     * @return Loaded SoundFileContainer, or nullptr on failure, including a
+     *         file shorter than one engine buffer.
      */
     [[nodiscard]] std::shared_ptr<Kakshya::SoundFileContainer> load_audio(const std::string& filepath, VideoLoadConfig config = {});
 
@@ -279,8 +280,8 @@ public:
      * @brief Construct an open SoundFileWriter the caller drives manually.
      *
      * Allocates, opens, and returns a writer ready to accept write() calls.
-     * IOManager does not track this writer; the caller is responsible for
-     * calling close() when done.
+     * IOManager keeps it in get_sound_writers() and closes it on stop() or
+     * shutdown(). The caller may close it earlier.
      *
      * @param filepath    Output file path. Extension determines container format.
      * @param channels    Number of channels in all submitted data.
@@ -562,7 +563,9 @@ public:
     [[nodiscard]] std::vector<uint32_t> get_video_capture_ids() const;
 
     /**
-     * @brief Returns all VideoFileWriters created via create_writer().
+     * @brief Returns the VideoFileWriters opened by capture_window().
+     *
+     * Writers from create_writer() belong to the caller and are not listed.
      */
     [[nodiscard]] std::vector<std::shared_ptr<VideoFileWriter>> get_video_writers() const;
 
@@ -1131,7 +1134,7 @@ public:
     [[nodiscard]] std::vector<uint32_t> get_audio_capture_ids() const;
 
     /**
-     * @brief Returns all registered SoundFileWriters created via create_writer() or write().
+     * @brief Returns the SoundFileWriters created via create_writer() or capture_output().
      */
     [[nodiscard]] std::vector<std::shared_ptr<SoundFileWriter>> get_sound_writers() const { return m_writers; };
 

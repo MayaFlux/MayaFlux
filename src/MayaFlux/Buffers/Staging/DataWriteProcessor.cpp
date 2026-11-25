@@ -332,7 +332,7 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
         m_texture_dirty.clear(std::memory_order_release);
         if (m_pending_texture) {
             if (auto rp = vk->get_render_processor()) {
-                rp->bind_texture(m_pending_texture->binding, m_pending_texture->image);
+                rp->bind_texture({ .name = m_pending_texture->binding, .image = m_pending_texture->image });
             }
             m_pending_texture.reset();
         }
@@ -347,7 +347,7 @@ void DataWriteProcessor::processing_function(const std::shared_ptr<Buffer>& buff
     if (m_gpu_texture) {
         if (auto rp = vk->get_render_processor()) {
             if (!m_tex_binding_confirmed) {
-                rp->bind_texture(m_tex_binding, m_gpu_texture);
+                rp->bind_texture({ .name = m_tex_binding, .image = m_gpu_texture });
                 m_tex_binding_confirmed = true;
             }
         }
@@ -452,7 +452,7 @@ void DataWriteProcessor::upload_texture(const std::shared_ptr<VKBuffer>& vk, Kak
             return;
         }
         if (auto rp = vk->get_render_processor()) {
-            rp->bind_texture(m_tex_binding, m_gpu_texture);
+            rp->bind_texture({ .name = m_tex_binding, .image = m_gpu_texture });
         }
     }
 

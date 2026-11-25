@@ -18,6 +18,11 @@ TextureCollection::TextureCollection(const TextureCollectionSpec& spec)
 {
 }
 
+TextureCollection::~TextureCollection()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_blank);
+}
+
 bool TextureCollection::is_full() const
 {
     if (m_spec.ring_layers > 0 || m_spec.max_bytes == 0)

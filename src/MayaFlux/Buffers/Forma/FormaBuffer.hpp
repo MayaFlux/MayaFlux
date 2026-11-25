@@ -54,7 +54,7 @@ public:
     FormaBuffer(
         Portal::Graphics::PrimitiveTopology topology);
 
-    ~FormaBuffer() override = default;
+    ~FormaBuffer() override;
 
     FormaBuffer(const FormaBuffer&) = delete;
     FormaBuffer& operator=(const FormaBuffer&) = delete;

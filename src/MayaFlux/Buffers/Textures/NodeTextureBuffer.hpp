@@ -28,7 +28,7 @@ class RenderProcessor;
  *
  *   // Access GPU texture for shader binding:
  *   auto texture = buffer->get_gpu_texture();
- *   render_processor->bind_texture("perlin", texture);
+ *   render_processor->bind_texture({ .name = "perlin", .image = texture });
  *
  * Usage (multiple textures via processor):
  *   auto staging = std::make_shared<NodeTextureBuffer>(primary_node, "primary");

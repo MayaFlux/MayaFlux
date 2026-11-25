@@ -20,12 +20,12 @@ namespace {
 
     [[nodiscard]] bool has_target(const StructureConfig::RenderConfig& render)
     {
-        if (render.target_window) {
+        if (render.target_window || !render.target_images.empty()) {
             return true;
         }
 
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
-            "mint: RenderConfig::target_window is required, there is no default window");
+            "mint: RenderConfig::target_window or target_images is required, there is no default window");
         return false;
     }
 

@@ -152,6 +152,12 @@ namespace internal {
             const Surface& surface, int64_t priority = 0);
 
         /**
+         * @brief create_batch for an already resolved destination in @p render.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> create_batch(
+            Graphics::RenderConfig render, int64_t priority = 0);
+
+        /**
          * @brief The buffer everything placed on @p surface without a buffer
          *        of its own draws into.
          *
@@ -165,6 +171,25 @@ namespace internal {
          * @brief A new slice of surface_batch(), of @p topology.
          */
         [[nodiscard]] FormaTarget batch_slice(Surface& surface, Graphics::PrimitiveTopology topology);
+
+        /**
+         * @brief The buffer elements of @p surface's Layer drawn into @p target share.
+         *
+         * Held by the Layer next to its window buffer, one per target. The
+         * surface's window is not used; the buffer draws into the image only.
+         * Elements in it are not hit-tested by pointer events, since the image
+         * is not where the pointer is.
+         */
+        [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> surface_batch(
+            Surface& surface, const std::shared_ptr<Graphics::ImageTarget>& target);
+
+        /**
+         * @brief A new slice of surface_batch(surface, target), of @p topology.
+         */
+        [[nodiscard]] FormaTarget batch_slice(
+            Surface& surface,
+            const std::shared_ptr<Graphics::ImageTarget>& target,
+            Graphics::PrimitiveTopology topology);
 
         /**
          * @brief A new buffer for content a Scrollable clips, drawn above the

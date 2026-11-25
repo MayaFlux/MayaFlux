@@ -13,23 +13,6 @@
 
 namespace MayaFlux::Portal::Graphics {
 
-size_t ImageKeyHash::operator()(const ImageKey& key) const noexcept
-{
-    uint64_t hash = 14695981039346656037ULL;
-    const auto mix = [&hash](uint64_t value) {
-        hash = (hash ^ value) * 1099511628211ULL;
-    };
-
-    mix(key.width);
-    mix(key.height);
-    mix(key.layers);
-    mix(key.mip_levels);
-    mix(static_cast<uint64_t>(key.format));
-    mix(static_cast<uint64_t>(key.kind));
-
-    return static_cast<size_t>(hash);
-}
-
 bool TextureLoom::s_initialized = false;
 
 bool TextureLoom::initialize(const std::shared_ptr<Core::VulkanBackend>& backend)
@@ -127,6 +110,9 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d(
     if (data) {
         size_t data_size = calculate_image_size(width, height, 1, format);
         upload_data(image, data, data_size);
+        if (mip_levels > 1) {
+            generate_mipmaps(image);
+        }
     } else {
         m_resource_manager->transition_image_layout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
     }
@@ -296,7 +282,8 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_2d_array(
 }
 
 std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
-    uint32_t width, uint32_t height, ImageFormat format)
+    uint32_t width, uint32_t height, ImageFormat format, uint32_t mip_levels,
+    bool storage, uint32_t layers, bool cube)
 {
     if (!is_initialized()) {
         MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
@@ -304,12 +291,31 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
         return nullptr;
     }
 
+    const uint32_t levels = mip_levels == 0
+        ? static_cast<uint32_t>(std::bit_width(std::max(width, height)))
+        : mip_levels;
+    const uint32_t layer_count = cube ? 6U : std::max(layers, 1U);
+
+    if (layer_count > 1 && levels > 1) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_render_target: {} layers cannot have {} mip levels", layer_count, levels);
+        return nullptr;
+    }
+    if (cube && width != height) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_render_target: a cube needs square faces, not {}x{}", width, height);
+        return nullptr;
+    }
+
     auto vk_format = to_vulkan_format(format);
     auto image = std::make_shared<Core::VKImage>(
         width, height, 1, vk_format,
         Core::VKImage::Usage::RENDER_TARGET,
-        Core::VKImage::Type::TYPE_2D,
-        1, 1, Kakshya::DataModality::IMAGE_COLOR);
+        cube ? Core::VKImage::Type::TYPE_CUBE : Core::VKImage::Type::TYPE_2D,
+        levels, layer_count, Kakshya::DataModality::IMAGE_COLOR);
+    if (storage) {
+        image->add_usage_flags(vk::ImageUsageFlagBits::eStorage);
+    }
 
     m_resource_manager->initialize_image(image);
 
@@ -323,9 +329,126 @@ std::shared_ptr<Core::VKImage> TextureLoom::create_render_target(
 
     track(image);
     MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
-        "Created render target: {}x{}, format: {}",
-        width, height, vk::to_string(vk_format));
+        "Created render target: {}x{}, format: {}, mips: {}",
+        width, height, vk::to_string(vk_format), levels);
     return image;
+}
+
+std::shared_ptr<ImageTarget> TextureLoom::create_image_target(const ImageTarget::Config& config)
+{
+    if (!is_initialized()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "TextureLoom not initialized");
+        return nullptr;
+    }
+
+    if (config.width == 0 || config.height == 0) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: {}x{} has no pixels", config.width, config.height);
+        return nullptr;
+    }
+
+    if (config.sample_depth && !config.depth) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: a sampleable depth image needs depth");
+        return nullptr;
+    }
+
+    const bool layered = config.cube || config.layers > 1;
+    if ((layered || !config.extra_formats.empty()) && config.mip_levels != 1) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: layers and extra color images cannot have mip levels");
+        return nullptr;
+    }
+
+    if (!config.extra_formats.empty() && !m_resource_manager->supports_independent_blend()) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: extra color images need a device with independent blend");
+        return nullptr;
+    }
+
+    std::vector<ImageFormat> formats { config.format };
+    formats.insert(formats.end(), config.extra_formats.begin(), config.extra_formats.end());
+    for (const auto format : formats) {
+        if (!m_resource_manager->supports_render_target(to_vulkan_format(format), config.storage)) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+                "create_image_target: format {} cannot be drawn into and sampled{}",
+                vk::to_string(to_vulkan_format(format)), config.storage ? " and written as storage" : "");
+            return nullptr;
+        }
+    }
+
+    const auto release_all = [this](std::shared_ptr<Core::VKImage>& first,
+                                 std::vector<std::shared_ptr<Core::VKImage>>& extra,
+                                 std::shared_ptr<Core::VKImage>& depth_image) {
+        release_image(first);
+        for (const auto& made : extra) {
+            release_image(made);
+        }
+        release_image(depth_image);
+    };
+
+    auto color = create_render_target(config.width, config.height, config.format, config.mip_levels,
+        config.storage, config.layers, config.cube);
+    if (!color) {
+        return nullptr;
+    }
+
+    std::vector<std::shared_ptr<Core::VKImage>> extra;
+    std::shared_ptr<Core::VKImage> depth;
+
+    if (color->get_mip_levels() > 1 && !can_blit(color, color, config.mip_filter)) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "create_image_target: format {} cannot make a mip chain with that filter",
+            vk::to_string(color->get_format()));
+        release_all(color, extra, depth);
+        return nullptr;
+    }
+
+    for (const auto format : config.extra_formats) {
+        auto made = create_render_target(config.width, config.height, format, 1,
+            config.storage, config.layers, config.cube);
+        if (!made) {
+            release_all(color, extra, depth);
+            return nullptr;
+        }
+        extra.push_back(std::move(made));
+    }
+
+    transition_layout(color, vk::ImageLayout::eShaderReadOnlyOptimal, SubmitMode::IMMEDIATE);
+    for (const auto& made : extra) {
+        transition_layout(made, vk::ImageLayout::eShaderReadOnlyOptimal, SubmitMode::IMMEDIATE);
+    }
+
+    if (config.depth) {
+        depth = create_depth_buffer(config.width, config.height);
+        if (!depth) {
+            release_all(color, extra, depth);
+            return nullptr;
+        }
+        if (config.sample_depth) {
+            transition_layout(depth, vk::ImageLayout::eShaderReadOnlyOptimal, SubmitMode::IMMEDIATE);
+        }
+    }
+
+    MF_INFO(Journal::Component::Portal, Journal::Context::ImageProcessing,
+        "Created image target: {}x{}, format: {}, colors: {}, layers: {}, depth: {}",
+        config.width, config.height, vk::to_string(color->get_format()),
+        1 + extra.size(), config.cube ? 6U : std::max(config.layers, 1U), depth ? "yes" : "no");
+
+    return std::shared_ptr<ImageTarget>(new ImageTarget(std::move(color), std::move(extra), std::move(depth), config));
+}
+
+vk::ImageView TextureLoom::attachment_view(const std::shared_ptr<Core::VKImage>& image, uint32_t layer) const
+{
+    if (!is_initialized() || !image) {
+        return {};
+    }
+
+    return m_resource_manager->get_image_view(image,
+        Core::ImageViewKey {
+            .type = vk::ImageViewType::e2D,
+            .range = { .base_mip = 0, .mip_count = 1, .base_layer = layer, .layer_count = 1 } });
 }
 
 std::shared_ptr<Core::VKImage> TextureLoom::create_depth_buffer(
@@ -404,15 +527,21 @@ std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
         || key.mip_levels == 0)
         return nullptr;
 
-    const auto usage = key.kind == ImageKey::Kind::STORAGE_2D
-        ? Core::VKImage::Usage::STORAGE
-        : Core::VKImage::Usage::TEXTURE_2D;
+    Core::VKImage::Usage usage = Core::VKImage::Usage::TEXTURE_2D;
+    if (key.kind == ImageKey::Kind::STORAGE_2D)
+        usage = Core::VKImage::Usage::STORAGE;
+    else if (key.kind == ImageKey::Kind::RENDER_TARGET)
+        usage = Core::VKImage::Usage::RENDER_TARGET;
+    else if (key.kind == ImageKey::Kind::DEPTH)
+        usage = Core::VKImage::Usage::DEPTH_STENCIL;
+
     if (entry.image && entry.key == key && entry.image->is_initialized()
         && entry.image->get_width() == key.width
         && entry.image->get_height() == key.height
         && entry.image->get_array_layers() == key.layers
         && entry.image->get_mip_levels() == key.mip_levels
-        && entry.image->get_format() == to_vulkan_format(key.format)
+        && (key.kind == ImageKey::Kind::DEPTH
+            || entry.image->get_format() == to_vulkan_format(key.format))
         && entry.image->get_usage() == usage) {
         return entry.image;
     }
@@ -434,6 +563,15 @@ std::shared_ptr<Core::VKImage> TextureLoom::acquire_cached_image(
             return nullptr;
         image = create_storage_image(key.width, key.height, key.format);
         break;
+    case ImageKey::Kind::RENDER_TARGET:
+        image = create_render_target(key.width, key.height, key.format, key.mip_levels,
+            key.storage, key.layers, key.cube);
+        break;
+    case ImageKey::Kind::DEPTH:
+        if (key.layers != 1 || key.mip_levels != 1)
+            return nullptr;
+        image = create_depth_buffer(key.width, key.height);
+        break;
     }
 
     if (image) {
@@ -448,8 +586,9 @@ std::shared_ptr<Core::VKImage> TextureLoom::refresh_cached_image(
     const ImageKey& key,
     std::span<const uint8_t> pixels)
 {
-    if (key.kind == ImageKey::Kind::STORAGE_2D || key.width == 0
-        || key.height == 0 || key.layers == 0)
+    if (key.kind != ImageKey::Kind::SAMPLED_2D && key.kind != ImageKey::Kind::SAMPLED_ARRAY)
+        return nullptr;
+    if (key.width == 0 || key.height == 0 || key.layers == 0)
         return nullptr;
 
     const size_t required = calculate_image_size(key.width, key.height, 1, key.format)
@@ -690,6 +829,24 @@ bool TextureLoom::can_blit(
 
     return m_resource_manager->supports_blit(
         src->get_format(), dst->get_format(), to_blit_filter(filter));
+}
+
+bool TextureLoom::generate_mipmaps(
+    const std::shared_ptr<Core::VKImage>& image,
+    FilterMode filter,
+    SubmitMode mode)
+{
+    if (!is_initialized() || !image) {
+        return false;
+    }
+
+    if (filter == FilterMode::CUBIC) {
+        MF_WARN(Journal::Component::Portal, Journal::Context::ImageProcessing,
+            "generate_mipmaps: cubic filtering is not available, using linear");
+        filter = FilterMode::LINEAR;
+    }
+
+    return m_resource_manager->generate_mip_chain(image, to_blit_filter(filter), mode);
 }
 
 bool TextureLoom::blit_layer(

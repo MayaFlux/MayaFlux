@@ -91,6 +91,8 @@ public:
      */
     MAYAFLUX_API explicit VisionAnalyzer(VisionAnalyzerConfig config = {});
 
+    MAYAFLUX_API ~VisionAnalyzer() override;
+
     VisionAnalyzer(const VisionAnalyzer&) = delete;
     VisionAnalyzer& operator=(const VisionAnalyzer&) = delete;
 

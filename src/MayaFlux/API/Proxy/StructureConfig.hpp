@@ -35,7 +35,7 @@ class MeshNetwork;
  * repeated, concrete arrangements may later earn class-level configuration.
  */
 struct StructureConfig {
-    /** @brief Render target and pipeline overrides. target_window is required. */
+    /** @brief Render target and pipeline overrides. A target_window or target_images is required. */
     using RenderConfig = Buffers::VKBuffer::RenderConfig;
 
     /** @brief A one-shot typed mesh expression, normally invoking Kinesis. */

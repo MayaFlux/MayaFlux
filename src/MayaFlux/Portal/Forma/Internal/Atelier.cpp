@@ -8,6 +8,7 @@
 #include "MayaFlux/Core/Windowing/WindowManager.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Nodes/NodeGraphManager.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/TextureLoom.hpp"
 #include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 #include "MayaFlux/Transitive/Memory/Persist.hpp"
@@ -48,9 +49,9 @@ bool Atelier::initialize(
     m_event_manager = std::move(event_manager);
     m_window_manager = std::move(window_manager);
 
-    m_bridge = std::make_unique<Bridge>(*m_scheduler, *m_buffer_manager);
+    m_bridge = std::make_unique<Bridge>(m_scheduler, m_buffer_manager);
     m_inspect = std::make_unique<Inspector>(
-        *m_node_graph_manager, *m_buffer_manager, *m_scheduler, *m_event_manager);
+        m_node_graph_manager, m_buffer_manager, m_scheduler, m_event_manager);
 
     m_initialized = true;
 
@@ -67,6 +68,7 @@ void Atelier::shutdown()
     m_bridge.reset();
     m_inspect.reset();
     m_atlas_images.clear();
+    Graphics::get_texture_manager().release_image(m_text_fallback);
     m_text_fallback.reset();
 
     m_node_graph_manager = nullptr;
@@ -126,10 +128,10 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
             "Portal::Forma not initialized - cannot create buffer");
     }
 
-    if (!render.target_window) {
+    if (!render.target_window && render.target_images.empty()) {
         error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
             std::source_location::current(),
-            "Portal::Forma create_buffer requires a target window");
+            "Portal::Forma create_buffer requires a target window or image target");
     }
 
     render.topology = Graphics::PrimitiveTopology::TRIANGLE_LIST;
@@ -138,7 +140,10 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
     auto buf = std::make_shared<Buffers::FormaBuffer>(k_capacity_bytes, render.topology);
     m_buffer_manager->add_buffer(buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
 
-    const auto height = std::max(render.target_window->get_create_info().height, 1U);
+    const auto height = std::max(render.target_window
+            ? render.target_window->get_create_info().height
+            : render.target_images.front()->height(),
+        1U);
     buf->setup_rendering(render);
 
     if (auto processor = buf->get_render_processor()) {
@@ -168,9 +173,46 @@ std::shared_ptr<Core::VKImage> Atelier::text_image()
     return m_text_fallback;
 }
 
+namespace {
+
+    /**
+     * A batch follows the view of the layer it belongs to, and draws into, and
+     * measures its line widths against, the part of the image its surface names.
+     */
+    void follow_surface(const std::shared_ptr<Buffers::FormaBuffer>& batch, const Surface& surface)
+    {
+        const auto processor = batch ? batch->get_render_processor() : nullptr;
+        if (!processor) {
+            return;
+        }
+
+        processor->set_view_transform_source(
+            [layer = std::weak_ptr<Layer>(surface.layer_ptr())]() {
+                const auto held = layer.lock();
+                return held && held->view() ? *held->view() : Kinesis::ViewTransform {};
+            },
+            false, Graphics::CullMode::NONE);
+
+        if (surface.image()) {
+            processor->set_target_area(surface.image(), surface.area());
+
+            Graphics::MillSpec spec = processor->get_mill_spec();
+            spec.width_scale = 2.0F / static_cast<float>(std::max(surface.extent().y, 1U));
+            processor->set_mill_spec(spec);
+        }
+    }
+
+}
+
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surface, int64_t priority)
 {
-    Graphics::RenderConfig render = surface.render_config();
+    auto batch = create_batch(surface.render_config(), priority);
+    follow_surface(batch, surface);
+    return batch;
+}
+
+std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(Graphics::RenderConfig render, int64_t priority)
+{
     render.fragment_shader = "forma_plot.frag.spv";
     render.additional_textures.push_back({ .name = "text", .image = text_image() });
     render.draw_priority = priority;
@@ -191,6 +233,40 @@ FormaTarget Atelier::batch_slice(Surface& surface, Graphics::PrimitiveTopology t
     return FormaTarget::slice_of(surface_batch(surface), topology);
 }
 
+std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(
+    Surface& surface, const std::shared_ptr<Graphics::ImageTarget>& target)
+{
+    if (!target) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(),
+            "Portal::Forma surface_batch requires an image target");
+    }
+
+    auto& layer = surface.layer();
+    for (auto& [image, buffer] : layer.m_image_batches) {
+        if (image != target)
+            continue;
+        if (!buffer || buffer->needs_removal()) {
+            buffer = create_batch(surface.image_config(target));
+            follow_surface(buffer, surface);
+        }
+        return buffer;
+    }
+
+    auto buffer = create_batch(surface.image_config(target));
+    follow_surface(buffer, surface);
+    layer.m_image_batches.emplace_back(target, buffer);
+    return buffer;
+}
+
+FormaTarget Atelier::batch_slice(
+    Surface& surface,
+    const std::shared_ptr<Graphics::ImageTarget>& target,
+    Graphics::PrimitiveTopology topology)
+{
+    return FormaTarget::slice_of(surface_batch(surface, target), topology);
+}
+
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_scroll_batch(Surface& surface)
 {
     return create_batch(surface, surface.layer().claim_front_priority());
@@ -200,7 +276,7 @@ std::pair<std::shared_ptr<Layer>, std::shared_ptr<Context>>
 Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string name)
 {
     auto layer = std::make_shared<Layer>();
-    auto ctx = std::make_shared<Context>(layer, window, *m_event_manager, std::move(name));
+    auto ctx = std::make_shared<Context>(layer, window, m_event_manager, std::move(name));
 
     MayaFlux::store(ctx);
 
@@ -209,10 +285,18 @@ Atelier::create_layer(const std::shared_ptr<Core::Window>& window, std::string n
 
 Surface Atelier::create_surface(SurfaceConfig config)
 {
+    const bool windowless = !config.window && config.image;
+
     if (!config.layer && config.ctx) {
         config.layer = config.ctx->layer();
     } else if (config.layer && !config.ctx) {
-        config.ctx = std::make_shared<Context>(config.layer, config.window, *m_event_manager, config.name);
+        config.ctx = windowless
+            ? std::make_shared<Context>(config.layer, config.image, config.area)
+            : std::make_shared<Context>(config.layer, config.window, m_event_manager, config.name);
+        MayaFlux::store(config.ctx);
+    } else if (!config.layer && windowless) {
+        config.layer = std::make_shared<Layer>();
+        config.ctx = std::make_shared<Context>(config.layer, config.image, config.area);
         MayaFlux::store(config.ctx);
     } else if (!config.layer) {
         auto [layer, ctx] = create_layer(config.window, config.name);

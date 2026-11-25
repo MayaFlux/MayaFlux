@@ -3,8 +3,10 @@
 #include "Primitives/Mapped.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Kriya/Awaiters/EventAwaiter.hpp"
 #include "MayaFlux/Kriya/Awaiters/GetPromise.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kriya/InputEvents.hpp"
 #include "MayaFlux/Vruta/Event.hpp"
 #include "MayaFlux/Vruta/EventManager.hpp"
@@ -51,14 +53,18 @@ namespace {
             && filter.matches_modifiers(data);
     }
 
-    Vruta::Event subscribed_key_events(std::shared_ptr<Core::Window> window, IO::Keys key,
+    bool is_key_event(Core::WindowEventType type)
+    {
+        return type == Core::WindowEventType::KEY_PRESSED
+            || type == Core::WindowEventType::KEY_RELEASED
+            || type == Core::WindowEventType::KEY_REPEAT;
+    }
+
+    Vruta::Event subscribed_key_events(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter,
         std::function<void(const Core::WindowEvent&)> callback)
     {
         auto& promise = co_await Kriya::GetEventPromise {};
         auto& source = window->get_event_source();
-
-        Vruta::WindowEventFilter filter;
-        filter.key_code = key;
 
         while (true) {
             if (promise.should_terminate)
@@ -74,13 +80,18 @@ namespace {
 
 Context::Context(std::shared_ptr<Layer> layer,
     std::shared_ptr<Core::Window> window,
-    Vruta::EventManager& event_manager,
+    const std::shared_ptr<Vruta::EventManager>& event_manager,
     std::string name)
     : m_layer(std::move(layer))
     , m_window(std::move(window))
     , m_event_manager(event_manager)
     , m_name(std::move(name))
 {
+    if (!m_event_manager) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(), "Forma::Context requires an event manager");
+    }
+
     if (m_window) {
         const auto& state = m_window->get_state();
         m_known_width = state.current_width;
@@ -89,9 +100,163 @@ Context::Context(std::shared_ptr<Layer> layer,
     register_handlers();
 }
 
+Context::Context(std::shared_ptr<Layer> layer,
+    std::shared_ptr<Portal::Graphics::ImageTarget> image,
+    const Kinesis::ViewportArea& area)
+    : m_layer(std::move(layer))
+    , m_image(std::move(image))
+    , m_area(area)
+{
+    if (!m_image) {
+        error<std::invalid_argument>(Journal::Component::Portal, Journal::Context::API,
+            std::source_location::current(), "Forma::Context requires an image target when it has no window");
+    }
+
+    const auto size = extent();
+    m_known_width = size.x;
+    m_known_height = size.y;
+}
+
 Context::~Context()
 {
     cancel_handlers();
+}
+
+glm::uvec2 Context::extent() const noexcept
+{
+    if (m_window) {
+        const auto& state = m_window->get_state();
+        return { state.current_width, state.current_height };
+    }
+    if (m_image) {
+        const auto filled = m_area.pixels(m_image->width(), m_image->height());
+        return { filled.width(), filled.height() };
+    }
+    return { 0U, 0U };
+}
+
+IO::Modifiers Context::modifiers() const
+{
+    return m_window ? m_window->get_event_source().modifiers() : m_fed_modifiers;
+}
+
+bool Context::button_down(IO::MouseButtons btn) const
+{
+    if (m_window) {
+        return m_window->get_event_source().is_mouse_pressed(static_cast<int>(btn));
+    }
+    const auto index = static_cast<size_t>(btn);
+    return index < m_fed_pressed.size() && m_fed_pressed[index];
+}
+
+glm::dvec2 Context::pointer_position() const
+{
+    if (m_window) {
+        const auto [px, py] = m_window->get_event_source().get_mouse_position();
+        return { px, py };
+    }
+    return m_fed_position;
+}
+
+// =============================================================================
+// Fed input
+// =============================================================================
+
+void Context::feed_move(double px, double py)
+{
+    m_fed_position = { px, py };
+    handle_move(px, py);
+    handle_drags(px, py);
+}
+
+void Context::feed_press(double px, double py, IO::MouseButtons btn)
+{
+    m_fed_position = { px, py };
+    if (const auto index = static_cast<size_t>(btn); index < m_fed_pressed.size())
+        m_fed_pressed[index] = true;
+    handle_press(px, py, btn);
+}
+
+void Context::feed_release(double px, double py, IO::MouseButtons btn)
+{
+    m_fed_position = { px, py };
+    if (const auto index = static_cast<size_t>(btn); index < m_fed_pressed.size())
+        m_fed_pressed[index] = false;
+    handle_release(px, py, btn);
+}
+
+void Context::feed_scroll(double dx, double dy)
+{
+    handle_scroll(dx, dy);
+}
+
+void Context::feed_leave()
+{
+    if (!m_hovered)
+        return;
+
+    const uint32_t left = *m_hovered;
+    m_hovered.reset();
+    const auto it = m_callbacks.find(left);
+    if (it != m_callbacks.end())
+        notify(it->second.leave, left);
+    dispatch(left, Core::WindowEventType::MOUSE_EXITED, glm::vec2(0.0F));
+}
+
+void Context::feed_cancel(IO::MouseButtons btn)
+{
+    const auto index = static_cast<size_t>(btn);
+    if (index < m_fed_pressed.size())
+        m_fed_pressed[index] = false;
+    if (index < std::size(m_dragging))
+        m_dragging[index].reset();
+}
+
+void Context::feed_text(uint32_t codepoint)
+{
+    handle_text(codepoint);
+}
+
+void Context::feed_key(IO::Keys key, Core::WindowEventType type, IO::Modifiers held)
+{
+    using Type = Core::WindowEventType;
+
+    if (type != Type::KEY_PRESSED && type != Type::KEY_RELEASED && type != Type::KEY_REPEAT)
+        return;
+
+    m_fed_modifiers = held;
+
+    const int base = static_cast<int>(key) & 0xFFFF;
+    const auto mask = static_cast<int>(held
+        & (IO::Modifiers::Shift | IO::Modifiers::Ctrl | IO::Modifiers::Alt | IO::Modifiers::Super));
+    const int chord = base | (1 << 16) | (mask << 17);
+
+    if (type == Type::KEY_RELEASED) {
+        handle_key_release(key);
+    } else {
+        if (type == Type::KEY_PRESSED) {
+            handle_key_press(base);
+            handle_key_press(chord);
+        }
+        handle_key_held(base);
+        handle_key_held(chord);
+    }
+
+    Core::WindowEvent event;
+    event.type = type;
+    event.data = Core::WindowEvent::KeyData { .key = static_cast<int16_t>(key), .scancode = 0, .mods = held };
+
+    if (m_subscribed_keys.contains(static_cast<int>(key))) {
+        handle_subscribed_key(key, event);
+    }
+    if (m_any_key_types.contains(static_cast<int>(type))) {
+        handle_any_key(event);
+    }
+}
+
+void Context::feed_modifiers(IO::Modifiers held)
+{
+    m_fed_modifiers = held;
 }
 
 // =============================================================================
@@ -144,7 +309,6 @@ bool Context::receives(const Vruta::WindowEventFilter& filter) noexcept
     case Type::KEY_PRESSED:
     case Type::KEY_RELEASED:
     case Type::KEY_REPEAT:
-        return filter.key_code.has_value();
     case Type::MOUSE_MOTION:
     case Type::MOUSE_BUTTON_PRESSED:
     case Type::MOUSE_BUTTON_RELEASED:
@@ -168,12 +332,22 @@ bool Context::subscribe(uint32_t id, Vruta::WindowEventFilter filter, Subscriber
     if (filter.key_code) {
         const IO::Keys key = *filter.key_code;
         const int key_code = static_cast<int>(key);
-        if (m_subscribed_keys.insert(key_code).second) {
-            m_event_manager.add_event(
+        if (m_subscribed_keys.insert(key_code).second && m_window) {
+            m_event_manager->add_event(
                 std::make_shared<Vruta::Event>(
-                    subscribed_key_events(m_window, key,
+                    subscribed_key_events(m_window, Vruta::WindowEventFilter(key),
                         [this, key](const Core::WindowEvent& event) { handle_subscribed_key(key, event); })),
                 m_name + "_subscribed_key_" + std::to_string(key_code));
+        }
+    } else if (filter.event_type && is_key_event(*filter.event_type)) {
+        const Core::WindowEventType type = *filter.event_type;
+        const int type_code = static_cast<int>(type);
+        if (m_any_key_types.insert(type_code).second && m_window) {
+            m_event_manager->add_event(
+                std::make_shared<Vruta::Event>(
+                    subscribed_key_events(m_window, Vruta::WindowEventFilter(type),
+                        [this](const Core::WindowEvent& event) { handle_any_key(event); })),
+                m_name + "_any_key_" + std::to_string(type_code));
         }
     }
 
@@ -186,9 +360,9 @@ void Context::on_press(uint32_t id, IO::ModifiedKey key, KeyFn fn)
     const int key_code = chord_code(key);
     m_callbacks[id].key_press[key_code] = std::move(fn);
 
-    if (!m_registered_keys[key_code].has_press) {
+    if (m_window && !m_registered_keys[key_code].has_press) {
         const std::string key_name = std::to_string(key_code);
-        m_event_manager.add_event(
+        m_event_manager->add_event(
             std::make_shared<Vruta::Event>(
                 Kriya::key_pressed(m_window, key,
                     [this, key_code]() { handle_key_press(key_code); })),
@@ -202,9 +376,9 @@ void Context::on_release(uint32_t id, IO::Keys key, KeyFn fn)
     const int key_code = static_cast<int>(key);
     m_callbacks[id].key_release[key_code] = std::move(fn);
 
-    if (!m_registered_keys[key_code].has_release) {
+    if (m_window && !m_registered_keys[key_code].has_release) {
         const std::string key_name = std::to_string(key_code);
-        m_event_manager.add_event(
+        m_event_manager->add_event(
             std::make_shared<Vruta::Event>(
                 Kriya::key_released(m_window, key,
                     [this, key]() { handle_key_release(key); })),
@@ -218,9 +392,9 @@ void Context::on_held(uint32_t id, IO::ModifiedKey key, KeyFn fn)
     const int key_code = chord_code(key);
     m_callbacks[id].key_held[key_code] = std::move(fn);
 
-    if (!m_registered_keys[key_code].has_held) {
+    if (m_window && !m_registered_keys[key_code].has_held) {
         const std::string key_name = std::to_string(key_code);
-        m_event_manager.add_event(
+        m_event_manager->add_event(
             std::make_shared<Vruta::Event>(
                 Kriya::key_held(m_window, key,
                     [this, key_code]() { handle_key_held(key_code); })),
@@ -261,6 +435,7 @@ void Context::detach_window(bool cancel_close)
         drag.reset();
     m_registered_keys.clear();
     m_subscribed_keys.clear();
+    m_any_key_types.clear();
     m_callbacks.clear();
 }
 
@@ -400,7 +575,7 @@ Context& Context::wire_drag(
 
 void Context::register_handlers()
 {
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_moved(m_window,
                 [this](double px, double py) {
@@ -409,61 +584,61 @@ void Context::register_handlers()
                 })),
         m_name + "_move");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_pressed(m_window, IO::MouseButtons::Left,
                 [this](double px, double py) { handle_press(px, py, IO::MouseButtons::Left); })),
         m_name + "_press_left");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_released(m_window, IO::MouseButtons::Left,
                 [this](double px, double py) { handle_release(px, py, IO::MouseButtons::Left); })),
         m_name + "_release_left");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_pressed(m_window, IO::MouseButtons::Right,
                 [this](double px, double py) { handle_press(px, py, IO::MouseButtons::Right); })),
         m_name + "_press_right");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_released(m_window, IO::MouseButtons::Right,
                 [this](double px, double py) { handle_release(px, py, IO::MouseButtons::Right); })),
         m_name + "_release_right");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_pressed(m_window, IO::MouseButtons::Middle,
                 [this](double px, double py) { handle_press(px, py, IO::MouseButtons::Middle); })),
         m_name + "_press_middle");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_released(m_window, IO::MouseButtons::Middle,
                 [this](double px, double py) { handle_release(px, py, IO::MouseButtons::Middle); })),
         m_name + "_release_middle");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_scrolled(m_window,
                 [this](double dx, double dy) { handle_scroll(dx, dy); })),
         m_name + "_scroll");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::text_input(m_window,
                 [this](uint32_t codepoint) { handle_text(codepoint); })),
         m_name + "_text");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::window_resized(m_window,
                 [this](uint32_t w, uint32_t h) { handle_resize(w, h); })),
         m_name + "_resize");
 
-    m_event_manager.add_event(
+    m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::window_closed(m_window,
                 [this]() { handle_close(); })),
@@ -472,29 +647,35 @@ void Context::register_handlers()
 
 void Context::cancel_handlers(bool cancel_close)
 {
+    if (!m_event_manager)
+        return;
+
     for (const char* suffix : {
              "_move",
              "_press_left", "_release_left",
              "_press_right", "_release_right",
              "_press_middle", "_release_middle",
              "_scroll", "_text", "_resize" }) {
-        m_event_manager.cancel_event(m_name + suffix);
+        m_event_manager->cancel_event(m_name + suffix);
     }
 
     if (cancel_close)
-        m_event_manager.cancel_event(m_name + "_close");
+        m_event_manager->cancel_event(m_name + "_close");
 
     for (const int key_code : m_subscribed_keys)
-        m_event_manager.cancel_event(m_name + "_subscribed_key_" + std::to_string(key_code));
+        m_event_manager->cancel_event(m_name + "_subscribed_key_" + std::to_string(key_code));
+
+    for (const int type_code : m_any_key_types)
+        m_event_manager->cancel_event(m_name + "_any_key_" + std::to_string(type_code));
 
     for (const auto& [key_code, handlers] : m_registered_keys) {
         const std::string key_name = std::to_string(key_code);
         if (handlers.has_press)
-            m_event_manager.cancel_event(m_name + "_key_press_" + key_name);
+            m_event_manager->cancel_event(m_name + "_key_press_" + key_name);
         if (handlers.has_release)
-            m_event_manager.cancel_event(m_name + "_key_release_" + key_name);
+            m_event_manager->cancel_event(m_name + "_key_release_" + key_name);
         if (handlers.has_held)
-            m_event_manager.cancel_event(m_name + "_key_held_" + key_name);
+            m_event_manager->cancel_event(m_name + "_key_held_" + key_name);
     }
 }
 
@@ -504,11 +685,14 @@ void Context::cancel_handlers(bool cancel_close)
 
 glm::vec2 Context::to_ndc(double px, double py) const noexcept
 {
-    const auto& s = m_window->get_state();
-    return {
-        (static_cast<float>(px) / static_cast<float>(s.current_width)) * 2.0F - 1.0F,
-        1.0F - (static_cast<float>(py) / static_cast<float>(s.current_height)) * 2.0F
-    };
+    const auto size = extent();
+    if (!m_window && m_image) {
+        const auto filled = m_area.pixels(m_image->width(), m_image->height());
+        px -= filled.x0;
+        py -= filled.y0;
+    }
+    return m_layer->from_view({ (static_cast<float>(px) / static_cast<float>(size.x)) * 2.0F - 1.0F,
+        1.0F - (static_cast<float>(py) / static_cast<float>(size.y)) * 2.0F });
 }
 
 Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) const noexcept
@@ -580,7 +764,7 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
         if (it != m_callbacks.end())
             notify(callback_for(it->second.press, btn_idx), pressed, ndc);
         dispatch(pressed, Core::WindowEventType::MOUSE_BUTTON_PRESSED, ndc,
-            Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), 0 }, btn);
+            Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), modifiers() }, btn);
     }
 }
 
@@ -599,14 +783,13 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     if (it != m_callbacks.end())
         notify(callback_for(it->second.release, btn_idx), released, ndc);
     dispatch(released, Core::WindowEventType::MOUSE_BUTTON_RELEASED, ndc,
-        Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), 0 }, btn);
+        Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), modifiers() }, btn);
 }
 
 void Context::handle_drags(double px, double py)
 {
-    const auto& source = m_window->get_event_source();
     for (const IO::MouseButtons btn : { IO::MouseButtons::Left, IO::MouseButtons::Right, IO::MouseButtons::Middle }) {
-        if (source.is_mouse_pressed(static_cast<int>(btn)))
+        if (button_down(btn))
             handle_drag(px, py, btn);
     }
 }
@@ -645,8 +828,8 @@ void Context::handle_scroll(double dx, double dy)
     if (it == m_callbacks.end())
         return;
 
-    const auto [px, py] = m_window->get_event_source().get_mouse_position();
-    const glm::vec2 ndc = to_ndc(px, py);
+    const auto position = pointer_position();
+    const glm::vec2 ndc = to_ndc(position.x, position.y);
     notify(it->second.scroll, over, ndc, dx, dy);
     dispatch(over, Core::WindowEventType::MOUSE_SCROLLED, ndc,
         Core::WindowEvent::ScrollData { dx, dy });
@@ -722,12 +905,29 @@ void Context::handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event
     if (!m_focused)
         return;
 
-    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt, key);
+    const bool keyless_listens = m_any_key_types.contains(static_cast<int>(event.type));
+    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt, key,
+        keyless_listens ? std::optional<bool>(true) : std::nullopt);
+}
+
+void Context::handle_any_key(const Core::WindowEvent& event)
+{
+    const auto* data = std::get_if<Core::WindowEvent::KeyData>(&event.data);
+    if (!data)
+        return;
+
+    sync_size();
+    if (!m_focused)
+        return;
+
+    dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt,
+        static_cast<IO::Keys>(data->key), false);
 }
 
 void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
     Core::WindowEvent::EventData data, std::optional<IO::MouseButtons> button,
-    std::optional<IO::Keys> key)
+    std::optional<IO::Keys> key,
+    std::optional<bool> names_key)
 {
     const auto found = m_callbacks.find(id);
     if (found == m_callbacks.end())
@@ -738,6 +938,8 @@ void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
     event.type = type;
     event.data = std::move(data);
     for (const auto& subscription : subscribers) {
+        if (names_key && subscription.filter.key_code.has_value() != *names_key)
+            continue;
         if (matches(subscription.filter, type, button, key, event.data))
             subscription.fn(id, event, ndc);
     }
@@ -745,13 +947,13 @@ void Context::dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
 
 void Context::sync_size()
 {
-    if (!m_window) {
+    if (!m_window && !m_image) {
         return;
     }
 
-    const auto& state = m_window->get_state();
-    if (state.current_width != m_known_width || state.current_height != m_known_height) {
-        handle_resize(state.current_width, state.current_height);
+    const auto size = extent();
+    if (size.x != m_known_width || size.y != m_known_height) {
+        handle_resize(size.x, size.y);
     }
 }
 
@@ -776,7 +978,7 @@ void Context::handle_close()
     }
     clear_focus();
     detach_window(false);
-    event_source->defer([event_manager = &m_event_manager,
+    event_source->defer([event_manager = m_event_manager,
                             name = std::move(close_event_name)]() {
         event_manager->cancel_event(name);
     });

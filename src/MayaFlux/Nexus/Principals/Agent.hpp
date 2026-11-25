@@ -369,10 +369,26 @@ public:
         return it != m_render_sinks.end() ? it->renderer : nullptr;
     }
 
+    /* @brief Return the render processor for the sink drawing into @p image, or nullptr if not found. */
+    std::shared_ptr<Buffers::RenderProcessor> get_render_processor(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const
+    {
+        auto it = std::ranges::find_if(m_render_sinks, [&image](const RenderSink& s) {
+            return std::ranges::find(s.images, image) != s.images.end();
+        });
+        return it != m_render_sinks.end() ? it->renderer : nullptr;
+    }
+
     /** @brief Unregister the render sink targeting @p window. */
     void remove_render(Buffers::BufferManager& mgr, const std::shared_ptr<Core::Window>& window)
     {
         remove_render_sink(m_render_sinks, mgr, window);
+    }
+
+    /** @brief Unregister the render sink drawing into @p image. */
+    void remove_render(Buffers::BufferManager& mgr, const std::shared_ptr<Portal::Graphics::ImageTarget>& image)
+    {
+        remove_render_sink(m_render_sinks, mgr, image);
     }
 
     /** @brief Push @p samples to all registered audio sinks. */

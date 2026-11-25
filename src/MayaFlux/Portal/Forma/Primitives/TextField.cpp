@@ -29,10 +29,10 @@ namespace {
     constexpr IO::Modifiers k_shortcut_modifier = IO::Modifiers::Ctrl;
 #endif
 
-    /// @brief Whether Shift is held on the window the context listens to.
+    /// @brief Whether Shift is held on the window the context listens to, or in the last fed key.
     bool shift_held(const Context& ctx)
     {
-        return IO::has_flag(ctx.event_source().modifiers(), IO::Modifiers::Shift);
+        return IO::has_flag(ctx.modifiers(), IO::Modifiers::Shift);
     }
 
     /**

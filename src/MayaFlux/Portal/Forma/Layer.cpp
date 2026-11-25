@@ -1,5 +1,8 @@
 #include "Layer.hpp"
 
+#include "MayaFlux/Kinesis/Spatial/HitTest.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
+
 namespace MayaFlux::Portal::Forma {
 
 // =============================================================================
@@ -47,6 +50,7 @@ void Layer::clear()
             el.buffer.retire();
     }
     m_batch.reset();
+    m_image_batches.clear();
     m_elements.clear();
     m_index.clear();
     m_index_stale = false;
@@ -194,13 +198,35 @@ std::vector<uint32_t> Layer::hit_test_all(glm::vec2 ndc) const
 std::optional<uint32_t> Layer::hit_test(
     double px, double py, uint32_t win_w, uint32_t win_h) const
 {
-    return hit_test(to_ndc(px, py, win_w, win_h));
+    return hit_test(from_view(to_ndc(px, py, win_w, win_h)));
 }
 
 std::vector<uint32_t> Layer::hit_test_all(
     double px, double py, uint32_t win_w, uint32_t win_h) const
 {
-    return hit_test_all(to_ndc(px, py, win_w, win_h));
+    return hit_test_all(from_view(to_ndc(px, py, win_w, win_h)));
+}
+
+// =========================================================================
+// View
+// =========================================================================
+
+void Layer::set_view(const std::optional<Kinesis::ViewTransform>& view)
+{
+    m_view = view;
+    for (const auto& [target, buffer] : m_image_batches) {
+        if (target)
+            target->request_redraw();
+    }
+}
+
+glm::vec2 Layer::from_view(glm::vec2 screen) const
+{
+    if (!m_view)
+        return screen;
+
+    constexpr float k_nowhere = 1.0e9F;
+    return Kinesis::view_plane_point(screen, *m_view).value_or(glm::vec2(k_nowhere));
 }
 
 // =========================================================================

@@ -1,5 +1,11 @@
 #include "RenderFlow.hpp"
 
+#include "ImageTarget.hpp"
+#include "TextureLoom.hpp"
+
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/ImageAccess.hpp"
+#include "MayaFlux/Core/Backends/Graphics/Vulkan/VKImage.hpp"
+
 #include "LayoutTranslator.hpp"
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
@@ -168,9 +174,8 @@ bool RenderFlow::initialize()
                                 .get_service<Registry::Service::DisplayService>();
 
     if (!display_service) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
-            "DisplayService not found in BackendRegistry");
-        return false;
+        MF_INFO(Journal::Component::Portal, Journal::Context::Rendering,
+            "No DisplayService registered, RenderFlow will draw into image targets only");
     }
 
     m_shader_foundry = foundry;
@@ -759,6 +764,13 @@ void RenderFlow::begin_rendering(
         it->second.swapchain_image = swapchain_image;
     }
 
+    if (!m_display_service) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering for window '{}' without a DisplayService",
+            window->get_create_info().title);
+        return;
+    }
+
     uint32_t width = 0, height = 0;
     m_display_service->get_swapchain_extent(window, width, height);
 
@@ -911,6 +923,203 @@ void RenderFlow::end_rendering(
     MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
         "Ended dynamic rendering for window '{}'",
         window->get_create_info().title);
+}
+
+namespace {
+
+    /** The use a color image is in now, from the layout it is tracked in. Shader read when it has none. */
+    Core::ImageAccess resting_use(const std::shared_ptr<Core::VKImage>& image)
+    {
+        return Core::image_access_of(image->get_current_layout()).value_or(Core::ImageAccess::SHADER_READ);
+    }
+
+    bool drawable_image(const std::shared_ptr<Core::VKImage>& image)
+    {
+        return image && image->is_initialized() && image->get_image_view();
+    }
+
+    bool keeps_depth(const ImageTarget& target, bool use_depth)
+    {
+        return use_depth && target.sample_depth() && drawable_image(target.depth_image());
+    }
+
+}
+
+void RenderFlow::begin_rendering(
+    CommandBufferID cmd_id, ImageTarget& target, bool use_depth, uint32_t layer, std::optional<bool> clear)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    if (layer >= target.layers()) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Cannot begin rendering into layer {} of an image target with {}", layer, target.layers());
+        return;
+    }
+
+    auto& loom = get_texture_manager();
+    const vk::ImageSubresourceRange color_range { vk::ImageAspectFlagBits::eColor, 0, 1, layer, 1 };
+    const auto loading = clear.value_or(target.take_clear())
+        ? vk::AttachmentLoadOp::eClear
+        : vk::AttachmentLoadOp::eLoad;
+
+    std::vector<vk::RenderingAttachmentInfo> color_attachments;
+    color_attachments.reserve(target.attachment_count());
+    for (size_t index = 0; index < target.attachment_count(); ++index) {
+        const auto& image = target.image(index);
+        if (!drawable_image(image)) {
+            MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+                "Cannot begin rendering into an image target without an initialized image");
+            return;
+        }
+
+        const vk::ImageView view = loom.attachment_view(image, layer);
+        if (!view) {
+            MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+                "Cannot begin rendering into an image target without a view of its first level");
+            return;
+        }
+
+        Core::record_image_barrier(cmd, image->get_image(), color_range,
+            resting_use(image), Core::ImageAccess::COLOR_ATTACHMENT);
+
+        vk::RenderingAttachmentInfo attachment {};
+        attachment.imageView = view;
+        attachment.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+        attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+        attachment.loadOp = loading;
+        attachment.storeOp = vk::AttachmentStoreOp::eStore;
+        attachment.clearValue.color = index == 0
+            ? vk::ClearColorValue(target.clear_color())
+            : vk::ClearColorValue(std::array<float, 4> {});
+        color_attachments.push_back(attachment);
+    }
+
+    const auto& depth = target.depth_image();
+    vk::RenderingAttachmentInfo depth_attachment {};
+    if (use_depth && drawable_image(depth)) {
+        const vk::ImageSubresourceRange depth_range { depth->get_aspect_flags(), 0, 1, 0, 1 };
+        Core::record_image_barrier(cmd, depth->get_image(), depth_range,
+            Core::ImageAccess::UNDEFINED, Core::ImageAccess::DEPTH_ATTACHMENT);
+
+        depth_attachment.imageView = depth->get_image_view();
+        depth_attachment.imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+        depth_attachment.resolveMode = vk::ResolveModeFlagBits::eNone;
+        depth_attachment.loadOp = vk::AttachmentLoadOp::eClear;
+        depth_attachment.storeOp = target.sample_depth()
+            ? vk::AttachmentStoreOp::eStore
+            : vk::AttachmentStoreOp::eDontCare;
+        depth_attachment.clearValue.depthStencil = vk::ClearDepthStencilValue { 1.0F, 0 };
+    }
+
+    vk::RenderingInfo rendering_info {};
+    rendering_info.flags = vk::RenderingFlagBits::eContentsSecondaryCommandBuffers;
+    rendering_info.renderArea.offset = vk::Offset2D { 0, 0 };
+    rendering_info.renderArea.extent = vk::Extent2D { target.width(), target.height() };
+    rendering_info.layerCount = 1;
+    rendering_info.colorAttachmentCount = static_cast<uint32_t>(color_attachments.size());
+    rendering_info.pColorAttachments = color_attachments.data();
+    rendering_info.pDepthAttachment = depth_attachment.imageView ? &depth_attachment : nullptr;
+
+    cmd.beginRendering(rendering_info);
+
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Began dynamic rendering into an image target ({}x{}, colors: {}, layer: {}, depth: {})",
+        target.width(), target.height(), color_attachments.size(), layer,
+        depth_attachment.imageView ? "yes" : "no");
+}
+
+void RenderFlow::end_rendering(CommandBufferID cmd_id, ImageTarget& target, uint32_t layer, bool depth_kept)
+{
+    auto cmd = m_shader_foundry->get_command_buffer(cmd_id);
+    if (!cmd) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Invalid command buffer ID: {}", cmd_id);
+        return;
+    }
+
+    cmd.endRendering();
+
+    release_draw_inputs(cmd_id);
+
+    const vk::ImageSubresourceRange color_range { vk::ImageAspectFlagBits::eColor, 0, 1, layer, 1 };
+    for (size_t index = 0; index < target.attachment_count(); ++index) {
+        const auto& image = target.image(index);
+        if (!image || !image->is_initialized()) {
+            continue;
+        }
+        Core::record_image_barrier(cmd, image->get_image(), color_range,
+            Core::ImageAccess::COLOR_ATTACHMENT, Core::ImageAccess::SHADER_READ);
+        image->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
+
+    if (depth_kept) {
+        const auto& depth = target.depth_image();
+        const vk::ImageSubresourceRange depth_range { depth->get_aspect_flags(), 0, 1, 0, 1 };
+        Core::record_image_barrier(cmd, depth->get_image(), depth_range,
+            Core::ImageAccess::DEPTH_ATTACHMENT, Core::ImageAccess::SHADER_READ);
+        depth->set_current_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+    }
+
+    MF_TRACE(Journal::Component::Portal, Journal::Context::Rendering,
+        "Ended dynamic rendering into an image target");
+}
+
+Core::TimelinePoint RenderFlow::draw_image_target(
+    ImageTarget& target,
+    const std::vector<CommandBufferID>& secondary_ids,
+    bool use_depth,
+    uint32_t layer,
+    std::optional<bool> clear)
+{
+    const auto primary_id = m_shader_foundry->begin_commands(ShaderFoundry::CommandBufferType::GRAPHICS);
+    auto primary = m_shader_foundry->get_command_buffer(primary_id);
+    if (!primary) {
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to create a primary command buffer for an image target");
+        return {};
+    }
+
+    try {
+        for (size_t index = 0; index < target.attachment_count(); ++index) {
+            m_shader_foundry->hold_image(primary_id, target.image(index));
+        }
+        if (target.depth_image())
+            m_shader_foundry->hold_image(primary_id, target.depth_image());
+
+        begin_rendering(primary_id, target, use_depth, layer, clear);
+
+        std::vector<vk::CommandBuffer> secondaries;
+        for (const auto id : secondary_ids) {
+            if (auto secondary = m_shader_foundry->get_command_buffer(id))
+                secondaries.push_back(secondary);
+        }
+        if (!secondaries.empty())
+            primary.executeCommands(secondaries);
+
+        end_rendering(primary_id, target, layer, keeps_depth(target, use_depth));
+
+        const auto fence = m_shader_foundry->submit_async(primary_id);
+        const auto point = m_shader_foundry->fence_point(fence);
+        m_shader_foundry->release_fence(fence);
+
+        if (target.image()->get_mip_levels() > 1) {
+            get_texture_manager().generate_mipmaps(target.image(), target.mip_filter(), SubmitMode::ASYNC);
+        }
+
+        MF_RT_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
+            "Drew {} buffers into an image target", secondaries.size());
+        return point;
+    } catch (const std::exception& e) {
+        m_shader_foundry->retire_after_submit(std::span<const CommandBufferID> { &primary_id, 1 });
+        MF_RT_ERROR(Journal::Component::Portal, Journal::Context::Rendering,
+            "Failed to draw into an image target: {}", e.what());
+        return {};
+    }
 }
 
 //==============================================================================
@@ -1222,6 +1431,9 @@ std::vector<std::shared_ptr<Core::Window>> RenderFlow::get_registered_windows() 
 
 vk::ImageView RenderFlow::get_current_image_view(const std::shared_ptr<Core::Window>& window)
 {
+    if (!m_display_service) {
+        return nullptr;
+    }
     auto view_ptr = m_display_service->get_current_image_view(window);
     if (!view_ptr) {
         return nullptr;

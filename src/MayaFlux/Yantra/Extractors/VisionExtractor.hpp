@@ -168,6 +168,11 @@ public:
 
     MAYAFLUX_API explicit VisionExtractor(VisionExtractorConfig config = {});
 
+    MAYAFLUX_API ~VisionExtractor() override;
+
+    VisionExtractor(const VisionExtractor&) = delete;
+    VisionExtractor& operator=(const VisionExtractor&) = delete;
+
     /** @brief The stored settings, or defaults when none were set. */
     [[nodiscard]] ConfigRefs configs() const override
     {

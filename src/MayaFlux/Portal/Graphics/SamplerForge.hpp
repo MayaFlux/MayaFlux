@@ -182,7 +182,7 @@ inline SamplerForge& get_sampler_factory()
  * Each returns a plain config to pass to SamplerForge::get_or_create or to a
  * SampledTexture, and to adjust further. The filter chooses how a texel is read, the
  * addressing what a coordinate outside the image reads, and the border its colour.
- * Mipmaps stay off: no mip chain is generated.
+ * Mipmaps stay off, so lod_bias, min_lod and max_lod have no effect on them.
  */
 namespace SamplerPresets {
 

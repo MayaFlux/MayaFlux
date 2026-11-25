@@ -214,6 +214,11 @@ VisionExtractor::VisionExtractor(VisionExtractorConfig config)
     set_config(std::move(config));
 }
 
+VisionExtractor::~VisionExtractor()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_upload_image);
+}
+
 GpuDispatchRecorder& VisionExtractor::recording()
 {
     if (!m_recording)
@@ -779,7 +784,9 @@ std::shared_ptr<Core::VKImage> VisionExtractor::resolve_image(
         return nullptr;
 
     if (!m_upload_image || m_upload_w != w || m_upload_h != h) {
-        m_upload_image = Portal::Graphics::TextureLoom::instance().create_2d(
+        auto& loom = Portal::Graphics::TextureLoom::instance();
+        loom.release_image(m_upload_image);
+        m_upload_image = loom.create_2d(
             w, h, Portal::Graphics::ImageFormat::RGBA8, nullptr);
         m_upload_w = w;
         m_upload_h = h;

@@ -73,9 +73,14 @@ using ElementRef = std::pair<std::weak_ptr<Layer>, uint32_t>;
  */
 class MAYAFLUX_API Bridge {
 public:
+    /**
+     * @param scheduler      Scheduler the binding tasks run on.
+     * @param buffer_manager Manager the write targets' processors are added to.
+     * @throws std::invalid_argument If either is null.
+     */
     Bridge(
-        Vruta::TaskScheduler& scheduler,
-        Buffers::BufferManager& buffer_manager);
+        const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        const std::shared_ptr<Buffers::BufferManager>& buffer_manager);
 
     ~Bridge();
 
@@ -690,8 +695,8 @@ private:
         std::optional<Kakshya::GpuDataFormat> typed_format; ///< format of T when typed_reader is populated
     };
 
-    Vruta::TaskScheduler& m_scheduler;
-    Buffers::BufferManager& m_buffer_manager;
+    std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
+    std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
 
     mutable uint32_t m_next_id { 0 };
 

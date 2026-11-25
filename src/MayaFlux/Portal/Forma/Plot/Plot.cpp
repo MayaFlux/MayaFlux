@@ -23,8 +23,8 @@ uint32_t place_label(
     const auto render_bounds = auto_render_bounds
         ? Kinesis::ndc_size_to_pixels(
               { spec.bounds.width(), spec.bounds.height() },
-              surface.window()->get_state().current_width,
-              surface.window()->get_state().current_height)
+              surface.extent().x,
+              surface.extent().y)
         : spec.render_bounds;
 
     Element el;
@@ -50,8 +50,8 @@ uint32_t place_label(
             [surface, id, text = spec.text, color = spec.color, bounds = spec.bounds](uint32_t, uint32_t) mutable {
                 const auto dims = Kinesis::ndc_size_to_pixels(
                     { bounds.width(), bounds.height() },
-                    surface.window()->get_state().current_width,
-                    surface.window()->get_state().current_height);
+                    surface.extent().x,
+                    surface.extent().y);
 
                 if (auto* element = surface.layer().get(id))
                     element->set_text(text, Portal::Text::PressParams { .color = color, .render_bounds = dims });

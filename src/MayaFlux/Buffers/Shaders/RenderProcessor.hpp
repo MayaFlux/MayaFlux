@@ -2,6 +2,8 @@
 
 #include "MayaFlux/Kinesis/Viewport/Scissor.hpp"
 #include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
+#include "MayaFlux/Kinesis/Viewport/ViewportArea.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Portal/Graphics/PrimitiveMill.hpp"
 #include "MayaFlux/Portal/Graphics/RenderFlow.hpp"
 #include "ShaderProcessor.hpp"
@@ -11,6 +13,35 @@ class VKImage;
 }
 
 namespace MayaFlux::Buffers {
+
+/**
+ * @struct DestinationView
+ * @brief The view one destination of a RenderProcessor draws with.
+ *
+ * Names the destination with exactly one of @c window and @c target, and the
+ * view with exactly one of @c transform and @c source. A source runs once per
+ * cycle for its destination and is given the pixel size of what that
+ * destination fills: the window, the target, or the part of the target its
+ * area names, so one source gets the aspect right everywhere.
+ *
+ * @code
+ * rp->set_destination_view({ .window = window, .transform = camera });
+ * rp->set_destination_view({ .target = target, .source = [](glm::uvec2 size) {
+ *     return look_at_origin(static_cast<float>(size.x) / static_cast<float>(size.y));
+ * } });
+ * @endcode
+ *
+ * @c enable_depth and @c cull are as RenderProcessor::set_view_transform takes
+ * them. They are state of the processor, so they apply to every destination.
+ */
+struct DestinationView {
+    std::shared_ptr<Core::Window> window;
+    std::shared_ptr<Portal::Graphics::ImageTarget> target;
+    std::optional<Kinesis::ViewTransform> transform;
+    std::function<Kinesis::ViewTransform(glm::uvec2)> source;
+    bool enable_depth { true };
+    Portal::Graphics::CullMode cull { Portal::Graphics::CullMode::BACK };
+};
 
 /**
  * @class RenderShaderProcessor
@@ -26,18 +57,112 @@ public:
     ~RenderProcessor() override
     {
         cleanup();
+        release_bound_images();
     }
 
     void set_geometry_shader(const std::string& geometry_path);
     void set_tess_control_shader(const std::string& tess_control_path);
     void set_tess_eval_shader(const std::string& tess_eval_path);
     void set_fragment_shader(const std::string& fragment_path);
+    /**
+     * @brief Make a window the only destination of this processor.
+     *
+     * Every other destination is dropped, and the pipeline is rebuilt for the
+     * window's formats.
+     */
     void set_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
 
-    /** @brief Get the window targeted by this processor. */
-    std::shared_ptr<Core::Window> get_target_window() const { return m_target_window; }
+    /**
+     * @brief Make an image target the only destination of this processor.
+     *
+     * Every other destination is dropped, and the pipeline is rebuilt for the
+     * image's formats. The target redraws. @p area picks the layer and the part
+     * of it that is drawn.
+     */
+    void set_target_image(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const std::shared_ptr<VKBuffer>& buffer,
+        const Kinesis::ViewportArea& area = {});
 
-    Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_pipeline_id; }
+    /**
+     * @brief Make a window and image targets the destinations of this processor.
+     *
+     * The window takes the first place when there is one. With no window the
+     * first image does, and the others are added. Every earlier destination is
+     * dropped. Logs when there is no destination at all.
+     */
+    void set_destinations(
+        const std::shared_ptr<Core::Window>& window,
+        const std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>>& images,
+        const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Also draw into a window. Ignored when the window is already a destination. */
+    void add_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
+     * @brief Also draw into an image target, into the layer and part of it @p area names.
+     *
+     * When the target is already a destination only its area changes.
+     */
+    void add_target_image(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const std::shared_ptr<VKBuffer>& buffer,
+        const Kinesis::ViewportArea& area = {});
+
+    /**
+     * @brief Change the layer and part of an image target this processor draws into.
+     *
+     * The target redraws. Does nothing for a target that is not a destination,
+     * or a layer the target does not have.
+     */
+    void set_target_area(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const Kinesis::ViewportArea& area);
+
+    /** @brief Where this processor draws into an image target. The whole first layer when it is not a destination. */
+    [[nodiscard]] Kinesis::ViewportArea get_target_area(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image) const;
+
+    /** @brief Stop drawing into a window and release its pipeline. */
+    void remove_target_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Stop drawing into an image target and release its pipeline. The target redraws. */
+    void remove_target_image(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const std::shared_ptr<VKBuffer>& buffer);
+
+    /** @brief Draw into the window, or keep its pipeline and skip it, without changing the other destinations. */
+    void set_window_enabled(bool enabled);
+
+    /** @brief Draw into an image target, or keep its pipeline and skip it, without changing the other destinations. */
+    void set_target_enabled(const std::shared_ptr<Portal::Graphics::ImageTarget>& image, bool enabled);
+
+    /** @brief The window this processor draws into, or null. */
+    [[nodiscard]] std::shared_ptr<Core::Window> get_target_window() const;
+
+    /** @brief The first image target this processor draws into, or null. */
+    [[nodiscard]] std::shared_ptr<Portal::Graphics::ImageTarget> get_target_image() const;
+
+    /** @brief Every image target this processor draws into. */
+    [[nodiscard]] std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> get_target_images() const;
+
+    /** @brief Whether this processor samples the image of @p target, however it was bound, so the root can draw that target first. */
+    [[nodiscard]] bool samples(const std::shared_ptr<Portal::Graphics::ImageTarget>& target) const;
+
+    /** @brief The pipeline of the first destination. */
+    Portal::Graphics::RenderPipelineID get_render_pipeline_id() const { return m_lanes.front()->pipeline; }
+
+    /** @brief Whether a pipeline belongs to one of this processor's destinations. */
+    [[nodiscard]] bool owns_pipeline(Portal::Graphics::RenderPipelineID id) const;
+
+    /** @brief Whether this processor draws into the window. */
+    [[nodiscard]] bool targets_window(const std::shared_ptr<Core::Window>& window) const { return find_lane(window) != nullptr; }
+
+    /** @brief How many places this processor draws into. */
+    [[nodiscard]] size_t destination_count() const noexcept
+    {
+        return static_cast<size_t>(std::ranges::count_if(m_lanes, [](const auto& lane) { return lane->window || lane->image; }));
+    }
 
     void on_attach(const std::shared_ptr<Buffer>& buffer) override;
 
@@ -56,12 +181,13 @@ public:
 
     /**
      * @brief Record the buffer's prepared geometry into a fresh secondary command buffer.
+     * @param pipeline The destination to record for, one of this processor's pipelines.
      *
      * Does not advance feeds, upload geometry, or dispatch milling. Both normal
      * processing and presentation refreshes use this operation. A buffer that has
      * not prepared geometry yet records nothing.
      */
-    void record_draw(const std::shared_ptr<VKBuffer>& buffer);
+    void record_draw(const std::shared_ptr<VKBuffer>& buffer, Portal::Graphics::RenderPipelineID pipeline);
 
     /// Set primitive topology (e.g., triangle list, line list, point list)
     inline void set_primitive_topology(Portal::Graphics::PrimitiveTopology topology)
@@ -70,7 +196,7 @@ public:
             return;
         }
         m_primitive_topology = topology;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
         invalidate_all_mills();
     }
 
@@ -81,7 +207,7 @@ public:
             return;
         }
         m_polygon_mode = mode;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
         invalidate_all_mills();
     }
 
@@ -92,48 +218,27 @@ public:
             return;
         }
         m_cull_mode = mode;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
     }
 
     /**
-     * @brief Bind a texture to a descriptor binding point
-     * @param binding Binding index (matches shader layout(binding = N))
-     * @param texture VKImage texture to bind
-     * @param sampler Optional sampler (uses default linear if null)
-     */
-    void bind_texture(
-        uint32_t binding,
-        const std::shared_ptr<Core::VKImage>& texture,
-        vk::Sampler sampler = nullptr);
-
-    /**
-     * @brief Bind a texture to a named descriptor
-     * @param descriptor_name Logical name (must be in config.bindings)
-     * @param texture VKImage texture to bind
-     * @param sampler Optional sampler (uses default linear if null)
-     */
-    void bind_texture(
-        const std::string& descriptor_name,
-        const std::shared_ptr<Core::VKImage>& texture,
-        vk::Sampler sampler = nullptr);
-
-    /**
-     * @brief Bind a texture with a sampler described by a config.
+     * @brief Bind a texture to a descriptor binding.
      *
-     * The sampler is kept for the binding, so a later bind without one reuses it.
+     * @code
+     * rp->bind_texture({ .name = "tex", .image = image });
+     * rp->bind_texture({ .binding = 2, .image = image, .sampler = nearest });
+     * rp->bind_texture({ .name = "tex", .target = target });
+     * @endcode
+     *
+     * The sampler is kept for the binding, so a later bind without one reuses
+     * it. A binding made with a target is bound again to target->image() on the
+     * next execute after the target is resized. Nothing is bound, and an error
+     * is logged, for an unknown name, a missing image, or both image and target.
+     *
+     * The processor holds a bound image through TextureLoom until the binding
+     * takes another or the processor is destroyed, so its creator can release
+     * it at any time.
      */
-    void bind_texture(
-        uint32_t binding,
-        const std::shared_ptr<Core::VKImage>& texture,
-        const Portal::Graphics::SamplerConfig& sampler);
-
-    /** @brief Named form of the config overload. */
-    void bind_texture(
-        const std::string& descriptor_name,
-        const std::shared_ptr<Core::VKImage>& texture,
-        const Portal::Graphics::SamplerConfig& sampler);
-
-    /** @brief Bind an additional texture by name, with its sampler when it has one. */
     void bind_texture(const Portal::Graphics::SampledTexture& texture);
 
     /**
@@ -151,7 +256,7 @@ public:
     /**
      * @brief Check if pipeline is created
      */
-    bool is_pipeline_ready() const { return m_pipeline_id != Portal::Graphics::INVALID_RENDER_PIPELINE; }
+    bool is_pipeline_ready() const { return m_lanes.front()->pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE; }
 
     /**
      * @brief Set vertex range for drawing subset of buffer
@@ -189,7 +294,7 @@ public:
             return;
         }
         m_blend_attachment = config;
-        m_needs_pipeline_rebuild = true;
+        invalidate_pipelines();
     }
 
     /** @brief Enable standard alpha blending (src_alpha, one_minus_src_alpha). Does not touch depth state. */
@@ -256,6 +361,31 @@ public:
         std::function<Kinesis::ViewTransform()> fn,
         bool enable_depth = true,
         Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
+
+    /**
+     * @brief Give one destination its own view.
+     *
+     * That destination draws with it, and the others keep theirs or the view of
+     * set_view_transform and set_view_transform_source. Setting it again
+     * replaces it, and it goes when the destination is removed. An image target
+     * redraws. The geometry a world facing ribbon or billboard is turned by is
+     * generated once for all destinations, towards the eye of the first one drawn.
+     *
+     * @return False, changing nothing, when the destination is not one of this
+     *         processor's, or the description does not name exactly one
+     *         destination and exactly one view.
+     */
+    bool set_destination_view(const DestinationView& view);
+
+    /**
+     * @brief Return a destination to the view of the processor.
+     *
+     * Only @c window or @c target of @p destination is read.
+     */
+    void clear_destination_view(const DestinationView& destination);
+
+    /** @brief Whether a destination draws with its own view. Only @c window or @c target is read. */
+    [[nodiscard]] bool has_destination_view(const DestinationView& destination) const;
 
     /** @brief Get current static view transform, if set */
     const std::optional<Kinesis::ViewTransform>& get_view_transform() const { return m_view_transform; }
@@ -388,6 +518,12 @@ protected:
      */
     const Kinesis::RenderTransform& publish_render_transform();
 
+    /** @brief Resolve the view and geometry transforms without writing them anywhere. */
+    const Kinesis::RenderTransform& resolve_render_transform();
+
+    /** @brief Write the resolved transform to the current destination's UBO when it changed. */
+    void write_render_transform();
+
     /** @brief Transform published for this frame by publish_render_transform(). */
     [[nodiscard]] const Kinesis::RenderTransform& published_render_transform() const
     {
@@ -396,6 +532,10 @@ protected:
 
     /** @brief Resolve the active scissor against a live framebuffer size. Full framebuffer when unset. */
     [[nodiscard]] vk::Rect2D resolve_scissor_rect(uint32_t width, uint32_t height) const noexcept;
+
+    /** @brief The pixel rect of a destination's area inside a target of the given size. The whole target when the area is unset. */
+    [[nodiscard]] static vk::Rect2D resolve_area_rect(
+        const Kinesis::ViewportArea& area, uint32_t width, uint32_t height) noexcept;
 
 private:
     struct BufferState {
@@ -411,12 +551,96 @@ private:
         uint32_t milled_count {};
     };
 
-    Portal::Graphics::RenderPipelineID m_pipeline_id = Portal::Graphics::INVALID_RENDER_PIPELINE;
     Portal::Graphics::ShaderID m_geometry_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_control_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_tess_eval_shader_id = Portal::Graphics::INVALID_SHADER;
     Portal::Graphics::ShaderID m_fragment_shader_id = Portal::Graphics::INVALID_SHADER;
-    std::shared_ptr<Core::Window> m_target_window;
+
+    /**
+     * @brief One place this processor draws into, with everything that belongs to it alone.
+     *
+     * Shaders, geometry, bindings and draw runs are shared by every lane. The
+     * first lane keeps its shader processor state in ShaderProcessor, as a
+     * processor with one destination always did. The others hold theirs here and
+     * trade it with ShaderProcessor while they run.
+     */
+    struct Lane {
+        std::shared_ptr<Core::Window> window;
+        std::shared_ptr<Portal::Graphics::ImageTarget> image;
+        Kinesis::ViewportArea area;
+        std::optional<Kinesis::ViewTransform> view;
+        std::function<Kinesis::ViewTransform(glm::uvec2)> view_source;
+        Portal::Graphics::RenderPipelineID pipeline { Portal::Graphics::INVALID_RENDER_PIPELINE };
+        Portal::Graphics::SlotArena transform_arena;
+        size_t transform_slot {};
+        std::optional<Kinesis::RenderTransform> written_transform;
+        bool enabled { true };
+
+        std::vector<Portal::Graphics::DescriptorSetID> descriptor_sets;
+        std::optional<uint64_t> created_layout;
+        bool initialized {};
+        bool descriptors_ready {};
+        bool needs_pipeline { true };
+        bool needs_descriptors { true };
+    };
+
+    std::vector<std::unique_ptr<Lane>> m_lanes;
+    Lane* m_lane { nullptr };
+
+    /** @brief Runs a lane as the current one, trading its shader processor state in and out. */
+    class ActiveLane {
+    public:
+        ActiveLane(RenderProcessor& owner, Lane& lane);
+        ~ActiveLane();
+        ActiveLane(const ActiveLane&) = delete;
+        ActiveLane& operator=(const ActiveLane&) = delete;
+
+    private:
+        RenderProcessor& m_owner;
+        Lane* m_previous;
+        bool m_swapped;
+    };
+
+    void exchange_shader_state(Lane& lane);
+
+    template <typename Destination>
+    [[nodiscard]] Lane* find_lane(const std::shared_ptr<Destination>& destination) const
+    {
+        const auto found = std::ranges::find_if(m_lanes, [&destination](const auto& lane) {
+            if constexpr (std::is_same_v<Destination, Core::Window>) {
+                return lane->window && lane->window == destination;
+            } else {
+                return lane->image && lane->image == destination;
+            }
+        });
+        return found == m_lanes.end() ? nullptr : found->get();
+    }
+
+    [[nodiscard]] Lane& claim_lane();
+    [[nodiscard]] Lane* find_view_lane(const DestinationView& destination) const;
+    [[nodiscard]] static bool has_view(const Lane& lane) noexcept { return lane.view || lane.view_source; }
+
+    /** @brief Put the current destination's own view, when it has one, into the published transform. */
+    void apply_lane_view();
+    void clear_destinations(const std::shared_ptr<VKBuffer>& buffer);
+    void drop_lane(Lane& lane, const std::shared_ptr<VKBuffer>& buffer);
+    void release_window(const std::shared_ptr<Core::Window>& window, const std::shared_ptr<VKBuffer>& buffer);
+    void invalidate_pipelines();
+
+    /** @brief What the pipeline and the viewport need to know about the destination. */
+    struct DestinationInfo {
+        std::vector<vk::Format> colors;
+        vk::Format depth {};
+        uint32_t width {};
+        uint32_t height {};
+    };
+
+    [[nodiscard]] bool has_destination() const noexcept { return m_lane->window || m_lane->image; }
+    [[nodiscard]] bool destination_ready(const Lane& lane) const;
+    [[nodiscard]] DestinationInfo describe() const;
+    [[nodiscard]] std::string destination_name() const;
+    void request_refresh(const std::shared_ptr<VKBuffer>& buffer) const;
+    void register_pipeline(const std::shared_ptr<VKBuffer>& buffer) const;
 
     std::unordered_map<std::shared_ptr<VKBuffer>, BufferState> m_buffer_info;
     /** @brief Non-owning exceptions to default visibility, removed on detach. */
@@ -433,6 +657,16 @@ private:
         vk::Sampler sampler;
     };
     std::unordered_map<uint32_t, TextureBinding> m_texture_bindings;
+    std::unordered_map<uint32_t, std::shared_ptr<Portal::Graphics::ImageTarget>> m_target_bindings;
+
+    /** @brief Bind again every binding whose target now has another image. */
+    void follow_target_images();
+
+    /** @brief Bind an image at a binding with the sampler the binding has, forgetting any target it followed. */
+    void bind_image(uint32_t binding, const std::shared_ptr<Core::VKImage>& texture);
+
+    /** @brief Give up the hold taken on every bound image. */
+    void release_bound_images();
     std::unordered_map<uint32_t, vk::Sampler> m_binding_samplers;
 
     std::optional<Portal::Graphics::BlendAttachmentConfig> m_blend_attachment;
@@ -440,9 +674,6 @@ private:
     Portal::Graphics::DepthStencilConfig m_depth_stencil;
 
     bool m_depth_enabled {};
-    Portal::Graphics::SlotArena m_render_transform_arena;
-    size_t m_render_transform_slot {};
-    std::optional<Kinesis::RenderTransform> m_written_render_transform;
 
     /**
      * @brief A replaced pipeline kept alive until the frames that may still use it finish

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ImageAccess.hpp"
 #include "VKCommandManager.hpp"
 
 #include "MayaFlux/Transitive/Memory/FlatMap.hpp"
@@ -146,6 +147,42 @@ public:
         SubmitMode mode = SubmitMode::DEFERRED);
 
     /**
+     * @brief Record a barrier between two uses of an image into a command buffer being recorded
+     * @param cmd Command buffer in the recording state, outside any dynamic rendering scope
+     * @param image Initialized image
+     * @param from The use the range leaves
+     * @param to The use the range enters
+     * @param range Mip levels and layers to move; the whole image by default
+     *
+     * The caller names the use being left, since the tracked layout is one value for
+     * the whole image and cannot describe a range. Moving the whole image sets the
+     * tracked layout to the layout of @p to when the barrier is recorded. Moving a range
+     * leaves the tracked layout alone, so whoever transitions ranges owns their layouts.
+     * A pass recorded elsewhere reports where it left an image with
+     * VKImage::set_current_layout.
+     */
+    void record_image_transition(
+        vk::CommandBuffer cmd,
+        const std::shared_ptr<VKImage>& image,
+        ImageAccess from,
+        ImageAccess to,
+        const ImageRange& range = {});
+
+    /**
+     * @brief A view of part of a managed image, created on first request
+     * @param image Image created through this manager
+     * @param key What the view covers; a default key covers the whole image
+     * @return The view, or a null handle if the image is not managed or the key lies outside it
+     *
+     * Views are cached on the image's allocation and destroyed with it, so one stays
+     * valid as long as a command that retained the allocation through
+     * retain_image_allocation. The whole-image view is VKImage::get_image_view().
+     */
+    [[nodiscard]] vk::ImageView get_image_view(
+        const std::shared_ptr<VKImage>& image,
+        const ImageViewKey& key = {});
+
+    /**
      * @brief Upload a whole color image from host memory.
      * Immediate calls wait for prior GPU use. Deferred calls record a GPU copy
      * and require a caller-owned staging buffer.
@@ -192,6 +229,27 @@ public:
         vk::Filter filter = vk::Filter::eNearest) const;
 
     /**
+     * @brief Whether a format can be drawn into and sampled, and written as a storage image when asked.
+     *
+     * Checks optimal tiling features for a color attachment and a sampled image,
+     * and a storage image when @p storage is set.
+     */
+    [[nodiscard]] bool supports_render_target(vk::Format format, bool storage = false) const;
+
+    /**
+     * @brief Whether a format can be blended as a color attachment.
+     */
+    [[nodiscard]] bool supports_color_blend(vk::Format format) const;
+
+    /**
+     * @brief Whether one draw can give each color attachment its own blend state.
+     *
+     * True when the device has independentBlend, which the backend enables
+     * whenever it is there.
+     */
+    [[nodiscard]] bool supports_independent_blend() const;
+
+    /**
      * @brief Blit a region of one image into a region of another.
      *
      * Scales with @p filter and converts between supported formats. The
@@ -211,6 +269,27 @@ public:
         const std::shared_ptr<VKImage>& dst,
         const vk::ImageBlit& region,
         vk::Filter filter,
+        SubmitMode mode = SubmitMode::IMMEDIATE);
+
+    /**
+     * @brief Fill every mip level below the first by repeated blits of the level above.
+     *
+     * Level zero must already hold the contents. The other levels are overwritten.
+     * Each level is blitted from the one before it, over every array layer or depth
+     * slice, so the barriers move one level at a time. The image returns to the layout it
+     * held, or shader read when that was transient.
+     *
+     * @param image  Initialized color image with more than one mip level.
+     * @param filter Nearest or linear.
+     * @param mode   IMMEDIATE waits, DEFERRED records into the batch a flush submits,
+     *               ASYNC submits at once without waiting.
+     * @return True if the chain was recorded, executed or submitted. False for an image
+     *         with one level, a depth or stencil format, or a format that cannot blit
+     *         with the filter.
+     */
+    bool generate_mip_chain(
+        const std::shared_ptr<VKImage>& image,
+        vk::Filter filter = vk::Filter::eLinear,
         SubmitMode mode = SubmitMode::IMMEDIATE);
 
     // ========================================================================
@@ -309,6 +388,7 @@ private:
         vk::Image image;
         vk::ImageView view;
         vk::DeviceMemory memory;
+        std::vector<std::pair<ImageViewKey, vk::ImageView>> sub_views;
 
         ~ImageAllocation();
     };

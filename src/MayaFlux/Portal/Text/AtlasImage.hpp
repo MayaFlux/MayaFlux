@@ -23,6 +23,16 @@ namespace MayaFlux::Portal::Text {
  */
 class MAYAFLUX_API AtlasImage {
 public:
+    AtlasImage() = default;
+
+    /** @brief Releases the image; whoever still binds it keeps it. */
+    ~AtlasImage();
+
+    AtlasImage(const AtlasImage&) = delete;
+    AtlasImage& operator=(const AtlasImage&) = delete;
+    AtlasImage(AtlasImage&&) = delete;
+    AtlasImage& operator=(AtlasImage&&) = delete;
+
     /**
      * @brief Bring the image up to date with @p atlas.
      *

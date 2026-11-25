@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "GraphicsUtils.hpp"
+#include "ImageTarget.hpp"
 
 #include "MayaFlux/Core/Backends/Graphics/Vulkan/VKTimeline.hpp"
 
@@ -20,35 +21,6 @@ class VKBuffer;
 namespace MayaFlux::Portal::Graphics {
 
 using SubmitMode = Core::SubmitMode;
-
-/** @brief Immutable properties that determine whether an image can be reused. */
-struct ImageKey {
-    enum class Kind : uint8_t {
-        SAMPLED_2D,
-        SAMPLED_ARRAY,
-        STORAGE_2D
-    };
-
-    uint32_t width {};
-    uint32_t height {};
-    uint32_t layers { 1 };
-    uint32_t mip_levels { 1 };
-    ImageFormat format {};
-    Kind kind { Kind::SAMPLED_2D };
-
-    [[nodiscard]] bool operator==(const ImageKey&) const = default;
-};
-
-/** @brief Hash image allocation properties for keyed reuse. */
-struct MAYAFLUX_API ImageKeyHash {
-    [[nodiscard]] size_t operator()(const ImageKey& key) const noexcept;
-};
-
-/** @brief Image retained by the producing owner. */
-struct ImageCacheEntry {
-    ImageKey key;
-    std::shared_ptr<Core::VKImage> image;
-};
 
 /**
  * @brief One layer to layer copy that scales and converts format.
@@ -153,6 +125,9 @@ public:
      *
      * Creates device-local texture optimized for shader sampling.
      * If data provided, uploads immediately and transitions to shader read layout.
+     * With data and more than one mip level, the lower levels are generated from the
+     * data, as generate_mipmaps does. Without data they hold nothing until the caller
+     * fills the first level and calls generate_mipmaps.
      */
     std::shared_ptr<Core::VKImage> create_2d(
         uint32_t width,
@@ -251,11 +226,20 @@ public:
      *
      * Creates image suitable for use as framebuffer color attachment.
      * Can also be sampled in shaders after rendering.
+     *
+     * @param storage Also let compute passes write it as a storage image. The format has to allow it.
+     * @param layers Array layers. More than one makes a 2D array, and cannot have mip levels.
+     * @param cube Six square faces that sample as a cube, in place of layers. Cannot have mip levels.
+     * @return The image, or nullptr when it cannot be made as asked.
      */
     std::shared_ptr<Core::VKImage> create_render_target(
         uint32_t width,
         uint32_t height,
-        ImageFormat format = ImageFormat::RGBA8);
+        ImageFormat format = ImageFormat::RGBA8,
+        uint32_t mip_levels = 1,
+        bool storage = false,
+        uint32_t layers = 1,
+        bool cube = false);
 
     /**
      * @brief Create a depth buffer
@@ -280,6 +264,22 @@ public:
         uint32_t width,
         uint32_t height,
         ImageFormat format = ImageFormat::RGBA8);
+
+    /**
+     * @brief Create an image that draws land in instead of a window
+     * @param config Size, format, clear color, optional depth and redraw policy
+     * @return The target, or nullptr if Loom is not initialized or the size is zero
+     *
+     * The color image rests in shader read layout, so a buffer can bind it as a
+     * texture. The target releases its images when its last holder lets go.
+     */
+    [[nodiscard]] std::shared_ptr<ImageTarget> create_image_target(const ImageTarget::Config& config);
+
+    /**
+     * @brief A 2D view of the first mip level of one layer of an image, as a draw attachment takes it
+     * @return The view, or a null handle when the image is not managed by this Loom
+     */
+    [[nodiscard]] vk::ImageView attachment_view(const std::shared_ptr<Core::VKImage>& image, uint32_t layer = 0) const;
 
     /**
      * @brief Reuse a matching image in an owner-held entry or create it once.
@@ -426,6 +426,25 @@ public:
         const std::shared_ptr<Core::VKImage>& src,
         const std::shared_ptr<Core::VKImage>& dst,
         FilterMode filter = FilterMode::LINEAR) const;
+
+    /**
+     * @brief Fill every mip level below the first from the level above it.
+     *
+     * The first level must already hold the picture, whether uploaded or drawn
+     * into. The other levels are overwritten. Use it after rendering into an image
+     * created with more than one mip level, since nothing generates them on its own.
+     *
+     * @param image  Color image created with more than one mip level.
+     * @param filter Nearest or linear; a cubic filter is not available and falls back to linear.
+     * @param mode   IMMEDIATE waits for the chain. DEFERRED records it for the next flush
+     *               or present submit. ASYNC submits it at once without waiting.
+     * @return True if the chain was recorded, executed or submitted. False for an image
+     *         with one level, a depth format, or a format that cannot blit with the filter.
+     */
+    bool generate_mipmaps(
+        const std::shared_ptr<Core::VKImage>& image,
+        FilterMode filter = FilterMode::LINEAR,
+        SubmitMode mode = SubmitMode::IMMEDIATE);
 
     //==========================================================================
     // Cleanup

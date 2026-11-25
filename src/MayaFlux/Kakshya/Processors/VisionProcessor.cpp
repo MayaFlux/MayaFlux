@@ -17,6 +17,11 @@ VisionProcessor::VisionProcessor(Kinesis::Vision::VisionSequence sequence)
         m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
 }
 
+VisionProcessor::~VisionProcessor()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_gpu_frame);
+}
+
 void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& container)
 {
     if (!container)
@@ -47,6 +52,7 @@ void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& co
             m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
 
         auto& loom = Portal::Graphics::TextureLoom::instance();
+        loom.release_image(m_gpu_frame);
         m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
     }
 
@@ -67,6 +73,7 @@ void VisionProcessor::on_detach(const std::shared_ptr<SignalSourceContainer>& /*
     if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU)
         m_cpu_executor.reset();
 
+    Portal::Graphics::get_texture_manager().release_image(m_gpu_frame);
     m_gpu_frame.reset();
 }
 
@@ -132,6 +139,7 @@ void VisionProcessor::set_sequence(Kinesis::Vision::VisionSequence sequence)
             m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
         }
     } else {
+        Portal::Graphics::get_texture_manager().release_image(m_gpu_frame);
         m_gpu_frame.reset();
     }
 }

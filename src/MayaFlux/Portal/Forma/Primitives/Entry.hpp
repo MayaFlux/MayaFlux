@@ -92,6 +92,14 @@ struct EntryGroup {
     float x_min, float x_max, float row_h);
 
 /**
+ * @brief Form of row_pixel_dims() for a canvas given by its pixel @p extent,
+ *        such as Surface::extent() of a Surface drawn into an image.
+ */
+[[nodiscard]] MAYAFLUX_API glm::uvec2 row_pixel_dims(
+    glm::uvec2 extent,
+    float x_min, float x_max, float row_h);
+
+/**
  * @brief Construct one labeled entry row, advance the cursor, and return it.
  *
  * The row is one slice of glyph quads: @p bg is drawn as the fill beneath

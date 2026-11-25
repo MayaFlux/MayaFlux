@@ -419,8 +419,25 @@ ModelReader::create_mesh_assembly() const
         }
     }
 
-    std::function<void(const aiNode*, std::optional<uint64_t>, bool)> visit;
-    visit = [&](const aiNode* ai_node, std::optional<uint64_t> parent, bool is_scene_root) {
+    struct Frame {
+        const aiNode* node;
+        std::optional<uint64_t> parent;
+        bool is_scene_root;
+    };
+
+    std::vector<Frame> pending { { s->mRootNode, std::nullopt, true } };
+
+    const auto push_children = [&pending](const aiNode* ai_node, std::optional<uint64_t> parent) {
+        for (unsigned int c = ai_node->mNumChildren; c-- > 0;) {
+            pending.push_back({ ai_node->mChildren[c], parent, false });
+        }
+    };
+
+    while (!pending.empty()) {
+        const Frame frame = pending.back();
+        pending.pop_back();
+
+        const aiNode* ai_node = frame.node;
         const glm::mat4 local = to_glm(ai_node->mTransformation);
 
         std::vector<std::pair<unsigned int, uint64_t>> meshes;
@@ -435,41 +452,35 @@ ModelReader::create_mesh_assembly() const
             }
         }
 
-        if (is_scene_root && is_identity(local) && !animated.contains(ai_node->mName.C_Str())) {
+        if (frame.is_scene_root && is_identity(local) && !animated.contains(ai_node->mName.C_Str())) {
             for (const auto& [mesh_index, source] : meshes) {
                 add_row(source_name[mesh_index], std::nullopt, source, mesh_index, glm::mat4(1.0F));
             }
-            for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
-                visit(ai_node->mChildren[c], std::nullopt, false);
-            }
-            return;
+            push_children(ai_node, std::nullopt);
+            continue;
         }
 
         const std::string node_name = ai_node->mName.C_Str();
         std::optional<size_t> own;
         if (meshes.empty()) {
             own = add_row(node_name.empty() ? "node_" + std::to_string(assembly->get_total_elements()) : node_name,
-                parent, std::nullopt, 0, local);
+                frame.parent, std::nullopt, 0, local);
         } else {
             own = add_row(node_name.empty() ? source_name[meshes.front().first] : node_name,
-                parent, meshes.front().second, meshes.front().first, local);
+                frame.parent, meshes.front().second, meshes.front().first, local);
             for (size_t m = 1; own && m < meshes.size(); ++m) {
                 add_row(source_name[meshes[m].first], own, meshes[m].second, meshes[m].first, glm::mat4(1.0F));
             }
         }
         if (!own) {
-            return;
+            continue;
         }
         if (!node_name.empty()) {
             rows_by_name[node_name].push_back(*own);
         }
 
-        for (unsigned int c = 0; c < ai_node->mNumChildren; ++c) {
-            visit(ai_node->mChildren[c], *own, false);
-        }
-    };
-
-    visit(s->mRootNode, std::nullopt, true);
+        push_children(ai_node, *own);
+    }
 
     for (unsigned int i = 0; i < s->mNumMeshes; ++i) {
         if (!placed[i]) {

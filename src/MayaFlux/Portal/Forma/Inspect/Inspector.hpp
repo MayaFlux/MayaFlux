@@ -38,14 +38,13 @@ class Surface;
  */
 class MAYAFLUX_API Inspector {
 public:
-    Inspector(Nodes::NodeGraphManager& ngm, Buffers::BufferManager& bm,
-        Vruta::TaskScheduler& sched, Vruta::EventManager& event_mgr)
-        : m_ngm(ngm)
-        , m_bm(bm)
-        , m_sched(sched)
-        , m_event_mgr(event_mgr)
-    {
-    }
+    /**
+     * @throws std::invalid_argument If any manager is null.
+     */
+    Inspector(const std::shared_ptr<Nodes::NodeGraphManager>& ngm,
+        const std::shared_ptr<Buffers::BufferManager>& bm,
+        const std::shared_ptr<Vruta::TaskScheduler>& sched,
+        const std::shared_ptr<Vruta::EventManager>& event_mgr);
 
     /**
      * @brief Inspect a single Node and its full modulator tree.
@@ -262,26 +261,44 @@ public:
     void destroy(InspectResult& result);
 
 private:
-    Buffers::BufferManager& m_bm;
-    Nodes::NodeGraphManager& m_ngm;
-    Vruta::TaskScheduler& m_sched;
-    Vruta::EventManager& m_event_mgr;
+    std::shared_ptr<Buffers::BufferManager> m_bm;
+    std::shared_ptr<Nodes::NodeGraphManager> m_ngm;
+    std::shared_ptr<Vruta::TaskScheduler> m_sched;
+    std::shared_ptr<Vruta::EventManager> m_event_mgr;
+
+    /**
+     * @brief A reader over a manager that its row must not keep alive.
+     *
+     * The row is polled by a scheduler task, so owning the manager there could
+     * close a cycle. The reader yields an empty string once the manager is gone.
+     */
+    template <typename Manager, typename Fn>
+    [[nodiscard]] static std::function<std::string()> reader_over(
+        const std::shared_ptr<Manager>& manager, Fn fn)
+    {
+        return [weak = std::weak_ptr<Manager>(manager), fn = std::move(fn)] {
+            const auto locked = weak.lock();
+            return locked ? std::string(fn(*locked)) : std::string {};
+        };
+    }
 
     /**
      * @brief @p count row targets, slices of one "text"-slotted buffer, for
      *        make_entry_group's rows. Empty when @p count is zero.
      */
     [[nodiscard]] std::vector<EntryBuffer> make_row_buffers(
-        const std::shared_ptr<Core::Window>& window,
+        const Surface& surface,
         size_t count) const;
 
     /**
      * @brief A "text"-slotted buffer, registered with the BufferManager. Used
      *        as make_entry_group's header, whose label Collapsible::place()
      *        draws itself, and as the buffer make_row_buffers slices.
+     *
+     * Draws where @p surface does: its window, or its image and area.
      */
     [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> make_header_buffer(
-        const std::shared_ptr<Core::Window>& window) const;
+        const Surface& surface) const;
 
     InspectResult inspect_modulator_tree(
         const Nodes::ModulatorTree& tree,

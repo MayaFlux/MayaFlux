@@ -4,6 +4,7 @@
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/IO/Keys.hpp"
+#include "MayaFlux/Kinesis/Viewport/ViewportArea.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
 namespace MayaFlux::Core {
@@ -12,6 +13,10 @@ class Window;
 
 namespace MayaFlux::Vruta {
 class EventManager;
+}
+
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
 }
 
 namespace MayaFlux::Portal::Forma {
@@ -62,19 +67,108 @@ public:
      * @brief Construct and immediately register event coroutines.
      * @param layer         Layer to hit-test against. Must outlive Context.
      * @param window        Window whose surface the layer lives on.
-     * @param event_manager Engine EventManager for coroutine registration.
+     * @param event_manager Engine EventManager for coroutine registration. Shared,
+     *                      so it outlives the cancellations made on destruction.
      * @param name          Unique name scoping all registered event handlers.
      *                      Must be unique across all live Contexts.
+     * @throws std::invalid_argument If event_manager is null.
      */
     Context(std::shared_ptr<Layer> layer,
         std::shared_ptr<Core::Window> window,
-        Vruta::EventManager& event_manager,
+        const std::shared_ptr<Vruta::EventManager>& event_manager,
         std::string name);
+
+    /**
+     * @brief A Context with no window, for a Layer drawn into an image target.
+     *
+     * Its pixel extent is the size of @p image, read at event time, so a resize
+     * of the target is followed. It subscribes to nothing: the owner of
+     * whatever shows the image passes input in through the feed_* calls, in
+     * pixels of that extent, and Surface::route_input_from() does so for an
+     * on-screen element.
+     *
+     * @param layer Layer to hit-test against. Must outlive Context.
+     * @param image Target the Layer is drawn into.
+     * @param area Part of the image the Layer fills, as a destination of a
+     *        RenderProcessor takes it. The extent is then that part's size, and
+     *        fed pixels are still pixels of the whole image.
+     * @throws std::invalid_argument If image is null.
+     */
+    Context(std::shared_ptr<Layer> layer,
+        std::shared_ptr<Portal::Graphics::ImageTarget> image,
+        const Kinesis::ViewportArea& area = {});
 
     /**
      * @brief Cancel all registered event coroutines.
      */
     ~Context();
+
+    // =========================================================================
+    // Fed input
+    // =========================================================================
+
+    /**
+     * @brief Pointer moved to pixel (@p px, @p py) of the extent, top-left origin.
+     *
+     * Runs hover, enter, leave, move and held-button drag callbacks as a window
+     * motion event does. Meant for a Context without a window; on one with a
+     * window the same input arrives by itself and would be handled twice.
+     */
+    void feed_move(double px, double py);
+
+    /// @brief Button pressed with the pointer at pixel (@p px, @p py). See feed_move().
+    void feed_press(double px, double py, IO::MouseButtons btn);
+
+    /// @brief Button released with the pointer at pixel (@p px, @p py). See feed_move().
+    void feed_release(double px, double py, IO::MouseButtons btn);
+
+    /// @brief Scroll while the pointer is over an element. See feed_move().
+    void feed_scroll(double dx, double dy);
+
+    /// @brief The pointer left the surface: the hovered element is left. See feed_move().
+    void feed_leave();
+
+    /**
+     * @brief Let go of a fed button without a release, ending any drag it began.
+     *
+     * For a release that happened where this Context could not see it.
+     */
+    void feed_cancel(IO::MouseButtons btn);
+
+    /// @brief Whether a button is held: by the window, or by the last feed_press() without a release.
+    [[nodiscard]] bool button_down(IO::MouseButtons btn) const;
+
+    /// @brief Resolved text for the focused element. See feed_move().
+    void feed_text(uint32_t codepoint);
+
+    /**
+     * @brief A key event for the focused element, with the modifiers held.
+     * @param key  The key.
+     * @param type KEY_PRESSED, KEY_RELEASED or KEY_REPEAT. Others are ignored.
+     * @param held Modifiers down at the event.
+     *
+     * Reaches on_press, on_held and on_release callbacks and key subscriptions
+     * as the window's key events do. See feed_move().
+     */
+    void feed_key(IO::Keys key, Core::WindowEventType type, IO::Modifiers held = IO::Modifiers::None);
+
+    /**
+     * @brief Say which modifiers are down, for a Context without a window.
+     *
+     * feed_key() sets them too. The pointer feeds carry none, so call this
+     * before them when a modifier may have changed since the last key.
+     */
+    void feed_modifiers(IO::Modifiers held);
+
+    /**
+     * @brief Modifiers held now: the window's, or the last passed to feed_modifiers() or feed_key().
+     */
+    [[nodiscard]] IO::Modifiers modifiers() const;
+
+    /**
+     * @brief The size input is measured in: the window's, or the image target's.
+     */
+    [[nodiscard]] glm::uvec2 extent() const noexcept;
 
     Context(const Context&) = delete;
     Context& operator=(const Context&) = delete;
@@ -164,8 +258,8 @@ public:
      *   starts on press, as on_drag does.
      * - MOUSE_ENTERED and MOUSE_EXITED when the pointer enters or leaves it.
      * - MOUSE_SCROLLED while the pointer is over it.
-     * - KEY_PRESSED, KEY_RELEASED and KEY_REPEAT of a key, while it has focus.
-     *   A filter for these must name the key.
+     * - KEY_PRESSED, KEY_RELEASED and KEY_REPEAT while it has focus: of the key
+     *   a filter names, or of every key when it names none.
      * - TEXT_INPUT while it has focus.
      * - WINDOW_FOCUS_GAINED and WINDOW_FOCUS_LOST when it gains or loses focus.
      *
@@ -179,8 +273,7 @@ public:
     /**
      * @brief Whether an element can receive what a filter asks for.
      *
-     * False for a key event without a key and for an event an element never
-     * receives, such as a window resize.
+     * False for an event an element never receives, such as a window resize.
      */
     [[nodiscard]] static bool receives(const Vruta::WindowEventFilter& filter) noexcept;
 
@@ -461,11 +554,20 @@ private:
     };
     std::unordered_map<int, KeyHandlerState> m_registered_keys;
     std::unordered_set<int> m_subscribed_keys;
+    std::unordered_set<int> m_any_key_types;
 
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Core::Window> m_window;
-    Vruta::EventManager& m_event_manager;
+    std::shared_ptr<Portal::Graphics::ImageTarget> m_image;
+    Kinesis::ViewportArea m_area;
+    std::shared_ptr<Vruta::EventManager> m_event_manager;
     std::string m_name;
+
+    std::array<bool, 3> m_fed_pressed {};
+    glm::dvec2 m_fed_position {};
+    IO::Modifiers m_fed_modifiers { IO::Modifiers::None };
+
+    [[nodiscard]] glm::dvec2 pointer_position() const;
     std::optional<uint32_t> m_hovered;
 
     std::unordered_map<uint32_t, ElementCallbacks> m_callbacks;
@@ -485,8 +587,10 @@ private:
     void dispatch(uint32_t id, Core::WindowEventType type, glm::vec2 ndc,
         Core::WindowEvent::EventData data = {},
         std::optional<IO::MouseButtons> button = std::nullopt,
-        std::optional<IO::Keys> key = std::nullopt);
+        std::optional<IO::Keys> key = std::nullopt,
+        std::optional<bool> names_key = std::nullopt);
     void handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event);
+    void handle_any_key(const Core::WindowEvent& event);
     void handle_key_press(int key_code);
     void handle_key_release(IO::Keys key);
     void handle_key_held(int key_code);

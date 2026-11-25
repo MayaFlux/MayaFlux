@@ -29,8 +29,8 @@ InspectResult Inspector::event(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, header_label, std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -52,14 +52,14 @@ InspectResult& Inspector::event_manager(
     const std::vector<EntrySpec> root_entrys {
         EntrySpec {
             .label = "events",
-            .reader = [&m_event_mgr = m_event_mgr] {
-                return std::to_string(m_event_mgr.get_all_events().size());
-            },
+            .reader = reader_over(m_event_mgr, [](Vruta::EventManager& events) {
+                return std::to_string(events.get_all_events().size());
+            }),
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), root_entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, root_entrys.size());
 
     auto root_group = make_entry_group(root_entrys, "EventManager", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
@@ -67,15 +67,15 @@ InspectResult& Inspector::event_manager(
     InspectResult& result = m_event_result.emplace();
     result.group = std::move(root_group);
 
-    const auto names = m_event_mgr.get_event_names();
+    const auto names = m_event_mgr->get_event_names();
 
-    for (const auto& ev : m_event_mgr.get_all_events()) {
+    for (const auto& ev : m_event_mgr->get_all_events()) {
         if (!ev)
             continue;
 
         std::string header_label = "(unnamed)";
         for (const auto& n : names) {
-            if (m_event_mgr.get_event(n) == ev) {
+            if (m_event_mgr->get_event(n) == ev) {
                 header_label = n;
                 break;
             }
@@ -88,8 +88,8 @@ InspectResult& Inspector::event_manager(
             },
         };
 
-        auto ev_hbuf = make_header_buffer(surface.window());
-        auto ev_rbufs = make_row_buffers(surface.window(), entrys.size());
+        auto ev_hbuf = make_header_buffer(surface);
+        auto ev_rbufs = make_row_buffers(surface, entrys.size());
 
         auto ev_group = make_entry_group(entrys, header_label, std::move(ev_hbuf), ev_rbufs,
             surface, cursor, x_min, x_max, row_h, false);

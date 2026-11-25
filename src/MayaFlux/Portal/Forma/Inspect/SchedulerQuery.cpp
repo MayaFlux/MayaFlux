@@ -41,8 +41,8 @@ InspectResult Inspector::inspect_task(
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, entrys.size());
 
     auto group = make_entry_group(entrys, Reflect::short_dynamic_type_name(*entry.routine), std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, false);
@@ -64,21 +64,21 @@ InspectResult& Inspector::scheduler(
     const std::vector<EntrySpec> root_entrys {
         EntrySpec {
             .label = "tasks",
-            .reader = [&m_sched = m_sched] {
-                return std::to_string(m_sched.get_all_tasks().size());
-            },
+            .reader = reader_over(m_sched, [](Vruta::TaskScheduler& scheduler) {
+                return std::to_string(scheduler.get_all_tasks().size());
+            }),
         },
     };
 
-    auto hbuf = make_header_buffer(surface.window());
-    auto rbufs = make_row_buffers(surface.window(), root_entrys.size());
+    auto hbuf = make_header_buffer(surface);
+    auto rbufs = make_row_buffers(surface, root_entrys.size());
     auto root_group = make_entry_group(root_entrys, "TaskScheduler", std::move(hbuf), rbufs,
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult& result = m_scheduler_result.emplace();
     result.group = std::move(root_group);
 
-    const auto tasks = m_sched.get_all_tasks();
+    const auto tasks = m_sched->get_all_tasks();
     for (const auto& entry : tasks) {
         if (!entry.routine)
             continue;
@@ -103,14 +103,14 @@ InspectResult Inspector::tasks(
     const std::string header_label = "TaskScheduler ["
         + std::string(Reflect::enum_to_string(token)) + "]";
 
-    auto hbuf = make_header_buffer(surface.window());
+    auto hbuf = make_header_buffer(surface);
     auto root_group = make_entry_group({}, header_label, std::move(hbuf), {},
         surface, cursor, x_min, x_max, row_h, true);
 
     InspectResult result;
     result.group = std::move(root_group);
 
-    const auto all = m_sched.get_all_tasks();
+    const auto all = m_sched->get_all_tasks();
     for (const auto& entry : all) {
         if (!entry.routine)
             continue;

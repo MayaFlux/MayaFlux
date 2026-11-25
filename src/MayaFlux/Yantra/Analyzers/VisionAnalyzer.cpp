@@ -67,6 +67,11 @@ VisionAnalyzer::VisionAnalyzer(VisionAnalyzerConfig config)
     set_config(std::move(config));
 }
 
+VisionAnalyzer::~VisionAnalyzer()
+{
+    Portal::Graphics::get_texture_manager().release_image(m_upload_image);
+}
+
 void VisionAnalyzer::reset()
 {
     for (const auto& executor : m_executors) {
@@ -406,7 +411,9 @@ std::shared_ptr<Core::VKImage> VisionAnalyzer::resolve_image(
         return nullptr;
 
     if (!m_upload_image || m_upload_w != w || m_upload_h != h) {
-        m_upload_image = Portal::Graphics::TextureLoom::instance().create_2d(
+        auto& loom = Portal::Graphics::TextureLoom::instance();
+        loom.release_image(m_upload_image);
+        m_upload_image = loom.create_2d(
             w, h, Portal::Graphics::ImageFormat::RGBA8, nullptr);
         m_upload_w = w;
         m_upload_h = h;

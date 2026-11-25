@@ -100,12 +100,12 @@ void CompositeGeometryBuffer::add_geometry(
             "Must call setup_processors() before add_geometry()");
     }
 
-    if (!config.target_window) {
+    if (!config.target_window && config.target_images.empty()) {
         error<std::invalid_argument>(
             Journal::Component::Buffers,
             Journal::Context::Init,
             std::source_location::current(),
-            "Target window must be specified in RenderConfig");
+            "A target window or image target must be specified in RenderConfig");
     }
 
     auto resolved = config;

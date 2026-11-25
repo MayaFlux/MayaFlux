@@ -110,18 +110,18 @@ namespace {
     }
 
     /**
-     * @brief Whether a render config names a window to draw into.
+     * @brief Whether a render config names a window or an image target to draw into.
      * @param render Render config.
-     * @return True when target_window is set. Logs an error otherwise.
+     * @return True when target_window or target_images is set. Logs an error otherwise.
      */
     bool has_target(const Evolve::RenderConfig& render)
     {
-        if (render.target_window) {
+        if (render.target_window || !render.target_images.empty()) {
             return true;
         }
 
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
-            "evolve: RenderConfig::target_window is required, there is no default window");
+            "evolve: RenderConfig::target_window or target_images is required, there is no default window");
         return false;
     }
 

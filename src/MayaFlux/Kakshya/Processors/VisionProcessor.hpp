@@ -39,7 +39,7 @@ public:
      */
     explicit VisionProcessor(Kinesis::Vision::VisionSequence sequence);
 
-    ~VisionProcessor() override = default;
+    ~VisionProcessor() override;
 
     /**
      * @brief Cache frame geometry from get_structure(). Resets executor state.

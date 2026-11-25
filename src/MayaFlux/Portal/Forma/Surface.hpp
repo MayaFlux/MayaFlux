@@ -28,6 +28,24 @@ struct SurfaceConfig {
     std::shared_ptr<Core::Window> window;
 
     /**
+     * @brief Image the Surface is drawn into, for a Surface with no window.
+     *
+     * Used when @c window is unset. The built Context has no window either:
+     * its extent is the image's size and input reaches it through
+     * Surface::route_input_from(). Ignored when @c window is set. A Surface
+     * that has a window may still be drawn into an image by image_config().
+     */
+    std::shared_ptr<Portal::Graphics::ImageTarget> image;
+
+    /**
+     * @brief Part of @c image, and layer of it, that a Surface with no window draws into.
+     *
+     * The Surface's extent is that part's size, its batches draw into it, and
+     * input routed to it is mapped into it. Unset is the whole first layer.
+     */
+    Kinesis::ViewportArea area;
+
+    /**
      * @brief Unique name scoping the Context's event coroutines.
      *
      * Only consulted when @c layer/@c ctx are unset and need to be built.
@@ -181,6 +199,59 @@ public:
     }
 
     /**
+     * @brief The image this Surface is drawn into, or null when it has a window.
+     */
+    [[nodiscard]] const std::shared_ptr<Portal::Graphics::ImageTarget>& image() const noexcept { return m_image; }
+
+    /**
+     * @brief Pixel size of the canvas: the window's, or that of the part of the image it draws into.
+     */
+    [[nodiscard]] glm::uvec2 extent() const noexcept { return extent_of(window(), m_image, m_area); }
+
+    /** @brief The layer and part of image() this Surface draws into. */
+    [[nodiscard]] const Kinesis::ViewportArea& area() const noexcept { return m_area; }
+
+    /**
+     * @brief Draw and hit test this Surface through a view.
+     *
+     * Elements stay placed in the z = 0 plane in NDC units; the view moves
+     * what shows. Its batches draw with it, and the pointer, drags and
+     * callbacks come back in element coordinates, for the Surface's own window
+     * input and for input routed into it. std::nullopt removes it. The batches
+     * and images redraw.
+     */
+    void set_view(const std::optional<Kinesis::ViewTransform>& view);
+
+    [[nodiscard]] const std::optional<Kinesis::ViewTransform>& view() const noexcept { return m_layer->view(); }
+
+    /**
+     * @brief Pixel size of a canvas given by its window or, without one, its image.
+     *
+     * For callbacks that must not keep the Surface alive.
+     */
+    [[nodiscard]] static glm::uvec2 extent_of(
+        const std::shared_ptr<Core::Window>& window,
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& image,
+        const Kinesis::ViewportArea& area = {}) noexcept;
+
+    /**
+     * @brief Send input that reaches an on-screen element into this Surface.
+     *
+     * For a Surface made from an image: @p element of @p host shows the image,
+     * and the pointer, buttons, scroll, text and keys that reach it are passed
+     * to the Context's feed_* calls, the pointer mapped from its bounds to this
+     * Surface's extent, with the host's modifiers. Keys reach it while the
+     * element has focus. A drag that began on the element keeps arriving after
+     * the pointer leaves it, and losing focus on the host clears focus here.
+     * The mapping takes the image to fill the element's bounds_hint, top edge
+     * to top edge.
+     *
+     * @return False, routing nothing, when this Surface has a window or the
+     *         element is missing or has no bounds_hint.
+     */
+    bool route_input_from(Surface& host, uint32_t element);
+
+    /**
      * @brief Shared handles for callers that need to keep components alive
      *        independently of the Surface (background tasks, escapes into
      *        coroutines, etc.).
@@ -220,14 +291,31 @@ public:
     // =========================================================================
 
     /**
-     * @brief @p base targeting this Surface's window.
+     * @brief @p base targeting this Surface's window, or its image when it has none.
      *
-     * Only the window is set; every other field of @p base is kept.
+     * Only the destination is set; every other field of @p base is kept.
      */
     [[nodiscard]] Portal::Graphics::RenderConfig render_config(
         Portal::Graphics::RenderConfig base = {}) const
     {
         base.target_window = window();
+        if (!base.target_window && m_image) {
+            base.target_images = { m_image };
+        }
+        return base;
+    }
+
+    /**
+     * @brief @p base targeting @p target instead of this Surface's window.
+     *
+     * Every other field of @p base is kept.
+     */
+    [[nodiscard]] Portal::Graphics::RenderConfig image_config(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& target,
+        Portal::Graphics::RenderConfig base = {}) const
+    {
+        base.target_window = nullptr;
+        base.target_images = { target };
         return base;
     }
 
@@ -327,6 +415,8 @@ private:
     };
 
     std::shared_ptr<WindowOwnership> m_window_ownership;
+    std::shared_ptr<Portal::Graphics::ImageTarget> m_image;
+    Kinesis::ViewportArea m_area;
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Context> m_ctx;
 };

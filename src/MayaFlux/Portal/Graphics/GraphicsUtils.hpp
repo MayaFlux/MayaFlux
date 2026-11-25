@@ -296,6 +296,9 @@ struct SamplerConfig {
     float max_anisotropy = 1.0F; // 1.0 = disabled, 16.0 = max quality
     bool enable_mipmaps = false;
     BorderColor border_color = BorderColor::DEFAULT;
+    float lod_bias = 0.0F; ///< Added to the computed level; positive blurs, negative sharpens
+    float min_lod = 0.0F; ///< Lowest level the sampler reads
+    float max_lod = 1000.0F; ///< Highest level it reads; 1000 or more leaves it unclamped
 
     bool operator==(const SamplerConfig& other) const = default;
 };
@@ -313,17 +316,28 @@ enum class FitMode : uint8_t {
     TILE_MIRRORED ///< Source repeated, every other tile mirrored
 };
 
+class ImageTarget;
+
 /**
  * @struct SampledTexture
- * @brief A texture bound besides the default one, with an optional sampler.
+ * @brief A texture and where it is bound, with an optional sampler.
  *
- * `{ "text", nullptr }` and `{ .name = "map", .image = image, .sampler = SamplerConfig { ... } }`
- * both work. Without a sampler the render processor's default is used.
+ * `{ "text", nullptr }`, `{ .name = "map", .image = image, .sampler = SamplerConfig { ... } }`
+ * and `{ .binding = 2, .target = target }` all work. Without a sampler the
+ * binding keeps the one it has, or the render processor's default.
+ *
+ * Where: @c binding when set, otherwise @c name, which must be one the
+ * processor's configuration lists.
+ *
+ * What: @c target when set, and the binding then follows it when it is
+ * resized, otherwise @c image. Setting both is refused.
  */
 struct SampledTexture {
     std::string name;
     std::shared_ptr<Core::VKImage> image;
     std::optional<SamplerConfig> sampler;
+    std::optional<uint32_t> binding;
+    std::shared_ptr<ImageTarget> target;
 
     bool operator==(const SampledTexture& other) const = default;
 };
@@ -345,6 +359,15 @@ struct SampledTexture {
  */
 struct RenderConfig {
     std::shared_ptr<Core::Window> target_window;
+
+    /**
+     * @brief Images to draw into instead of, or besides, a window.
+     *
+     * The window and every image are destinations of the buffer's primary render
+     * processor, each with its own pipeline. The same image listed twice is one
+     * destination.
+     */
+    std::vector<std::shared_ptr<ImageTarget>> target_images;
     std::string vertex_shader;
     std::string fragment_shader;
     std::string geometry_shader;

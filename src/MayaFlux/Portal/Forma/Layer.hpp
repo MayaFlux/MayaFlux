@@ -2,6 +2,12 @@
 
 #include "Element.hpp"
 
+#include "MayaFlux/Kinesis/Viewport/ViewTransform.hpp"
+
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
+}
+
 namespace MayaFlux::Portal::Forma {
 
 namespace internal {
@@ -187,6 +193,19 @@ public:
      */
     [[nodiscard]] const std::shared_ptr<Buffers::FormaBuffer>& batch() const noexcept { return m_batch; }
 
+    /**
+     * @brief The buffer elements placed for @p target draw into, or null before
+     *        the first one. Made and replaced by Forma.
+     */
+    [[nodiscard]] std::shared_ptr<Buffers::FormaBuffer> batch(const std::shared_ptr<Graphics::ImageTarget>& target) const
+    {
+        for (const auto& [image, buffer] : m_image_batches) {
+            if (image == target)
+                return buffer;
+        }
+        return nullptr;
+    }
+
     // =========================================================================
     // Element mutation
     // =========================================================================
@@ -237,6 +256,31 @@ public:
      *        (drawn first), cascading to every related element.
      */
     bool send_to_back(uint32_t id);
+
+    // =========================================================================
+    // View
+    // =========================================================================
+
+    /**
+     * @brief The view the layer is drawn with, or std::nullopt for none.
+     *
+     * Elements stay placed in the z = 0 plane. The batches Forma draws them
+     * into follow the view, and a Context maps the pointer back through it, so
+     * hit regions and callbacks keep working in the elements' own coordinates.
+     * A buffer made with create_buffer() takes its view from its own processor.
+     * Image batches redraw. Surface::set_view also redraws a Surface's image.
+     */
+    void set_view(const std::optional<Kinesis::ViewTransform>& view);
+
+    [[nodiscard]] const std::optional<Kinesis::ViewTransform>& view() const noexcept { return m_view; }
+
+    /**
+     * @brief The element coordinates that show at a screen NDC position under the view.
+     *
+     * The position itself with no view. A position that meets no element plane,
+     * behind the eye or edge on, comes back far outside every element.
+     */
+    [[nodiscard]] glm::vec2 from_view(glm::vec2 screen) const;
 
     // =========================================================================
     // Spatial queries - NDC space
@@ -339,7 +383,9 @@ private:
     int64_t m_next_front_priority {};
     int64_t m_next_back_priority {};
 
+    std::optional<Kinesis::ViewTransform> m_view;
     std::shared_ptr<Buffers::FormaBuffer> m_batch;
+    std::vector<std::pair<std::shared_ptr<Graphics::ImageTarget>, std::shared_ptr<Buffers::FormaBuffer>>> m_image_batches;
 
     [[nodiscard]] int64_t claim_front_priority() noexcept { return ++m_next_front_priority; }
 

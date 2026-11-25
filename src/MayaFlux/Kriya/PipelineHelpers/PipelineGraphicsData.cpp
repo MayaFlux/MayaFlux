@@ -134,7 +134,8 @@ bool ensure_rendering(const std::shared_ptr<Buffers::VKBuffer>& buffer, const Po
     }
 
     if (buffer->get_render_processor()) {
-        if (buffer->get_render_config().target_window != config.target_window) {
+        if (buffer->get_render_config().target_window != config.target_window
+            || buffer->get_render_config().target_images != config.target_images) {
             MF_WARN(Journal::Component::Kriya, Journal::Context::Configuration,
                 "Buffer already renders to another window; keeping its render setup");
         }

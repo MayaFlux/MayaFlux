@@ -66,9 +66,10 @@ concept GridCellData = (ArithmeticData<State> || GlmVec2Type<State> || GlmVec4Ty
  *   spatial stages run over the frames.
  *
  * The first three route to the graphics domain and every call requires
- * RenderConfig::target_window. There is no default window. A null target logs
- * an error and returns nullptr, and nothing is registered. Exceptions thrown
- * by the classes' constructors propagate.
+ * RenderConfig::target_window or RenderConfig::target_images. There is no
+ * default window. A config with neither logs an error and returns nullptr,
+ * and nothing is registered. Exceptions thrown by the classes' constructors
+ * propagate.
  *
  * Nothing here is realtime safe. Call from the thread that constructs the
  * objects.
@@ -129,7 +130,7 @@ public:
     /**
      * @brief Build a relaxation grid, register it and attach rendering.
      * @param config Grid arrangement.
-     * @param render Render target. target_window is required.
+     * @param render Render target. A target_window or target_images is required.
      * @return The registered grid, or nullptr if the target window is null.
      *
      * The grid is constructed from the config, registered in the graphics
@@ -154,7 +155,7 @@ public:
      * @param config Grid arrangement.
      * @param seed Callable taking cell coordinates (x, y) and returning the
      *        cell's state. x runs over [0, width) and y over [0, height).
-     * @param render Render target. target_window is required.
+     * @param render Render target. A target_window or target_images is required.
      * @return The registered grid, or nullptr if the target window is null or
      *         the seed's return type does not match the grid's cell stride.
      *
@@ -200,7 +201,7 @@ public:
      *        named ref the volume does not yet hold is declared, with the slot
      *        count its role needs. A ref issued by another volume is left for
      *        setup_flow to reject.
-     * @param render Render target. target_window is required.
+     * @param render Render target. A target_window or target_images is required.
      * @return The volume, or nullptr if it is null or the target window is null.
      *
      * Registers the volume in the graphics domain, which establishes its
@@ -230,7 +231,7 @@ public:
      *        IO::open_volume_sequence.
      * @param reflow Courses, frame operations, selection and rewrite. Default constructed
      *        plays the whole sequence once.
-     * @param render Render target. target_window is required.
+     * @param render Render target. A target_window or target_images is required.
      * @return The reflow, or nullptr if the volume or the frames are null, the target
      *         window is null, or the config cannot make a reflow. Nothing is registered
      *         in that case.
@@ -263,7 +264,7 @@ public:
      * @param frames The frames to play, such as an IO::SpatialFileFrames.
      * @param reflow Courses, frame operations, selection and rewrite. Default constructed
      *        plays the whole stream once.
-     * @param render Render target. target_window is required.
+     * @param render Render target. A target_window or target_images is required.
      * @return The reflow, or nullptr if the buffer or the frames are null, the target window
      *         is null, or the config cannot make a reflow. Nothing is registered in that case.
      *
@@ -296,7 +297,7 @@ public:
      *        Default constructed means field displacement only.
      * @param bind Called with the GpuFieldOperator before the geometry buffer is
      *        registered. May be empty when the config alone is wanted.
-     * @param render Render target. target_window is required.
+     * @param render Render target. A target_window or target_images is required.
      * @return The network, or nullptr if it is null, has no primary
      *         GraphicsOperator to read a layout from, or the target window is null.
      *

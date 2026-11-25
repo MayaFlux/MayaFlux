@@ -45,6 +45,8 @@ class MAYAFLUX_API TextureCollection : public TextureContainer {
 public:
     explicit TextureCollection(const TextureCollectionSpec& spec);
 
+    ~TextureCollection() override;
+
     /**
      * @brief Copy @p image into the next layer.
      *

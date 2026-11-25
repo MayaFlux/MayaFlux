@@ -27,6 +27,7 @@ namespace Nexus {
 
 namespace Portal::Graphics {
     struct RenderConfig;
+    class ImageTarget;
 }
 
 /**
@@ -110,6 +111,20 @@ template <typename Entity>
 void remove_render_sink(const std::shared_ptr<Entity>& entity, const std::shared_ptr<Core::Window>& window)
 {
     entity->remove_render(*get_buffer_manager(), window);
+}
+
+/**
+ * @brief Unregister the render output of an Agent or Emitter drawing into @p image.
+ *
+ * Needed only for an entity outside a Fabric.
+ */
+template <typename Entity>
+    requires requires(Entity& entity, Buffers::BufferManager& manager, const std::shared_ptr<Portal::Graphics::ImageTarget>& image) {
+        entity.remove_render(manager, image);
+    }
+void remove_render_sink(const std::shared_ptr<Entity>& entity, const std::shared_ptr<Portal::Graphics::ImageTarget>& image)
+{
+    entity->remove_render(*get_buffer_manager(), image);
 }
 
 } // namespace MayaFlux
