@@ -91,13 +91,11 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
 {
     Agent::invoke_perception(ctx);
 
-    const auto half_turn = glm::angleAxis(glm::pi<float>(), glm::vec3(0.0F, 1.0F, 0.0F));
-
     if (!m_held->drives(m_driver)) {
         const auto [placement, frustum] = m_held->read();
         m_view = Kinesis::view_from_frustum(placement, frustum, aspect());
         m_controls.position.observe(glm::vec3(placement[3]));
-        m_controls.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(placement))) * half_turn);
+        m_controls.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(placement))));
         return;
     }
 
@@ -113,11 +111,10 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
         Kinesis::advance_navigation(m_nav);
     }
     m_view = Kinesis::build_view_transform(m_nav, aspect());
-    m_held->write(m_driver, Kinesis::viewpoint_of(m_nav));
+    const auto viewpoint = Kinesis::viewpoint_of(m_nav);
+    m_held->write(m_driver, viewpoint);
     m_controls.position.observe(m_nav.eye);
-    m_controls.orientation.observe(
-        glm::angleAxis(m_nav.yaw, glm::vec3(0.0F, 1.0F, 0.0F))
-        * glm::angleAxis(-m_nav.pitch, glm::vec3(1.0F, 0.0F, 0.0F)));
+    m_controls.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(viewpoint.first))));
 }
 
 void Locus::invoke_influence(const InfluenceContext& ctx) const

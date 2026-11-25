@@ -49,7 +49,7 @@ MF_DESCRIBE(SensorControls)
 
 /**
  * @struct AgentControls
- * @brief The state of an Agent. `orientation` is a glm::quat, local +Z forward.
+ * @brief The state of an Agent. `orientation` is a glm::quat, local -Z forward.
  */
 struct AgentControls {
     Quantity position;

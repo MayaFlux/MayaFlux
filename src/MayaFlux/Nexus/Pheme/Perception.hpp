@@ -19,7 +19,7 @@ namespace MayaFlux::Nexus {
 struct PerceptionContext {
     glm::vec3 position {};
     float radius { 1.0F }; ///< Query radius the spatial results were gathered with.
-    std::optional<glm::quat> orientation; ///< Optional orientation of the perceiver. Local +Z is its forward direction.
+    std::optional<glm::quat> orientation; ///< Optional orientation of the perceiver. Local -Z is its forward direction.
     std::span<const Kinesis::QueryResult> spatial_results;
 
     // @note future: EnergyAnalysis audio_energy {};

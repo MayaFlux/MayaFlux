@@ -172,7 +172,7 @@ public:
         m_controls.position.assign(Quantity::unset());
     }
 
-    /** @brief Set the orientation. Local +Z is forward. Unset means no rotation. */
+    /** @brief Set the orientation. Local -Z is forward. Unset means no rotation. */
     [[deprecated("use set({ .orientation = ... })")]] void set_orientation(const glm::quat& q)
     {
         m_controls.orientation.assign(Quantity(q));
