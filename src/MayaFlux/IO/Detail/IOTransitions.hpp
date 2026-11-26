@@ -11,6 +11,7 @@ class CameraContainer;
 class StreamContainer;
 struct VolumeData;
 struct MeshData;
+struct MeshAssemblyMaterial;
 }
 
 namespace MayaFlux::Buffers {
@@ -54,6 +55,19 @@ void configure_camera_container(
     const std::shared_ptr<Kakshya::CameraContainer>& container, uint64_t reader_id);
 
 MAYAFLUX_API TextureResolver make_default_resolver(const std::string& filepath);
+
+using MaterialResolver = std::function<std::shared_ptr<Core::VKImage>(const Kakshya::MeshAssemblyMaterial&)>;
+
+/**
+ * @brief The image of an assembly material, found beside the file it came from.
+ *
+ * A cut out material gets its colour with the opacity map as alpha. Otherwise the
+ * diffuse path is tried as written, then in a textures folder beside the file,
+ * then beside the file itself. Textures the file embeds are not read. The holds
+ * on the images are released with the last copy of the resolver, so whatever
+ * binds one must retain it.
+ */
+MAYAFLUX_API MaterialResolver make_material_resolver(const std::string& filepath);
 
 std::shared_ptr<Buffers::VideoContainerBuffer> create_video_container_buffer(
     const std::shared_ptr<Buffers::BufferManager>& buffer_manager,

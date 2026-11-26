@@ -83,6 +83,16 @@ public:
     /** @brief Replace what a row becomes in orchestrate(). Empty returns to default_row(). */
     void set_row_rule(RowRule rule) { m_row_rule = std::move(rule); }
 
+    /**
+     * @brief The image of each material orchestrate() uses.
+     *
+     * Without one, a path given to orchestrate() finds textures beside that file,
+     * and an assembly given directly gets none. A material is bound before the
+     * realization is returned, so present it afterwards. The part that binds an
+     * image retains it; release the hold your resolver took.
+     */
+    void set_material_resolver(Kriya::MeshAssemblyMaterialResolver resolver) { m_material_resolver = std::move(resolver); }
+
     /** @brief How orchestrate() cuts an assembly into buffers. */
     void set_realize_options(Kriya::MeshAssemblyRealizeOptions options) { m_realize_options = std::move(options); }
 
@@ -252,6 +262,11 @@ public:
     orchestrate(const std::string& filepath);
 
 private:
+    /** Realize, bind materials with @p materials and make the rows. */
+    [[nodiscard]] std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, Rows> orchestrate_rows(
+        const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+        const Kriya::MeshAssemblyMaterialResolver& materials);
+
     /** Place a principal where its buffer is drawn, then wire it to follow. */
     void wrap(const Fabric::Member& member, const BufferSlot& shown);
 
@@ -264,6 +279,7 @@ private:
     WiringRule m_wiring_rule;
     RowRule m_row_rule;
     Kriya::MeshAssemblyRealizeOptions m_realize_options;
+    Kriya::MeshAssemblyMaterialResolver m_material_resolver;
 };
 
 } // namespace MayaFlux::Nexus

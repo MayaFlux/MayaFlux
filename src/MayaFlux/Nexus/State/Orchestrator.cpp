@@ -5,6 +5,7 @@
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
+#include "MayaFlux/IO/Detail/IOTransitions.hpp"
 #include "MayaFlux/IO/Model/ModelReader.hpp"
 #include "MayaFlux/IO/Spatial/SpatialAssembly.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -311,11 +312,22 @@ Fabric::Member StateOrchestrator::default_row(
 std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, StateOrchestrator::Rows>
 StateOrchestrator::orchestrate(const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly)
 {
+    return orchestrate_rows(assembly, m_material_resolver);
+}
+
+std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, StateOrchestrator::Rows>
+StateOrchestrator::orchestrate_rows(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const Kriya::MeshAssemblyMaterialResolver& materials)
+{
     if (!assembly) {
         return {};
     }
 
     auto realization = Kriya::MeshAssemblyRealization::create(assembly, m_realize_options);
+    if (realization && materials) {
+        realization->bind_materials(materials);
+    }
     Rows rows;
 
     const auto world = assembly->world_transforms();
@@ -358,7 +370,8 @@ StateOrchestrator::orchestrate(const std::string& filepath)
         return {};
     }
 
-    auto [realization, rows] = orchestrate(assembly);
+    auto [realization, rows] = orchestrate_rows(assembly,
+        m_material_resolver ? m_material_resolver : IO::Detail::make_material_resolver(filepath));
     return { std::move(assembly), std::move(realization), std::move(rows) };
 }
 

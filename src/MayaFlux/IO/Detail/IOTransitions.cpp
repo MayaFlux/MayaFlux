@@ -2,6 +2,9 @@
 
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/IO/Image/ImageReader.hpp"
+#include "MayaFlux/IO/Model/ModelReader.hpp"
+
+#include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
 
 #include "MayaFlux/Kakshya/Processors/ContiguousAccessProcessor.hpp"
 #include "MayaFlux/Kakshya/Processors/FrameAccessProcessor.hpp"
@@ -109,6 +112,41 @@ TextureResolver make_default_resolver(const std::string& filepath)
     const auto base_dir = std::filesystem::path(filepath).parent_path();
     return [base_dir, resolved = std::make_shared<ResolvedTextures>()](const std::string& raw) -> std::shared_ptr<Core::VKImage> {
         auto tex_path = FileReader::resolve_path((base_dir / raw).generic_string());
+        const auto found = resolved->images.find(tex_path);
+        if (found != resolved->images.end()) {
+            return found->second;
+        }
+        auto image = IO::ImageReader::load_texture(tex_path);
+        resolved->images.emplace(std::move(tex_path), image);
+        return image;
+    };
+}
+
+MaterialResolver make_material_resolver(const std::string& filepath)
+{
+    const auto base_dir = std::filesystem::path(filepath).parent_path();
+    return [base_dir, model = FileReader::resolve_path(filepath), resolved = std::make_shared<ResolvedTextures>()](
+               const Kakshya::MeshAssemblyMaterial& material) -> std::shared_ptr<Core::VKImage> {
+        if (auto cut = IO::ModelReader::load_cutout_texture(material, model)) {
+            resolved->images.emplace("\ncutout" + std::to_string(resolved->images.size()), cut);
+            return cut;
+        }
+        if (material.diffuse_path.empty() || material.diffuse_embedded) {
+            return nullptr;
+        }
+
+        std::string named = material.diffuse_path;
+        std::ranges::replace(named, '\\', '/');
+        const auto leaf = std::filesystem::path(named).filename();
+
+        auto tex_path = FileReader::resolve_path((base_dir / named).generic_string());
+        for (const auto& elsewhere : { base_dir / "textures" / leaf, base_dir / leaf }) {
+            if (std::filesystem::exists(tex_path)) {
+                break;
+            }
+            tex_path = FileReader::resolve_path(elsewhere.generic_string());
+        }
+
         const auto found = resolved->images.find(tex_path);
         if (found != resolved->images.end()) {
             return found->second;
