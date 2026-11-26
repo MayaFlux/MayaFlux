@@ -4,7 +4,7 @@ if(NOT EXISTS "${EXAMPLES_SHADER_DIR}")
     return()
 endif()
 
-file(GLOB_RECURSE EXAMPLE_SHADER_FILES
+file(GLOB_RECURSE EXAMPLE_SHADER_FILES CONFIGURE_DEPENDS
     "${EXAMPLES_SHADER_DIR}/*.vert"
     "${EXAMPLES_SHADER_DIR}/*.frag"
     "${EXAMPLES_SHADER_DIR}/*.comp"
@@ -37,6 +37,18 @@ foreach(SHADER_FILE ${EXAMPLE_SHADER_FILES})
     )
 
     list(APPEND EXAMPLE_SHADER_OUTPUTS "${OUTPUT_FILE}")
+
+    if(SHADER_FILE MATCHES "_lit\\.frag$")
+        string(REGEX REPLACE "_lit\\.frag$" "_lit_list.frag.spv" LIST_OUTPUT "${SHADER_FILE}")
+        add_custom_command(
+            OUTPUT  "${LIST_OUTPUT}"
+            COMMAND glslc --target-env=vulkan1.4 -DMF_INFLUENCE_LIST "${SHADER_FILE}" -o "${LIST_OUTPUT}"
+            DEPENDS "${SHADER_FILE}"
+            COMMENT "Compiling example shader: ${LIST_OUTPUT}"
+            VERBATIM
+        )
+        list(APPEND EXAMPLE_SHADER_OUTPUTS "${LIST_OUTPUT}")
+    endif()
 endforeach()
 
 add_custom_target(compile_example_shaders
