@@ -27,7 +27,9 @@ std::shared_ptr<Course> Course::create(double step_rate, const CourseSetting& se
     if (!clock || !setting.usable()) {
         return nullptr;
     }
-    return std::shared_ptr<Course>(new Course(*clock, setting, paused));
+    auto course = std::shared_ptr<Course>(new Course(*clock, setting, paused));
+    course->m_step_rate = step_rate;
+    return course;
 }
 
 CourseControls& Course::open(CourseStore& store)
@@ -161,6 +163,32 @@ double Course::weight() const noexcept
 {
     const double value = number(m_controls.weight, 1.0);
     return std::isfinite(value) && value > 0.0 ? value : 0.0;
+}
+
+bool Course::fade_weight(double target, double seconds)
+{
+    if (!std::isfinite(target) || target < 0.0 || !std::isfinite(seconds) || seconds < 0.0) {
+        return false;
+    }
+    return m_commands.push(Detail::CourseCommand { .kind = Kind::FadeWeight, .value = target, .seconds = seconds });
+}
+
+void Course::step_fade()
+{
+    if (m_fade_done >= m_fade_steps) {
+        return;
+    }
+    if (number(m_controls.weight, 1.0) != m_fade_written) {
+        m_fade_done = m_fade_steps;
+        return;
+    }
+
+    ++m_fade_done;
+    const double value = m_fade_done == m_fade_steps
+        ? m_fade_to
+        : m_fade_from + (m_fade_to - m_fade_from) * (static_cast<double>(m_fade_done) / static_cast<double>(m_fade_steps));
+    m_controls.weight.assign(ControlValue(value));
+    m_fade_written = number(m_controls.weight, 1.0);
 }
 
 CourseSetting Course::setting() const
@@ -298,7 +326,8 @@ void Course::refuse()
 void Course::apply(const Detail::CourseCommand& command, const CourseSetting& setting)
 {
     bool applied = true;
-    m_jumped = m_jumped || (command.kind != Kind::Start && command.kind != Kind::Pause);
+    m_jumped = m_jumped
+        || (command.kind != Kind::Start && command.kind != Kind::Pause && command.kind != Kind::FadeWeight);
     switch (command.kind) {
     case Kind::Start:
         m_paused = false;
@@ -322,6 +351,13 @@ void Course::apply(const Detail::CourseCommand& command, const CourseSetting& se
         break;
     case Kind::SeekNormalized:
         applied = m_clock.seek(setting.in + command.value * (setting.out - setting.in), setting);
+        break;
+    case Kind::FadeWeight:
+        m_fade_from = number(m_controls.weight, 1.0);
+        m_fade_written = m_fade_from;
+        m_fade_to = command.value;
+        m_fade_steps = std::max<uint64_t>(1, static_cast<uint64_t>(std::llround(command.seconds * m_step_rate)));
+        m_fade_done = 0;
         break;
     case Kind::Nudge: {
         const auto here = m_clock.resolve(setting);
@@ -412,6 +448,9 @@ std::optional<CourseStep> Course::advance(bool advance)
     std::optional<CourseStep> step;
     try {
         m_commands.drain([&](const Detail::CourseCommand& command) { apply(command, setting); });
+        if (advance) {
+            step_fade();
+        }
 
         if (m_paused || !advance) {
             if (const auto held = m_clock.resolve(setting)) {

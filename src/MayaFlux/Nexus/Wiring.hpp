@@ -199,6 +199,41 @@ public:
     }
 
     /**
+     * @brief on() for a broadcast source, handing each value over before the entity fires.
+     *
+     * This is how the entity learns what fired it: for a Course, the id of the marker
+     * passed. A source holds one pending value, so values signalled before the wiring
+     * resumes reach it as the last of them.
+     * @param source  Source to listen to; the wiring keeps it alive.
+     * @param receive Called with the value, on the signalling thread, just before the firing.
+     *
+     * @code
+     * auto door = course->add_marker("door", 4.0);
+     * auto passed = std::make_shared<uint64_t>(0);
+     *
+     * fabric->wire(emitter)
+     *     .on(course->subscribe(Kriya::CourseEventKind::Marked),
+     *         [passed](const Kriya::CourseEvent& event) { *passed = event.value; })
+     *     .finalise();
+     * @endcode
+     */
+    template <typename T>
+    Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source,
+        std::type_identity_t<std::function<void(const T&)>> receive)
+    {
+        m_triggers.emplace_back(BroadcastTrigger {
+            .listen = [source = std::move(source), receive = std::move(receive)](std::function<void()> fire) {
+                return Kriya::on_signal(source, [fire = std::move(fire), receive](const T& value) {
+                    if (receive) {
+                        receive(value);
+                    }
+                    fire();
+                });
+            } });
+        return *this;
+    }
+
+    /**
      * @brief Fire the entity on each matching event of a window.
      *
      * A mouse position carried by the event is made available to the entity as the cursor.

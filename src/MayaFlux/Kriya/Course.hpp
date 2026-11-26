@@ -98,11 +98,13 @@ namespace Detail {
             Seek,
             SeekClock,
             SeekNormalized,
-            Nudge
+            Nudge,
+            FadeWeight
         };
 
         Kind kind {};
         double value {};
+        double seconds {};
     };
 
     /** @brief One subscription: the kind it hears and where it is delivered. */
@@ -226,6 +228,18 @@ public:
 
     /** @brief How much this course counts where several are mixed. Finite and not negative. */
     bool weight(double value);
+
+    /**
+     * @brief Move the weight to a value over a time, in equal steps of advance().
+     *
+     * Starts from the weight at the next advance and runs whether or not the course
+     * is paused. A later fade replaces it, and a weight written any other way ends
+     * it. Two courses faded in opposite directions are a crossfade.
+     * @param target  Finite and not negative.
+     * @param seconds Finite and not negative; zero arrives at the next advance.
+     * @return false when not queued.
+     */
+    bool fade_weight(double target, double seconds);
 
     /** @brief The setting the next advance will step with, built from the controls now. */
     [[nodiscard]] CourseSetting setting() const;
@@ -393,6 +407,7 @@ private:
     [[nodiscard]] static CourseControls& open(CourseStore& store);
     [[nodiscard]] CourseSetting compose() const;
     bool push(Detail::CourseCommand::Kind kind, double value = 0.0);
+    void step_fade();
     void apply(const Detail::CourseCommand& command, const CourseSetting& setting);
     void publish(const CourseSetting& setting, const CourseStep& step);
     void announce(CourseEventKind kind, double time, uint64_t value) const;
@@ -408,6 +423,12 @@ private:
     std::atomic<uint64_t> m_next_marker { 1 };
 
     CourseTime m_clock;
+    double m_step_rate {};
+    double m_fade_from {};
+    double m_fade_to {};
+    double m_fade_written {};
+    uint64_t m_fade_steps {};
+    uint64_t m_fade_done {};
     bool m_paused;
     bool m_was_finished {};
     bool m_refusing {};
