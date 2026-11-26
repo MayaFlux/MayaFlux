@@ -289,6 +289,8 @@ struct EntityRecord {
     std::vector<std::string> view_targets;
     std::vector<ViewSinkRecord> view_sinks;
     std::optional<uint32_t> view_of;
+    std::optional<uint32_t> follows_view; ///< The Locus whose viewpoint this one follows.
+    std::vector<float> follow_offset; ///< Sixteen values, column by column.
     std::vector<CallRecord> configurations;
     std::vector<AudioSinkRecord> audio_sinks;
     std::vector<RenderSinkRecord> render_sinks;

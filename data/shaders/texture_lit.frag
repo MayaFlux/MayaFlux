@@ -13,8 +13,6 @@ void main()
 {
     vec4 tex = texture(texSampler, fragTexCoord);
 
-    float reach = influence_reach(in_world_pos);
-
-    vec3 lit = tex.rgb + (color * intensity * reach);
+    vec3 lit = tex.rgb + influence_light(in_world_pos, vec3(0.0));
     outColor = vec4(clamp(lit, 0.0, 1.0), tex.a);
 }

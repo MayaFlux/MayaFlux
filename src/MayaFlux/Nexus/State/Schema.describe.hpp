@@ -142,6 +142,8 @@ struct Description<::MayaFlux::Nexus::State::EntityRecord> {
             Member<&::MayaFlux::Nexus::State::EntityRecord::view_targets> { "view_targets" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::view_sinks> { "view_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::view_of> { "view_of" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::follows_view> { "follows_view" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::follow_offset> { "follow_offset" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::configurations> { "configurations" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::audio_sinks> { "audio_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::render_sinks> { "render_sinks" },

@@ -37,8 +37,77 @@ LocusControls& Locus::open_locus()
     return controls;
 }
 
+bool Locus::follow(std::function<Kinesis::Viewpoint()> source)
+{
+    if (!source) {
+        return false;
+    }
+    unfollow();
+
+    const auto mark = std::make_shared<char>();
+    auto guarded = [source = std::move(source), mark, stood = m_held->read()]() -> Kinesis::Viewpoint {
+        thread_local std::vector<const void*> reading;
+        if (std::ranges::find(reading, mark.get()) != reading.end()) {
+            return stood;
+        }
+        reading.push_back(mark.get());
+        auto view = source();
+        reading.pop_back();
+        return view;
+    };
+
+    m_follower = m_held->join({}, std::move(guarded));
+    return m_held->hand_to(m_follower);
+}
+
+bool Locus::follow(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& other, const glm::mat4& offset)
+{
+    if (!other || other == m_held) {
+        return false;
+    }
+    const bool followed = follow(
+        [held = std::weak_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>(other), offset, stood = m_held->read()]() {
+            const auto cell = held.lock();
+            if (!cell) {
+                return stood;
+            }
+            const auto [placement, frustum] = cell->read();
+            return Kinesis::Viewpoint { placement * offset, frustum };
+        });
+    if (followed) {
+        m_followed = other;
+        m_follow_offset = offset;
+    }
+    return followed;
+}
+
+void Locus::unfollow()
+{
+    if (m_follower == 0) {
+        return;
+    }
+    if (m_held->drives(m_follower)) {
+        m_held->hand_to(m_driver);
+    }
+    m_held->leave(m_follower);
+    m_follower = 0;
+    m_followed.reset();
+}
+
+std::optional<std::pair<std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>, glm::mat4>> Locus::following() const
+{
+    auto cell = m_followed.lock();
+    if (m_follower == 0 || !cell) {
+        return std::nullopt;
+    }
+    return std::pair { std::move(cell), m_follow_offset };
+}
+
 Locus::~Locus()
 {
+    if (m_follower != 0) {
+        m_held->leave(m_follower);
+    }
     m_held->leave(m_driver);
 }
 
@@ -61,6 +130,7 @@ void Locus::set_view(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>
     if (!view || view == m_held) {
         return;
     }
+    unfollow();
     m_held->leave(m_driver);
     join_view(view);
     for (const auto& proc : m_view_targets) {

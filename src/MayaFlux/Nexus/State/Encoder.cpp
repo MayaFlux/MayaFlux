@@ -1064,6 +1064,24 @@ bool StateEncoder::encode_fabric(
                     }
                 }
             }
+            if (auto locus = std::dynamic_pointer_cast<Locus>(a); locus && locus->is_following()) {
+                if (const auto followed = locus->following()) {
+                    for (const uint32_t other : ids) {
+                        const auto leader = fabric.kind(other) == Fabric::Kind::Agent
+                            ? std::dynamic_pointer_cast<Locus>(fabric.get_agent(other))
+                            : nullptr;
+                        if (leader && other != id && leader->view() == followed->first) {
+                            ent.follows_view = other;
+                            append_matrix(ent.follow_offset, followed->second);
+                            break;
+                        }
+                    }
+                }
+                if (!ent.follows_view && locus->configurations().empty()) {
+                    MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                        "StateEncoder: Locus {} follows a function or a viewpoint of no saved Locus, which is not encoded", id);
+                }
+            }
             break;
         }
         }

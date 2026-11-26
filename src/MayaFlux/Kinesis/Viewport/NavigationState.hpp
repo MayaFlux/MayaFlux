@@ -173,4 +173,14 @@ MAYAFLUX_API void advance_navigation(NavigationState& state, float dt);
  */
 MAYAFLUX_API void set_viewpoint(NavigationState& state, const Viewpoint& view);
 
+/**
+ * @brief The viewpoint part of the way from one to another.
+ *
+ * The position and the frustum's window and clip distances run linearly and the rotation
+ * along the shortest arc. The projection kind is that of the nearer end.
+ *
+ * @param t Zero is @p from, one is @p to. Clamped.
+ */
+[[nodiscard]] MAYAFLUX_API Viewpoint mix_viewpoints(const Viewpoint& from, const Viewpoint& to, float t);
+
 } // namespace MayaFlux::Kinesis

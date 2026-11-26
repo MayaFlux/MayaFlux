@@ -29,8 +29,6 @@ void main()
         alpha = 1.0 - smoothstep(1.0 - edge_softness, 1.0, dist_from_center);
     }
 
-    float reach = influence_reach(in_world_pos);
-
-    vec3 lit = in_color + (color * intensity * reach);
+    vec3 lit = in_color + influence_light(in_world_pos, vec3(0.0));
     outColor = vec4(clamp(lit, 0.0, 1.0), alpha);
 }

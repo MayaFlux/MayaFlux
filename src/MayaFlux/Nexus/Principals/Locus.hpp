@@ -162,6 +162,36 @@ public:
     void set_view(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view);
 
     /**
+     * @brief Take this Locus's viewpoint from a function until unfollow().
+     *
+     * The function is called whenever the view is read, so it must be safe on the threads
+     * that read it. Blend two views with Kinesis::mix_viewpoints over their cells and a
+     * weight, such as one a Presence reports. A function that reads this viewpoint again,
+     * as two Locuses following each other would, answers where this one stood.
+     * @return False for an empty function.
+     */
+    bool follow(std::function<Kinesis::Viewpoint()> source);
+
+    /**
+     * @brief follow() another viewpoint, such as another Locus's view().
+     * @param other The viewpoint to follow. Held weakly.
+     * @param offset Applied in the followed viewpoint's own frame.
+     * @return False for a null cell or this Locus's own.
+     */
+    bool follow(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& other,
+        const glm::mat4& offset = glm::mat4(1.0F));
+
+    /** @brief Stop following, and carry on from where the view is if it was still being followed. */
+    void unfollow();
+
+    /** @brief Whether a follow() has not been ended. */
+    [[nodiscard]] bool is_following() const noexcept { return m_follower != 0; }
+
+    /** @brief The viewpoint followed and its offset, for a follow() of a cell. */
+    [[nodiscard]] std::optional<std::pair<std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>, glm::mat4>>
+    following() const;
+
+    /**
      * @brief Draw a render processor from this Locus's viewpoint.
      *
      * Adding the same processor twice is a no-op.
@@ -215,6 +245,9 @@ private:
     std::vector<std::shared_ptr<Buffers::RenderProcessor>> m_view_targets;
     std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>> m_held;
     uint32_t m_driver {};
+    uint32_t m_follower {};
+    std::weak_ptr<Memory::OwnedCell<Kinesis::Viewpoint>> m_followed;
+    glm::mat4 m_follow_offset { 1.0F };
 
     [[nodiscard]] LocusControls& open_locus();
     void open_view();

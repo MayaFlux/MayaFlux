@@ -1808,6 +1808,29 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
         }
     }
 
+    {
+        std::map<uint32_t, uint32_t> runtime;
+        for (const auto& [entry, id] : constructed_ids) {
+            runtime.insert_or_assign(entry->id, id);
+        }
+        const auto locus_of = [&fabric, &runtime](uint32_t saved) {
+            const auto found = runtime.find(saved);
+            return found == runtime.end() ? nullptr
+                                          : std::dynamic_pointer_cast<Locus>(fabric.get_agent(found->second));
+        };
+        for (const auto& entry : schema.entities) {
+            if (!entry.follows_view) {
+                continue;
+            }
+            const auto follower = locus_of(entry.id);
+            const auto leader = locus_of(*entry.follows_view);
+            const glm::mat4 offset = entry.follow_offset.size() == 16 ? matrix_at(entry.follow_offset, 0) : glm::mat4(1.0F);
+            if (!follower || !leader || !follower->follow(leader->view(), offset)) {
+                result.warnings.push_back(who_is(entry) + ": the view it followed could not be followed again");
+            }
+        }
+    }
+
     for (const auto& xrec : schema.expanses) {
         const auto same = [this, buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
             return wraps(live, subkind, buffer);
