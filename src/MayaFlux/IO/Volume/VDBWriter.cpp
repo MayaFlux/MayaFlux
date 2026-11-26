@@ -6,6 +6,8 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+
 namespace MayaFlux::IO {
 
 namespace {
@@ -14,82 +16,76 @@ namespace {
      */
     constexpr int k_deflate_level = 5;
 
-    /**
-     * @brief One field reduced to the active cells an archive grid consumes.
-     *
-     * coords and values are parallel: element i of values, read at the width
-     * is_vector implies, belongs to coords[i]. Owned here so the archive can
-     * borrow spans over both without a lifetime question.
-     */
+    /** @brief One field reduced to the cells an archive grid stores. */
     struct ActiveSet {
         std::vector<glm::ivec3> coords;
-        std::vector<std::byte> values;
-        bool is_vector { false };
+        Kakshya::VolumeField::ValueStorage values;
     };
 
     /**
-     * @brief Threshold a field and emit surviving cells as coord/value pairs.
+     * @brief Pick the cells to store and emit them as coord and value pairs.
      *
-     * Walks the lattice in its own index order and emits each coordinate
-     * alongside its value, so no index convention is shared with the archive
-     * backend at all.
-     *
-     * A scalar is compared on magnitude, a vector on length, so a velocity
-     * whose components cancel is correctly inactive.
+     * A cell is stored when it differs from @p reference by at least the threshold, a vector by
+     * the length of the difference. A level set stores its band, and, when its values are not
+     * float, everything inside it too, since only a float grid can be flood filled.
      */
     ActiveSet extract_active(
         const Kakshya::VolumeField& field,
         const Kinesis::Lattice3D& lattice,
-        float threshold)
+        float threshold,
+        const glm::dvec3& reference,
+        double band)
     {
         const glm::uvec3 res = lattice.resolution;
-
         ActiveSet out;
-        out.is_vector = field.is_vector();
 
-        const size_t cells = field.element_count();
-        const size_t guess = cells / 4;
-        out.coords.reserve(guess);
-        out.values.reserve(guess * (out.is_vector ? sizeof(glm::vec3) : sizeof(float)));
+        std::visit(
+            [&](const auto& values) {
+                using T = typename std::decay_t<decltype(values)>::value_type;
+                std::vector<T> kept;
 
-        const auto emit = [&](uint32_t x, uint32_t y, uint32_t z,
-                              const void* value, size_t width) {
-            out.coords.emplace_back(
-                static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z));
-            const auto* bytes = static_cast<const std::byte*>(value);
-            out.values.insert(out.values.end(), bytes, bytes + width);
-        };
+                const auto stored = [&](const T& value) {
+                    if constexpr (std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::dvec3>) {
+                        const glm::dvec3 difference = glm::dvec3(value) - reference;
+                        return glm::dot(difference, difference) >= static_cast<double>(threshold) * threshold;
+                    } else {
+                        const auto v = static_cast<double>(value);
+                        if (band > 0.0) {
+                            const double edge = band * (1.0 - 1.0E-6);
+                            return std::is_same_v<T, float> ? std::abs(v) < edge : v < edge;
+                        }
+                        return std::abs(v - reference.x) >= static_cast<double>(threshold);
+                    }
+                };
 
-        if (const auto* scalars = field.as_scalar()) {
-            size_t i = 0;
-            for (uint32_t z = 0; z < res.z; ++z) {
-                for (uint32_t y = 0; y < res.y; ++y) {
-                    for (uint32_t x = 0; x < res.x; ++x, ++i) {
-                        const float v = (*scalars)[i];
-                        if (std::abs(v) >= threshold) {
-                            emit(x, y, z, &v, sizeof(float));
+                size_t i = 0;
+                for (uint32_t z = 0; z < res.z; ++z) {
+                    for (uint32_t y = 0; y < res.y; ++y) {
+                        for (uint32_t x = 0; x < res.x; ++x, ++i) {
+                            if (stored(values[i])) {
+                                out.coords.emplace_back(
+                                    static_cast<int32_t>(x), static_cast<int32_t>(y), static_cast<int32_t>(z));
+                                kept.push_back(values[i]);
+                            }
                         }
                     }
                 }
-            }
-            return out;
-        }
+                out.values = std::move(kept);
+            },
+            field.values);
 
-        const auto* vectors = field.as_vector();
-        const float threshold_sq = threshold * threshold;
-
-        size_t i = 0;
-        for (uint32_t z = 0; z < res.z; ++z) {
-            for (uint32_t y = 0; y < res.y; ++y) {
-                for (uint32_t x = 0; x < res.x; ++x, ++i) {
-                    const glm::vec3& v = (*vectors)[i];
-                    if (glm::dot(v, v) >= threshold_sq) {
-                        emit(x, y, z, &v, sizeof(glm::vec3));
-                    }
-                }
-            }
-        }
         return out;
+    }
+
+    double largest_magnitude(const Kakshya::VolumeField& field)
+    {
+        const auto narrowed = field.narrowed();
+        const auto* scalars = std::get_if<std::vector<float>>(&narrowed);
+        double largest = 0.0;
+        for (const float value : scalars ? *scalars : std::vector<float> {}) {
+            largest = std::max(largest, static_cast<double>(std::abs(value)));
+        }
+        return largest;
     }
 
     uint32_t compression_flags(const VolumeWriteOptions& options)
@@ -151,20 +147,25 @@ namespace {
     }
 
     /**
-     * @brief Interchange metadata for a field, beyond its name.
+     * @brief Interchange metadata for a field, beyond its name: its semantics and whatever
+     *        pairs its facets carry.
      *
-     * vector_type is emitted only for vector fields: a scalar grid carrying
-     * one would be meaningless and OpenVDB ignores it.
+     * vector_type is emitted only for vector fields.
      */
-    std::vector<std::pair<std::string, std::string>> semantics_metadata(
+    std::vector<Kakshya::MeshAssemblyMetadata::Entry> grid_metadata(
         const Kakshya::VolumeField& field)
     {
-        std::vector<std::pair<std::string, std::string>> meta;
-        meta.reserve(2);
-
-        meta.emplace_back("class", class_token(field.semantics.value_class));
+        std::vector<Kakshya::MeshAssemblyMetadata::Entry> meta;
+        meta.push_back({ .row = std::nullopt, .key = "class", .value = std::string(class_token(field.semantics.value_class)) });
         if (field.is_vector()) {
-            meta.emplace_back("vector_type", variance_token(field.semantics.variance));
+            meta.push_back({ .row = std::nullopt, .key = "vector_type", .value = std::string(variance_token(field.semantics.variance)) });
+        }
+
+        if (const auto* held = field.facets.get<Kakshya::MeshAssemblyMetadata>()) {
+            std::ranges::copy_if(held->entries, std::back_inserter(meta), [](const auto& entry) {
+                return entry.key != "class" && entry.key != "vector_type" && entry.key != "name"
+                    && !entry.key.starts_with("file_");
+            });
         }
 
         return meta;
@@ -216,44 +217,61 @@ bool VDBWriter::write(
         return false;
     }
 
-    const float scalar_bg = options.background;
-    const glm::vec3 vector_bg { options.background };
+    const glm::vec3 cell = data.lattice.cell_size();
+    const auto* placement = data.facets.get(Kakshya::volume_placement);
+    const glm::dmat4 index_to_world = glm::dmat4(placement ? *placement : glm::mat4(1.0F))
+        * glm::translate(glm::dmat4(1.0), glm::dvec3(data.lattice.bounds.min + 0.5F * cell))
+        * glm::scale(glm::dmat4(1.0), glm::dvec3(cell));
 
     Detail::VDBArchive archive;
 
     for (const auto& field : data.fields) {
+        const auto* held = field.facets.get(Kakshya::volume_background);
+        glm::dvec3 background = held ? *held : glm::dvec3(options.background);
+
+        const bool level_set = !field.is_vector()
+            && field.semantics.value_class == Kinesis::LatticeValueClass::LevelSet;
+        if (level_set) {
+            background.x = std::abs(background.x);
+            if (background.x == 0.0) {
+                background.x = largest_magnitude(field);
+            }
+        }
+
         const ActiveSet active = extract_active(
-            field, data.lattice, threshold_for(field.name, options));
+            field, data.lattice, threshold_for(field.name, options),
+            held ? background : glm::dvec3(0.0), level_set ? background.x : 0.0);
 
-        const auto meta = semantics_metadata(field);
-
-        const auto background = active.is_vector
-            ? std::as_bytes(std::span(&vector_bg, 1))
-            : std::as_bytes(std::span(&scalar_bg, 1));
+        const auto meta = grid_metadata(field);
 
         const Detail::VDBGridSpec spec {
             .name = field.name,
             .coords = active.coords,
-            .values = active.values,
+            .values = &active.values,
             .background = background,
-            .is_vector = active.is_vector,
+            .index_to_world = index_to_world,
+            .level_set = level_set,
+            .half_float = options.half_float,
             .metadata = meta,
         };
 
-        if (!archive.add_grid(data.lattice, spec)) {
+        if (!archive.add_grid(spec)) {
             m_last_error = std::string(archive.last_error());
             MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
             return false;
         }
 
         MF_DEBUG(Journal::Component::IO, Journal::Context::FileIO,
-            "VDBWriter: '{}' {} of {} cells active",
+            "VDBWriter: '{}' {} of {} cells stored",
             field.name, active.coords.size(), data.cell_count());
     }
 
     const auto resolved = resolve_write_path(filepath);
 
-    if (!archive.save(resolved, compression_flags(options), k_deflate_level)) {
+    const auto* file_metadata = data.facets.get<Kakshya::MeshAssemblyMetadata>();
+    if (!archive.save(resolved, compression_flags(options), k_deflate_level,
+            file_metadata ? std::span<const Kakshya::MeshAssemblyMetadata::Entry>(file_metadata->entries)
+                          : std::span<const Kakshya::MeshAssemblyMetadata::Entry> {})) {
         m_last_error = std::string(archive.last_error());
         MF_ERROR(Journal::Component::IO, Journal::Context::FileIO, m_last_error);
         return false;

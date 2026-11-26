@@ -45,6 +45,7 @@
 #include "Image/ImageExport.hpp"
 #include "Image/STBImageWriter.hpp"
 
+#include "Model/AlembicModelWriter.hpp"
 #include "Model/AssimpModelWriter.hpp"
 #include "Model/ModelExport.hpp"
 #include "Model/ModelReader.hpp"
@@ -101,6 +102,7 @@ IOManager::IOManager(Core::GlobalStreamInfo& stream_info, uint32_t frame_rate, c
     EXRWriter::register_with_registry();
     VDBWriter::register_with_registry();
     AssimpModelWriter::register_with_registry();
+    AlembicModelWriter::register_with_registry();
     SafetensorsReader::register_with_registry();
     NpyReader::register_with_registry();
     NpzReader::register_with_registry();
@@ -1131,6 +1133,25 @@ bool IOManager::save_mesh(
     track_save_task(std::async(std::launch::async,
         [network, filepath, options]() -> bool {
             return IO::save_mesh(network, filepath, options);
+        }));
+
+    return true;
+}
+
+bool IOManager::save_mesh(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::string& filepath,
+    const IO::ModelWriteOptions& options)
+{
+    if (!assembly) {
+        MF_ERROR(Journal::Component::API, Journal::Context::FileIO,
+            "save_mesh: null assembly");
+        return false;
+    }
+
+    track_save_task(std::async(std::launch::async,
+        [assembly, filepath, options]() -> bool {
+            return IO::save_mesh(assembly, filepath, options);
         }));
 
     return true;

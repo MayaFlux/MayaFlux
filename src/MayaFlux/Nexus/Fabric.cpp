@@ -46,6 +46,9 @@ Fabric::~Fabric()
     }
 
     for (auto& [id, reg] : m_registrations) {
+        if (reg.ending) {
+            reg.ending->closed = true;
+        }
         if (!reg.task_name.empty()) {
             m_scheduler->cancel_task(reg.task_name);
         }
@@ -61,8 +64,8 @@ Fabric::~Fabric()
 
 void Fabric::release(Registration& reg)
 {
-    if (reg.wiring.has_value()) {
-        reg.wiring->detach();
+    if (reg.ending) {
+        reg.ending->release();
     }
 
     std::visit([this](const auto& ptr) {
@@ -124,6 +127,9 @@ void Fabric::remove(uint32_t id)
 
     auto& reg = it->second;
 
+    if (reg.ending) {
+        reg.ending->closed = true;
+    }
     if (!reg.task_name.empty()) {
         m_scheduler->cancel_task(reg.task_name);
     }
@@ -139,6 +145,15 @@ void Fabric::remove(uint32_t id)
     m_registrations.erase(it);
 }
 
+Wiring Fabric::rewire(uint32_t id)
+{
+    cancel_wiring(id);
+    if (const auto it = m_registrations.find(id); it != m_registrations.end()) {
+        it->second.wiring.reset();
+    }
+    return Wiring(*this, id);
+}
+
 void Fabric::cancel_wiring(uint32_t id)
 {
     const auto it = m_registrations.find(id);
@@ -151,15 +166,15 @@ uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 {
     const uint32_t id = expanse->id();
 
-    if (!expanse->fn_name().empty() && expanse->contains_fn()) {
+    if (!expanse->fn_name().empty() && expanse->fn_call().second.empty() && expanse->contains_fn()) {
         m_expanse_fns.try_emplace(
             expanse->fn_name(), std::make_shared<Expanse::ContainsFn>(expanse->contains_fn()));
     }
-    if (!expanse->on_enter_fn_name().empty() && expanse->on_enter_fn()) {
+    if (!expanse->on_enter_fn_name().empty() && expanse->on_enter_fn_call().second.empty() && expanse->on_enter_fn()) {
         m_crossing_fns.try_emplace(
             expanse->on_enter_fn_name(), std::make_shared<Expanse::CrossingFn>(expanse->on_enter_fn()));
     }
-    if (!expanse->on_exit_fn_name().empty() && expanse->on_exit_fn()) {
+    if (!expanse->on_exit_fn_name().empty() && expanse->on_exit_fn_call().second.empty() && expanse->on_exit_fn()) {
         m_crossing_fns.try_emplace(
             expanse->on_exit_fn_name(), std::make_shared<Expanse::CrossingFn>(expanse->on_exit_fn()));
     }
@@ -287,6 +302,9 @@ std::shared_ptr<Agent> Fabric::get_agent(uint32_t id) const
 void Fabric::commit()
 {
     for (auto& [id, reg] : m_registrations) {
+        if (reg.commit_driven) {
+            apply_placement(reg);
+        }
         std::visit([&](const auto& ptr) {
             const auto position = ptr->position();
             if (!position.has_value()) {
@@ -331,7 +349,17 @@ void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor, const Core::Wind
             "Fabric::fire: id {} not registered", id);
         return;
     }
+    apply_placement(it->second);
     fire(it->second, cursor, input);
+}
+
+void Fabric::apply_placement(const Registration& reg)
+{
+    if (!reg.placement) {
+        return;
+    }
+    const PlacementControls incoming = reg.placement();
+    std::visit([&incoming](const auto& ptr) { ptr->set(incoming); }, reg.member);
 }
 
 // =============================================================================
@@ -416,10 +444,13 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             if (const auto position = ptr->position()) {
                 ctx.position = *position;
             }
+            ctx.orientation = ptr->orientation();
             ctx.intensity = ptr->intensity();
             ctx.radius = ptr->radius();
             ctx.color = ptr->color();
             ctx.size = ptr->size();
+            ctx.cone = ptr->cone();
+            ctx.attenuation = ptr->attenuation();
             ctx.cursor_pos = cursor;
             ctx.input = input;
             ptr->invoke(ctx);
@@ -428,6 +459,7 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             PerceptionContext ctx;
             const float query_radius = ptr->query_radius();
             ctx.radius = query_radius;
+            ctx.orientation = ptr->orientation();
             std::vector<Kinesis::QueryResult> results;
             if (const auto position = ptr->position()) {
                 ctx.position = *position;
@@ -458,6 +490,8 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             ictx.radius = ptr->radius();
             ictx.color = ptr->color();
             ictx.size = ptr->size();
+            ictx.cone = ptr->cone();
+            ictx.attenuation = ptr->attenuation();
             if (const auto position = ptr->position()) {
                 ictx.position = *position;
                 ictx.cursor_pos = cursor;
@@ -491,6 +525,18 @@ std::shared_ptr<Expanse::CrossingFn> Fabric::resolve_crossing_fn(std::string_vie
 {
     auto it = m_crossing_fns.find(std::string(name));
     return it != m_crossing_fns.end() ? it->second : nullptr;
+}
+
+std::optional<std::pair<uint32_t, float>> Fabric::nearest_hit(const Kinesis::Ray& ray) const
+{
+    std::optional<std::pair<uint32_t, float>> best;
+    for (const auto& [id, expanse] : m_expanses) {
+        const auto distance = expanse->intersect(ray);
+        if (distance && (!best || *distance < best->second)) {
+            best.emplace(id, *distance);
+        }
+    }
+    return best;
 }
 
 std::vector<uint32_t> Fabric::all_expanse_ids() const

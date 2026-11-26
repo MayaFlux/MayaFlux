@@ -109,13 +109,14 @@ std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
     }
 
     const double anchor = m_anchor.value_or(default_anchor(setting));
-    const auto now = unfolded(setting, (clock - origin) + setting.offset, anchor);
+    const double shift = restarted ? 0.0 : m_shift;
+    const auto now = unfolded(setting, (clock - origin) + setting.offset, anchor + shift);
     if (!now) {
         return std::nullopt;
     }
     std::optional<double> before = now;
     if (!restarted) {
-        if (const auto prior = unfolded(setting, (previous_clock - origin) + setting.offset, anchor)) {
+        if (const auto prior = unfolded(setting, (previous_clock - origin) + setting.offset, anchor + shift)) {
             before = prior;
         }
     }
@@ -175,6 +176,7 @@ std::optional<CourseStep> CourseTime::step(const CourseSetting& setting)
         m_repeat_origin = 0.0;
         m_repeat_length.reset();
     }
+    m_shift = shift;
     m_crossings = total;
     m_passes = passes;
     m_finished = finished;
@@ -199,6 +201,7 @@ bool CourseTime::seek_clock(double clock_seconds)
     }
     m_base_step = m_steps;
     m_base_clock = clock_seconds;
+    m_shift = 0.0;
     m_repeat_origin = 0.0;
     m_repeat_length.reset();
     m_crossings = 0;
@@ -207,11 +210,30 @@ bool CourseTime::seek_clock(double clock_seconds)
     return true;
 }
 
+bool CourseTime::carry_on(double source_time, const CourseSetting& setting)
+{
+    if (!usable(setting) || !std::isfinite(source_time)) {
+        return false;
+    }
+
+    const double now = clock_at(m_steps);
+    double origin = 0.0;
+    if (has(setting.repeat)) {
+        origin = m_repeat_length ? m_repeat_origin : now;
+    }
+
+    const double anchor = m_anchor.value_or(default_anchor(setting));
+    m_anchor = anchor;
+    m_shift = source_time - (anchor + (now - origin) + setting.offset);
+    return true;
+}
+
 void CourseTime::restart()
 {
     m_base_step = m_steps;
     m_base_clock = 0.0;
     m_anchor.reset();
+    m_shift = 0.0;
     m_repeat_origin = 0.0;
     m_repeat_length.reset();
     m_crossings = 0;
@@ -235,7 +257,7 @@ std::optional<double> CourseTime::resolve(const CourseSetting& setting, double e
     }
 
     const double anchor = m_anchor.value_or(default_anchor(setting));
-    const auto u = unfolded(setting, (now - origin) + setting.offset + extra_offset, anchor);
+    const auto u = unfolded(setting, (now - origin) + setting.offset + extra_offset, anchor + m_shift);
     if (!u) {
         return std::nullopt;
     }

@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -48,6 +49,7 @@ void InstanceSSBOProcessor::on_attach(const std::shared_ptr<Buffer>& buffer)
     m_payload_arena->initialize(slot_count * sizeof(InstancePayload), Portal::Graphics::BufferUsageHint::HOST_STORAGE, 3);
 
     upload_template(vk_buf);
+    upload_deformation_template();
     upload_transforms(vk_buf);
     push_ssbo_binding(vk_buf);
 
@@ -67,6 +69,12 @@ void InstanceSSBOProcessor::on_detach(const std::shared_ptr<Buffer>&)
         m_payload_arena->release();
     }
     m_payload_arena.reset();
+    for (auto* stream : { &m_influences, &m_deltas, &m_palettes, &m_weights }) {
+        if (stream->arena) {
+            stream->arena->release();
+        }
+        stream->arena.reset();
+    }
     m_index_buffer.reset();
     m_index_staging.reset();
 }
@@ -79,10 +87,17 @@ void InstanceSSBOProcessor::processing_function(const std::shared_ptr<Buffer>& b
 
     const auto& slots = m_network->slots();
 
-    if (slots[0].node && slots[0].node->needs_gpu_update())
+    bool refit = false;
+    if (slots[0].node && slots[0].node->needs_gpu_update()) {
         upload_template(vk_buf);
+        if (m_deformed_vertices > 0) {
+            const bool fits = slots[0].node->get_vertex_data().size() == m_deformed_vertices * sizeof(Kakshya::MeshVertex);
+            refit = fits != m_deformation_fits;
+            m_deformation_fits = fits;
+        }
+    }
 
-    if (any_slot_dirty()) {
+    if (any_slot_dirty() || refit) {
         upload_transforms(vk_buf);
         clear_dirty_flags();
     }
@@ -157,6 +172,7 @@ void InstanceSSBOProcessor::upload_transforms(const std::shared_ptr<VKBuffer>& v
     m_transform_arena->write(m_transform_slot, m_transform_scratch.data(), bytes);
 
     upload_payload();
+    upload_deformation();
 
     if (auto rp = vertex_buf->get_render_processor())
         rp->set_instance_count(static_cast<uint32_t>(slots.size()));
@@ -170,7 +186,14 @@ void InstanceSSBOProcessor::upload_payload()
     const auto& slots = m_network->slots();
     m_payload_scratch.assign(slots.size(), InstancePayload {});
     for (const auto& slot : slots) {
-        m_payload_scratch[slot.index] = { .tint = slot.tint, .scalar = slot.scalar, .texture = slot.texture };
+        const bool skinned = m_deformation_fits && slot.palette.size() == m_joint_count;
+        const bool morphed = m_deformation_fits && slot.morph_weights.size() == m_target_count;
+        m_payload_scratch[slot.index] = { .tint = slot.tint,
+            .scalar = slot.scalar,
+            .texture = slot.texture,
+            .joint_count = skinned ? m_joint_count : 0,
+            .target_count = morphed ? m_target_count : 0,
+            .vertex_count = m_deformed_vertices };
     }
 
     const size_t bytes = m_payload_scratch.size() * sizeof(InstancePayload);
@@ -180,6 +203,85 @@ void InstanceSSBOProcessor::upload_payload()
 
     m_payload_slot = m_payload_arena->acquire();
     m_payload_arena->write(m_payload_slot, m_payload_scratch.data(), bytes);
+}
+
+void InstanceSSBOProcessor::write_stream(Stream& stream, const void* data, size_t bytes)
+{
+    constexpr auto usage = Portal::Graphics::BufferUsageHint::HOST_STORAGE;
+    if (!stream.arena) {
+        stream.arena = std::make_shared<Portal::Graphics::SlotArena>();
+        stream.arena->initialize(bytes, usage, 3);
+    } else if (bytes > stream.arena->slot_bytes()) {
+        stream.arena->initialize(bytes * 3 / 2, usage, 3);
+    }
+    stream.slot = stream.arena->acquire();
+    stream.arena->write(stream.slot, data, bytes);
+}
+
+void InstanceSSBOProcessor::upload_deformation_template()
+{
+    m_joint_count = 0;
+    m_target_count = 0;
+    m_deformed_vertices = 0;
+    m_deformation_fits = false;
+
+    const auto& first = m_network->slots()[0];
+    if ((!first.skin && !first.morphs) || !first.node) {
+        return;
+    }
+
+    const auto data = first.node->get_vertex_data();
+    const size_t vertices = data.size() / sizeof(Kakshya::MeshVertex);
+    if (vertices == 0 || data.size() % sizeof(Kakshya::MeshVertex) != 0 || (first.skin && !first.skin->valid(vertices))) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "InstanceSSBOProcessor: the skin does not cover the template's {} vertices, so the instances are not deformed", vertices);
+        const std::array<uint32_t, 8> unused {};
+        write_stream(m_influences, unused.data(), sizeof(unused));
+        write_stream(m_deltas, unused.data(), sizeof(float));
+        m_deformed_vertices = 1;
+        return;
+    }
+
+    struct Influence {
+        glm::uvec4 joints { 0 };
+        glm::vec4 weights { 0.0F };
+    };
+    std::vector<Influence> influences(vertices);
+    for (size_t v = 0; first.skin && v < vertices; ++v) {
+        influences[v] = { first.skin->influence_joints[v], first.skin->influence_weights[v] };
+    }
+    write_stream(m_influences, influences.data(), influences.size() * sizeof(Influence));
+
+    std::vector<Kakshya::MeshVertex> base(vertices);
+    std::memcpy(base.data(), data.data(), data.size());
+    const auto deltas = shape_offsets(first.morphs ? *first.morphs : Kakshya::MeshMorphTargets {}, base);
+    write_stream(m_deltas, deltas.data(), deltas.size() * sizeof(float));
+
+    m_joint_count = first.skin ? static_cast<uint32_t>(first.skin->joint_count()) : 0;
+    m_target_count = first.morphs ? static_cast<uint32_t>(first.morphs->size()) : 0;
+    m_deformed_vertices = static_cast<uint32_t>(vertices);
+    m_deformation_fits = true;
+}
+
+void InstanceSSBOProcessor::upload_deformation()
+{
+    if (m_deformed_vertices == 0) {
+        return;
+    }
+
+    const auto& slots = m_network->slots();
+    std::vector<glm::mat4> palettes(std::max<size_t>(1, slots.size() * m_joint_count), glm::mat4(1.0F));
+    std::vector<float> weights(std::max<size_t>(1, slots.size() * m_target_count), 0.0F);
+    for (const auto& slot : slots) {
+        if (slot.palette.size() == m_joint_count) {
+            std::ranges::copy(slot.palette, palettes.begin() + static_cast<std::ptrdiff_t>(slot.index * m_joint_count));
+        }
+        if (slot.morph_weights.size() == m_target_count) {
+            std::ranges::copy(slot.morph_weights, weights.begin() + static_cast<std::ptrdiff_t>(slot.index * m_target_count));
+        }
+    }
+    write_stream(m_palettes, palettes.data(), palettes.size() * sizeof(glm::mat4));
+    write_stream(m_weights, weights.data(), weights.size() * sizeof(float));
 }
 
 void InstanceSSBOProcessor::push_ssbo_binding(const std::shared_ptr<VKBuffer>& vertex_buf)
@@ -211,6 +313,12 @@ void InstanceSSBOProcessor::push_ssbo_binding(const std::shared_ptr<VKBuffer>& v
     push(k_transform_ssbo_binding, m_transform_arena, m_transform_slot);
     if (m_payload_arena && m_payload_arena->is_initialized()) {
         push(k_payload_ssbo_binding, m_payload_arena, m_payload_slot);
+    }
+    if (m_deformed_vertices > 0) {
+        push(k_influence_ssbo_binding, m_influences.arena, m_influences.slot);
+        push(k_delta_ssbo_binding, m_deltas.arena, m_deltas.slot);
+        push(k_palette_ssbo_binding, m_palettes.arena, m_palettes.slot);
+        push(k_weight_ssbo_binding, m_weights.arena, m_weights.slot);
     }
 }
 

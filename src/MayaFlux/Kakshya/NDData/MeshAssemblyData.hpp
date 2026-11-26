@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Composite.hpp"
+#include "ImageData.hpp"
 #include "MeshData.hpp"
 #include "MeshSkin.hpp"
 #include "SpatialData.hpp"
 
 #include "MayaFlux/Kinesis/Temporal/TimedValues.hpp"
-#include "MayaFlux/Kinesis/Viewport/Lens.hpp"
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -26,6 +27,86 @@ enum class TopologyVariance : uint8_t {
 };
 
 /**
+ * @struct MeshAssemblyLens
+ * @brief A camera's optics as a file writes them: focal length, film back and clip planes.
+ *
+ * The defaults are Alembic's: a 35 mm lens on a 3.6 by 2.4 cm film back. Lengths of the film are in
+ * centimetres and the focal length in millimetres. window is the rectangle the lens looks through in
+ * half widths of the film back, with film offset, overscan and squeeze already applied. f_stop and
+ * focus_distance do not affect the projection. frustum_of() gives the geometry.
+ */
+struct MeshAssemblyLens {
+    double focal_length { 35.0 };
+    double horizontal_aperture { 3.6 };
+    double vertical_aperture { 2.4 };
+    Kinesis::AABB2D window { .min = { -1.0F, -2.0F / 3.0F }, .max = { 1.0F, 2.0F / 3.0F } };
+    double near { 0.1 };
+    double far { 100000.0 };
+    double f_stop { 5.6 };
+    double focus_distance { 5.0 };
+    double orthographic_width {}; ///< Above zero the lens is orthographic and the window spans this many scene units.
+};
+
+/** @brief The tangent of half the horizontal field of view a lens gives its film back. */
+[[nodiscard]] inline double lens_half_tangent(const MeshAssemblyLens& lens) noexcept
+{
+    return lens.horizontal_aperture * 10.0 / (2.0 * lens.focal_length);
+}
+
+/**
+ * @brief The frustum a lens sees through, covering an output of any aspect.
+ *
+ * A lens that is not usable gives an empty window, whose projection is the identity.
+ */
+[[nodiscard]] inline Kinesis::Frustum frustum_of(const MeshAssemblyLens& lens) noexcept
+{
+    const bool orthographic = lens.orthographic_width > 0.0;
+    const double width = static_cast<double>(lens.window.max.x) - lens.window.min.x;
+    const double reach = lens_half_tangent(lens);
+    const double scale = orthographic
+        ? (width > 0.0 ? lens.orthographic_width / width : 0.0)
+        : (lens.focal_length > 0.0 && reach > 0.0 ? reach : 0.0);
+    const auto s = static_cast<float>(scale);
+    return {
+        .window = { .min = lens.window.min * s, .max = lens.window.max * s },
+        .near = lens.near,
+        .far = lens.far,
+        .orthographic = orthographic,
+        .fit = Kinesis::AspectFit::Cover
+    };
+}
+
+/** @brief What kind of light source a file describes. */
+enum class MeshAssemblyLightKind : uint8_t {
+    Directional,
+    Point,
+    Spot,
+    Ambient,
+    Area,
+    Unknown ///< The importer could not tell, as it does for some FBX area lights.
+};
+
+/**
+ * @struct MeshAssemblyLight
+ * @brief A light source as a file describes it. Its placement row gives position and direction:
+ *        the light faces -Z with +Y up.
+ *
+ * attenuation holds the constant, linear and quadratic terms. The cone angles are radians from
+ * the axis (glTF, FBX and Collada files; other formats as the importer gives them) and apply to
+ * spot lights, size to area lights. color already includes the file's intensity.
+ */
+struct MeshAssemblyLight {
+    MeshAssemblyLightKind kind { MeshAssemblyLightKind::Point };
+    glm::vec3 color { 1.0F };
+    glm::vec3 specular { 1.0F };
+    glm::vec3 ambient { 0.0F };
+    glm::vec3 attenuation { 1.0F, 0.0F, 0.0F };
+    float inner_cone {};
+    float outer_cone {};
+    glm::vec2 size { 0.0F };
+};
+
+/**
  * @struct MeshAssemblySource
  * @brief One thing a row can show, stored once however many placements use it: a mesh, points
  *        or curves, or a camera's lens.
@@ -42,7 +123,7 @@ enum class TopologyVariance : uint8_t {
  * reader reads it by, empty for geometry made in code.
  */
 struct MeshAssemblySource {
-    std::variant<MeshData, SpatialData, Kinesis::Lens> geometry;
+    std::variant<MeshData, SpatialData, Kakshya::MeshAssemblyLens, MeshAssemblyLight> geometry;
     std::string name;
     std::string origin;
     std::optional<Kinesis::TimeSampling> time;
@@ -70,19 +151,235 @@ struct MeshAssemblyMaterial {
 MF_DESCRIBE(MeshAssemblyMaterial)
 
 /**
+ * @enum MeshAssemblyAlpha
+ * @brief How a material means the alpha of its colour to be used.
+ */
+enum class MeshAssemblyAlpha : uint8_t {
+    Opaque,
+    Mask,
+    Blend
+};
+
+/**
  * @struct MeshAssemblySurface
  * @brief The colour and factors a material names, kept in its facets by the readers that know them.
  *
- * base_color is the diffuse or base colour with its opacity in the alpha. A reader that finds none of
- * them leaves the facet out, and a consumer reads it with facets.get<MeshAssemblySurface>().
+ * base_color is the diffuse or base colour with its opacity in the alpha. alpha_cutoff applies
+ * under MeshAssemblyAlpha::Mask. A reader that finds none of them leaves the facet out, and a
+ * consumer reads it with facets.get<MeshAssemblySurface>().
  */
 struct MeshAssemblySurface {
     glm::vec4 base_color { 1.0F };
     float metallic { 0.0F };
     float roughness { 1.0F };
+    glm::vec3 emissive { 0.0F };
+    float alpha_cutoff { 0.5F };
+    MeshAssemblyAlpha alpha { MeshAssemblyAlpha::Opaque };
+    bool double_sided {};
 };
 
 MF_DESCRIBE(MeshAssemblySurface)
+
+/** @brief How a texture continues outside the unit square. */
+enum class MeshAssemblyWrap : uint8_t {
+    Repeat,
+    Clamp,
+    Mirror,
+    Decal
+};
+
+/** @brief The offset, scale and rotation in radians a material applies to texture coordinates. */
+struct MeshAssemblyUvTransform {
+    glm::vec2 offset { 0.0F };
+    glm::vec2 scale { 1.0F };
+    float rotation {};
+};
+
+/**
+ * @struct MeshAssemblyTexture
+ * @brief One texture a material names.
+ *
+ * image holds the decoded pixels when the model file carries them, and path is then a reference
+ * into that file. Otherwise image is null and path names a file.
+ */
+struct MeshAssemblyTexture {
+    std::string path;
+    std::shared_ptr<const ImageData> image;
+    MeshAssemblyWrap wrap_u { MeshAssemblyWrap::Repeat };
+    MeshAssemblyWrap wrap_v { MeshAssemblyWrap::Repeat };
+    std::optional<MeshAssemblyUvTransform> transform;
+    uint32_t uv_set {}; ///< 0 is the vertex uv, higher ones are MeshAssemblyVertexSets::uvs[uv_set - 1].
+};
+
+/** @brief A texture under a use MeshAssemblyMaps has no member for, or past the first of one it has. */
+struct MeshAssemblyNamedTexture {
+    std::string use;
+    uint32_t index {};
+    MeshAssemblyTexture texture;
+};
+
+/**
+ * @struct MeshAssemblyMaps
+ * @brief The textures of a material by use, kept in its facets by the readers that know them.
+ *
+ * A file that packs metalness and roughness into one texture names it in both.
+ */
+struct MeshAssemblyMaps {
+    std::optional<MeshAssemblyTexture> base_color;
+    std::optional<MeshAssemblyTexture> normal;
+    std::optional<MeshAssemblyTexture> metalness;
+    std::optional<MeshAssemblyTexture> roughness;
+    std::optional<MeshAssemblyTexture> emissive;
+    std::optional<MeshAssemblyTexture> occlusion;
+    std::optional<MeshAssemblyTexture> opacity;
+    std::vector<MeshAssemblyNamedTexture> others;
+};
+
+/**
+ * @struct MeshAssemblyProperties
+ * @brief Every property a file gives a material, as the importer named it, kept in the material's facets.
+ */
+struct MeshAssemblyProperties {
+    using Value = std::variant<std::vector<float>, std::vector<double>, std::vector<int32_t>, std::string, std::vector<uint8_t>>;
+
+    struct Entry {
+        std::string key;
+        uint32_t semantic {};
+        uint32_t index {};
+        Value value;
+    };
+
+    std::vector<Entry> entries;
+};
+
+/**
+ * @struct MeshAssemblyVertexSets
+ * @brief A mesh source's UV and colour sets past the first, one entry per vertex, kept in its facets.
+ */
+struct MeshAssemblyVertexSets {
+    std::vector<std::vector<glm::vec2>> uvs;
+    std::vector<std::vector<glm::vec4>> colors;
+};
+
+/** @brief The keyed weights of one row's morph targets, in the order of its source's targets. */
+struct MeshAssemblyWeights {
+    uint64_t row {};
+    std::vector<Kinesis::TimedValues<float>> targets;
+};
+
+/**
+ * @struct MeshAssemblyAttributes
+ * @brief The named per element values of a geometry source that have no place in its
+ *        vertices, kept in its facets.
+ *
+ * A Varying attribute has one value per vertex, a Uniform one per polygon and a
+ * Constant one exactly one.
+ */
+struct MeshAssemblyAttributes {
+    std::vector<SpatialAttribute> values;
+};
+
+/**
+ * @struct MeshAssemblyPointMap
+ * @brief The file point each vertex of a mesh source was split from, kept in its facets
+ *        when seams or hard edges made more vertices than points.
+ */
+struct MeshAssemblyPointMap {
+    std::vector<uint32_t> of_vertex;
+    uint32_t point_count {};
+};
+
+/** @brief A named set of polygons of a mesh source, with the material it shows, if its own. */
+struct MeshAssemblyFaceSet {
+    std::string name;
+    std::vector<uint32_t> faces;
+    bool exclusive {};
+    std::optional<uint64_t> material;
+};
+
+/** @brief The face sets of a mesh source, kept in its facets. */
+struct MeshAssemblyFaceSets {
+    std::vector<MeshAssemblyFaceSet> sets;
+};
+
+/**
+ * @struct MeshAssemblySubdivision
+ * @brief Marks a mesh source as the cage of a subdivision surface, kept in its facets.
+ *
+ * Crease and corner indices name points as MeshAssemblyPointMap numbers them, or
+ * vertices when the source has no map. Holes name polygons.
+ */
+struct MeshAssemblySubdivision {
+    std::string scheme { "catmull-clark" };
+    std::vector<int32_t> crease_indices;
+    std::vector<int32_t> crease_lengths;
+    std::vector<float> crease_sharpness;
+    std::vector<int32_t> corner_indices;
+    std::vector<float> corner_sharpness;
+    std::vector<int32_t> holes;
+    int32_t face_varying_boundary {};
+    int32_t face_varying_corners {};
+    int32_t boundary {};
+};
+
+enum class MeshAssemblyCurveType : uint8_t {
+    Cubic,
+    Linear,
+    VariableOrder
+};
+
+enum class MeshAssemblyCurveBasis : uint8_t {
+    None,
+    Bezier,
+    Bspline,
+    CatmullRom,
+    Hermite,
+    Power
+};
+
+/** @brief How the control points of a curve source are meant to be read, kept in its facets. */
+struct MeshAssemblyCurveForm {
+    MeshAssemblyCurveType type { MeshAssemblyCurveType::Linear };
+    MeshAssemblyCurveBasis basis { MeshAssemblyCurveBasis::None };
+    bool periodic {};
+    std::vector<uint8_t> orders;
+    std::vector<float> knots;
+};
+
+/**
+ * @struct MeshAssemblyVisibility
+ * @brief The rows a file shows or hides explicitly, kept in the assembly's facets.
+ *
+ * A row without an entry inherits from its parent. keys, when present, holds 1 for
+ * shown and 0 for hidden over time, each held until the next.
+ */
+struct MeshAssemblyVisibility {
+    struct Entry {
+        uint64_t row {};
+        bool visible { true };
+        std::optional<Kinesis::TimedValues<float>> keys;
+    };
+
+    std::vector<Entry> entries;
+};
+
+/**
+ * @struct MeshAssemblyMetadata
+ * @brief The named values a file attaches to its scene and rows, uninterpreted, kept in the assembly's facets.
+ *
+ * An entry with no row belongs to the scene. Nested names are joined with '/'.
+ */
+struct MeshAssemblyMetadata {
+    using Value = std::variant<bool, int64_t, uint64_t, double, glm::vec3, std::string>;
+
+    struct Entry {
+        std::optional<uint64_t> row;
+        std::string key;
+        Value value;
+    };
+
+    std::vector<Entry> entries;
+};
 
 /**
  * @struct MeshAssemblyChannel
@@ -96,6 +393,8 @@ struct MeshAssemblyChannel {
     std::optional<Kinesis::TimedValues<glm::vec3>> translation;
     std::optional<Kinesis::TimedValues<glm::vec4>> rotation;
     std::optional<Kinesis::TimedValues<glm::vec3>> scale;
+    std::optional<Kinesis::OutOfRange> before;
+    std::optional<Kinesis::OutOfRange> after;
 };
 
 /**
@@ -105,6 +404,7 @@ struct MeshAssemblyChannel {
 struct MeshAssemblyMotion {
     std::string name;
     std::vector<MeshAssemblyChannel> channels;
+    std::vector<MeshAssemblyWeights> weights {};
 };
 
 MF_DESCRIBE(MeshAssemblyMotion)
@@ -128,15 +428,18 @@ MF_DESCRIBE(MeshAssemblyGroup)
  * The table's layout is derived from this description, so a column is named by the
  * member that declares it. parent is the row of the parent and is always an earlier
  * row, absent for a root. source indexes MeshAssemblyData::sources and is absent for a
- * joint. material indexes MeshAssemblyData::materials and is absent for none. local is
- * the placement relative to the parent. Two rows may name the same source, which is
- * how a shared mesh is kept shared.
+ * joint. material indexes MeshAssemblyData::materials and is absent for none. skeleton
+ * indexes MeshAssemblyData::skeletons and says which rows move the source's MeshSkin,
+ * absent for a row drawn unskinned. local is the placement relative to the parent. Two
+ * rows may name the same source, which is how a shared mesh is kept shared, and each
+ * may follow a skeleton of its own.
  */
 struct MeshAssemblyPlacement {
     std::string name;
     std::optional<uint64_t> parent;
     std::optional<uint64_t> source;
     std::optional<uint64_t> material;
+    std::optional<uint64_t> skeleton;
     glm::mat4 local { 1.0F };
 };
 
@@ -147,7 +450,7 @@ MF_DESCRIBE(MeshAssemblyPlacement)
  * @brief Geometry sources placed in a hierarchy: what a model file or an
  *        Alembic archive holds, as one passive value.
  *
- * Sources and materials are stored once. The placement table has one row per
+ * Sources, materials and skeletons are stored once. The placement table has one row per
  * MeshAssemblyPlacement. Motions move rows by keys over time. facets holds what
  * describes the whole file (its path, application, units, up axis), by typed key
  * or as whole structs, so no such fact is a member.
@@ -167,6 +470,7 @@ struct MAYAFLUX_API MeshAssemblyData {
 
     std::vector<MeshAssemblySource> sources;
     std::vector<MeshAssemblyMaterial> materials;
+    std::vector<std::vector<uint64_t>> skeletons; ///< Each the joint rows of a skin, in its joint order.
     CompositeArray placements { placement_layout() };
     std::vector<MeshAssemblyMotion> motions;
     Facets facets;

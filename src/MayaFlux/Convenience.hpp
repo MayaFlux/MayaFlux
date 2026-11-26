@@ -71,6 +71,7 @@
 #include "Buffers/Geometry/ComputeMeshBuffer.hpp"
 #include "Buffers/Geometry/GeometryBuffer.hpp"
 #include "Buffers/Geometry/MeshBuffer.hpp"
+#include "Buffers/Network/AssembledGeometryBuffer.hpp"
 #include "Buffers/Network/InstanceNetworkBuffer.hpp"
 #include "Buffers/Network/MeshNetworkBuffer.hpp"
 #include "Buffers/Network/NetworkAudioBuffer.hpp"

@@ -3,7 +3,6 @@
 #include "MeshNetworkProcessor.hpp"
 
 #include "MayaFlux/Buffers/State/StateFieldBuffer.hpp"
-#include "MayaFlux/Kakshya/NDData/MeshSkin.hpp"
 
 namespace MayaFlux::Core {
 class VKImage;
@@ -67,6 +66,11 @@ public:
     /**
      * @brief Attach a RenderProcessor with optional texture support.
      *
+     * Every slot that carries a skin or morph targets (MeshSlot::skin, MeshSlot::morphs) gets a
+     * pass ahead of the field pass.
+     * Each pass finds its slot's range among the concatenated vertices every cycle, so slots may
+     * be added, removed or reordered.
+     *
      * Mirrors MeshBuffer::setup_rendering:
      * - Topology is always TRIANGLE_LIST.
      * - Defaults to triangle.vert.spv / triangle.frag.spv (untextured)
@@ -121,23 +125,19 @@ public:
     // -------------------------------------------------------------------------
 
     /**
-     * @brief Skin a slot's vertices on the GPU from a palette of joint matrices.
-     * @param slot Index of the slot, whose node holds the skin's rest pose and keeps its vertex count.
-     * @param skin Joints and per vertex weights covering the slot's vertices, or null to remove it.
-     *
-     * Call before setup_rendering, which wires one skin pass for every skinned slot ahead of the
-     * field pass. Each pass finds its slot's range among the concatenated vertices every cycle, so
-     * slots may be added, removed or reordered.
-     */
-    void set_slot_skin(uint32_t slot, std::shared_ptr<const Kakshya::MeshSkin> skin);
-
-    /**
      * @brief Publish the palette of a skinned slot, one matrix for each joint, in the space of the slot's mesh.
      * @return False when the slot has no skin pass wired yet or the count is not its skin's joint count.
      *
-     * Safe from any thread (see Kinesis::skin_palette).
+     * Safe from any thread (see Kinesis::relative_transforms). A slot that names its joint slots has its
+     * palette recomputed from them every cycle, which replaces what is published here.
      */
     bool set_slot_palette(uint32_t slot, std::vector<glm::mat4> palette);
+
+    /**
+     * @brief A copy of the palette a skinned slot is deformed with now.
+     * @return Empty when the slot has no skin pass wired yet.
+     */
+    [[nodiscard]] std::vector<glm::mat4> get_slot_palette(uint32_t slot) const;
 
     // -------------------------------------------------------------------------
     // Accessors
@@ -167,7 +167,6 @@ private:
 
     struct SkinEntry {
         uint32_t slot {};
-        std::shared_ptr<const Kakshya::MeshSkin> skin;
         std::shared_ptr<SkinProcessor> processor;
     };
     std::vector<SkinEntry> m_skins;

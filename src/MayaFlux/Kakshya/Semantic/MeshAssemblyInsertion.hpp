@@ -15,6 +15,7 @@ struct MeshAssemblyGraft {
     std::vector<uint64_t> rows;
     std::vector<uint64_t> sources;
     std::vector<uint64_t> materials;
+    std::vector<uint64_t> skeletons;
     std::vector<uint64_t> motions;
     std::optional<uint64_t> joint;
 };
@@ -99,7 +100,8 @@ public:
      * @return Where everything landed, or nullopt when the parent is out of range.
      *
      * Sources and materials are copied whole, with the frame sources of the sources that have
-     * them, and the motions follow their rows.
+     * them, and face sets, skeletons, motions and the visibility and metadata entries of rows
+     * are renumbered to follow. Facets of @p other that describe its whole file stay behind.
      */
     [[nodiscard]] std::optional<MeshAssemblyGraft> graft(const MeshAssemblyContainer& other,
         std::optional<uint64_t> parent = std::nullopt, const glm::mat4& local = glm::mat4(1.0F),

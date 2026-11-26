@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ViewTransform.hpp"
+#include "Frustum.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -88,5 +88,11 @@ MAYAFLUX_API void apply_pan_zoom_pan(
  * @param ticks Signed scroll ticks (positive = zoom in).
  */
 MAYAFLUX_API void apply_pan_zoom_scroll(PanZoom2DState& state, float ticks);
+
+/** @brief The viewpoint a pan and zoom state is at: an orthographic frustum twice the zoom high. */
+[[nodiscard]] MAYAFLUX_API Viewpoint viewpoint_of(const PanZoom2DState& state);
+
+/** @brief Take pan and zoom from a viewpoint's position and orthographic window. */
+MAYAFLUX_API void set_viewpoint(PanZoom2DState& state, const Viewpoint& view);
 
 } // namespace MayaFlux::Kinesis

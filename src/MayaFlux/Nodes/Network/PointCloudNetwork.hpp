@@ -8,6 +8,10 @@
 
 #include "MayaFlux/Kinesis//Stochastic/Stochastic.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::Nodes::Network {
 
 /**
@@ -293,6 +297,20 @@ private:
 
     void apply_controls();
 };
+
+/**
+ * @brief Build a PointCloudNetwork from rows of a MeshAssembly that show points, or lines.
+ * @param assembly The assembly to read.
+ * @param rows Rows whose sources are all points, or all lines.
+ * @return A network whose FieldOperator holds the rows' vertices one after another, each at its
+ *         row's rest world placement. Nullptr for a null assembly, a row that is neither, or a mix.
+ *
+ * Lines are held as pairs of vertices, strips expanded, so draw them as a line list. The
+ * vertices are placed once: an assembly's motion does not move them.
+ */
+[[nodiscard]] MAYAFLUX_API std::shared_ptr<PointCloudNetwork> make_point_cloud_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    std::span<const uint64_t> rows);
 
 } // namespace MayaFlux::Nodes::Network
 #include "PointCloudNetwork.describe.hpp"

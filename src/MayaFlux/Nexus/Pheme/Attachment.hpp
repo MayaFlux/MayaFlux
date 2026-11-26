@@ -30,6 +30,13 @@ struct AttachConfig {
     std::optional<uint32_t> index;
 
     /**
+     * @brief Slot of a mesh or instance network the anchor is read from, as read_anchor takes it.
+     *
+     * Chooses the anchor only: the attachment still moves the whole buffer.
+     */
+    std::optional<uint32_t> slot;
+
+    /**
      * @brief Offset of the Agent from the anchor, in the Agent's own frame.
      *
      * Rotated by the Agent's orientation, so a look that sits in front of its

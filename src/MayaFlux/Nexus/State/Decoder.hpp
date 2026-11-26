@@ -1,33 +1,49 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Tapestry.hpp"
+#include "Bindings.hpp"
+#include "Orchestrator.hpp"
 #include "Schema.hpp"
+
+namespace MayaFlux::Buffers {
+class RenderProcessor;
+}
 
 namespace MayaFlux::Nexus {
 
 /**
  * @class StateDecoder
- * @brief Patches or rebuilds Fabric state from a previously encoded EXR + JSON schema pair.
+ * @brief Patches or rebuilds Fabric state from a previously encoded JSON schema.
  *
  * Does what the classes allow and reports the rest. Emitters, Sensors, Agents
  * (including Locus and Presence) are patched by id or constructed; their
- * Expanses are restored. Each control of the entity takes the value the schema
+ * Expanses are restored. A patched entity takes the saved controls, attachment,
+ * view targets and setups it has not had, has its sinks replaced when they differ,
+ * and is wired again when its wiring differs from the saved one. Each control of the entity takes the value the schema
  * saved for it, and one the schema does not list is emptied, so an absent
  * position clears the entity's position. A control the schema lists and the
  * entity does not hold is warned and skipped. Callable name mismatches between
  * schema and live entity are warned but do not abort the patch. Values are read
  * from the JSON; the EXR is not read.
  *
- * Live objects are never invented. Sinks, typed influences and perceptions,
- * attachments, a Locus's view targets and every wiring source that needs a
- * window, a network source or a callable are reported as warnings, and a wiring
- * that cannot be restored falls back to commit_driven. A Hull needs a buffer
- * and is skipped; a Mantle comes back as its plain box. Only files of schema
- * version k_schema_version are read.
+ * Live objects are never invented. A function is made from the Bindings'
+ * FunctionTable with the arguments saved for it, or taken from the Fabric's
+ * registry by name when it has none. Buffers, windows and network sources are
+ * looked up by the names saved for them, which restores triggers, sinks,
+ * attachments, view targets, Hull and Mantle. What is not bound is reported, and
+ * a wiring with nothing left to schedule it falls back to commit_driven. Only
+ * files of schema version k_schema_version are read.
  */
 class MAYAFLUX_API StateDecoder {
 public:
     StateDecoder() = default;
+
+    /** @param bindings Names for the live objects the state refers to. */
+    explicit StateDecoder(const std::shared_ptr<const State::Bindings>& bindings)
+        : m_bindings(bindings)
+    {
+    }
+
     ~StateDecoder() = default;
 
     StateDecoder(const StateDecoder&) = delete;
@@ -44,6 +60,12 @@ public:
         int skipped { 0 };
         std::vector<std::string> warnings;
         nlohmann::json user_state;
+        State::BufferNames buffers; ///< Loaded from the state's assets, for names the Bindings do not hold.
+        State::CourseNames courses; ///< Made for saved courses the Bindings do not hold, or by a restarted motion.
+
+        /** @brief Motions started again by name: what moves and the reflows moving it, to be kept. */
+        std::map<std::string, std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, StateOrchestrator::Reflows>>
+            motions;
     };
 
     /**
@@ -62,14 +84,12 @@ public:
     /**
      * @brief Patch existing entities and construct missing ones from schema.
      *
-     * Entities whose id exists in the fabric are patched in place. Missing
-     * entities are constructed, their callables resolved via the fabric's
-     * function registry (left empty with a warning if absent), and wired.
-     * Restorable wiring kinds: every (with its scheduler tokens), move_to and
-     * commit_driven. Any other kind falls back to commit_driven with a warning.
+     * Entities whose id exists in the fabric have their controls patched in
+     * place. Missing entities are constructed with their functions, sinks,
+     * attachment and view targets, and wired as they were.
      * Entity ids are assigned by the Fabric, so a reconstructed entity may get a
      * different id, which is warned.
-     * Hard failure (bad schema, unreadable EXR, dimension mismatch) sets
+     * Hard failure (a missing or bad schema) sets
      * last_error() and returns a zeroed result.
      *
      * @param fabric    Target fabric. May be empty, partial, or full.
@@ -108,9 +128,41 @@ public:
     [[nodiscard]] size_t missing_count() const { return m_missing_count; }
 
 private:
+    /** reconstruct() with buffers already loaded for names the Bindings do not hold. */
+    [[nodiscard]] ReconstructionResult reconstruct_fabric(
+        Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded, State::CourseNames& courses,
+        std::map<std::pair<std::string, uint32_t>, uint32_t>& ids, const std::string& label);
+
+    using Moving = std::map<std::string, std::shared_ptr<Memory::SnapshotCell<State::Carried>>>;
+    using Realizations = std::map<std::string, std::shared_ptr<Kriya::MeshAssemblyRealization>>;
+
+    /** Start the saved motions, naming their courses in @p courses, carrying nothing yet. */
+    [[nodiscard]] Moving start_motions(const std::vector<State::MotionRecord>& records,
+        const std::string& schema_path, const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        Realizations& realized, State::CourseNames& courses, ReconstructionResult& result) const;
+
+    /** Hand each restarted motion the principals it carries, found by their saved ids. */
+    static void carry(const std::vector<State::MotionRecord>& records, const Moving& moving,
+        const std::map<std::pair<std::string, uint32_t>, uint32_t>& ids,
+        const std::function<Fabric*(const std::string&)>& fabric_named);
+
+    /** Replace the sinks of a live entity when they differ from the saved ones. */
+    void patch_sinks(Fabric& fabric, const State::EntityRecord& entry, std::vector<std::string>& warnings,
+        const State::BufferNames& buffers,
+        std::map<std::pair<uint32_t, uint32_t>, std::shared_ptr<Buffers::RenderProcessor>>& sinks);
+
+    /** Wire a live entity again when what it was told differs from what was saved. */
+    void rewire(Fabric& fabric, const State::EntityRecord& entry, std::vector<std::string>& warnings,
+        const State::BufferNames& buffers, const State::CourseNames& courses);
+
+    /** Whether a live Expanse is of a record's kind and, for a Hull or Mantle, wraps its buffer. */
+    [[nodiscard]] bool wraps(const Expanse& live, const std::string& subkind,
+        const std::shared_ptr<Buffers::VKBuffer>& buffer) const;
+
     std::string m_last_error;
     size_t m_patched_count { 0 };
     size_t m_missing_count { 0 };
+    std::shared_ptr<const State::Bindings> m_bindings;
 };
 
 } // namespace MayaFlux::Nexus

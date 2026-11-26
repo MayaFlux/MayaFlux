@@ -18,10 +18,11 @@ using VolumeReflowBuilder = ReflowBuilder<Kakshya::VolumeData>;
 /**
  * @brief A sink that replaces the fields of a VolumeGridBuffer with each frame it is given.
  *
- * Every field of the frame the buffer declares is written into the field's current read
- * slot through VolumeGridBuffer::seed_raw, a vector field padded from vec3 to the vec4 the
- * buffer stores. Whatever processors the buffer has run after the write as usual, so a
- * surface, a raymarch or a simulation chain all see the frame.
+ * Every field of the frame the buffer declares is written together through
+ * VolumeGridBuffer::write_fields, in single precision, a vector field padded from vec3 to the
+ * vec4 the buffer stores. Each goes into the field's write slot and becomes the one read, so a
+ * surface, a raymarch or a simulation chain on the buffer sees the new frame whole. A frame's
+ * volume_placement is not applied: place what draws the volume.
  *
  * What the sink needs of the frame is checked, and each failure is logged once until it
  * clears: the frame's lattice must equal the buffer's, and a field the buffer does not
@@ -31,7 +32,7 @@ using VolumeReflowBuilder = ReflowBuilder<Kakshya::VolumeData>;
  * The buffer is held weakly, so a reflow never keeps it alive, and a buffer that is gone
  * ends the writes quietly.
  *
- * seed_raw records a transfer that the next one resolves, so call from the thread that
+ * write_fields records transfers that the next one resolves, so call from the thread that
  * runs the graphics frame clock, which is where a started reflow runs.
  *
  * @param volume The buffer to write. Made over the lattice of the frames, with the fields

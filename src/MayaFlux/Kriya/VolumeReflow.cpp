@@ -21,7 +21,10 @@ namespace {
 
     struct SinkState {
         std::weak_ptr<Buffers::VolumeGridBuffer> volume;
-        std::vector<glm::vec4> padded;
+        std::vector<std::vector<float>> scalars;
+        std::vector<std::vector<glm::vec4>> padded;
+        std::vector<std::string> names;
+        std::vector<std::pair<const void*, size_t>> sources;
         bool inconsistent_reported {};
         bool lattice_reported {};
         bool nothing_reported {};
@@ -54,42 +57,49 @@ namespace {
             }
             lattice_reported = false;
 
-            size_t written = 0;
-            for (const auto& field : frame.fields) {
+            names.clear();
+            sources.clear();
+            scalars.resize(frame.fields.size());
+            padded.resize(frame.fields.size());
+
+            for (size_t i = 0; i < frame.fields.size(); ++i) {
+                const auto& field = frame.fields[i];
                 if (!target->has_field(field.name)) {
                     report(field.name, "is not declared on the buffer");
                     continue;
                 }
 
                 const size_t stride = target->get_field_stride(field.name);
-                if (const auto* scalars = field.as_scalar()) {
-                    if (stride != sizeof(float)) {
-                        report(field.name, "is a scalar but the buffer declares another stride");
-                        continue;
-                    }
-                    target->seed_raw(field.name, scalars->data(), scalars->size() * sizeof(float));
-                    ++written;
+                if (stride != (field.is_vector() ? sizeof(glm::vec4) : sizeof(float))) {
+                    report(field.name, field.is_vector()
+                            ? "is a vector but the buffer declares another stride"
+                            : "is a scalar but the buffer declares another stride");
                     continue;
                 }
 
-                const auto* vectors = field.as_vector();
-                if (stride != sizeof(glm::vec4)) {
-                    report(field.name, "is a vector but the buffer declares another stride");
-                    continue;
+                auto narrowed = field.narrowed();
+                if (auto* values = std::get_if<std::vector<float>>(&narrowed)) {
+                    scalars[i] = std::move(*values);
+                    sources.emplace_back(scalars[i].data(), scalars[i].size() * sizeof(float));
+                } else {
+                    const auto& vectors = std::get<std::vector<glm::vec3>>(narrowed);
+                    padded[i].resize(vectors.size());
+                    std::ranges::transform(vectors, padded[i].begin(), [](const glm::vec3& v) { return glm::vec4(v, 0.0F); });
+                    sources.emplace_back(padded[i].data(), padded[i].size() * sizeof(glm::vec4));
                 }
-                padded.resize(vectors->size());
-                std::ranges::transform(*vectors, padded.begin(), [](const glm::vec3& v) { return glm::vec4(v, 0.0F); });
-                target->seed_raw(field.name, padded.data(), padded.size() * sizeof(glm::vec4));
-                ++written;
+                names.push_back(field.name);
             }
 
-            if (written == 0 && !nothing_reported) {
-                nothing_reported = true;
-                MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::BufferProcessing,
-                    "volume_sink: no field of the frame could be written");
-            } else if (written > 0) {
-                nothing_reported = false;
+            if (names.empty()) {
+                if (!nothing_reported) {
+                    nothing_reported = true;
+                    MF_RT_ERROR(Journal::Component::Kriya, Journal::Context::BufferProcessing,
+                        "volume_sink: no field of the frame could be written");
+                }
+                return;
             }
+            nothing_reported = false;
+            target->write_fields(names, sources);
         }
 
         void report(const std::string& name, const char* reason)

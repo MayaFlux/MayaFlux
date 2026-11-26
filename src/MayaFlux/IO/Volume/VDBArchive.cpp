@@ -1,13 +1,14 @@
 #include "VDBArchive.hpp"
 
+#include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/SmallFloat.hpp"
 
 extern "C" {
 #include "tinyvdb_ray.h"
 #include "tinyvdb_sparse_tree.h"
+#include "tinyvdb_tree.h"
+#include "tinyvdb_tree_internal.h"
 }
-
-#include <deque>
 
 namespace MayaFlux::IO::Detail {
 
@@ -52,25 +53,49 @@ namespace {
         return alloc;
     }
 
-    constexpr const char* grid_type_token(bool is_vector)
+    using MetadataEntry = Kakshya::MeshAssemblyMetadata::Entry;
+
+    template <typename T>
+    constexpr tvdb_value_type_t value_type_of()
     {
-        return is_vector ? "Tree_vec3s_5_4_3" : "Tree_float_5_4_3";
+        if constexpr (std::is_same_v<T, float>) {
+            return TVDB_VALUE_FLOAT;
+        } else if constexpr (std::is_same_v<T, double>) {
+            return TVDB_VALUE_DOUBLE;
+        } else if constexpr (std::is_same_v<T, int32_t>) {
+            return TVDB_VALUE_INT32;
+        } else if constexpr (std::is_same_v<T, glm::vec3>) {
+            return TVDB_VALUE_VEC3F;
+        } else {
+            return TVDB_VALUE_VEC3D;
+        }
+    }
+
+    constexpr const char* grid_type_token(tvdb_value_type_t vt)
+    {
+        switch (vt) {
+        case TVDB_VALUE_DOUBLE:
+            return "Tree_double_5_4_3";
+        case TVDB_VALUE_INT32:
+            return "Tree_int32_5_4_3";
+        case TVDB_VALUE_VEC3F:
+            return "Tree_vec3s_5_4_3";
+        case TVDB_VALUE_VEC3D:
+            return "Tree_vec3d_5_4_3";
+        default:
+            return "Tree_float_5_4_3";
+        }
     }
 
     // -------------------------------------------------------------------------
     // Read path
     // -------------------------------------------------------------------------
 
-    /**
-     * @brief The value type leaf-level cells of a grid are stored as.
-     */
+    /** The value type leaf-level cells of a grid are stored as. */
     tvdb_value_type_t leaf_value_type(const tvdb_grid_t& grid)
     {
         const int levels = grid.tree.layout.num_levels;
-        if (levels <= 0) {
-            return TVDB_VALUE_NULL;
-        }
-        return grid.tree.layout.levels[levels - 1].value_type;
+        return levels <= 0 ? TVDB_VALUE_NULL : grid.tree.layout.levels[levels - 1].value_type;
     }
 
     constexpr bool is_vector_type(tvdb_value_type_t vt)
@@ -78,403 +103,354 @@ namespace {
         return vt == TVDB_VALUE_VEC3F || vt == TVDB_VALUE_VEC3D || vt == TVDB_VALUE_VEC3I;
     }
 
-    constexpr bool needs_narrowing(tvdb_value_type_t vt)
+    template <typename T>
+    T load(const void* bytes)
     {
-        return vt != TVDB_VALUE_FLOAT && vt != TVDB_VALUE_VEC3F;
+        T value {};
+        std::memcpy(&value, bytes, sizeof(T));
+        return value;
     }
 
-    /**
-     * @brief Per-axis voxel size from a grid's transform.
-     *
-     * SCALE_TRANSLATE — what add_grid writes — carries independent per-axis
-     * values directly. AFFINE, which no MayaFlux-written file uses, falls
-     * back to the matrix diagonal: exact for an axis-aligned scale, wrong
-     * for a sheared or rotated one, which this reader does not attempt to
-     * represent.
-     */
-    glm::vec3 grid_voxel_size(const tvdb_transform_t& t)
+    /** One stored element as the element type a grid of its kind is read into. */
+    template <typename T>
+    T element_of(tvdb_value_type_t vt, const void* bytes)
     {
+        if constexpr (std::is_same_v<T, float>) {
+            return vt == TVDB_VALUE_HALF ? Kakshya::half_to_float(load<uint16_t>(bytes)) : load<float>(bytes);
+        } else if constexpr (std::is_same_v<T, double>) {
+            return vt == TVDB_VALUE_INT64 ? static_cast<double>(load<int64_t>(bytes)) : load<double>(bytes);
+        } else if constexpr (std::is_same_v<T, int32_t>) {
+            return vt == TVDB_VALUE_BOOL ? static_cast<int32_t>(load<uint8_t>(bytes) != 0) : load<int32_t>(bytes);
+        } else if constexpr (std::is_same_v<T, glm::vec3>) {
+            return load<glm::vec3>(bytes);
+        } else {
+            return vt == TVDB_VALUE_VEC3I ? glm::dvec3(load<glm::ivec3>(bytes)) : load<glm::dvec3>(bytes);
+        }
+    }
+
+    glm::dvec3 widened(tvdb_value_type_t vt, const void* bytes)
+    {
+        switch (vt) {
+        case TVDB_VALUE_FLOAT:
+        case TVDB_VALUE_HALF:
+            return glm::dvec3(element_of<float>(vt, bytes), 0.0, 0.0);
+        case TVDB_VALUE_DOUBLE:
+        case TVDB_VALUE_INT64:
+            return glm::dvec3(element_of<double>(vt, bytes), 0.0, 0.0);
+        case TVDB_VALUE_INT32:
+        case TVDB_VALUE_BOOL:
+            return glm::dvec3(element_of<int32_t>(vt, bytes), 0.0, 0.0);
+        case TVDB_VALUE_VEC3F:
+            return glm::dvec3(element_of<glm::vec3>(vt, bytes));
+        case TVDB_VALUE_VEC3D:
+        case TVDB_VALUE_VEC3I:
+            return element_of<glm::dvec3>(vt, bytes);
+        default:
+            return glm::dvec3(0.0);
+        }
+    }
+
+    /** The grid's transform as a matrix from voxel index to world. */
+    glm::dmat4 index_to_world(const tvdb_transform_t& t)
+    {
+        glm::dmat4 out(1.0);
+        const auto scale = [&](const double (&size)[3]) {
+            for (int axis = 0; axis < 3; ++axis) {
+                out[axis][axis] = size[axis];
+            }
+        };
+        const auto translate = [&] {
+            out[3] = glm::dvec4(t.translation[0], t.translation[1], t.translation[2], 1.0);
+        };
+
         switch (t.type) {
         case TVDB_TRANSFORM_UNIFORM_SCALE:
+            out = glm::dmat4(glm::dmat3(t.voxel_size[0]));
+            break;
         case TVDB_TRANSFORM_UNIFORM_SCALE_TRANSLATE:
-            return glm::vec3(static_cast<float>(t.voxel_size[0]));
+            out = glm::dmat4(glm::dmat3(t.voxel_size[0]));
+            translate();
+            break;
         case TVDB_TRANSFORM_SCALE:
+            scale(t.voxel_size);
+            break;
         case TVDB_TRANSFORM_SCALE_TRANSLATE:
-            return {
-                static_cast<float>(t.voxel_size[0]),
-                static_cast<float>(t.voxel_size[1]),
-                static_cast<float>(t.voxel_size[2]),
-            };
-        case TVDB_TRANSFORM_AFFINE:
-            return {
-                static_cast<float>(t.matrix[0][0]),
-                static_cast<float>(t.matrix[1][1]),
-                static_cast<float>(t.matrix[2][2]),
-            };
+            scale(t.voxel_size);
+            translate();
+            break;
         case TVDB_TRANSFORM_TRANSLATION:
-        default:
-            return glm::vec3(1.0F);
-        }
-    }
-
-    /**
-     * @brief World-space translation from a grid's transform.
-     *
-     * AFFINE's translation is read from the last column, rows 0-2 — the
-     * standard [R | t; 0 0 0 1] row-major layout, confirmed directly
-     * against tinyvdb's own AffineMap read/write (tvdb->translation[i] =
-     * matrix[i][3], both directions), not assumed.
-     */
-    glm::vec3 grid_translation(const tvdb_transform_t& t)
-    {
-        switch (t.type) {
-        case TVDB_TRANSFORM_UNIFORM_SCALE_TRANSLATE:
-        case TVDB_TRANSFORM_SCALE_TRANSLATE:
-        case TVDB_TRANSFORM_TRANSLATION:
-            return {
-                static_cast<float>(t.translation[0]),
-                static_cast<float>(t.translation[1]),
-                static_cast<float>(t.translation[2]),
-            };
+            translate();
+            break;
         case TVDB_TRANSFORM_AFFINE:
-            return {
-                static_cast<float>(t.matrix[0][3]),
-                static_cast<float>(t.matrix[1][3]),
-                static_cast<float>(t.matrix[2][3]),
-            };
+            for (int column = 0; column < 4; ++column) {
+                for (int row = 0; row < 3; ++row) {
+                    out[column][row] = t.matrix[row][column];
+                }
+            }
+            break;
         default:
-            return glm::vec3(0.0F);
+            break;
         }
+        return out;
     }
 
-    /**
-     * @brief Convert one raw scalar element to float via MayaFlux::try_convert.
-     *
-     * HALF is the one source type try_convert cannot see: it is a bit
-     * pattern, not a type try_convert's arithmetic concepts recognise, so
-     * it keeps its own decode. It is also the one case with no precision
-     * question to answer — float has strictly more range and mantissa bits
-     * than half, so widening it is always exact.
-     */
-    CastResult<float> narrow_scalar(tvdb_value_type_t vt, const void* bytes)
+    std::vector<MetadataEntry> metadata_of(const tvdb_metadata_t& metadata)
     {
-        switch (vt) {
-        case TVDB_VALUE_FLOAT: {
-            float v {};
-            std::memcpy(&v, bytes, sizeof(v));
-            return try_convert<float>(v);
-        }
-        case TVDB_VALUE_DOUBLE: {
-            double v {};
-            std::memcpy(&v, bytes, sizeof(v));
-            return try_convert<float>(v);
-        }
-        case TVDB_VALUE_INT32: {
-            int32_t v {};
-            std::memcpy(&v, bytes, sizeof(v));
-            return try_convert<float>(v);
-        }
-        case TVDB_VALUE_INT64: {
-            int64_t v {};
-            std::memcpy(&v, bytes, sizeof(v));
-            return try_convert<float>(v);
-        }
-        case TVDB_VALUE_BOOL: {
-            uint8_t v {};
-            std::memcpy(&v, bytes, sizeof(v));
-            return try_convert<float>(v != 0);
-        }
-        case TVDB_VALUE_HALF: {
-            uint16_t v {};
-            std::memcpy(&v, bytes, sizeof(v));
-            CastResult<float> result;
-            result.value = Kakshya::half_to_float(v);
-            return result;
-        }
-        default: {
-            CastResult<float> result;
-            result.value = 0.0F;
-            return result;
-        }
-        }
-    }
-
-    /**
-     * @brief narrow_vector's result: the converted glm::vec3 and whether
-     *        any of its three components lost precision.
-     *
-     * A plain glm::vec3 cannot also carry precision_loss, and
-     * try_convert does not itself understand GLM types (it
-     * converts one arithmetic scalar at a time) so this aggregates three
-     * per-component try_convert calls rather than making one call over the
-     * vector as a whole.
-     */
-    struct VectorNarrowResult {
-        glm::vec3 value { 0.0F };
-        bool precision_loss { false };
-    };
-
-    VectorNarrowResult narrow_vector(tvdb_value_type_t vt, const void* bytes)
-    {
-        switch (vt) {
-        case TVDB_VALUE_VEC3F: {
-            float v[3];
-            std::memcpy(v, bytes, sizeof(v));
-            return { { v[0], v[1], v[2] }, false };
-        }
-        case TVDB_VALUE_VEC3D: {
-            double v[3];
-            std::memcpy(v, bytes, sizeof(v));
-            const auto cx = try_convert<float>(v[0]);
-            const auto cy = try_convert<float>(v[1]);
-            const auto cz = try_convert<float>(v[2]);
-            return {
-                { cx.value.value_or(0.0F), cy.value.value_or(0.0F), cz.value.value_or(0.0F) },
-                cx.precision_loss || cy.precision_loss || cz.precision_loss,
+        std::vector<MetadataEntry> out;
+        out.reserve(metadata.count);
+        for (size_t i = 0; i < metadata.count; ++i) {
+            const tvdb_meta_entry_t& entry = metadata.entries[i];
+            if (!entry.name) {
+                continue;
+            }
+            const auto keep = [&](Kakshya::MeshAssemblyMetadata::Value value) {
+                out.push_back({ .row = std::nullopt, .key = entry.name, .value = std::move(value) });
             };
+            const auto& u = entry.value.u;
+            switch (entry.value.type) {
+            case TVDB_VALUE_BOOL:
+                keep(u.b != 0);
+                break;
+            case TVDB_VALUE_INT32:
+                keep(static_cast<int64_t>(u.i32));
+                break;
+            case TVDB_VALUE_INT64:
+                keep(static_cast<int64_t>(u.i64));
+                break;
+            case TVDB_VALUE_FLOAT:
+                keep(static_cast<double>(u.f));
+                break;
+            case TVDB_VALUE_DOUBLE:
+                keep(u.d);
+                break;
+            case TVDB_VALUE_VEC3I:
+                keep(glm::vec3(u.vec3i[0], u.vec3i[1], u.vec3i[2]));
+                break;
+            case TVDB_VALUE_VEC3F:
+                keep(glm::vec3(u.vec3f[0], u.vec3f[1], u.vec3f[2]));
+                break;
+            case TVDB_VALUE_VEC3D:
+                keep(glm::vec3(u.vec3d[0], u.vec3d[1], u.vec3d[2]));
+                break;
+            case TVDB_VALUE_STRING:
+                if (u.s.str) {
+                    keep(std::string(u.s.str, u.s.len));
+                }
+                break;
+            default:
+                break;
+            }
         }
-        case TVDB_VALUE_VEC3I: {
-            int32_t v[3];
-            std::memcpy(v, bytes, sizeof(v));
-            const auto cx = try_convert<float>(v[0]);
-            const auto cy = try_convert<float>(v[1]);
-            const auto cz = try_convert<float>(v[2]);
-            return {
-                { cx.value.value_or(0.0F), cy.value.value_or(0.0F), cz.value.value_or(0.0F) },
-                cx.precision_loss || cy.precision_loss || cz.precision_loss,
-            };
-        }
-        default:
-            return {};
-        }
+        return out;
     }
 
-    /**
-     * @brief The root tile's background value, narrowed to float.
-     *
-     * Root index 0 is not a convention this reader invents: tinyvdb's own
-     * tvdb_grid_set_background writes through tree.nodes[0].u.root, so a
-     * well-formed grid always has its root there. Background precision loss
-     * is not tracked separately from the active-cell kind read_dense_scalar/
-     * read_dense_vector report; a lossy background is rare enough (it is one
-     * value, not a whole grid's worth) that this returns the converted value
-     * only.
-     */
-    float grid_background_scalar(const tvdb_grid_t& grid)
-    {
-        if (grid.tree.num_nodes == 0) {
-            return 0.0F;
+    /** A tree's node origins and spans, released with the scope. */
+    struct TreeIndex {
+        tvdb_tree_index index {};
+        bool ready {};
+
+        TreeIndex(const tvdb_grid_t& grid, std::string& error)
+        {
+            tvdb_error_t err {};
+            ready = tvdb_tree_index_create(&grid, 0, &index, &err) == TVDB_OK;
+            if (!ready) {
+                error = err.message[0] != '\0' ? err.message : "unreadable tree";
+            }
         }
-        const tvdb_value_t& bg = grid.tree.nodes[0].u.root.background;
-        return narrow_scalar(bg.type, &bg.u).value.value_or(0.0F);
-    }
 
-    glm::vec3 grid_background_vector(const tvdb_grid_t& grid)
-    {
-        if (grid.tree.num_nodes == 0) {
-            return glm::vec3(0.0F);
+        ~TreeIndex()
+        {
+            if (ready) {
+                tvdb_tree_index_destroy(&index);
+            }
         }
-        const tvdb_value_t& bg = grid.tree.nodes[0].u.root.background;
-        return narrow_vector(bg.type, &bg.u).value;
-    }
 
-    /**
-     * @brief Union of every leaf's voxel-index extent, tinyvdb's own
-     *        active-bbox definition, generalized past its float-only
-     *        tvdb_grid_active_bbox.
-     */
-    struct BBoxAcc {
-        glm::ivec3 min { 0 };
-        glm::ivec3 max { 0 };
-        bool has_any { false };
-    };
-
-    int bbox_visit(const tvdb_leaf_view_t* leaf, void* user)
-    {
-        auto* acc = static_cast<BBoxAcc*>(user);
-        const int32_t dim = 1 << leaf->log2dim;
-        const glm::ivec3 lo(leaf->origin[0], leaf->origin[1], leaf->origin[2]);
-        const glm::ivec3 hi = lo + glm::ivec3(dim);
-
-        if (!acc->has_any) {
-            acc->min = lo;
-            acc->max = hi;
-            acc->has_any = true;
-        } else {
-            acc->min = glm::min(acc->min, lo);
-            acc->max = glm::max(acc->max, hi);
-        }
-        return 0;
-    }
-
-    /**
-     * @brief Shared context for the dense-fill visitors.
-     *
-     * region_max is exclusive. elem_size is the leaf's own on-disk element
-     * width, used to stride into the raw byte buffer regardless of what
-     * that element narrows to. precision_lost, when non-null, accumulates
-     * across every element the visit touches — set true the first time any
-     * one of them loses precision and left alone afterward.
-     */
-    struct DenseCtx {
-        glm::ivec3 region_min;
-        glm::ivec3 region_max;
-        tvdb_value_type_t vt;
-        size_t elem_size;
-        bool* precision_lost { nullptr };
-    };
-
-    struct DenseScalarCtx : DenseCtx {
-        std::vector<float>* out;
-    };
-
-    struct DenseVectorCtx : DenseCtx {
-        std::vector<glm::vec3>* out;
+        TreeIndex(const TreeIndex&) = delete;
+        TreeIndex& operator=(const TreeIndex&) = delete;
+        TreeIndex(TreeIndex&&) = delete;
+        TreeIndex& operator=(TreeIndex&&) = delete;
     };
 
     /**
-     * @brief World-voxel coordinate of leaf slot s, OpenVDB's own
-     *        (x<<2L)|(y<<L)|z packing within a dim^3 block.
+     * Call visit(origin, span, bytes, active, leaf) for every value the tree stores below its
+     * background: root tiles, internal tiles and leaf voxels.
      */
-    glm::ivec3 leaf_slot_coord(const tvdb_leaf_view_t& leaf, int32_t s)
+    template <typename Visit>
+    void walk_values(const tvdb_grid_t& grid, const tvdb_tree_index& index, Visit&& visit)
     {
-        const int32_t log2dim = leaf.log2dim;
-        const int32_t mask = (1 << log2dim) - 1;
-        return {
-            leaf.origin[0] + ((s >> (2 * log2dim)) & mask),
-            leaf.origin[1] + ((s >> log2dim) & mask),
-            leaf.origin[2] + (s & mask),
-        };
-    }
+        const tvdb_root_node_t& root = grid.tree.nodes[0].u.root;
+        for (size_t i = 0; i < root.num_tiles; ++i) {
+            const glm::ivec3 origin(root.tile_origins[3 * i], root.tile_origins[3 * i + 1], root.tile_origins[3 * i + 2]);
+            visit(origin, index.span[1], static_cast<const void*>(&root.tile_values[i].u), root.tile_active[i] != 0, false);
+        }
 
-    int dense_scalar_visit(const tvdb_leaf_view_t* leaf, void* user)
-    {
-        auto* ctx = static_cast<DenseScalarCtx*>(user);
-        const int32_t nslots = 1 << (3 * leaf->log2dim);
-        const auto* base = reinterpret_cast<const uint8_t*>(leaf->data);
-        const glm::ivec3 res = ctx->region_max - ctx->region_min;
+        const size_t width = index.value_size;
+        for (size_t n = 1; n < grid.tree.num_nodes; ++n) {
+            const tvdb_tree_node_t& node = grid.tree.nodes[n];
+            const int log2dim = grid.tree.layout.levels[node.level].log2dim;
+            const int dim = 1 << log2dim;
+            const bool leaf = node.type == TVDB_NODE_LEAF;
+            const int64_t step = leaf ? 1 : index.span[node.level + 1];
+            const uint8_t* data = leaf ? node.u.leaf.data : node.u.internal.values;
+            const tvdb_nodemask_t* active = leaf ? &node.u.leaf.value_mask : &node.u.internal.value_mask;
 
-        for (int32_t s = 0; s < nslots; ++s) {
-            if (!tvdb_nodemask_is_on(leaf->value_mask, s)) {
-                continue;
-            }
-            const glm::ivec3 world = leaf_slot_coord(*leaf, s);
-            if (glm::any(glm::lessThan(world, ctx->region_min))
-                || glm::any(glm::greaterThanEqual(world, ctx->region_max))) {
-                continue;
-            }
-            const glm::ivec3 local = world - ctx->region_min;
-            const size_t index = (static_cast<size_t>(local.z) * res.y + local.y) * res.x + local.x;
-            const auto converted = narrow_scalar(ctx->vt, base + static_cast<size_t>(s) * ctx->elem_size);
-            (*ctx->out)[index] = converted.value.value_or(0.0F);
-            if (converted.precision_loss && ctx->precision_lost) {
-                *ctx->precision_lost = true;
+            for (size_t slot = 0; slot < (size_t { 1 } << (3 * log2dim)); ++slot) {
+                if (!leaf && tvdb_nodemask_is_on(&node.u.internal.child_mask, static_cast<int32_t>(slot))) {
+                    continue;
+                }
+                glm::ivec3 origin;
+                for (int axis = 0; axis < 3; ++axis) {
+                    origin[axis] = static_cast<int32_t>(index.origins[n][axis]
+                        + static_cast<int64_t>((slot >> ((2 - axis) * log2dim)) & (dim - 1)) * step);
+                }
+                visit(origin, step, static_cast<const void*>(data + slot * width),
+                    tvdb_nodemask_is_on(active, static_cast<int32_t>(slot)) != 0, leaf);
             }
         }
-        return 0;
     }
 
-    int dense_vector_visit(const tvdb_leaf_view_t* leaf, void* user)
+    template <typename T>
+    void fill_dense(const tvdb_grid_t& grid, const tvdb_tree_index& index,
+        const glm::ivec3& region_min, const glm::uvec3& resolution, std::vector<T>& out)
     {
-        auto* ctx = static_cast<DenseVectorCtx*>(user);
-        const int32_t nslots = 1 << (3 * leaf->log2dim);
-        const auto* base = reinterpret_cast<const uint8_t*>(leaf->data);
-        const glm::ivec3 res = ctx->region_max - ctx->region_min;
+        const tvdb_value_type_t vt = leaf_value_type(grid);
+        const T background = element_of<T>(vt, &grid.tree.nodes[0].u.root.background.u);
+        out.assign(static_cast<size_t>(resolution.x) * resolution.y * resolution.z, background);
 
-        for (int32_t s = 0; s < nslots; ++s) {
-            if (!tvdb_nodemask_is_on(leaf->value_mask, s)) {
-                continue;
+        const glm::vec<3, int64_t> low(region_min);
+        const glm::vec<3, int64_t> high = low + glm::vec<3, int64_t>(resolution);
+
+        walk_values(grid, index, [&](const glm::ivec3& origin, int64_t span, const void* bytes, bool, bool) {
+            const glm::vec<3, int64_t> from = glm::max(glm::vec<3, int64_t>(origin), low);
+            const glm::vec<3, int64_t> to = glm::min(glm::vec<3, int64_t>(origin) + span, high);
+            if (glm::any(glm::greaterThanEqual(from, to))) {
+                return;
             }
-            const glm::ivec3 world = leaf_slot_coord(*leaf, s);
-            if (glm::any(glm::lessThan(world, ctx->region_min))
-                || glm::any(glm::greaterThanEqual(world, ctx->region_max))) {
-                continue;
+            const T value = element_of<T>(vt, bytes);
+            for (int64_t z = from.z; z < to.z; ++z) {
+                for (int64_t y = from.y; y < to.y; ++y) {
+                    const size_t row = static_cast<size_t>((z - low.z) * resolution.y + (y - low.y)) * resolution.x;
+                    std::fill(out.begin() + static_cast<std::ptrdiff_t>(row + (from.x - low.x)),
+                        out.begin() + static_cast<std::ptrdiff_t>(row + (to.x - low.x)), value);
+                }
             }
-            const glm::ivec3 local = world - ctx->region_min;
-            const size_t index = (static_cast<size_t>(local.z) * res.y + local.y) * res.x + local.x;
-            const auto converted = narrow_vector(ctx->vt, base + static_cast<size_t>(s) * ctx->elem_size);
-            (*ctx->out)[index] = converted.value;
-            if (converted.precision_loss && ctx->precision_lost) {
-                *ctx->precision_lost = true;
-            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // Write path
+    // -------------------------------------------------------------------------
+
+    void set_metadata(tvdb_grid_t& grid, const MetadataEntry& entry)
+    {
+        tvdb_value_t value {};
+        std::string text;
+        std::visit(
+            [&](const auto& held) {
+                using T = std::decay_t<decltype(held)>;
+                if constexpr (std::is_same_v<T, bool>) {
+                    value.type = TVDB_VALUE_BOOL;
+                    value.u.b = held ? 1 : 0;
+                } else if constexpr (std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>) {
+                    value.type = TVDB_VALUE_INT64;
+                    value.u.i64 = static_cast<int64_t>(held);
+                } else if constexpr (std::is_same_v<T, double>) {
+                    value.type = TVDB_VALUE_DOUBLE;
+                    value.u.d = held;
+                } else if constexpr (std::is_same_v<T, glm::vec3>) {
+                    value.type = TVDB_VALUE_VEC3F;
+                    for (int axis = 0; axis < 3; ++axis) {
+                        value.u.vec3f[axis] = held[axis];
+                    }
+                } else {
+                    text = held;
+                    value.type = TVDB_VALUE_STRING;
+                    value.u.s.str = text.data();
+                    value.u.s.len = text.size();
+                }
+            },
+            entry.value);
+
+        tvdb_error_t err {};
+        if (tvdb_grid_set_metadata(&grid, entry.key.c_str(), &value, &err) != TVDB_OK) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VDBArchive: metadata '{}' was not written: {}", entry.key, err.message);
         }
-        return 0;
-    }
-
-    constexpr size_t element_width(bool is_vector)
-    {
-        return is_vector ? sizeof(glm::vec3) : sizeof(float);
     }
 
     /**
-     * @brief Synthesize the 5-4-3 template the builder reads layout, grid
-     *        type and transform from.
-     *
-     * The template's own tree is unused. grid_type must outlive the builder
-     * call; the builder duplicates the string but borrows it until it does.
+     * Synthesize the 5-4-3 template the builder reads layout, grid type and transform from.
+     * grid_type must outlive the builder call.
      */
-    tvdb_grid_t make_template(
-        const Kinesis::Lattice3D& lattice, bool is_vector, char* grid_type)
+    tvdb_grid_t make_template(const glm::dmat4& matrix, tvdb_value_type_t vt, char* grid_type)
     {
         tvdb_grid_t tmpl;
         std::memset(&tmpl, 0, sizeof(tmpl));
 
-        std::strcpy(grid_type, grid_type_token(is_vector));
+        std::strcpy(grid_type, grid_type_token(vt));
         tmpl.descriptor.grid_type = grid_type;
 
-        const tvdb_value_type_t vt = is_vector ? TVDB_VALUE_VEC3F : TVDB_VALUE_FLOAT;
-
+        constexpr std::array<int, 4> log2dims { 0, 5, 4, 3 };
         tmpl.tree.layout.num_levels = 4;
-        tmpl.tree.layout.levels[0].node_type = TVDB_NODE_ROOT;
-        tmpl.tree.layout.levels[1].node_type = TVDB_NODE_INTERNAL;
-        tmpl.tree.layout.levels[2].node_type = TVDB_NODE_INTERNAL;
-        tmpl.tree.layout.levels[3].node_type = TVDB_NODE_LEAF;
-        tmpl.tree.layout.levels[0].log2dim = 0;
-        tmpl.tree.layout.levels[1].log2dim = 5;
-        tmpl.tree.layout.levels[2].log2dim = 4;
-        tmpl.tree.layout.levels[3].log2dim = 3;
-        for (int lv = 0; lv < 4; ++lv) {
-            tmpl.tree.layout.levels[lv].value_type = vt;
+        for (int level = 0; level < 4; ++level) {
+            auto& info = tmpl.tree.layout.levels[level];
+            info.node_type = level == 0 ? TVDB_NODE_ROOT : level == 3 ? TVDB_NODE_LEAF
+                                                                      : TVDB_NODE_INTERNAL;
+            info.log2dim = log2dims[level];
+            info.value_type = vt;
         }
 
-        const glm::vec3 cell = lattice.cell_size();
-        const glm::vec3 origin = lattice.bounds.min + 0.5F * cell;
+        bool axis_aligned = true;
+        for (int column = 0; column < 3; ++column) {
+            for (int row = 0; row < 3; ++row) {
+                const double value = matrix[column][row];
+                axis_aligned = axis_aligned && (column == row ? value > 0.0 : value == 0.0);
+            }
+        }
 
-        tmpl.transform.type = TVDB_TRANSFORM_SCALE_TRANSLATE;
+        auto& transform = tmpl.transform;
+        transform.type = axis_aligned ? TVDB_TRANSFORM_SCALE_TRANSLATE : TVDB_TRANSFORM_AFFINE;
         for (int axis = 0; axis < 3; ++axis) {
-            tmpl.transform.scale_values[axis] = cell[axis];
-            tmpl.transform.voxel_size[axis] = cell[axis];
-            tmpl.transform.translation[axis] = origin[axis];
+            const double size = glm::length(glm::dvec3(matrix[axis]));
+            transform.scale_values[axis] = size;
+            transform.voxel_size[axis] = size;
+            transform.translation[axis] = matrix[3][axis];
+        }
+        for (int column = 0; column < 4; ++column) {
+            for (int row = 0; row < 4; ++row) {
+                transform.matrix[row][column] = matrix[column][row];
+            }
         }
 
         return tmpl;
+    }
+
+    /**
+     * Replace a float grid by what a tinyvdb rewrite makes of it, keeping the grid when the
+     * rewrite is refused.
+     */
+    template <typename Rewrite>
+    bool rewrite_grid(tvdb_grid_t& grid, Rewrite&& rewrite, std::string& error)
+    {
+        tvdb_grid_t out {};
+        tvdb_error_t err {};
+        if (rewrite(&grid, &out, &err) != TVDB_OK) {
+            error = err.message;
+            return false;
+        }
+        tvdb_grid_destroy_owned(&grid);
+        grid = out;
+        return true;
     }
 
 } // namespace
 
 /**
  * @struct VDBArchive::State
- * @brief Built grids and the storage their borrowed pointers refer into.
- *
- * tvdb_meta_entry_t holds bare char pointers and tvdb_grid_destroy_owned
- * frees whatever the grid owns. Metadata strings therefore live here and the
- * entry array is detached from each grid before destroying it, so tinyvdb
- * never frees memory it did not allocate.
- *
- * Deques rather than vectors: entry arrays hold pointers into the string
- * storage, and grids hold pointers into the entry storage, so neither may
- * reallocate as more grids are added.
- *
- * read_file/read_file_open are the read path's entire state: open() parses
- * a file into read_file and every accessor below indexes into it directly.
- * Independent of the write-side members above — an instance may open() for
- * reading without ever having called add_grid.
+ * @brief Built grids, which own their memory, and the opened file.
  */
 struct VDBArchive::State {
     std::vector<tvdb_grid_t> grids;
-    std::deque<std::string> strings;
-    std::deque<std::vector<tvdb_meta_entry_t>> entries;
-    std::deque<std::array<char, 32>> type_tokens;
 
     tvdb_file_t read_file {};
     bool read_file_open { false };
@@ -488,9 +464,6 @@ VDBArchive::VDBArchive()
 VDBArchive::~VDBArchive()
 {
     for (auto& grid : m_state->grids) {
-        grid.metadata.entries = nullptr;
-        grid.metadata.count = 0;
-        grid.metadata.capacity = 0;
         tvdb_grid_destroy_owned(&grid);
     }
 
@@ -504,18 +477,11 @@ size_t VDBArchive::grid_count() const
     return m_state->grids.size();
 }
 
-bool VDBArchive::add_grid(
-    const Kinesis::Lattice3D& lattice, const VDBGridSpec& spec)
+bool VDBArchive::add_grid(const VDBGridSpec& spec)
 {
-    const size_t width = element_width(spec.is_vector);
-    if (spec.values.size() != spec.coords.size() * width) {
-        m_last_error = "grid '" + std::string(spec.name)
-            + "': value bytes do not match coordinate count";
-        return false;
-    }
-    if (spec.background.size() != width) {
-        m_last_error = "grid '" + std::string(spec.name)
-            + "': background is the wrong width";
+    const std::string name(spec.name);
+    if (!spec.values || std::visit([](const auto& v) { return v.size(); }, *spec.values) != spec.coords.size()) {
+        m_last_error = "grid '" + name + "': values do not match the coordinate count";
         return false;
     }
 
@@ -523,67 +489,80 @@ bool VDBArchive::add_grid(
         "glm::ivec3 and tvdb_vec3i must be layout compatible for the "
         "coordinate span to be passed through without a copy");
 
-    auto& type_token = m_state->type_tokens.emplace_back();
-    tvdb_grid_t tmpl = make_template(lattice, spec.is_vector, type_token.data());
+    tvdb_grid_t grid {};
+    const bool built = std::visit(
+        [&](const auto& values) {
+            using T = typename std::decay_t<decltype(values)>::value_type;
+            constexpr tvdb_value_type_t vt = value_type_of<T>();
 
-    const std::string name(spec.name);
+            std::array<char, 32> type_token {};
+            tvdb_grid_t tmpl = make_template(spec.index_to_world, vt, type_token.data());
 
-    tvdb_grid_t grid;
-    const bool ok = tvdb_grid_from_sparse_typed_using_template(
-        &tmpl,
-        reinterpret_cast<const tvdb_vec3i*>(spec.coords.data()),
-        spec.values.data(),
-        spec.coords.size(),
-        spec.is_vector ? TVDB_VALUE_VEC3F : TVDB_VALUE_FLOAT,
-        spec.background.data(),
-        name.c_str(),
-        &grid);
+            T background {};
+            if constexpr (std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::dvec3>) {
+                background = T(spec.background);
+            } else {
+                background = static_cast<T>(spec.background.x);
+            }
 
-    if (!ok) {
+            return tvdb_grid_from_sparse_typed_using_template(
+                &tmpl,
+                reinterpret_cast<const tvdb_vec3i*>(spec.coords.data()),
+                values.data(),
+                spec.coords.size(),
+                vt,
+                &background,
+                name.c_str(),
+                &grid);
+        },
+        *spec.values);
+
+    if (!built) {
         m_last_error = "grid '" + name + "': tree build failed";
         return false;
     }
 
-    auto& list = m_state->entries.emplace_back();
-    list.reserve(spec.metadata.size() + 1);
-
-    auto add_entry = [&](std::string_view key, std::string_view value) {
-        std::string& k = m_state->strings.emplace_back(key);
-        std::string& t = m_state->strings.emplace_back("string");
-        std::string& v = m_state->strings.emplace_back(value);
-
-        tvdb_meta_entry_t entry;
-        std::memset(&entry, 0, sizeof(entry));
-        entry.name = k.data();
-        entry.type_name = t.data();
-        entry.value.type = TVDB_VALUE_STRING;
-        entry.value.u.s.str = v.data();
-        entry.value.u.s.len = v.size();
-        list.push_back(entry);
-    };
+    if (std::holds_alternative<std::vector<float>>(*spec.values)) {
+        std::string reason;
+        const auto width = static_cast<float>(spec.background.x);
+        if (spec.level_set && width > 0.0F
+            && !rewrite_grid(grid, [width](const tvdb_grid_t* in, tvdb_grid_t* out, tvdb_error_t* err) {
+                   return tvdb_grid_signed_flood_fill(in, width, -width, out, err);
+               },
+                reason)) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VDBArchive: grid '{}' was not flood filled, so its inside may read as outside: {}", name, reason);
+        }
+        if (!rewrite_grid(grid, tvdb_grid_prune, reason)) {
+            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
+                "VDBArchive: grid '{}' was written without tiles: {}", name, reason);
+        }
+    }
 
     // OpenVDB reads a grid's name from metadata, not from the archive's grid
     // descriptor. Without this entry vdb_print and every DCC show it unnamed.
-    add_entry("name", spec.name);
-
-    for (const auto& [key, value] : spec.metadata) {
-        add_entry(key, value);
+    set_metadata(grid, { .row = std::nullopt, .key = "name", .value = name });
+    for (const auto& entry : spec.metadata) {
+        set_metadata(grid, entry);
     }
 
-    grid.metadata.entries = list.data();
-    grid.metadata.count = list.size();
-    grid.metadata.capacity = list.size();
-    grid.metadata.alloc = nullptr;
+    grid.descriptor.save_float_as_half = spec.half_float && !std::holds_alternative<std::vector<int32_t>>(*spec.values) ? 1 : 0;
 
     m_state->grids.push_back(grid);
     return true;
 }
 
-bool VDBArchive::save(const std::string& path, uint32_t compression, int level)
+bool VDBArchive::save(const std::string& path, uint32_t compression, int level,
+    std::span<const Kakshya::MeshAssemblyMetadata::Entry> metadata)
 {
     if (m_state->grids.empty()) {
         m_last_error = "no grids to save";
         return false;
+    }
+
+    tvdb_grid_t file_entries {};
+    for (const auto& entry : metadata) {
+        set_metadata(file_entries, entry);
     }
 
     tvdb_file_t out;
@@ -591,12 +570,15 @@ bool VDBArchive::save(const std::string& path, uint32_t compression, int level)
     out.alloc = make_allocator();
     out.num_grids = m_state->grids.size();
     out.grids = m_state->grids.data();
+    out.file_metadata = file_entries.metadata;
 
     tvdb_error_t err;
     std::memset(&err, 0, sizeof(err));
 
     const tvdb_status_t st = tvdb_file_save(
         &out, path.c_str(), compression, level, /*use_mmap=*/0, &err);
+
+    tvdb_grid_destroy(&file_entries, nullptr);
 
     if (st != TVDB_OK) {
         m_last_error = std::string("save failed: ")
@@ -659,140 +641,82 @@ VDBGridSummary VDBArchive::grid_summary(size_t index) const
 
     const tvdb_value_type_t vt = leaf_value_type(grid);
     out.is_vector = is_vector_type(vt);
-    out.narrowed = needs_narrowing(vt);
+    out.index_to_world = index_to_world(grid.transform);
+    out.metadata = metadata_of(grid.metadata);
 
-    out.voxel_size = grid_voxel_size(grid.transform);
-    out.translation = grid_translation(grid.transform);
+    TreeIndex tree(grid, m_last_error);
+    if (!tree.ready) {
+        return out;
+    }
+    out.background = widened(vt, &grid.tree.nodes[0].u.root.background.u);
 
-    BBoxAcc acc;
-    tvdb_grid_visit_leaves(&grid, bbox_visit, &acc);
-    out.has_active = acc.has_any;
-    out.active_min = acc.min;
-    out.active_max = acc.max;
-
-    out.background_scalar = grid_background_scalar(grid);
-    out.background_vector = grid_background_vector(grid);
+    walk_values(grid, tree.index, [&](const glm::ivec3& origin, int64_t span, const void*, bool active, bool leaf) {
+        if (!leaf && !active) {
+            return;
+        }
+        const glm::ivec3 high = origin + glm::ivec3(static_cast<int32_t>(span));
+        out.active_min = out.has_active ? glm::min(out.active_min, origin) : origin;
+        out.active_max = out.has_active ? glm::max(out.active_max, high) : high;
+        out.has_active = true;
+    });
 
     return out;
 }
 
-std::string VDBArchive::grid_metadata(size_t index, std::string_view key) const
+std::vector<Kakshya::MeshAssemblyMetadata::Entry> VDBArchive::file_metadata() const
 {
-    if (!m_state->read_file_open || index >= m_state->read_file.num_grids) {
-        return {};
-    }
-
-    const tvdb_grid_t& grid = m_state->read_file.grids[index];
-
-    for (size_t i = 0; i < grid.metadata.count; ++i) {
-        const tvdb_meta_entry_t& entry = grid.metadata.entries[i];
-        if (!entry.name || key != entry.name) {
-            continue;
-        }
-        if (entry.value.type != TVDB_VALUE_STRING || !entry.value.u.s.str) {
-            return {};
-        }
-        return { entry.value.u.s.str, entry.value.u.s.len };
-    }
-    return {};
+    return m_state->read_file_open
+        ? metadata_of(m_state->read_file.file_metadata)
+        : std::vector<Kakshya::MeshAssemblyMetadata::Entry> {};
 }
 
-bool VDBArchive::read_dense_scalar(
+bool VDBArchive::read_dense(
     size_t index,
     const glm::ivec3& region_min,
     const glm::uvec3& resolution,
-    float background,
-    std::vector<float>& out,
-    bool* precision_lost) const
+    Kakshya::VolumeField::ValueStorage& out) const
 {
     if (!m_state->read_file_open || index >= m_state->read_file.num_grids) {
-        m_last_error = "read_dense_scalar: grid index out of range";
+        m_last_error = "read_dense: grid index out of range";
         return false;
     }
     if (resolution.x == 0 || resolution.y == 0 || resolution.z == 0) {
-        m_last_error = "read_dense_scalar: zero resolution";
+        m_last_error = "read_dense: zero resolution";
         return false;
     }
 
     const tvdb_grid_t& grid = m_state->read_file.grids[index];
-    const tvdb_value_type_t vt = leaf_value_type(grid);
-
-    if (is_vector_type(vt)) {
-        const char* name = tvdb_grid_name(&m_state->read_file, index);
-        m_last_error = "read_dense_scalar: grid '" + std::string(name ? name : "") + "' is vector-typed";
-        return false;
-    }
-    const size_t elem_size = tvdb_value_type_size(vt);
-    if (elem_size == 0) {
-        m_last_error = "read_dense_scalar: grid has an unsupported leaf value type";
+    TreeIndex tree(grid, m_last_error);
+    if (!tree.ready) {
         return false;
     }
 
-    if (precision_lost) {
-        *precision_lost = false;
-    }
+    const auto fill = [&]<typename T>() {
+        std::vector<T> values;
+        fill_dense(grid, tree.index, region_min, resolution, values);
+        out = std::move(values);
+        return true;
+    };
 
-    out.assign(static_cast<size_t>(resolution.x) * resolution.y * resolution.z, background);
-
-    DenseScalarCtx ctx {};
-    ctx.region_min = region_min;
-    ctx.region_max = region_min + glm::ivec3(resolution);
-    ctx.vt = vt;
-    ctx.elem_size = elem_size;
-    ctx.precision_lost = precision_lost;
-    ctx.out = &out;
-
-    tvdb_grid_visit_leaves(&grid, dense_scalar_visit, &ctx);
-    return true;
-}
-
-bool VDBArchive::read_dense_vector(
-    size_t index,
-    const glm::ivec3& region_min,
-    const glm::uvec3& resolution,
-    const glm::vec3& background,
-    std::vector<glm::vec3>& out,
-    bool* precision_lost) const
-{
-    if (!m_state->read_file_open || index >= m_state->read_file.num_grids) {
-        m_last_error = "read_dense_vector: grid index out of range";
+    switch (leaf_value_type(grid)) {
+    case TVDB_VALUE_FLOAT:
+    case TVDB_VALUE_HALF:
+        return fill.template operator()<float>();
+    case TVDB_VALUE_DOUBLE:
+    case TVDB_VALUE_INT64:
+        return fill.template operator()<double>();
+    case TVDB_VALUE_INT32:
+    case TVDB_VALUE_BOOL:
+        return fill.template operator()<int32_t>();
+    case TVDB_VALUE_VEC3F:
+        return fill.template operator()<glm::vec3>();
+    case TVDB_VALUE_VEC3D:
+    case TVDB_VALUE_VEC3I:
+        return fill.template operator()<glm::dvec3>();
+    default:
+        m_last_error = "read_dense: grid has an unsupported value type";
         return false;
     }
-    if (resolution.x == 0 || resolution.y == 0 || resolution.z == 0) {
-        m_last_error = "read_dense_vector: zero resolution";
-        return false;
-    }
-
-    const tvdb_grid_t& grid = m_state->read_file.grids[index];
-    const tvdb_value_type_t vt = leaf_value_type(grid);
-
-    if (!is_vector_type(vt)) {
-        const char* name = tvdb_grid_name(&m_state->read_file, index);
-        m_last_error = "read_dense_vector: grid '" + std::string(name ? name : "") + "' is scalar-typed";
-        return false;
-    }
-    const size_t elem_size = tvdb_value_type_size(vt);
-    if (elem_size == 0) {
-        m_last_error = "read_dense_vector: grid has an unsupported leaf value type";
-        return false;
-    }
-
-    if (precision_lost) {
-        *precision_lost = false;
-    }
-
-    out.assign(static_cast<size_t>(resolution.x) * resolution.y * resolution.z, background);
-
-    DenseVectorCtx ctx {};
-    ctx.region_min = region_min;
-    ctx.region_max = region_min + glm::ivec3(resolution);
-    ctx.vt = vt;
-    ctx.elem_size = elem_size;
-    ctx.precision_lost = precision_lost;
-    ctx.out = &out;
-
-    tvdb_grid_visit_leaves(&grid, dense_vector_visit, &ctx);
-    return true;
 }
 
 } // namespace MayaFlux::IO::Detail

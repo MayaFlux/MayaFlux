@@ -19,6 +19,9 @@ class BufferManager;
 
 namespace MayaFlux::Nexus {
 
+class StateEncoder;
+class StateDecoder;
+
 /**
  * @class Fabric
  * @brief Orchestrates spatial indexing and scheduling for Nexus objects.
@@ -46,6 +49,12 @@ public:
         Sensor,
         Agent,
     };
+
+    /** @brief Any one of the principals a Fabric holds. */
+    using Member = std::variant<
+        std::shared_ptr<Emitter>,
+        std::shared_ptr<Sensor>,
+        std::shared_ptr<Agent>>;
 
     /**
      * @brief Construct with scheduler and event manager from the engine.
@@ -127,8 +136,9 @@ public:
     /**
      * @brief Remove a registered object by id, cancelling any associated tasks.
      *
-     * Also releases what the object holds: an attached buffer gets its placement
-     * back and its audio and render sinks are unregistered.
+     * Runs the wiring's detach callbacks and releases what the object holds: an
+     * attached buffer gets its placement back and its audio and render sinks are
+     * unregistered.
      *
      * @param id Stable id assigned at registration.
      */
@@ -137,9 +147,10 @@ public:
     /**
      * @brief Stop a finalised wiring without removing the entity.
      *
-     * Cancels the wiring's task, event or chain and runs its bind detach function
-     * once. The entity stays registered and can still be fired by id. Does nothing
-     * if @p id is not registered or has no finalised wiring.
+     * Cancels the wiring's task, event or chain, stops commit from firing the
+     * entity and runs its detach callbacks once. The entity stays registered and
+     * can still be fired by id. Does nothing if @p id is not registered or has no
+     * finalised wiring.
      *
      * @param id Stable id assigned at registration.
      */
@@ -172,11 +183,11 @@ public:
 
     /**
      * @brief Apply one controls struct to every entity of this Fabric.
-     * @tparam C EmitterControls, SensorControls, AgentControls, PresenceControls, LocusControls
-     *         or any struct an entity holds through extend().
+     * @tparam C PlacementControls, EmitterControls, SensorControls, AgentControls,
+     *         PresenceControls, LocusControls or any struct an entity holds through extend().
      *
-     * An entity that does not hold C is left alone, so `set_all(PresenceControls { ... })`
-     * reaches only the Presences. Members of @p incoming that are empty are untouched, as
+     * Every entity holds PlacementControls. One that does not hold C is left alone, so
+     * `set_all(PresenceControls { ... })` reaches only the Presences. Members of @p incoming that are empty are untouched, as
      * for the entity's own set().
      */
     template <typename C>
@@ -267,6 +278,15 @@ public:
      */
     [[nodiscard]] std::vector<Kinesis::QueryResult> k_nearest(
         const glm::vec3& center, uint32_t k) const;
+
+    /**
+     * @brief Find the registered Expanse a ray reaches first.
+     * @param ray World-space ray.
+     * @return The Expanse's id and the distance along the ray, or nullopt when
+     *         none answers Expanse::intersect.
+     */
+    [[nodiscard]] std::optional<std::pair<uint32_t, float>> nearest_hit(
+        const Kinesis::Ray& ray) const;
 
     /**
      * @brief Access the finalised wiring for an entity for introspection.
@@ -388,13 +408,12 @@ public:
 private:
     friend class Wiring;
     friend class StateEncoder;
+    friend class StateDecoder;
+
+    /** Drop the wiring of a registered entity and answer a new one to finalise under the same id. */
+    [[nodiscard]] Wiring rewire(uint32_t id);
 
     std::string m_name;
-
-    using Member = std::variant<
-        std::shared_ptr<Emitter>,
-        std::shared_ptr<Sensor>,
-        std::shared_ptr<Agent>>;
 
     struct Registration {
         Member member;
@@ -404,10 +423,13 @@ private:
         bool commit_driven { false };
         std::optional<uint32_t> spatial_id;
         std::optional<Wiring> wiring;
+        Wiring::PlacementFn placement;
+        std::shared_ptr<WiringEnding> ending;
     };
 
     uint32_t assign_id(Member& m);
     void fire(const Registration& reg, std::optional<glm::vec2> cursor, const Core::WindowEvent* input) const;
+    static void apply_placement(const Registration& reg);
     void track(uint32_t id, Registration& reg, const glm::vec3& position);
     void untrack(Registration& reg);
     void release(Registration& reg);

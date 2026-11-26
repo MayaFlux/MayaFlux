@@ -1,7 +1,10 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/Semantic/MeshAssemblyMotionFrames.hpp"
+#include "MayaFlux/Kinesis/Tendency/Tendency.hpp"
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Kriya/Reflow.hpp"
+#include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
 
 namespace MayaFlux::Nodes::Network {
 class MeshNetwork;
@@ -12,6 +15,8 @@ enum class MeshPartPlacement : uint8_t;
 namespace MayaFlux::Buffers {
 class RecordedGeometryBuffer;
 }
+
+
 
 namespace MayaFlux::Kriya {
 
@@ -40,6 +45,28 @@ using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const Fram
  */
 [[nodiscard]] MAYAFLUX_API FrameOperation<Kakshya::MeshAssemblyLocals> placement_edit(
     const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly, PlacementEdit edit);
+
+/**
+ * @brief An operation that gives every row its own playhead, from where the row is placed.
+ *
+ * The offset field is sampled at each row's composed placement in the frame and answers clock
+ * seconds. A row with a nonzero answer takes its local placement and morph weights from @p sampled
+ * at Course::time_at of that offset, so the course's edge and time map apply to it, and the world
+ * placements are resolved again. A wave of delay then crosses a segmented asset, or a region of the
+ * field holds its rows behind the rest. Rows answering zero keep the frame's own.
+ *
+ * Needs the frame to come from one course: where several have been mixed it is returned unchanged,
+ * so give it to the route or the single course it belongs to. Each distinct offset costs one sample
+ * of the whole source per cycle.
+ *
+ * @param assembly Resolves the world placements.
+ * @param sampled Source of the rows at other times, usually the one the course plays.
+ * @param offset Clock seconds by position. Null or empty arguments return frames unchanged.
+ */
+[[nodiscard]] MAYAFLUX_API FrameOperation<Kakshya::MeshAssemblyLocals> placement_time_offset(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::shared_ptr<const Kakshya::SampledFrames<Kakshya::MeshAssemblyLocals>>& sampled,
+    Kinesis::SpatialField offset);
 
 /**
  * @brief A sink that writes each frame's placements into the slots of a MeshNetwork.
@@ -81,21 +108,48 @@ using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const Fram
  * @param instances The network, such as one made by Nodes::Network::make_instance_network.
  * @param rows rows[i] is the row instance slot i shows, in the order of the group the network was made from.
  *
- * Marks an instance dirty only when its transform changes. The network is held weakly.
+ * Marks an instance dirty only when its transform or morph weights change. The network is held weakly.
  */
 [[nodiscard]] MAYAFLUX_API MotionReflow::Sink instance_sink(
     const std::shared_ptr<Nodes::Network::InstanceNetwork>& instances, std::vector<uint64_t> rows);
 
 /**
  * @brief A sink that places a buffer that shows points or curves at the world placement of a row.
- * @param buffer The buffer. Its render processor is given a geometry transform source the first
- *        time a frame arrives after rendering is set up, which replaces any placement it had.
+ * @param buffer The buffer, given each placement by set_placement(), so a transform its
+ *        renderers already have stays and applies outside the placement.
  * @param row The row the buffer shows.
  *
- * The placement is held in a cell the draw reads, so the sink may run on any thread. The buffer is
- * held weakly.
+ * For the graphics thread. The buffer is held weakly.
  */
 [[nodiscard]] MAYAFLUX_API MotionReflow::Sink placement_sink(
     const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer, uint64_t row);
+
+/**
+ * @brief A sink that drives a viewpoint cell with a camera row of an assembly.
+ * @param view The viewpoint, held weakly.
+ * @param driver An id the cell's join() gave. Nothing is written until the cell is handed to it.
+ * @param row The row that places the camera. The frame needs its world placements.
+ * @param assembly When given and the row's lens has no frames of its own, that lens's frustum is
+ *        written with each placement. Otherwise only the placement is, and frustum_sink writes
+ *        the frustum.
+ *
+ * @code
+ * const auto path = view->join();
+ * builder.sink(viewpoint_sink(view, path, camera_row, assembly));
+ * view->hand_to(path);
+ * @endcode
+ */
+[[nodiscard]] MAYAFLUX_API MotionReflow::Sink viewpoint_sink(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view, uint32_t driver, uint64_t row,
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly = nullptr);
+
+/**
+ * @brief A sink that writes the frustum of each frame of a camera's lens into a viewpoint cell,
+ *        such as an assembly's lens_frames played by a Reflow<Kakshya::MeshAssemblyLens>.
+ * @param view The viewpoint, held weakly.
+ * @param driver The id that drives it, the one its viewpoint_sink was given.
+ */
+[[nodiscard]] MAYAFLUX_API Reflow<Kakshya::MeshAssemblyLens>::Sink frustum_sink(
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view, uint32_t driver);
 
 } // namespace MayaFlux::Kriya

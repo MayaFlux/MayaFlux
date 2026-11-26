@@ -107,6 +107,41 @@ struct Lattice3D {
 };
 
 /**
+ * @brief The value of a cell centred field at a point, between its eight nearest centres.
+ * @param lattice The lattice the values are sampled over.
+ * @param values One per cell, x fastest. Another count gives @p outside.
+ * @param point In the lattice's own space. Past its bounds gives @p outside; within them, the
+ *        half cell outside the outermost centres holds the edge value.
+ */
+template <typename T>
+[[nodiscard]] T sample_trilinear(
+    const Lattice3D& lattice, std::span<const T> values, const glm::vec3& point, const T& outside = T {})
+{
+    if (values.size() != lattice.cell_count() || values.empty()
+        || glm::any(glm::lessThan(point, lattice.bounds.min)) || glm::any(glm::greaterThan(point, lattice.bounds.max))) {
+        return outside;
+    }
+
+    const glm::vec3 at = glm::clamp((point - lattice.bounds.min) / lattice.cell_size() - 0.5F,
+        glm::vec3(0.0F), glm::vec3(lattice.resolution - 1U));
+    const glm::uvec3 low(at);
+    const glm::uvec3 high = glm::min(low + 1U, lattice.resolution - 1U);
+    const glm::vec3 f = at - glm::vec3(low);
+
+    const auto value = [&](uint32_t x, uint32_t y, uint32_t z) { return values[lattice.index({ x, y, z })]; };
+    const auto blend = [](const T& a, const T& b, float t) {
+        return static_cast<T>(a + (b - a) * static_cast<std::conditional_t<std::is_same_v<T, double> || std::is_same_v<T, glm::dvec3>, double, float>>(t));
+    };
+
+    const T near_face = blend(blend(value(low.x, low.y, low.z), value(high.x, low.y, low.z), f.x),
+        blend(value(low.x, high.y, low.z), value(high.x, high.y, low.z), f.x), f.y);
+    const T far_face = blend(blend(value(low.x, low.y, high.z), value(high.x, low.y, high.z), f.x),
+        blend(value(low.x, high.y, high.z), value(high.x, high.y, high.z), f.x), f.y);
+    return blend(near_face, far_face, f.z);
+}
+
+
+/**
  * @struct Lattice2D
  * @brief A regular subdivision of an AABB2D into a cell count per axis.
  *

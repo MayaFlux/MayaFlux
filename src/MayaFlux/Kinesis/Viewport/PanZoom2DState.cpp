@@ -49,4 +49,29 @@ void apply_pan_zoom_scroll(PanZoom2DState& st, float ticks)
     st.zoom = glm::clamp(st.zoom, st.min_zoom, st.max_zoom);
 }
 
+Viewpoint viewpoint_of(const PanZoom2DState& st)
+{
+    const Frustum frustum {
+        .window = { .min = glm::vec2(-st.zoom), .max = glm::vec2(st.zoom) },
+        .near = st.near_plane,
+        .far = st.far_plane,
+        .orthographic = true,
+        .fit = AspectFit::Height
+    };
+    return { glm::translate(glm::mat4(1.0F), glm::vec3(st.pan, 0.0F)), frustum };
+}
+
+void set_viewpoint(PanZoom2DState& st, const Viewpoint& view)
+{
+    if (same_viewpoint(view, viewpoint_of(st))) {
+        return;
+    }
+
+    const auto& [placement, frustum] = view;
+    st.pan = glm::vec2(placement[3]);
+    if (frustum.orthographic) {
+        st.zoom = glm::clamp((frustum.window.max.y - frustum.window.min.y) * 0.5F, st.min_zoom, st.max_zoom);
+    }
+}
+
 } // namespace MayaFlux::Kinesis

@@ -23,5 +23,9 @@ void main()
         return;
     }
 
-    out_color = texture(diffuseTex[in_slot], mill_surface_uv(in_uv));
+    vec4 sampled = texture(diffuseTex[in_slot], mill_surface_uv(in_uv));
+    if (sampled.a < 0.5)
+        discard;
+
+    out_color = sampled;
 }

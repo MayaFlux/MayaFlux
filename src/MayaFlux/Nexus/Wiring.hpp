@@ -4,6 +4,7 @@
 
 #include "MayaFlux/IO/Keys.hpp"
 #include "MayaFlux/Kriya/BroadcastEvents.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -29,6 +30,38 @@ class Fabric;
 class StateEncoder;
 
 /**
+ * @struct WiringEnding
+ * @brief The completion and detach callbacks of one finalised wiring, each run at most once.
+ */
+struct WiringEnding {
+    std::function<void()> complete;
+    std::function<void()> detach;
+    bool closed {};
+
+    /** @brief The wiring ran out by itself: complete, then detach. Ignored once closed. */
+    void finish()
+    {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        if (auto fn = std::exchange(complete, nullptr)) {
+            fn();
+        }
+        release();
+    }
+
+    /** @brief The wiring is being taken away: close it and detach. */
+    void release()
+    {
+        closed = true;
+        if (auto fn = std::exchange(detach, nullptr)) {
+            fn();
+        }
+    }
+};
+
+/**
  * @class Wiring
  * @brief Fluent builder that wires an entity into Fabric's scheduling infrastructure.
  *
@@ -37,8 +70,8 @@ class StateEncoder;
  *
  * No coroutine is created unless a scheduling modifier is set. @c bind()
  * performs an immediate single call with no coroutine. Any scheduling
- * modifier (@c every, @c on, @c move_to, @c position_from, @c use) creates
- * and registers a coroutine owned by Fabric.
+ * modifier (@c every, @c on, @c move_to, @c use) creates and registers a
+ * coroutine owned by Fabric. A wiring with none of these is fired by commit.
  *
  * @c on and @c on_scroll add a trigger, so one wiring may hold any number of them:
  * every key, button and window event an entity answers to goes through one wiring.
@@ -48,6 +81,7 @@ class StateEncoder;
 class MAYAFLUX_API Wiring {
 public:
     using PositionFn = std::function<glm::vec3()>;
+    using PlacementFn = std::function<PlacementControls()>;
     using SoundFactory = std::function<Vruta::SoundRoutine()>;
     using GraphicsFactory = std::function<Vruta::GraphicsRoutine()>;
     using CrossFactory = std::function<Vruta::CrossRoutine()>;
@@ -121,6 +155,14 @@ public:
     Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held,
         std::function<void(double, double)> on_release = nullptr);
 
+    /** @brief A key trigger whose release callback can be made again from its call. */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key, bool held,
+        Reflect::FunctionCall release_call, std::function<void()> on_release);
+
+    /** @brief A mouse trigger whose release callback can be made again from its call. */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held,
+        Reflect::FunctionCall release_call, std::function<void(double, double)> on_release);
+
     /**
      * @brief Fire the entity on mouse button press and invoke a release callback on release.
      * @param window      Source window.
@@ -150,9 +192,48 @@ public:
     Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source)
     {
         m_triggers.emplace_back(BroadcastTrigger {
-            .listen = [source = std::move(source)](std::function<void()> fire) {
+            .listen = [source](std::function<void()> fire) {
                 return Kriya::on_signal(source, [fire = std::move(fire)](const T&) { fire(); });
-            } });
+            },
+            .source = source });
+        return *this;
+    }
+
+    /**
+     * @brief on() for a broadcast source, handing each value over before the entity fires.
+     *
+     * This is how the entity learns what fired it: for a Course, the id of the marker
+     * passed. A source holds one pending value, so values signalled before the wiring
+     * resumes reach it as the last of them.
+     * @param source  Source to listen to; the wiring keeps it alive.
+     * @param receive Called with the value, on the signalling thread, just before the firing.
+     *
+     * @code
+     * auto door = course->add_marker("door", 4.0);
+     * auto passed = std::make_shared<uint64_t>(0);
+     *
+     * fabric->wire(emitter)
+     *     .on(course->subscribe(Kriya::CourseEventKind::Marked),
+     *         [passed](const Kriya::CourseEvent& event) { *passed = event.value; })
+     *     .finalise();
+     * @endcode
+     */
+    template <typename T>
+    Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source,
+        std::type_identity_t<std::function<void(const T&)>> receive)
+    {
+        const bool receives = static_cast<bool>(receive);
+        m_triggers.emplace_back(BroadcastTrigger {
+            .listen = [source, receive = std::move(receive)](std::function<void()> fire) {
+                return Kriya::on_signal(source, [fire = std::move(fire), receive](const T& value) {
+                    if (receive) {
+                        receive(value);
+                    }
+                    fire();
+                });
+            },
+            .source = source,
+            .receives = receives });
         return *this;
     }
 
@@ -183,6 +264,10 @@ public:
     Wiring& on_scroll(std::shared_ptr<Core::Window> window,
         std::function<void(double, double)> fn);
 
+    /** @brief on_scroll with the call that made the function, so it can be made again. */
+    Wiring& on_scroll(std::shared_ptr<Core::Window> window,
+        Reflect::FunctionCall call, std::function<void(double, double)> fn);
+
     /**
      * @brief Choreograph a position move as an EventChain step.
      * @param pos           Target position.
@@ -191,17 +276,41 @@ public:
     Wiring& move_to(const glm::vec3& pos, double delay_seconds = 0.0);
 
     /**
-     * @brief Drive position from a callable evaluated on each @c every() tick.
-     * @param fn Returns the new position on each invocation.
+     * @brief Drive position and orientation from a callable evaluated before each firing.
+     *
+     * Applies to every way the entity is fired: commit, every, triggers, move_to and
+     * Fabric::fire. A member the source leaves empty stays as it is. Where move_to
+     * also sets the position, the source wins. A Locus takes its placement from its
+     * viewpoint instead.
+     * @param fn Returns the placement to apply.
+     */
+    Wiring& place_from(PlacementFn fn);
+
+    /**
+     * @brief Same, with a name used for state encoding.
+     * @param fn_name Identifier used for state encoding.
+     * @param fn      Returns the placement to apply.
+     */
+    Wiring& place_from(std::string fn_name, PlacementFn fn);
+
+    /** @brief place_from with the call that made the source, so it can be made again. */
+    Wiring& place_from(Reflect::FunctionCall call, PlacementFn fn);
+
+    /**
+     * @brief place_from for position alone.
+     * @param fn Returns the new position.
      */
     Wiring& position_from(PositionFn fn);
 
     /**
-     * @brief Drive position from a named callable evaluated on each @c every() tick.
+     * @brief place_from for position alone, with a name used for state encoding.
      * @param fn_name Identifier used for state encoding.
-     * @param fn      Returns the new position on each invocation.
+     * @param fn      Returns the new position.
      */
     Wiring& position_from(std::string fn_name, PositionFn fn);
+
+    /** @brief position_from with the call that made the source. */
+    Wiring& position_from(Reflect::FunctionCall call, PositionFn fn);
 
     /**
      * @brief Repeat the configured sequence or choreography N times.
@@ -223,9 +332,13 @@ public:
 
     /** @brief Register a named factory. */
     Wiring& use(std::string fn_name, SoundFactory factory);
+    Wiring& use(Reflect::FunctionCall call, SoundFactory factory);
     Wiring& use(std::string fn_name, GraphicsFactory factory);
+    Wiring& use(Reflect::FunctionCall call, GraphicsFactory factory);
     Wiring& use(std::string fn_name, CrossFactory factory);
+    Wiring& use(Reflect::FunctionCall call, CrossFactory factory);
     Wiring& use(std::string fn_name, EventFactory factory);
+    Wiring& use(Reflect::FunctionCall call, EventFactory factory);
 
     // =====================================================================
     // Immediate bind — no coroutine
@@ -256,9 +369,56 @@ public:
     /** @brief Call a named custom function once immediately. */
     Wiring& bind(std::string fn_name, std::function<void()> fn);
 
+    /** @brief Call once a custom function, with the call that made it. */
+    Wiring& bind(Reflect::FunctionCall call, std::function<void()> fn);
+
     /** @brief Call named attach/detach functions. */
     Wiring& bind(std::string attach_name, std::function<void()> attach,
         std::string detach_name, std::function<void()> detach);
+
+    /** @brief Attach and detach functions, with the calls that made them. */
+    Wiring& bind(Reflect::FunctionCall attach_call, std::function<void()> attach,
+        Reflect::FunctionCall detach_call, std::function<void()> detach);
+
+    // =====================================================================
+    // Endings
+    // =====================================================================
+
+    /**
+     * @brief Run @p fn when the wiring runs out by itself.
+     *
+     * That is: times is used up, for_duration expires, a move_to choreography ends
+     * or the routine or event from use returns. Never runs for cancel, remove or
+     * the end of the Fabric. times(1) on every or on a trigger means no limit, so it
+     * never runs out. Replaces any on_complete a factory set on its own routine.
+     * @param fn Called once, on the thread that ends the wiring.
+     */
+    Wiring& on_complete(std::function<void()> fn);
+
+    /** @brief on_complete with the call that made the function. */
+    Wiring& on_complete(Reflect::FunctionCall call, std::function<void()> fn);
+
+    /**
+     * @brief Run @p fn once when the wiring stops, for whatever reason.
+     *
+     * After on_complete when it runs out, and on cancel, Fabric::remove or the end
+     * of the Fabric. Runs after a bind detach, if there is one.
+     * @param fn Called once.
+     */
+    Wiring& on_detach(std::function<void()> fn);
+
+    /** @brief on_detach with the call that made the function. */
+    Wiring& on_detach(Reflect::FunctionCall call, std::function<void()> fn);
+
+    /**
+     * @brief Set up the wiring with code and keep its call, so a loaded state can run it again.
+     *
+     * For what the other methods cannot name, such as a broadcast trigger. The
+     * triggers and choreography steps @p apply adds are saved as the call alone.
+     * @param call  Call that makes @p apply from a Reflect::FunctionTable.
+     * @param apply Run now on this wiring.
+     */
+    Wiring& configure(Reflect::FunctionCall call, const std::function<void(Wiring&)>& apply);
 
     // =====================================================================
     // Terminal
@@ -276,17 +436,14 @@ public:
     /**
      * @brief Cancel an active wiring and release any owned coroutine.
      *
-     * Runs the bind detach once, whether it is called again or a duration
-     * timer fires afterwards.
+     * Runs the bind detach and on_detach once, whether it is called again or a
+     * duration timer fires afterwards. The placement source stops with it.
      */
     void cancel();
 
 private:
     friend class Fabric;
     friend class StateEncoder;
-
-    /** @brief Run the bind detach if it has not run yet. Does nothing otherwise. */
-    void detach();
 
     explicit Wiring(Fabric& fabric, uint32_t entity_id)
         : m_fabric(fabric)
@@ -308,6 +465,7 @@ private:
         IO::ModifiedKey key;
         std::optional<std::function<void()>> on_release;
         bool held {};
+        Reflect::FunctionCall release_call;
     };
 
     struct MouseTrigger {
@@ -315,11 +473,13 @@ private:
         IO::MouseButtons button;
         std::optional<std::function<void(double, double)>> on_release;
         bool held {};
+        Reflect::FunctionCall release_call;
     };
 
     struct ScrollTrigger {
         std::shared_ptr<Core::Window> window;
         std::function<void(double, double)> fn;
+        Reflect::FunctionCall call;
     };
 
     struct NetworkTrigger {
@@ -333,6 +493,8 @@ private:
 
     struct BroadcastTrigger {
         std::function<Vruta::Event(std::function<void()>)> listen;
+        std::shared_ptr<const void> source {}; ///< Identifies what is listened to, for saving.
+        bool receives {}; ///< A receive function was given, which cannot be saved.
     };
 
     using Trigger = std::variant<
@@ -353,8 +515,12 @@ private:
 
     std::optional<double> m_interval;
     std::optional<double> m_duration;
-    std::optional<PositionFn> m_position_fn;
-    std::string m_position_fn_name;
+    PlacementFn m_placement_fn;
+    std::function<void()> m_on_complete;
+    std::function<void()> m_on_detach;
+    Reflect::FunctionCall m_complete_call;
+    Reflect::FunctionCall m_detach_call;
+    Reflect::FunctionCall m_position_call;
     std::vector<MoveStep> m_move_steps;
     size_t m_times { 1 };
     Vruta::ProcessingToken m_metro_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
@@ -363,12 +529,16 @@ private:
     std::vector<Trigger> m_triggers;
     Factory m_factory;
     EFactory m_event_factory;
-    std::string m_factory_name;
+    Reflect::FunctionCall m_factory_call;
 
     std::optional<std::function<void()>> m_bind_attach;
+    bool m_bind_self {};
+    std::vector<Reflect::FunctionCall> m_configurations;
+    std::vector<size_t> m_configured_triggers;
+    std::vector<size_t> m_configured_steps;
     std::optional<std::function<void()>> m_bind_detach;
-    std::string m_bind_attach_name;
-    std::string m_bind_detach_name;
+    Reflect::FunctionCall m_bind_attach_call;
+    Reflect::FunctionCall m_bind_detach_call;
 
     Wiring& window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter);
 
@@ -416,8 +586,8 @@ public:
     /** @brief Active event-factory, if @c use(EventFactory) was called. */
     [[nodiscard]] const EFactory& event_factory() const { return m_event_factory; }
 
-    /** @brief True if @c position_from was called. */
-    [[nodiscard]] bool has_position_fn() const { return m_position_fn.has_value(); }
+    /** @brief True if @c place_from or @c position_from was called. */
+    [[nodiscard]] bool has_position_fn() const { return static_cast<bool>(m_placement_fn); }
 
     /** @brief True if any @c bind overload was called. */
     [[nodiscard]] bool has_bind() const { return m_bind_attach.has_value(); }
@@ -425,17 +595,35 @@ public:
     /** @brief True if @c bind(attach, detach) was called. */
     [[nodiscard]] bool has_bind_detach() const { return m_bind_detach.has_value(); }
 
-    /** @brief Name of the position function, empty if anonymous. */
-    [[nodiscard]] const std::string& position_fn_name() const { return m_position_fn_name; }
+    /** @brief Name of the placement source, empty if anonymous. */
+    [[nodiscard]] const std::string& position_fn_name() const { return m_position_call.first; }
+
+    /** @brief The placement source as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& position_call() const { return m_position_call; }
 
     /** @brief Name of the active factory, empty if anonymous or none. */
-    [[nodiscard]] const std::string& factory_name() const { return m_factory_name; }
+    [[nodiscard]] const std::string& factory_name() const { return m_factory_call.first; }
+
+    /** @brief The active factory as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& factory_call() const { return m_factory_call; }
 
     /** @brief Name of the bind attach function, empty if anonymous or none. */
-    [[nodiscard]] const std::string& bind_attach_name() const { return m_bind_attach_name; }
+    [[nodiscard]] const std::string& bind_attach_name() const { return m_bind_attach_call.first; }
+
+    /** @brief The bind attach function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& bind_attach_call() const { return m_bind_attach_call; }
 
     /** @brief Name of the bind detach function, empty if anonymous or none. */
-    [[nodiscard]] const std::string& bind_detach_name() const { return m_bind_detach_name; }
+    [[nodiscard]] const std::string& bind_detach_name() const { return m_bind_detach_call.first; }
+
+    /** @brief The bind detach function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& bind_detach_call() const { return m_bind_detach_call; }
+
+    /** @brief The on_complete function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& complete_call() const { return m_complete_call; }
+
+    /** @brief The on_detach function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& detach_call() const { return m_detach_call; }
 };
 
 } // namespace MayaFlux::Nexus

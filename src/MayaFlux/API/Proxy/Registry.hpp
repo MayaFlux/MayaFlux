@@ -81,6 +81,7 @@ namespace Buffers {
     class NetworkTextureBuffer;
     class NetworkAudioBuffer;
     class RecordedGeometryBuffer;
+    class AssembledGeometryBuffer;
     class VolumeGridBuffer;
 }
 
@@ -155,4 +156,5 @@ namespace IO {
     B(InstanceNetworkBuffer, MayaFlux::Buffers::InstanceNetworkBuffer)     \
     B(NetworkAudioBuffer, MayaFlux::Buffers::NetworkAudioBuffer)           \
     B(RecordedGeometryBuffer, MayaFlux::Buffers::RecordedGeometryBuffer)   \
+    B(AssembledGeometryBuffer, MayaFlux::Buffers::AssembledGeometryBuffer) \
     B(VolumeGridBuffer, MayaFlux::Buffers::VolumeGridBuffer)

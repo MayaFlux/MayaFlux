@@ -2,6 +2,11 @@
 
 #include "Operators/FieldOperator.hpp"
 
+#include "MayaFlux/Kakshya/NDData/SpatialAccess.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
+#include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
+
 #include "MayaFlux/Journal/Archivist.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -402,6 +407,81 @@ std::vector<LineVertex> PointCloudNetwork::generate_initial_positions()
 {
     auto samples = Kinesis::generate_samples(m_init_mode, m_num_points, m_bounds, m_random_gen);
     return Kakshya::to_line_vertices(samples, { 1.0F, 2.0F });
+}
+
+std::shared_ptr<PointCloudNetwork> make_point_cloud_network(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    std::span<const uint64_t> rows)
+{
+    using Portal::Graphics::PrimitiveTopology;
+
+    if (!assembly || rows.empty()) {
+        return nullptr;
+    }
+
+    const auto world = assembly->world_transforms();
+    const auto layout = Kakshya::VertexLayout::for_points();
+    std::vector<Kakshya::Vertex> vertices;
+    std::optional<bool> lines;
+
+    for (const uint64_t row : rows) {
+        const auto placement = assembly->placement(row);
+        const auto* spatial = placement && placement->source ? assembly->spatial(*placement->source) : nullptr;
+        if (!spatial) {
+            return nullptr;
+        }
+
+        const bool is_line = spatial->topology != PrimitiveTopology::POINT_LIST;
+        if (lines.value_or(is_line) != is_line) {
+            return nullptr;
+        }
+        lines = is_line;
+
+        const auto access = Kakshya::as_spatial_vertex_access(*spatial);
+        if (!access) {
+            return nullptr;
+        }
+
+        const auto* begin = reinterpret_cast<const uint8_t*>(access->conversion_buffer.data());
+        std::vector<uint8_t> bytes(begin, begin + access->byte_count);
+        if (!Kakshya::place_vertices(bytes, layout, world[row])) {
+            return nullptr;
+        }
+
+        std::vector<Kakshya::Vertex> held(bytes.size() / sizeof(Kakshya::Vertex));
+        std::memcpy(held.data(), bytes.data(), held.size() * sizeof(Kakshya::Vertex));
+
+        if (spatial->topology != PrimitiveTopology::LINE_STRIP) {
+            vertices.insert(vertices.end(), held.begin(), held.end());
+            continue;
+        }
+
+        size_t offset = 0;
+        for (const int32_t length : spatial->vertex_counts_per_curve) {
+            const size_t end = std::min(held.size(), offset + static_cast<size_t>(std::max(length, 0)));
+            for (size_t v = offset + 1; v < end; ++v) {
+                vertices.push_back(held[v - 1]);
+                vertices.push_back(held[v]);
+            }
+            offset = end;
+        }
+    }
+
+    const auto fill = [&vertices]<typename V>(std::type_identity<V>) {
+        static_assert(sizeof(V) == sizeof(Kakshya::Vertex));
+        std::vector<V> out(vertices.size());
+        std::memcpy(out.data(), vertices.data(), vertices.size() * sizeof(V));
+        return out;
+    };
+
+    auto network = std::make_shared<PointCloudNetwork>();
+    auto* held = network->create_operator<FieldOperator>();
+    if (*lines) {
+        held->initialize(fill(std::type_identity<LineVertex> {}));
+    } else {
+        held->initialize(fill(std::type_identity<PointVertex> {}));
+    }
+    return network;
 }
 
 } // namespace MayaFlux::Nodes::Network

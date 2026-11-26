@@ -527,6 +527,21 @@ public:
     void seed_raw(const std::string& name, const void* data, size_t size);
 
     /**
+     * @brief Replace several fields at once, such as one frame of a recording.
+     * @param names Fields to write.
+     * @param sources For each name, the host data and its byte count, which must equal
+     *        get_field_bytes(name). A mismatched or unknown field is reported and left out.
+     *
+     * Each field is written into its write slot and then swapped to be the one read, so a
+     * pass already reading the field keeps reading whole values. The copies are issued
+     * together and not waited for; the next transfer through this buffer waits for them.
+     * The counterpart of read_fields.
+     */
+    void write_fields(
+        std::span<const std::string> names,
+        std::span<const std::pair<const void*, size_t>> sources);
+
+    /**
      * @brief Add sampled values into a scalar field.
      * @param name Field name. Must have stride sizeof(float).
      * @param field Sampled at each cell centre in world space and added
@@ -614,6 +629,8 @@ private:
 
     std::vector<std::string> m_field_order;
     std::unordered_map<std::string, Field> m_fields;
+
+    void settle_transfers();
     std::optional<SurfaceConfig> m_surface;
 
     std::shared_ptr<VKBuffer> m_transfer_staging; ///< Reused across seed and read calls.
@@ -622,6 +639,7 @@ private:
     std::shared_ptr<VKBuffer> m_counter_buf; ///< Atomic vertex counter for the extraction stage.
 
     TransferHandle m_pending_transfer; ///< In-flight seed upload, resolved before the next transfer.
+    std::vector<TransferHandle> m_pending_writes; ///< In-flight write_fields uploads.
 
     /**
      * @brief Bytes of vertex storage the extraction resolution requires.

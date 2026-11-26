@@ -99,6 +99,16 @@ public:
      */
     void update_draw(uint32_t vertex_count, std::vector<Portal::Graphics::DrawRun> runs);
 
+    /**
+     * @brief Place what the buffer draws, inside whatever transform its renderers already have.
+     *
+     * A renderer's own transform, fixed or from a source, stays and is applied outside the
+     * placement, and one set on it afterwards through a source is layered the same way.
+     * Every caller writes the one placement, so it is applied once however many there are.
+     * A renderer made after a call is reached by the next one. For the graphics thread.
+     */
+    void set_placement(const glm::mat4& placement);
+
     [[nodiscard]] uint32_t capacity() const noexcept { return m_capacity; }
 
     [[nodiscard]] Portal::Graphics::PrimitiveTopology topology() const noexcept { return m_topology; }
@@ -115,6 +125,9 @@ private:
     std::shared_ptr<RecordedGeometryProcessor> m_processor;
 
     Memory::SnapshotCell<std::shared_ptr<const Kakshya::SpatialData>> m_pending;
+
+    std::shared_ptr<Memory::SnapshotCell<glm::mat4>> m_placement;
+    std::vector<std::weak_ptr<RenderProcessor>> m_placed;
 
     uint32_t m_draw_count {};
     std::vector<Portal::Graphics::DrawRun> m_draw_runs;

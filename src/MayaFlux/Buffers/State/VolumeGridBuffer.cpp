@@ -53,7 +53,7 @@ VolumeGridBuffer::VolumeGridBuffer(
 
 VolumeGridBuffer::~VolumeGridBuffer()
 {
-    resolve_transfer(m_pending_transfer);
+    settle_transfers();
 }
 
 bool VolumeGridBuffer::allocate_field(
@@ -500,6 +500,63 @@ vk::Buffer VolumeGridBuffer::write_handle(const std::string& name) const
     return get_buffer_resources().back_buffers[slot].buffer;
 }
 
+void VolumeGridBuffer::settle_transfers()
+{
+    resolve_transfer(m_pending_transfer);
+    for (auto& handle : m_pending_writes) {
+        resolve_transfer(handle);
+    }
+    m_pending_writes.clear();
+}
+
+void VolumeGridBuffer::write_fields(
+    std::span<const std::string> names,
+    std::span<const std::pair<const void*, size_t>> sources)
+{
+    constexpr size_t k_alignment = 16;
+
+    if (names.size() != sources.size()) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+            "VolumeGridBuffer::write_fields: {} names for {} sources", names.size(), sources.size());
+        return;
+    }
+
+    std::vector<std::pair<size_t, size_t>> chosen;
+    size_t total = 0;
+    for (size_t i = 0; i < names.size(); ++i) {
+        const auto* field = find_field(names[i], "write_fields");
+        if (!field) {
+            continue;
+        }
+        const size_t expected = static_cast<size_t>(get_cell_count()) * field->stride_bytes;
+        if (sources[i].second != expected || !sources[i].first) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferManagement,
+                "VolumeGridBuffer::write_fields: size {} does not match expected {} for '{}'",
+                sources[i].second, expected, names[i]);
+            continue;
+        }
+        chosen.emplace_back(i, total);
+        total += (expected + k_alignment - 1) & ~(k_alignment - 1);
+    }
+    if (chosen.empty()) {
+        return;
+    }
+
+    settle_transfers();
+    if (!m_transfer_staging || m_transfer_staging->get_size_bytes() < total) {
+        m_transfer_staging = create_staging_buffer(total);
+    }
+
+    for (const auto& [i, offset] : chosen) {
+        const auto* field = find_field(names[i], "write_fields");
+        const uint32_t slot = field->read_is_a ? field->slot_b : field->slot_a;
+        m_pending_writes.push_back(upload_back_buffer_async(
+            get_buffer_resources().back_buffers[slot], sources[i].first, sources[i].second,
+            m_transfer_staging, offset));
+        swap_field(names[i]);
+    }
+}
+
 void VolumeGridBuffer::swap_field(const std::string& name)
 {
     auto it = m_fields.find(name);
@@ -589,7 +646,7 @@ void VolumeGridBuffer::seed_raw(const std::string& name, const void* data, size_
         return;
     }
 
-    resolve_transfer(m_pending_transfer);
+    settle_transfers();
 
     const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
     m_pending_transfer = upload_back_buffer_async(
@@ -678,7 +735,7 @@ void VolumeGridBuffer::read_field(const std::string& name, void* data, size_t si
     }
 
     const uint32_t slot = field->read_is_a ? field->slot_a : field->slot_b;
-    resolve_transfer(m_pending_transfer);
+    settle_transfers();
     download_back_buffer(get_buffer_resources().back_buffers[slot], data, size, m_transfer_staging);
 }
 
@@ -723,7 +780,7 @@ void VolumeGridBuffer::read_fields(
         return;
     }
 
-    resolve_transfer(m_pending_transfer);
+    settle_transfers();
 
     if (!m_transfer_staging || m_transfer_staging->get_size_bytes() < total) {
         m_transfer_staging = create_staging_buffer(total);

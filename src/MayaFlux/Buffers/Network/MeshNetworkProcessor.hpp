@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Buffers/VKBuffer.hpp"
+#include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Portal/Graphics/SlotMachine.hpp"
 
 namespace MayaFlux::Nodes::Network {
@@ -93,6 +94,10 @@ private:
     std::vector<glm::mat4> m_model_scratch;
 
     /// @brief Set when the next cycle must upload the geometry in full.
+    friend class MeshNetworkBuffer;
+
+    /** @brief Hears each slot's vertices as they are uploaded, to keep a skin pass's rest records. */
+    std::function<void(uint32_t, const std::vector<Kakshya::MeshVertex>&)> m_geometry_observer;
     bool m_force_full_upload { true };
 
     void allocate_gpu_buffers(const std::shared_ptr<VKBuffer>& vertex_buf);

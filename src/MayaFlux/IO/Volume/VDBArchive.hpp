@@ -1,6 +1,7 @@
 #pragma once
 
-#include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
+#include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
+#include "MayaFlux/Kakshya/NDData/VolumeData.hpp"
 
 namespace MayaFlux::IO::Detail {
 
@@ -8,25 +9,24 @@ namespace MayaFlux::IO::Detail {
  * @struct VDBGridSpec
  * @brief One grid's worth of input to VDBArchive::add_grid.
  *
- * Values are the active cells only, parallel to coords by position: element
- * i of values belongs to coords[i]. Element width is four bytes for a scalar
- * grid and twelve for a vector grid, so values.size() must equal coords.size()
- * times that width.
+ * values holds the active cells only, parallel to coords by position, and its
+ * alternative decides the grid's value type. background is the value of every
+ * other cell, a scalar in x.
  *
- * background is one element's worth of bytes, of the same width, used for
- * every inactive cell and every tile.
+ * index_to_world maps a voxel index to the position of its cell centre.
  *
- * metadata entries are written verbatim as string-typed grid metadata. The
- * caller owns those strings and they need only outlive the add_grid call.
- * The grid name is passed separately and does not need repeating here.
+ * A level set is signed flood filled, so the cells it does not store read as
+ * minus the background inside the surface, where the value type is float.
  */
 struct VDBGridSpec {
     std::string_view name;
     std::span<const glm::ivec3> coords;
-    std::span<const std::byte> values;
-    std::span<const std::byte> background;
-    bool is_vector { false };
-    std::span<const std::pair<std::string, std::string>> metadata;
+    const Kakshya::VolumeField::ValueStorage* values {};
+    glm::dvec3 background { 0.0 };
+    glm::dmat4 index_to_world { 1.0 };
+    bool level_set {};
+    bool half_float {};
+    std::span<const Kakshya::MeshAssemblyMetadata::Entry> metadata;
 };
 
 /**
@@ -34,36 +34,20 @@ struct VDBGridSpec {
  * @brief What a reader needs to know about one grid in an opened file,
  *        before deciding how to materialize it.
  *
- * voxel_size and translation come from the grid's own transform, read
- * per-axis for SCALE_TRANSLATE (what VDBArchive::add_grid writes) and
- * approximated for the rarer transform kinds a foreign file may carry — see
- * the .cpp for the per-type fallback. active_min/active_max are the voxel-
- * index bounding box of every leaf the tree holds, max exclusive, matching
- * tinyvdb's own tvdb_grid_active_bbox convention. has_active is false, and
- * the bbox members are unset, for a grid with no leaves at all.
- *
- * narrowed is true when the grid's leaf value type is something other than
- * float (scalar) or vec3f (vector) — double, int32, int64, bool, vec3d,
- * vec3i, or half — meaning VDBArchive::read_dense_scalar/read_dense_vector
- * will convert every value to the representable type rather than reject it.
- *
- * background_scalar/background_vector are the root tile's fill value,
- * narrowed the same way leaf values are. Only the one matching is_vector is
- * meaningful; the other holds its default. This is the value every cell
- * outside the tree takes — pass it to read_dense_scalar/read_dense_vector
- * as the background argument to reproduce that.
+ * index_to_world is the grid's own transform, affine ones whole.
+ * active_min and active_max are the voxel index box of every leaf and active
+ * tile, max exclusive. has_active is false, and the box unset, for a grid
+ * with neither.
  */
 struct VDBGridSummary {
     std::string name;
     bool is_vector { false };
-    bool narrowed { false };
-    glm::vec3 voxel_size { 1.0F };
-    glm::vec3 translation { 0.0F };
+    glm::dmat4 index_to_world { 1.0 };
     bool has_active { false };
     glm::ivec3 active_min { 0 };
     glm::ivec3 active_max { 0 }; ///< Exclusive.
-    float background_scalar { 0.0F };
-    glm::vec3 background_vector { 0.0F };
+    glm::dvec3 background { 0.0 }; ///< A scalar grid's in x.
+    std::vector<Kakshya::MeshAssemblyMetadata::Entry> metadata;
 };
 
 /**
@@ -78,18 +62,13 @@ struct VDBGridSummary {
  * Write path: grids accumulate through add_grid and are written together by
  * a single save, producing one .vdb carrying every field as a separately
  * named grid. The destructor releases whatever was built regardless of
- * whether save ran, so an abandoned archive and a failed one clean up
- * identically.
+ * whether save ran.
  *
  * Read path: open() parses a file and reads every grid's tree into memory.
- * grid_summary(), grid_metadata() and read_dense_scalar/read_dense_vector
- * then address grids by index, in file order. An instance used for reading
- * is not also used for writing; the two paths share the class only because
- * they share the C boundary they hide.
+ * grid_summary() and read_dense() then address grids by index, in file order.
+ * An instance used for reading is not also used for writing.
  *
- * Not copyable and not movable: the underlying file struct holds a pointer
- * into this object's own grid storage on the write side, and open() leaves
- * live pointers into mapped file data on the read side.
+ * Not copyable and not movable.
  */
 class MAYAFLUX_API VDBArchive {
 public:
@@ -103,16 +82,11 @@ public:
 
     /**
      * @brief Build one grid from active cells and retain it for saving.
-     *
-     * The lattice becomes a per-axis scale-translate transform mapping index
-     * to world as cell_size() times index plus bounds.min plus half a cell,
-     * which reproduces Lattice3D::cell_center exactly.
-     *
      * @return False if the spec is inconsistent or the tree build failed.
      *         Call last_error() for detail. A failure leaves previously added
      *         grids intact.
      */
-    bool add_grid(const Kinesis::Lattice3D& lattice, const VDBGridSpec& spec);
+    bool add_grid(const VDBGridSpec& spec);
 
     /**
      * @brief Write every added grid to one file.
@@ -120,9 +94,11 @@ public:
      * @param path        Destination, already resolved by the caller.
      * @param compression Combination of VDBCompression flags.
      * @param level       Deflate level for the ZIP path, ignored otherwise.
+     * @param metadata    Name and value pairs of the file itself.
      * @return False on failure; call last_error() for detail.
      */
-    bool save(const std::string& path, uint32_t compression, int level);
+    bool save(const std::string& path, uint32_t compression, int level,
+        std::span<const Kakshya::MeshAssemblyMetadata::Entry> metadata = {});
 
     [[nodiscard]] size_t grid_count() const;
     [[nodiscard]] std::string_view last_error() const { return m_last_error; }
@@ -131,9 +107,6 @@ public:
      * @brief Open a .vdb and read every grid's tree into memory.
      *
      * Replaces whatever a previous open() on this instance had loaded.
-     * Does not touch the write-side grid accumulation, so an instance is
-     * safe to open for reading even if add_grid was never called — the two
-     * are independent state.
      *
      * @param path Source path, already resolved by the caller.
      * @return False on failure; call last_error() for detail.
@@ -144,73 +117,36 @@ public:
     [[nodiscard]] size_t read_grid_count() const;
 
     /**
-     * @brief Summarize one grid: name, value kind, transform, active bounds.
+     * @brief Summarize one grid: name, value kind, transform, bounds, metadata.
      * @param index Grid index, less than read_grid_count().
      * @return The summary, or a default-constructed one if index is out of
      *         range or nothing is open.
      */
     [[nodiscard]] VDBGridSummary grid_summary(size_t index) const;
 
-    /**
-     * @brief Look up a string-typed metadata entry on a grid.
-     * @param index Grid index, less than read_grid_count().
-     * @param key   Metadata key, such as "class" or "vector_type".
-     * @return The value, or empty if absent, not a string, or index is out
-     *         of range.
-     */
-    [[nodiscard]] std::string grid_metadata(size_t index, std::string_view key) const;
+    /** @brief The name and value pairs of the opened file. */
+    [[nodiscard]] std::vector<Kakshya::MeshAssemblyMetadata::Entry> file_metadata() const;
 
     /**
-     * @brief Materialize a scalar grid's cells over an explicit region.
+     * @brief Materialize a grid's cells over a region of its voxel index space.
      *
-     * region_min and resolution are expressed in the grid's own voxel-index
-     * space — the same space active_min/active_max in grid_summary() use.
-     * A cell not covered by any active leaf, and a cell whose index falls
-     * outside the region entirely, both take @p background. Output is
-     * resized to resolution.x*y*z elements and written x-fastest,
-     * z-slowest, matching Lattice3D and VolumeField's convention.
+     * Every value the tree stores is read, active or not, tiles included, and
+     * a cell the tree stores nothing for takes the background. Output is
+     * x-fastest, z-slowest.
      *
-     * A grid whose leaf value type is not float is converted per-element via
-     * MayaFlux::try_convert; check grid_summary().narrowed beforehand to
-     * know whether that happened at all, or pass @p precision_lost to learn
-     * whether it happened losslessly. Every element that round-trips through
-     * float and back to the source type unchanged leaves it false; a single
-     * element that doesn't sets it true for the whole call. half is the one
-     * source type never marked lossy — float has strictly more precision in
-     * both exponent and mantissa, so widening it is always exact.
+     * The alternative @p out receives follows the grid: float (float and half),
+     * double (double and int64), int32 (int32 and bool), vec3 (vec3f) or dvec3
+     * (vec3d and vec3i).
      *
-     * @param precision_lost Set to whether any narrowed element lost
-     *        precision. Cleared to false at the start of the call if
-     *        non-null; left untouched by a null pointer.
-     * @return False if index is out of range, the grid is vector-typed, or
-     *         resolution has a zero axis. Call last_error() for detail.
+     * @return False if index is out of range, the resolution has a zero axis,
+     *         or the value type or tree is not one this reads. Call
+     *         last_error() for detail.
      */
-    bool read_dense_scalar(
+    bool read_dense(
         size_t index,
         const glm::ivec3& region_min,
         const glm::uvec3& resolution,
-        float background,
-        std::vector<float>& out,
-        bool* precision_lost = nullptr) const;
-
-    /**
-     * @brief Materialize a vector grid's cells over an explicit region.
-     *
-     * As read_dense_scalar, for a grid whose leaf value type is vec3f,
-     * vec3d or vec3i. Non-vec3f types are converted component-wise via
-     * MayaFlux::try_convert; @p precision_lost is set if any of the three
-     * components of any element lost precision.
-     *
-     * @return False if index is out of range, the grid is scalar-typed, or
-     *         resolution has a zero axis. Call last_error() for detail.
-     */
-    bool read_dense_vector(
-        size_t index,
-        const glm::ivec3& region_min,
-        const glm::uvec3& resolution,
-        const glm::vec3& background,
-        std::vector<glm::vec3>& out,
-        bool* precision_lost = nullptr) const;
+        Kakshya::VolumeField::ValueStorage& out) const;
 
 private:
     struct State;

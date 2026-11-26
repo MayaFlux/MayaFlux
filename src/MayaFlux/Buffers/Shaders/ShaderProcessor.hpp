@@ -594,8 +594,8 @@ protected:
     virtual void on_descriptors_created();
 
     /**
-     * @brief Called before each process callback
-     * @param cmd Command buffer
+     * @brief Called once per process cycle, before execution
+     * @param cmd The previous cycle's command buffer, not the one about to be recorded
      * @param buffer Currently processing buffer
      * @return True to proceed with execution, false to skip
      *
@@ -604,8 +604,8 @@ protected:
     virtual bool on_before_execute(Portal::Graphics::CommandBufferID cmd_id, const std::shared_ptr<VKBuffer>& buffer);
 
     /**
-     * @brief Called after each process callback
-     * @param cmd Command buffer
+     * @brief Called once per process cycle, after execution has been submitted
+     * @param cmd The command buffer last recorded
      * @param buffer Currently processed buffer
      *
      * Override for post-dispatch synchronization or state updates.

@@ -219,6 +219,10 @@ private:
  *         copied into each. A joint, and a row whose source is points or curves, gets no
  *         node and only carries its transform. Nullptr for an assembly with no rows.
  *
+ * A row whose source has a MeshSkin and which names a skeleton gets a slot that carries the
+ * skin, with the skeleton's rows as its joint slots, so a MeshNetworkBuffer draws it skinned
+ * and moving those slots bends it.
+ *
  * Because slot i is row i, an assembly's motion plays on the network by writing one local
  * matrix per slot (Kriya::slot_sink). The material is not applied: a MeshAssemblyMaterial
  * holds a path, and loading and binding the texture is the caller's, with
@@ -274,7 +278,9 @@ struct MeshNetworkPart {
  *
  * Each row's mesh is copied into the slot of its own, as make_mesh_network(assembly) does, with
  * its submeshes and polygon faces. The material is not applied. A flat part starts at the rows'
- * rest world placement and a chained one at their rest local placement.
+ * rest world placement and a chained one at their rest local placement. A skinned row's slot
+ * carries its skin; joint slots are named only when a chained part holds every joint, and
+ * otherwise the palette is the caller's to publish.
  */
 [[nodiscard]] MAYAFLUX_API std::optional<MeshNetworkPart> make_mesh_network(
     const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,

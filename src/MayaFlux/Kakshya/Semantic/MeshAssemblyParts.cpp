@@ -15,6 +15,9 @@ MeshAssemblyRowKind row_kind(const MeshAssemblyContainer& assembly, size_t row)
     if (assembly.lens(*placement->source)) {
         return MeshAssemblyRowKind::Camera;
     }
+    if (assembly.light(*placement->source)) {
+        return MeshAssemblyRowKind::Light;
+    }
     if (const auto* spatial = assembly.spatial(*placement->source)) {
         return spatial->topology == Portal::Graphics::PrimitiveTopology::POINT_LIST
             ? MeshAssemblyRowKind::Points
@@ -43,7 +46,7 @@ std::vector<MeshAssemblyPart> partition_assembly(
 
     for (size_t row = 0; row < total; ++row) {
         const auto kind = row_kind(assembly, row);
-        if (kind == MeshAssemblyRowKind::Joint) {
+        if (kind == MeshAssemblyRowKind::Joint || kind == MeshAssemblyRowKind::Light) {
             continue;
         }
 

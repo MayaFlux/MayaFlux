@@ -8,13 +8,7 @@ layout(location = 2) in vec3 in_world_pos;
 
 layout(set = 0, binding = 1) uniform sampler2D diffuseTex;
 
-layout(push_constant) uniform Influence {
-    vec3 position;
-    float intensity;
-    vec3 color;
-    float radius;
-    float size;
-};
+#include "include/influence_light.glsl"
 
 layout(location = 0) out vec4 out_color;
 
@@ -42,10 +36,6 @@ void main()
         }
     }
 
-    float dist = length(position - in_world_pos);
-    float attenuation = clamp(1.0 - (dist / radius), 0.0, 1.0);
-    attenuation *= attenuation;
-
-    vec3 lit = tex.rgb + (color * intensity * attenuation);
+    vec3 lit = tex.rgb + influence_light(in_world_pos, vec3(0.0));
     out_color = vec4(clamp(lit, 0.0, 1.0), tex.a);
 }

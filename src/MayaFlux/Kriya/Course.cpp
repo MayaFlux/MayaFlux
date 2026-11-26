@@ -27,7 +27,9 @@ std::shared_ptr<Course> Course::create(double step_rate, const CourseSetting& se
     if (!clock || !setting.usable()) {
         return nullptr;
     }
-    return std::shared_ptr<Course>(new Course(*clock, setting, paused));
+    auto course = std::shared_ptr<Course>(new Course(*clock, setting, paused));
+    course->m_step_rate = step_rate;
+    return course;
 }
 
 CourseControls& Course::open(CourseStore& store)
@@ -163,6 +165,32 @@ double Course::weight() const noexcept
     return std::isfinite(value) && value > 0.0 ? value : 0.0;
 }
 
+bool Course::fade_weight(double target, double seconds)
+{
+    if (!std::isfinite(target) || target < 0.0 || !std::isfinite(seconds) || seconds < 0.0) {
+        return false;
+    }
+    return m_commands.push(Detail::CourseCommand { .kind = Kind::FadeWeight, .value = target, .seconds = seconds });
+}
+
+void Course::step_fade()
+{
+    if (m_fade_done >= m_fade_steps) {
+        return;
+    }
+    if (number(m_controls.weight, 1.0) != m_fade_written) {
+        m_fade_done = m_fade_steps;
+        return;
+    }
+
+    ++m_fade_done;
+    const double value = m_fade_done == m_fade_steps
+        ? m_fade_to
+        : m_fade_from + (m_fade_to - m_fade_from) * (static_cast<double>(m_fade_done) / static_cast<double>(m_fade_steps));
+    m_controls.weight.assign(ControlValue(value));
+    m_fade_written = number(m_controls.weight, 1.0);
+}
+
 CourseSetting Course::setting() const
 {
     return compose();
@@ -213,12 +241,79 @@ bool Course::follow(const std::shared_ptr<const Course>& other, double offset)
         }
         return *last;
     } });
+    m_followed.publish(Followed { .leader = other, .map = m_controls.time_map.value(), .offset = offset });
+    return true;
+}
+
+bool Course::scrub(std::function<double()> playhead)
+{
+    if (!playhead) {
+        return false;
+    }
+    time_map(Kinesis::TimeMap { .fn = [playhead = std::move(playhead),
+                                    last = std::make_shared<double>(time())](const double&) {
+        if (const double value = playhead(); std::isfinite(value)) {
+            *last = value;
+        }
+        return *last;
+    } });
     return true;
 }
 
 void Course::unfollow()
 {
+    if (!mapped(m_controls.time_map)) {
+        return;
+    }
     clear_time_map();
+    push(Kind::CarryOn);
+}
+
+std::optional<std::pair<std::shared_ptr<const Course>, double>> Course::following() const
+{
+    const auto held = m_followed.read();
+    if (!held || !held->map || held->map != m_controls.time_map.value()) {
+        return std::nullopt;
+    }
+    auto leader = held->leader.lock();
+    if (!leader) {
+        return std::nullopt;
+    }
+    return std::pair { std::move(leader), held->offset };
+}
+
+CoursePlayback Course::playback() const noexcept
+{
+    CoursePlayback at;
+    at.clock = m_clock_cell.load(std::memory_order_relaxed);
+    if (m_has_anchor_cell.load(std::memory_order_relaxed)) {
+        at.anchor = m_anchor_cell.load(std::memory_order_relaxed);
+    }
+    at.shift = m_shift_cell.load(std::memory_order_relaxed);
+    at.repeat_origin = m_repeat_origin_cell.load(std::memory_order_relaxed);
+    if (m_has_repeat_cell.load(std::memory_order_relaxed)) {
+        at.repeat_length = m_repeat_length_cell.load(std::memory_order_relaxed);
+    }
+    at.crossings = m_crossings_cell.load(std::memory_order_relaxed);
+    at.passes = m_passes_cell.load(std::memory_order_relaxed);
+    at.finished = m_finished_cell.load(std::memory_order_relaxed);
+    at.reversed = m_reversed_cell.load(std::memory_order_relaxed);
+    at.time = m_time_cell.load(std::memory_order_relaxed);
+    at.paused = m_paused_cell.load(std::memory_order_relaxed);
+    at.fade_to = m_fade_to_cell.load(std::memory_order_relaxed);
+    at.fade_seconds = m_fade_left_cell.load(std::memory_order_relaxed);
+    return at;
+}
+
+bool Course::resume(const CoursePlayback& from)
+{
+    const auto finite = [](const std::optional<double>& value) { return !value || std::isfinite(*value); };
+    if (!std::isfinite(from.clock) || !std::isfinite(from.shift) || !std::isfinite(from.repeat_origin)
+        || !std::isfinite(from.time) || !finite(from.anchor) || !finite(from.repeat_length)) {
+        return false;
+    }
+    m_resume.publish(from);
+    return push(Kind::Resume);
 }
 
 std::optional<uint64_t> Course::add_marker(std::string name, double source_time)
@@ -276,6 +371,19 @@ std::shared_ptr<CourseEvents> Course::subscribe(CourseEventKind kind)
     return source;
 }
 
+std::optional<CourseEventKind> Course::subscription(const void* source) const
+{
+    const auto listeners = m_listeners.read();
+    if (listeners) {
+        for (const auto& listener : *listeners) {
+            if (listener.source.get() == source) {
+                return listener.kind;
+            }
+        }
+    }
+    return std::nullopt;
+}
+
 void Course::announce(CourseEventKind kind, double time, uint64_t value) const
 {
     const auto listeners = m_listeners.read();
@@ -298,7 +406,9 @@ void Course::refuse()
 void Course::apply(const Detail::CourseCommand& command, const CourseSetting& setting)
 {
     bool applied = true;
-    m_jumped = m_jumped || (command.kind != Kind::Start && command.kind != Kind::Pause);
+    m_jumped = m_jumped
+        || (command.kind != Kind::Start && command.kind != Kind::Pause && command.kind != Kind::FadeWeight
+            && command.kind != Kind::CarryOn);
     switch (command.kind) {
     case Kind::Start:
         m_paused = false;
@@ -323,6 +433,39 @@ void Course::apply(const Detail::CourseCommand& command, const CourseSetting& se
     case Kind::SeekNormalized:
         applied = m_clock.seek(setting.in + command.value * (setting.out - setting.in), setting);
         break;
+    case Kind::FadeWeight:
+        m_fade_from = number(m_controls.weight, 1.0);
+        m_fade_written = m_fade_from;
+        m_fade_to = command.value;
+        m_fade_steps = std::max<uint64_t>(1, static_cast<uint64_t>(std::llround(command.seconds * m_step_rate)));
+        m_fade_done = 0;
+        break;
+    case Kind::CarryOn:
+        if (m_advanced) {
+            m_clock.carry_on(m_time_cell.load(std::memory_order_relaxed), setting);
+        }
+        break;
+    case Kind::Resume:
+        if (const auto from = m_resume.read()) {
+            m_clock.m_base_step = m_clock.m_steps;
+            m_clock.m_base_clock = from->clock;
+            m_clock.m_speed = setting.speed;
+            m_clock.m_anchor = from->anchor;
+            m_clock.m_shift = from->shift;
+            m_clock.m_repeat_origin = from->repeat_origin;
+            m_clock.m_repeat_length = from->repeat_length;
+            m_clock.m_crossings = from->crossings;
+            m_clock.m_passes = from->passes;
+            m_clock.m_finished = from->finished;
+            m_clock.m_last = CourseStep {
+                .time = from->time, .passes = from->passes, .reversed = from->reversed, .finished = from->finished
+            };
+            m_paused = from->paused;
+            m_passes_seen = from->passes;
+            m_last_reversed = from->reversed;
+            m_was_finished = from->finished;
+        }
+        break;
     case Kind::Nudge: {
         const auto here = m_clock.resolve(setting);
         applied = here.has_value() && m_clock.seek(*here + command.value, setting);
@@ -340,6 +483,19 @@ void Course::apply(const Detail::CourseCommand& command, const CourseSetting& se
 void Course::publish(const CourseSetting& setting, const CourseStep& step)
 {
     const double length = setting.out - setting.in;
+    m_clock_cell.store(m_clock.clock(), std::memory_order_relaxed);
+    m_has_anchor_cell.store(m_clock.m_anchor.has_value(), std::memory_order_relaxed);
+    m_anchor_cell.store(m_clock.m_anchor.value_or(0.0), std::memory_order_relaxed);
+    m_shift_cell.store(m_clock.m_shift, std::memory_order_relaxed);
+    m_repeat_origin_cell.store(m_clock.m_repeat_origin, std::memory_order_relaxed);
+    m_has_repeat_cell.store(m_clock.m_repeat_length.has_value(), std::memory_order_relaxed);
+    m_repeat_length_cell.store(m_clock.m_repeat_length.value_or(0.0), std::memory_order_relaxed);
+    m_passes_cell.store(m_clock.passes(), std::memory_order_relaxed);
+    m_reversed_cell.store(m_clock.m_last.reversed, std::memory_order_relaxed);
+    const bool fading = m_fade_done < m_fade_steps;
+    m_fade_to_cell.store(fading ? m_fade_to : 0.0, std::memory_order_relaxed);
+    m_fade_left_cell.store(fading ? static_cast<double>(m_fade_steps - m_fade_done) / m_step_rate : 0.0,
+        std::memory_order_relaxed);
     m_time_cell.store(step.time, std::memory_order_relaxed);
     m_progress_cell.store(std::clamp((step.time - setting.in) / length, 0.0, 1.0), std::memory_order_relaxed);
     m_crossings_cell.store(m_clock.crossings(), std::memory_order_relaxed);
@@ -412,6 +568,9 @@ std::optional<CourseStep> Course::advance(bool advance)
     std::optional<CourseStep> step;
     try {
         m_commands.drain([&](const Detail::CourseCommand& command) { apply(command, setting); });
+        if (advance) {
+            step_fade();
+        }
 
         if (m_paused || !advance) {
             if (const auto held = m_clock.resolve(setting)) {

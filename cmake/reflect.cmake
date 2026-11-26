@@ -105,36 +105,59 @@ foreach(_header IN LISTS _mf_headers)
         continue()
     endif()
 
-    file(STRINGS "${_header}" _mf_request REGEX "^[ \t;}]*MF_DESCRIBE[ \t]*\\(" LIMIT_COUNT 1)
-    if(NOT _mf_request)
-        continue()
-    endif()
-
     get_filename_component(_mf_dir "${_header}" DIRECTORY)
     get_filename_component(_mf_stem "${_header}" NAME_WLE)
     file(RELATIVE_PATH _mf_rel "${_mf_src}" "${_header}")
 
-    set(_mf_sidecar "${_mf_dir}/${_mf_stem}.describe.hpp")
-    set(_mf_depfile "${_mf_work}/${_mf_rel}.d")
-    set(_mf_stamp "${_mf_work}/${_mf_rel}.stamp")
+    file(STRINGS "${_header}" _mf_request REGEX "^[ \t;}]*MF_DESCRIBE[ \t]*\\(" LIMIT_COUNT 1)
+    if(_mf_request)
+        set(_mf_sidecar "${_mf_dir}/${_mf_stem}.describe.hpp")
+        set(_mf_depfile "${_mf_work}/${_mf_rel}.d")
+        set(_mf_stamp "${_mf_work}/${_mf_rel}.stamp")
 
-    add_custom_command(
-        OUTPUT "${_mf_stamp}"
-        BYPRODUCTS "${_mf_sidecar}"
-        COMMAND mayaflux_reflect --build "${_header}"
-            -p "${CMAKE_BINARY_DIR}"
-            --translation-unit "${_mf_unit}"
-            ${_mf_scan_flags}
-            --depfile "${_mf_depfile}"
-            --depfile-target "${_mf_stamp}"
-        COMMAND ${CMAKE_COMMAND} -E touch "${_mf_stamp}"
-        DEPENDS "${_header}" mayaflux_reflect
-        DEPFILE "${_mf_depfile}"
-        COMMENT "Describing ${_mf_rel}"
-        VERBATIM
-    )
-    list(APPEND _mf_sidecars "${_mf_sidecar}")
-    list(APPEND _mf_stamps "${_mf_stamp}")
+        add_custom_command(
+            OUTPUT "${_mf_stamp}"
+            BYPRODUCTS "${_mf_sidecar}"
+            COMMAND mayaflux_reflect --build "${_header}"
+                -p "${CMAKE_BINARY_DIR}"
+                --translation-unit "${_mf_unit}"
+                ${_mf_scan_flags}
+                --depfile "${_mf_depfile}"
+                --depfile-target "${_mf_stamp}"
+            COMMAND ${CMAKE_COMMAND} -E touch "${_mf_stamp}"
+            DEPENDS "${_header}" mayaflux_reflect
+            DEPFILE "${_mf_depfile}"
+            COMMENT "Describing ${_mf_rel}"
+            VERBATIM
+        )
+        list(APPEND _mf_sidecars "${_mf_sidecar}")
+        list(APPEND _mf_stamps "${_mf_stamp}")
+    endif()
+
+    file(STRINGS "${_header}" _mf_function_request REGEX "^[ \t;}]*MF_DESCRIBE_FUNCTION[ \t]*\\(" LIMIT_COUNT 1)
+    if(_mf_function_request)
+        set(_mf_sidecar "${_mf_dir}/${_mf_stem}.signatures.hpp")
+        set(_mf_depfile "${_mf_work}/${_mf_rel}.signatures.d")
+        set(_mf_stamp "${_mf_work}/${_mf_rel}.signatures.stamp")
+
+        add_custom_command(
+            OUTPUT "${_mf_stamp}"
+            BYPRODUCTS "${_mf_sidecar}"
+            COMMAND mayaflux_signatures --functions --build "${_header}"
+                -p "${CMAKE_BINARY_DIR}"
+                --translation-unit "${_mf_unit}"
+                ${_mf_scan_flags}
+                --depfile "${_mf_depfile}"
+                --depfile-target "${_mf_stamp}"
+            COMMAND ${CMAKE_COMMAND} -E touch "${_mf_stamp}"
+            DEPENDS "${_header}" mayaflux_signatures
+            DEPFILE "${_mf_depfile}"
+            COMMENT "Describing functions in ${_mf_rel}"
+            VERBATIM
+        )
+        list(APPEND _mf_sidecars "${_mf_sidecar}")
+        list(APPEND _mf_stamps "${_mf_stamp}")
+    endif()
 endforeach()
 
 if(_mf_sidecars)

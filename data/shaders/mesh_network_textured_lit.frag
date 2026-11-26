@@ -1,4 +1,5 @@
 #version 460
+#extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
 layout(location = 0) in vec3 in_color;
@@ -9,13 +10,7 @@ layout(location = 4) in vec3 in_world_pos;
 
 layout(set = 0, binding = 3) uniform sampler2D diffuseTex[];
 
-layout(push_constant) uniform Influence {
-    vec3 position;
-    float intensity;
-    vec3 color;
-    float radius;
-    float size;
-};
+#include "include/influence_light.glsl"
 
 layout(location = 0) out vec4 out_color;
 
@@ -23,10 +18,6 @@ void main()
 {
     vec4 tex = texture(diffuseTex[in_slot], in_uv);
 
-    float dist = length(position - in_world_pos);
-    float attenuation = clamp(1.0 - (dist / radius), 0.0, 1.0);
-    attenuation *= attenuation;
-
-    vec3 lit = tex.rgb + (color * intensity * attenuation);
+    vec3 lit = tex.rgb + influence_light(in_world_pos, in_normal);
     out_color = vec4(clamp(lit, 0.0, 1.0), tex.a);
 }

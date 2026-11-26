@@ -3,7 +3,6 @@
 #include "SpatialCache.hpp"
 
 #include "MayaFlux/Kakshya/NDData/MeshAssemblyData.hpp"
-#include "MayaFlux/Kinesis/Viewport/Lens.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
 namespace MayaFlux::Kakshya {
@@ -25,6 +24,9 @@ enum class SpatialObjectKind : uint8_t {
     PolyMesh,
     SubD,
     Camera,
+    Light,
+    Material,
+    FaceSet, ///< Part of the mesh above it.
     Other
 };
 
@@ -68,9 +70,11 @@ struct SpatialObject {
  * meshes, not streams of points: get_mesh_names() lists them and read_mesh()
  * reads one sample as a MeshData.
  * Attributes of types SpatialCache does not write are skipped with a
- * warning. A curves stream is reported as LINE_STRIP: a file does not tell a
- * list of pairs from curves of two vertices. Not safe to call from several
- * threads at once.
+ * warning. Points and curves widths, and curves uvs and normals, arrive as the
+ * attributes "width", "uv" and "normal". Texture coordinates of meshes and curves
+ * are turned from Alembic's upward v to the downward v the engine uses. A curves
+ * stream is reported as LINE_STRIP: a file does not tell a list of pairs from
+ * curves of two vertices. Not safe to call from several threads at once.
  *
  * Usage:
  * @code
@@ -223,7 +227,7 @@ public:
      * @return The lens, or nullopt for an unknown camera, an index out of range or a read failure;
      *         the reason is in get_last_error().
      */
-    [[nodiscard]] std::optional<Kinesis::Lens> read_lens(const std::string& camera_name, size_t index) const;
+    [[nodiscard]] std::optional<Kakshya::MeshAssemblyLens> read_lens(const std::string& camera_name, size_t index) const;
 
     /**
      * @brief Read one sample of a mesh object as triangles.
@@ -232,6 +236,9 @@ public:
      * are reversed to give the counter clockwise winding the engine's meshes use. Faces of any
      * size are triangulated. A subdivision surface is read as its control cage and is not
      * subdivided.
+     *
+     * The first colour parameter becomes the vertex colour. Further colour and uv sets and
+     * other arbitrary parameters are kept by create_mesh_assembly(), not by this call.
      *
      * Normals and texture coordinates are taken when the sample has them per vertex or per
      * face corner. A mesh that has any per corner values becomes one vertex per corner; other
@@ -278,6 +285,16 @@ public:
      * with its sample times and its topology variance, and a row that shows it. An instance
      * shares the sources of the object it instances instead of reading them again. A
      * transform that changes over time becomes a channel of one motion named for the file.
+     *
+     * Lights become sources too. Materials become the assembly's materials, assigned to the
+     * rows that show geometry, inherited down the hierarchy. A group holding only materials
+     * gets no row. A mesh source keeps in its facets whatever its vertices cannot hold: the
+     * further vertex sets, MeshAssemblyAttributes, MeshAssemblyPointMap, MeshAssemblyFaceSets
+     * and, for a subdivision surface, MeshAssemblySubdivision. A curves source keeps its
+     * MeshAssemblyCurveForm. The assembly's facets hold user properties as
+     * MeshAssemblyMetadata and explicit visibility as MeshAssemblyVisibility.
+     *
+     * NURBS surfaces and shader networks are not read.
      *
      * The variance of a mesh or curves object is the file's; that of a points object is
      * Constant for one sample and Heterogeneous for more, since the point count may change.

@@ -35,6 +35,13 @@ struct VolumeReadOptions {
      * selection proceeds.
      */
     std::vector<std::string> field_names;
+
+    /**
+     * @brief The placement the output lattice is expressed in, as VolumeData's
+     *        volume_placement. Absent takes the first selected grid's own, so a file is
+     *        read as it is. Grids placed otherwise are resampled into it.
+     */
+    std::optional<glm::mat4> placement;
 };
 
 /**
@@ -52,68 +59,38 @@ struct VolumeReadOptions {
  *
  * ## Lattice reconstruction
  *
- * A .vdb carries a transform and, per grid, an active-voxel bounding box —
- * not a resolution and world bounds the way Lattice3D wants. VolumeData
- * needs one lattice shared by every field, so this reader offers two ways
- * to get one:
+ * A .vdb carries a transform and, per grid, a box of stored voxels, not a
+ * resolution and bounds. VolumeData needs one lattice shared by every field:
  *
- * - extract()/load() with no lattice: the output lattice is the union of
- *   every selected grid's active bbox, in voxel-index space, with voxel
- *   size and translation taken from the first selected grid's transform.
- *   This is what a DCC user expects — the file's own content decides the
- *   size — and is exact when every grid in the file shares one transform,
- *   which every file MayaFlux writes does and most single-purpose exports
- *   from another DCC do too.
- * - extract()/load() with a caller-supplied Lattice3D: region_min is
- *   derived from the lattice's world bounds through the *first selected
- *   grid's* transform, snapped to the nearest voxel index — no
- *   interpolation. This is the only path that round-trips exactly: pass
- *   the same Lattice3D a VDBWriter call was given and the cell values come
- *   back unpermuted and unresampled, which is what verify_volume_export's
- *   round-trip check exercises.
+ * - extract()/load() with no lattice: the union of every selected grid's leaves
+ *   and active tiles, at the first selected grid's voxel size.
+ * - extract()/load() with a caller-supplied Lattice3D: those bounds and that
+ *   resolution. Pass the lattice a VDBWriter call was given and the values come
+ *   back as written.
  *
- * Both paths assume every selected grid shares the first grid's voxel size
- * and translation. A file with per-grid transforms that actually differ is
- * not resampled into agreement — each grid's raw voxel indices are read
- * directly against the shared region, which misplaces that grid's content
- * relative to the others. materialize() logs an MF_WARN naming the
- * mismatched grid so this is a loud failure rather than a silent one, but
- * it does not correct it — actual per-grid resampling would need to
- * materialize the mismatched grid separately in its own index space and
- * interpolate into the shared lattice, which is not implemented. This is a
- * real limitation for a file assembled by hand from mismatched sources; it
- * is not a limitation for output produced by a single simulation or DCC
- * export, which is what this reader exists to consume.
+ * A grid whose voxels coincide with the lattice's cells is copied. One with
+ * another voxel size, offset or orientation is resampled, trilinearly for real
+ * values and by nearest voxel for integers.
  *
- * ## Inactive cells
+ * A first grid that is rotated or sheared gives an axis aligned lattice and the
+ * rigid part as VolumeData's volume_placement. Shear that remains after it is
+ * resampled away.
  *
- * VolumeData is dense: every cell in the output lattice that is not covered
- * by an active leaf takes the grid's own background value (root.background
- * in exchange), narrowed the same way an active cell's value is if the
- * grid's own type needs it — see below. This means a sparse simulation
- * export expands to full density in host memory: six fields at 256 cubed
- * is roughly 400 MB, before whatever the caller does with it next. A tile
- * whose inactive fill differs from the plain background — a level set's
- * sign-flood-filled interior/exterior tiles are the standard example — is
- * not reconstructed; every non-leaf cell reads as the one background value
- * regardless of which side of the surface it is on. A foreign narrow-band
- * level set is therefore the case most likely to come back wrong; a fog
- * volume or a carried scalar, where every non-leaf cell genuinely is the
- * background, round-trips correctly.
+ * ## Values
  *
- * ## Type narrowing
+ * Every value the file stores is read, active or not, tiles included, and a cell
+ * nothing stores takes the grid's background, so the inside of a narrow band
+ * level set reads as negative. The background is also kept, as the field's
+ * volume_background facet.
  *
- * VolumeData's variant holds float and glm::vec3 only. A grid whose leaf
- * value type is double, int32, int64, bool or half is narrowed to float; a
- * vec3d or vec3i grid is narrowed to glm::vec3, via MayaFlux::try_convert
- * per element (per component, for vectors). This is logged once per grid
- * at MF_WARN, distinguishing a narrowing that round-tripped every element
- * exactly from one where at least one element actually lost precision —
- * the common case for a double or int64 grid whose range exceeds float,
- * uncommon for a value meant to feed a float GPU field in the first place,
- * which is the purpose this reader is built for. Accepted as the cost of a
- * single representable type rather than widening VolumeData to carry every
- * tinyvdb value type.
+ * float and half grids give float fields, double and int64 give double, int32 and
+ * bool give int32, vec3f gives vec3 and vec3d and vec3i give dvec3. Other grid
+ * kinds are rejected.
+ *
+ * Grid metadata beyond class, vector_type and name is kept as a MeshAssemblyMetadata
+ * in the field's facets, and the file's own in VolumeData's.
+ *
+ * VolumeData is dense, so a sparse export expands to full density in host memory.
  */
 class MAYAFLUX_API VolumeReader : public FileReader {
 public:
@@ -244,16 +221,18 @@ private:
 
     /**
      * @brief Build VolumeData from selected grids over an explicit region.
-     * @param indices    Grid indices, in the order fields should appear.
-     * @param region_min Voxel-index origin, in the first grid's index space.
-     * @param lattice    Output lattice. Its resolution drives every
-     *                   read_dense_scalar/read_dense_vector call.
+     * @param indices   Grid indices, in the order fields should appear.
+     * @param placement Placement the lattice is expressed in.
+     * @param lattice   Output lattice.
      * @return Populated VolumeData, or nullopt on failure.
      */
     [[nodiscard]] std::optional<Kakshya::VolumeData> materialize(
         const std::vector<size_t>& indices,
-        const glm::ivec3& region_min,
+        const glm::dmat4& placement,
         const Kinesis::Lattice3D& lattice) const;
+
+    /** @brief The requested placement, or the rigid part of a grid's rotation or shear. */
+    [[nodiscard]] glm::dmat4 placement_for(size_t first, const VolumeReadOptions& options) const;
 
     void set_error(std::string msg) const { m_last_error = std::move(msg); }
 };

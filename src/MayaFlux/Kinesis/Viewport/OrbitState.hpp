@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ViewTransform.hpp"
+#include "Frustum.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -125,5 +125,16 @@ MAYAFLUX_API void apply_orbit_pan(OrbitState& state, float dx, float dy);
  * @param view  0 = front (+Z), 1 = right (+X), 2 = top (+Y), 3 = flip opposite.
  */
 MAYAFLUX_API void snap_orbit_ortho(OrbitState& state, int view);
+
+/** @brief The viewpoint an orbit state is at, its fov fitted by height. */
+[[nodiscard]] MAYAFLUX_API Viewpoint viewpoint_of(const OrbitState& state);
+
+/**
+ * @brief Put an orbit around a viewpoint, so it carries on from it.
+ *
+ * The distance is kept and the focal point put that far ahead. An orbit has no roll and no frustum of
+ * its own, so only the vertical fov and clip planes are taken.
+ */
+MAYAFLUX_API void set_viewpoint(OrbitState& state, const Viewpoint& view);
 
 } // namespace MayaFlux::Kinesis

@@ -503,6 +503,15 @@ void GpuFieldOperator::bind(FieldTarget target, const Kinesis::ParametricUVField
     store(target, field.source, 2, true, cluster, true);
 }
 
+Kinesis::FieldTarget GpuFieldOperator::bound_targets() const
+{
+    auto targets = Kinesis::FieldTarget::NONE;
+    for (const auto& b : m_bindings) {
+        targets |= b.targets;
+    }
+    return targets;
+}
+
 bool GpuFieldOperator::uses_params() const
 {
     return std::ranges::any_of(m_bindings,

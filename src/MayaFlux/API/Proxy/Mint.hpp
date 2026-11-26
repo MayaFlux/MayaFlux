@@ -4,11 +4,11 @@
 #include "MayaFlux/Transitive/Memory/LiveArena.hpp"
 
 namespace MayaFlux::Buffers {
+class AssembledGeometryBuffer;
 class ComputeMeshBuffer;
 class InstanceNetworkBuffer;
 class MeshBuffer;
 class MeshNetworkBuffer;
-class NetworkGeometryBuffer;
 }
 
 namespace MayaFlux {
@@ -79,7 +79,7 @@ public:
 
     /** @brief Mint independently supplied geometry into one rendered assembly. */
     auto operator()(const StructureConfig::Assembly& config)
-        -> std::shared_ptr<Buffers::NetworkGeometryBuffer>
+        -> std::shared_ptr<Buffers::AssembledGeometryBuffer>
     {
         auto structure = build(config);
         if (structure) {
@@ -109,7 +109,7 @@ private:
         const StructureConfig::Model& config);
     std::shared_ptr<Buffers::InstanceNetworkBuffer> build(
         const StructureConfig::Instances& config);
-    std::shared_ptr<Buffers::NetworkGeometryBuffer> build(
+    std::shared_ptr<Buffers::AssembledGeometryBuffer> build(
         const StructureConfig::Assembly& config);
     std::shared_ptr<Buffers::ComputeMeshBuffer> build(
         const StructureConfig::Isosurface& config);

@@ -39,7 +39,7 @@ jobs:
 
   build_linux:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.linux }}
-    uses: ./.github/workflows/build-linux.yml
+    uses: ./.github/workflows/build-linux-arch.yml
     with:
       version: "pr-${{ github.event.pull_request.number }}"
       clean_version: "0.0.0"
@@ -47,7 +47,7 @@ jobs:
       run_tests: false
       create_distribution: false
       artifact_name: "pr-${{ github.event.pull_request.number }}-linux"
-      distribution_name: linux-fedora43-x64
+      distribution_name: linux-arch
       os_display_name: Linux
 
   build_windows:

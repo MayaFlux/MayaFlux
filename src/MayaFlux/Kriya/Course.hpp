@@ -7,6 +7,7 @@
 #include "MayaFlux/Transitive/Facet/ControlValueStore.hpp"
 #include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
 namespace MayaFlux::Kriya {
@@ -43,6 +44,29 @@ struct CourseMarker {
     std::string name;
     double time {}; ///< Source seconds.
 };
+
+/**
+ * @struct CoursePlayback
+ * @brief Where a course is, as of its last advance: enough for another course with the
+ *        same controls to carry on from the same place.
+ */
+struct CoursePlayback {
+    double clock {}; ///< Clock seconds.
+    std::optional<double> anchor; ///< Source seconds the clock started from.
+    double shift {}; ///< Added to source time since a time map was removed.
+    double repeat_origin {}; ///< Clock seconds the current repeat began at.
+    std::optional<double> repeat_length; ///< Clock seconds the current repeat lasts.
+    uint64_t crossings {};
+    uint64_t passes {};
+    bool finished {};
+    bool reversed {}; ///< A ping-pong pass is running backwards.
+    double time {}; ///< Source seconds.
+    bool paused {};
+    double fade_to {}; ///< Weight a fade in progress ends at.
+    double fade_seconds {}; ///< Clock seconds the fade has left, zero for no fade.
+};
+
+MF_DESCRIBE(CoursePlayback)
 
 /** @brief A stream of a course's events, awaited by one coroutine. */
 using CourseEvents = Vruta::BroadcastSource<CourseEvent>;
@@ -97,11 +121,15 @@ namespace Detail {
             Seek,
             SeekClock,
             SeekNormalized,
-            Nudge
+            Nudge,
+            FadeWeight,
+            CarryOn,
+            Resume
         };
 
         Kind kind {};
         double value {};
+        double seconds {};
     };
 
     /** @brief One subscription: the kind it hears and where it is delivered. */
@@ -226,6 +254,35 @@ public:
     /** @brief How much this course counts where several are mixed. Finite and not negative. */
     bool weight(double value);
 
+    /**
+     * @brief Move the weight to a value over a time, in equal steps of advance().
+     *
+     * Starts from the weight at the next advance and runs whether or not the course
+     * is paused. A later fade replaces it, and a weight written any other way ends
+     * it. Two courses faded in opposite directions are a crossfade.
+     * @param target  Finite and not negative.
+     * @param seconds Finite and not negative; zero arrives at the next advance.
+     * @return false when not queued.
+     */
+    bool fade_weight(double target, double seconds);
+
+    /** @brief Where the course is, as of its last advance. Each member is read on its own. */
+    [[nodiscard]] CoursePlayback playback() const noexcept;
+
+    /**
+     * @brief Put the course where another was, with its pause, direction and counts, at the next advance.
+     *
+     * A fade is not resumed: ask fade_weight() with the playback's members.
+     * @return false when not queued or the numbers are not finite.
+     */
+    bool resume(const CoursePlayback& from);
+
+    /** @brief The course this one follows and its offset, while that follow() still steers it. */
+    [[nodiscard]] std::optional<std::pair<std::shared_ptr<const Course>, double>> following() const;
+
+    /** @brief Advances per second the course was made with. */
+    [[nodiscard]] double step_rate() const noexcept { return m_step_rate; }
+
     /** @brief The setting the next advance will step with, built from the controls now. */
     [[nodiscard]] CourseSetting setting() const;
 
@@ -274,6 +331,27 @@ public:
      */
     bool follow(const std::shared_ptr<const Course>& other, double offset = 0.0);
 
+    /**
+     * @brief Take source time from a value instead of the clock, such as a place on a path.
+     *
+     * Each advance reads @p playhead on the driving thread, so what it reads must be
+     * safe to read there. The range and edge still fold the value, and markers it
+     * passes are announced either way. Use CourseEdge::Hold: a Once course finishes
+     * at an end and no longer follows the value. A value that is not finite holds the
+     * last one. Sets the time map, as follow() does; unfollow() ends it.
+     *
+     * @return false for an empty function.
+     *
+     * @code
+     * course->edge(Kriya::CourseEdge::Hold);
+     * course->scrub([walker, from, along = to - from] {
+     *     const glm::vec3 at = walker->position().value_or(from);
+     *     return 12.0 * glm::dot(at - from, along) / glm::dot(along, along);
+     * });
+     * @endcode
+     */
+    bool scrub(std::function<double()> playhead);
+
     /** @brief Stop following. Source time runs with the clock again, from where the course is. */
     void unfollow();
 
@@ -297,6 +375,23 @@ public:
 
     /** @brief Seek to the first marker of this name, as seek does. false for no such marker or when the seek is not queued. */
     bool jump(std::string_view name);
+
+    // Saved setup
+
+    /**
+     * @brief Run @p apply on this course and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a time map, a repeat or following
+     * another course. Belongs to the thread that sets the course up.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Course&)>& apply)
+    {
+        apply(*this);
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
 
     // State
 
@@ -338,6 +433,9 @@ public:
      */
     [[nodiscard]] std::shared_ptr<CourseEvents> subscribe(CourseEventKind kind);
 
+    /** @brief The kind a subscribe() answered @p source for, or nothing when it is not one of this course's. */
+    [[nodiscard]] std::optional<CourseEventKind> subscription(const void* source) const;
+
     // Driving thread
 
     /**
@@ -375,12 +473,14 @@ private:
     [[nodiscard]] static CourseControls& open(CourseStore& store);
     [[nodiscard]] CourseSetting compose() const;
     bool push(Detail::CourseCommand::Kind kind, double value = 0.0);
+    void step_fade();
     void apply(const Detail::CourseCommand& command, const CourseSetting& setting);
     void publish(const CourseSetting& setting, const CourseStep& step);
     void announce(CourseEventKind kind, double time, uint64_t value) const;
     void scan_markers(double before, const CourseStep& step, const CourseSetting& setting) const;
     void refuse();
 
+    std::vector<Reflect::FunctionCall> m_configurations;
     CourseStore m_store;
     CourseControls& m_controls { open(m_store) };
     Memory::PendingQueue<Detail::CourseCommand, 64> m_commands;
@@ -389,6 +489,12 @@ private:
     std::atomic<uint64_t> m_next_marker { 1 };
 
     CourseTime m_clock;
+    double m_step_rate {};
+    double m_fade_from {};
+    double m_fade_to {};
+    double m_fade_written {};
+    uint64_t m_fade_steps {};
+    uint64_t m_fade_done {};
     bool m_paused;
     bool m_was_finished {};
     bool m_refusing {};
@@ -397,6 +503,26 @@ private:
     bool m_last_reversed {};
     uint64_t m_passes_seen {};
     std::optional<uint64_t> m_last_frame;
+
+    struct Followed {
+        std::weak_ptr<const Course> leader;
+        std::shared_ptr<const Kinesis::TimeMap> map;
+        double offset {};
+    };
+
+    Memory::SnapshotCell<Followed> m_followed;
+    Memory::SnapshotCell<CoursePlayback> m_resume;
+    std::atomic<double> m_clock_cell { 0.0 };
+    std::atomic<double> m_anchor_cell { 0.0 };
+    std::atomic<double> m_shift_cell { 0.0 };
+    std::atomic<double> m_repeat_origin_cell { 0.0 };
+    std::atomic<double> m_repeat_length_cell { 0.0 };
+    std::atomic<double> m_fade_to_cell { 0.0 };
+    std::atomic<double> m_fade_left_cell { 0.0 };
+    std::atomic<uint64_t> m_passes_cell { 0 };
+    std::atomic<bool> m_has_anchor_cell { false };
+    std::atomic<bool> m_has_repeat_cell { false };
+    std::atomic<bool> m_reversed_cell { false };
 
     std::atomic<double> m_time_cell { 0.0 };
     std::atomic<double> m_progress_cell { 0.0 };

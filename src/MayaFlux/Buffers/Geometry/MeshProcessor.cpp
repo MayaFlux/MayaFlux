@@ -89,12 +89,17 @@ void MeshProcessor::processing_function(const std::shared_ptr<Buffer>& /*buffer*
             m_mesh_buffer->m_mesh_data.layout.vertex_count = static_cast<uint32_t>(verts.size());
             m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
             m_mesh_buffer->m_indices_dirty.store(true, std::memory_order_release);
+            m_mesh_buffer->m_rest_dirty.store(true, std::memory_order_release);
         }
     }
 
     if (auto frame = m_mesh_buffer->current_frame(); frame != m_frame) {
         m_frame = std::move(frame);
         adopt_frame(m_frame);
+    }
+
+    if (m_mesh_buffer->m_rest_dirty.exchange(false, std::memory_order_acq_rel)) {
+        m_mesh_buffer->update_skin_rest();
     }
 
     if (m_mesh_buffer->restores_vertices()) {
@@ -128,6 +133,7 @@ void MeshProcessor::adopt_frame(const std::shared_ptr<const Kakshya::MeshData>& 
     data.submeshes = frame->submeshes;
     data.faces = frame->faces;
     m_mesh_buffer->m_vertices_dirty.store(true, std::memory_order_release);
+    m_mesh_buffer->m_rest_dirty.store(true, std::memory_order_release);
 
     if (!same_indices) {
         data.index_variant = frame->index_variant;

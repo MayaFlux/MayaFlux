@@ -76,19 +76,19 @@ CameraFileFrames::CameraFileFrames(std::shared_ptr<SpatialArchive> archive, std:
 
 CameraFileFrames::~CameraFileFrames() = default;
 
-std::shared_ptr<const Kinesis::Lens> CameraFileFrames::read(size_t index) const
+std::shared_ptr<const Kakshya::MeshAssemblyLens> CameraFileFrames::read(size_t index) const
 {
     if (index >= m_count) {
         return nullptr;
     }
 
-    return m_archive->read([&](SpatialReader& reader) -> std::shared_ptr<const Kinesis::Lens> {
+    return m_archive->read([&](SpatialReader& reader) -> std::shared_ptr<const Kakshya::MeshAssemblyLens> {
         auto lens = reader.read_lens(m_camera, index);
         if (!lens) {
             fail("sample " + std::to_string(index) + " of '" + m_camera + "': " + reader.get_last_error());
             return nullptr;
         }
-        return std::make_shared<const Kinesis::Lens>(*lens);
+        return std::make_shared<const Kakshya::MeshAssemblyLens>(*lens);
     });
 }
 

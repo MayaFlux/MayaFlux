@@ -31,7 +31,11 @@ struct InfluenceContext {
 
     std::optional<glm::vec2> cursor_pos; ///< Optional cursor position for pending interactions, useful for real-time editing or previewing influence effects.
 
-    std::optional<glm::quat> orientation; ///< Optional orientation of the influencer. Local +Z is its forward direction.
+    std::optional<glm::quat> orientation; ///< Optional orientation of the influencer. Local -Z is its forward direction.
+
+    std::optional<glm::vec2> cone; ///< Optional inner and outer angles of a cone about forward, radians from the axis.
+
+    std::optional<glm::vec3> attenuation; ///< Optional constant, linear and quadratic terms dividing the fall with distance.
 
     const Core::WindowEvent* input {}; ///< The window event that caused this firing, valid only during the call; null for firings a window event did not cause.
 
@@ -51,8 +55,14 @@ struct InfluenceContext {
  *     vec3  color;
  *     float radius;
  *     float size;
+ *     vec3  direction;
+ *     float cone_inner;
+ *     vec3  attenuation;
+ *     float cone_outer;
  * };
  * @endcode
+ *
+ * A shader of your own may declare the leading members only.
  */
 struct alignas(16) InfluenceBlock {
     glm::vec3 position { 0.0F };
@@ -61,21 +71,30 @@ struct alignas(16) InfluenceBlock {
     float radius { 1.0F };
     float size { 1.0F };
     float _pad[3] {};
+    glm::vec3 direction { 0.0F, 0.0F, -1.0F };
+    float cone_inner { 0.0F };
+    glm::vec3 attenuation { 1.0F, 0.0F, 0.0F };
+    float cone_outer { 0.0F }; ///< Zero or less is no cone.
 
-    /** @brief The block for @p ctx, with white and size 1 where the context has none. */
+    /** @brief The block for @p ctx, with white, size 1, no cone and no attenuation where it has none. */
     [[nodiscard]] static InfluenceBlock from(const InfluenceContext& ctx)
     {
+        const glm::vec2 cone = ctx.cone.value_or(glm::vec2(0.0F));
         return {
             .position = ctx.position,
             .intensity = ctx.intensity,
             .color = ctx.color.value_or(glm::vec3(1.0F)),
             .radius = ctx.radius,
             .size = ctx.size.value_or(1.0F),
+            .direction = ctx.orientation.value_or(glm::quat(1.0F, 0.0F, 0.0F, 0.0F)) * glm::vec3(0.0F, 0.0F, -1.0F),
+            .cone_inner = cone.x,
+            .attenuation = ctx.attenuation.value_or(glm::vec3(1.0F, 0.0F, 0.0F)),
+            .cone_outer = cone.y,
         };
     }
 };
 
-static_assert(sizeof(InfluenceBlock) == 48);
+static_assert(sizeof(InfluenceBlock) == 80);
 
 /**
  * @class Influence

@@ -38,5 +38,8 @@ void main()
         return;
     }
 
+    if (sampled.a < 0.5) {
+        discard;
+    }
     out_color = sampled;
 }

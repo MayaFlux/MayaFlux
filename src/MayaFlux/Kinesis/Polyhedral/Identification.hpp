@@ -106,10 +106,10 @@ template <typename... T>
 }
 
 /**
- * @struct Welding
+ * @struct Coincidence
  * @brief Points merged into the vertices they coincide with.
  */
-struct Welding {
+struct Coincidence {
     std::vector<uint32_t> vertex_map; ///< The merged vertex of every point.
     std::vector<uint32_t> source_vertex; ///< The lowest numbered point of each merged vertex.
 };
@@ -128,7 +128,7 @@ struct Welding {
  *
  * @return nullopt for a tolerance that is negative or not finite.
  */
-[[nodiscard]] MAYAFLUX_API std::optional<Welding> weld_positions(
+[[nodiscard]] MAYAFLUX_API std::optional<Coincidence> merge_coincident_positions(
     std::span<const glm::vec3> positions, float tolerance);
 
 } // namespace MayaFlux::Kinesis

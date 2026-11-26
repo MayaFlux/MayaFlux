@@ -12,7 +12,8 @@ namespace MayaFlux::Kinesis {
 
 /**
  * @struct Ray
- * @brief Origin and normalized direction in world space.
+ * @brief Origin and direction. A ray in world space has a normalized direction;
+ *        one taken into another space by transform_ray keeps the scale it had there.
  */
 struct Ray {
     glm::vec3 origin;
@@ -97,6 +98,28 @@ struct HitResult {
     }
 
     return glm::vec2(met.x, met.y);
+}
+
+// =========================================================================
+// Ray in another space
+// =========================================================================
+
+/**
+ * @brief Take a ray through an affine transform without renormalizing.
+ *
+ * The point at parameter t of the result is the image of the point at t of
+ * @p ray, so a parameter found against geometry in the other space is the
+ * parameter on the original ray.
+ *
+ * @param transform Affine transform into the other space.
+ * @param ray       Ray to take there.
+ */
+[[nodiscard]] inline Ray transform_ray(const glm::mat4& transform, const Ray& ray)
+{
+    return {
+        .origin = glm::vec3(transform * glm::vec4(ray.origin, 1.0F)),
+        .direction = glm::vec3(transform * glm::vec4(ray.direction, 0.0F)),
+    };
 }
 
 // =========================================================================

@@ -101,6 +101,19 @@ namespace {
         return true;
     }
 
+    bool quad_spans_area(std::span<const glm::vec3> positions, std::span<const uint32_t> ring) noexcept
+    {
+        const dvec3 origin(positions[ring[0]]);
+        const dvec3 a = dvec3(positions[ring[1]]) - origin;
+        const dvec3 b = dvec3(positions[ring[2]]) - origin;
+        const dvec3 c = dvec3(positions[ring[3]]) - origin;
+        const auto spans = [](const dvec3& u, const dvec3& v) {
+            const dvec3 n = glm::cross(u, v);
+            return glm::dot(n, n) > 0.0;
+        };
+        return spans(a, b) || spans(b, c) || spans(a, c);
+    }
+
     bool triangulate_face(
         std::span<const glm::vec3> positions,
         std::span<const uint32_t> ring,
@@ -124,7 +137,11 @@ namespace {
             return true;
         }
 
-        return clip_concave(positions, ring, out);
+        if (clip_concave(positions, ring, out)) {
+            return true;
+        }
+        return count == 4 && quad_spans_area(positions, ring)
+            && split_quad(positions, ring, shorter_diagonal, out);
     }
 
 } // namespace

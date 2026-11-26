@@ -93,7 +93,7 @@ Attachment make_attachment(
         .transform = std::make_shared<glm::mat4>(1.0F),
     };
 
-    if (const auto anchor = read_anchor(attachment.buf, config.index)) {
+    if (const auto anchor = read_anchor(attachment.buf, config.index, config.slot)) {
         attachment.anchor = *anchor;
     } else {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
@@ -133,7 +133,7 @@ void recenter_attachment(
 {
     const glm::quat rotation = frame(orientation);
 
-    if (const auto anchor = read_anchor(attachment.buf, attachment.config.index)) {
+    if (const auto anchor = read_anchor(attachment.buf, attachment.config.index, attachment.config.slot)) {
         attachment.anchor = *anchor;
     } else {
         MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,

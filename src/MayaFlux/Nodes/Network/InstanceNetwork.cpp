@@ -5,6 +5,7 @@
 #include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
 #include "MayaFlux/Kakshya/NDData/SpatialAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/AffineBlend.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 #include "MayaFlux/Nodes/Graphics/PointCollectionNode.hpp"
 
@@ -146,11 +147,35 @@ std::shared_ptr<InstanceNetwork> make_instance_network(
         node = std::make_shared<GpuSync::PointCollectionNode>(std::move(vertices));
     }
 
+    const auto skin = mesh ? assembly->skin(group.source) : nullptr;
+    std::shared_ptr<const Kakshya::MeshMorphTargets> morphs;
+    if (const auto* held = assembly->get_data().sources[group.source].facets.get<Kakshya::MeshMorphTargets>(); held && mesh) {
+        morphs = std::make_shared<const Kakshya::MeshMorphTargets>(*held);
+    }
+
     auto network = std::make_shared<InstanceNetwork>();
     for (const uint64_t row : group.rows) {
         const auto placement = assembly->placement(row);
         const auto index = network->add_slot(placement ? placement->name : std::string {}, node);
-        network->get_slot(index).transform = world[row];
+        auto& slot = network->get_slot(index);
+        slot.transform = world[row];
+        slot.skin = skin;
+        slot.morphs = morphs;
+
+        const auto* skeleton = placement && placement->skeleton ? assembly->skeleton(*placement->skeleton) : nullptr;
+        if (skin && skeleton) {
+            std::vector<glm::mat4> joints;
+            joints.reserve(skeleton->size());
+            for (const uint64_t joint : *skeleton) {
+                joints.push_back(world[joint]);
+            }
+            slot.palette = Kinesis::relative_transforms(world[row], joints, skin->inverse_bind);
+        }
+        if (morphs) {
+            for (const auto& [name, shape] : *morphs) {
+                slot.morph_weights.push_back(shape.empty() ? 0.0F : shape.front().weight);
+            }
+        }
     }
     return network;
 }

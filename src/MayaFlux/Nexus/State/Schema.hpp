@@ -1,7 +1,10 @@
 #pragma once
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
+#include "MayaFlux/Kriya/Course.hpp"
 #include "MayaFlux/Nexus/Fabric.hpp"
+#include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
@@ -29,7 +32,10 @@ namespace MayaFlux::Nexus::State {
  *       written by name as the text its TextCodec reads back, so nothing is
  *       listed by hand and a control added to an entity is saved without a
  *       change here. The EXR is a normalized picture of those same numbers and
- *       the decoder does not read it.
+ *       the decoder does not read it. Functions are written with their
+ *       arguments, wirings with every trigger and ending, and buffers, windows
+ *       and network sources by their bound names. Changed in place while
+ *       unpublished.
  */
 inline constexpr uint32_t k_schema_version = 7;
 
@@ -78,53 +84,93 @@ MF_DESCRIBE(ComponentRecord)
 // =============================================================================
 
 /**
- * @brief Serializable wiring strategies.
- *
- * Written as the underlying integer, so new enumerators are only ever
- * appended. Key, Mouse, Network, WindowEvent, Factory and Bind describe a wiring
- * whose source is live (a window, a network source, a callable) and is not
- * encoded; the record keeps what is plain data. Unsupported marks a wiring the
- * encoder could not describe.
+ * @brief A function as it was named and, when a FunctionTable made it, the arguments.
+ *        An empty name is an anonymous or absent function.
  */
-enum class WiringKind : uint8_t {
-    CommitDriven,
-    Every,
-    MoveTo,
-    Scroll,
-    Unsupported,
+struct CallRecord {
+    std::string name;
+    std::map<std::string, std::string> arguments;
+
+    bool operator==(const CallRecord&) const = default;
+};
+
+MF_DESCRIBE(CallRecord)
+
+enum class TriggerKind : uint8_t {
     Key,
     Mouse,
+    Scroll,
     Network,
     WindowEvent,
-    Factory,
-    Bind,
+    Course,
+};
+
+/**
+ * @brief One trigger. @p source is the bound name of its window or network source.
+ *        @p callback is the release callback of a key or mouse trigger, or the
+ *        function of a scroll trigger.
+ */
+struct TriggerRecord {
+    TriggerKind kind { TriggerKind::Key };
+    std::string source;
+    std::optional<IO::Keys> key;
+    std::optional<IO::Modifiers> modifiers;
+    std::optional<IO::MouseButtons> button;
+    std::optional<Core::WindowEventType> event_type;
+    bool held {};
+    CallRecord callback;
+    std::optional<Kriya::CourseEventKind> course_event; ///< Of the course @p source names.
+
+    bool operator==(const TriggerRecord&) const = default;
+};
+
+MF_DESCRIBE(TriggerRecord)
+
+/** @brief Which Wiring::use overload a factory was given to. */
+enum class FactoryKind : uint8_t {
+    None,
+    Sound,
+    Graphics,
+    Cross,
+    Event,
 };
 
 struct WiringStep {
     glm::vec3 position {};
     double delay_seconds { 0.0 };
 
+    bool operator==(const WiringStep&) const = default;
 };
 
 MF_DESCRIBE(WiringStep)
 
+/**
+ * @brief Everything a Wiring was told, as data.
+ *
+ * @p lost lists what could not be written down, such as an anonymous factory or
+ * a window with no bound name.
+ */
 struct WiringRecord {
-    WiringKind kind { WiringKind::CommitDriven };
     std::optional<double> interval;
     std::optional<double> duration;
     std::optional<size_t> times;
-    std::optional<std::vector<WiringStep>> steps;
+    std::vector<WiringStep> steps;
     std::optional<Vruta::ProcessingToken> interval_token;
     std::optional<Vruta::ProcessingToken> duration_token;
-    std::optional<IO::Keys> key;
-    std::optional<IO::Modifiers> key_modifiers;
-    std::optional<IO::MouseButtons> button;
-    std::optional<bool> held;
-    std::string position_fn_name;
-    std::string factory_name;
-    std::string attach_fn_name;
-    std::string detach_fn_name;
+    std::vector<TriggerRecord> triggers;
+    FactoryKind factory_kind { FactoryKind::None };
+    CallRecord factory;
+    CallRecord place;
+    bool bound {};
+    bool bound_to_entity {};
+    CallRecord bind_attach;
+    CallRecord bind_detach;
+    CallRecord on_complete;
+    CallRecord on_detach;
+    std::vector<CallRecord> configurations;
+    std::vector<std::string> lost;
 
+    bool operator==(const WiringRecord&) const = default;
 };
 
 MF_DESCRIBE(WiringRecord)
@@ -136,7 +182,9 @@ MF_DESCRIBE(WiringRecord)
 struct AudioSinkRecord {
     uint32_t channel {};
     std::string fn_name;
+    std::map<std::string, std::string> arguments;
 
+    bool operator==(const AudioSinkRecord&) const = default;
 };
 
 MF_DESCRIBE(AudioSinkRecord)
@@ -147,6 +195,7 @@ MF_DESCRIBE(AudioSinkRecord)
  */
 struct RenderSinkRecord {
     std::string fn_name;
+    std::string window;
     std::string vertex_shader;
     std::string fragment_shader;
     std::string geometry_shader;
@@ -157,10 +206,22 @@ struct RenderSinkRecord {
     bool triangulate { false };
     int64_t draw_priority {};
     std::unordered_map<std::string, std::string> extra_string_params;
+    std::map<std::string, std::string> arguments;
+    std::vector<std::string> targets; ///< Bound names of the image targets drawn into.
 
+    bool operator==(const RenderSinkRecord&) const = default;
 };
 
 MF_DESCRIBE(RenderSinkRecord)
+
+/** @brief A view target that is another entity's render sink, by that entity's id and the sink's place. */
+struct ViewSinkRecord {
+    uint32_t entity {};
+    uint32_t sink {};
+
+};
+
+MF_DESCRIBE(ViewSinkRecord)
 
 // =============================================================================
 // Locus navigation fields
@@ -171,8 +232,6 @@ MF_DESCRIBE(RenderSinkRecord)
  *        a Locus on reconstruct. Dynamic nav state (velocity, yaw accumulation)
  *        is transient and is not encoded. The aspect is a control of the Locus.
  *
- * @note view_targets are live RenderProcessor pointers and cannot be serialized.
- *       StateDecoder warns on reconstruct; the caller must reconnect them.
  */
 struct LocusNavRecord {
     glm::vec3 eye {};
@@ -193,6 +252,20 @@ MF_DESCRIBE(LocusNavRecord)
 // =============================================================================
 
 /**
+ * @brief A buffer an entity is attached to, by its bound name.
+ */
+struct AttachRecord {
+    std::string buffer;
+    std::optional<uint32_t> index;
+    std::optional<uint32_t> slot;
+    glm::vec3 offset {};
+    AttachConfig::OnMove on_move { AttachConfig::OnMove::Offset };
+
+};
+
+MF_DESCRIBE(AttachRecord)
+
+/**
  * @brief Per-entity JSON record.
  *
  * `kind` is one of "emitter", "sensor", "agent".
@@ -208,10 +281,17 @@ struct EntityRecord {
     std::string kind;
     std::string subkind;
     std::map<std::string, std::string> controls;
-    std::string influence_fn_name;
-    std::string perception_fn_name;
-    std::string radiate_fn_name;
+    CallRecord influence;
+    CallRecord perception;
+    CallRecord radiate;
     WiringRecord wiring;
+    std::optional<AttachRecord> attach;
+    std::vector<std::string> view_targets;
+    std::vector<ViewSinkRecord> view_sinks;
+    std::optional<uint32_t> view_of;
+    std::optional<uint32_t> follows_view; ///< The Locus whose viewpoint this one follows.
+    std::vector<float> follow_offset; ///< Sixteen values, column by column.
+    std::vector<CallRecord> configurations;
     std::vector<AudioSinkRecord> audio_sinks;
     std::vector<RenderSinkRecord> render_sinks;
     std::optional<LocusNavRecord> locus_nav;
@@ -227,29 +307,147 @@ MF_DESCRIBE(EntityRecord)
 /**
  * @brief Per-expanse JSON record.
  *
- * The containment predicate and crossing callbacks are closures, so only their
- * names are serializable and they are resolved from the Fabric's function
- * registry on reconstruct. The box is plain data and is stored as is.
+ * The containment predicate and crossing callbacks are written as calls and made
+ * again from the bound functions, or resolved by name from the Fabric's function
+ * registry. The box is plain data and is stored as is.
  *
  * `subkind` is empty for a plain Expanse, "hull" for a Hull and "mantle" for a
  * Mantle. A Hull keeps its collection index and a Mantle its fit mode, as the
- * lowercase FitMode name. The buffer both wrap is live and is not encoded.
+ * lowercase FitMode name. The buffer both wrap is written by its bound name.
  * `id` is the id the Expanse had when saved and is informational.
  */
 struct ExpanseRecord {
     uint32_t id {};
     std::string subkind;
-    std::string fn_name;
-    std::string on_enter_fn_name;
-    std::string on_exit_fn_name;
+    CallRecord contains;
+    CallRecord on_enter;
+    CallRecord on_exit;
+    std::string buffer;
     std::optional<glm::vec3> bounds_min;
     std::optional<glm::vec3> bounds_max;
     std::optional<uint32_t> collection;
     std::string fit_name;
+    std::vector<CallRecord> configurations;
+    std::map<std::string, std::string> controls;
 
 };
 
 MF_DESCRIBE(ExpanseRecord)
+
+// =============================================================================
+// Asset records
+// =============================================================================
+
+/** @brief How a buffer is made from its file. */
+enum class AssetForm : uint8_t {
+    Mesh, ///< One of ModelReader::create_mesh_buffers().
+    Network, ///< A MeshNetworkBuffer over ModelReader::create_mesh_network().
+    Part, ///< The buffer that shows a row of a realized assembly.
+    Call, ///< Made by a bound function.
+    Spatial, ///< A RecordedGeometryBuffer over the streams of an Alembic snapshot.
+    Instances, ///< An InstanceNetworkBuffer over a template mesh and the record's instances.
+    Volume, ///< A VolumeGridBuffer over a volume file.
+    Texture, ///< A TextureBuffer over an image file.
+};
+
+/** @brief One slot of an instance network. @p transform is its sixteen values, column by column. */
+struct InstanceRecord {
+    std::string name;
+    std::vector<float> transform;
+    glm::vec3 tint { 1.0F };
+    float scalar { 1.0F };
+    uint32_t texture {};
+    std::vector<float> morph_weights;
+    std::vector<float> palette; ///< Sixteen values for each joint, column by column.
+
+};
+
+MF_DESCRIBE(InstanceRecord)
+
+/**
+ * @brief A buffer by its bound name and the file that holds it. A snapshot's path
+ *        is relative to the directory of the schema that lists it.
+ */
+struct AssetRecord {
+    std::string name;
+    std::string file;
+    AssetForm form { AssetForm::Mesh };
+    uint64_t index {};
+    bool snapshot {};
+    CallRecord make;
+    std::vector<InstanceRecord> instances;
+    std::vector<uint32_t> resolution; ///< Cells of a volume per axis, over bounds_min to bounds_max.
+    CallRecord realize; ///< Of a Part, the call that makes its realize options; its bounds are bounds_min to bounds_max.
+    std::optional<glm::vec3> bounds_min;
+    std::optional<glm::vec3> bounds_max;
+
+};
+
+MF_DESCRIBE(AssetRecord)
+
+// =============================================================================
+// Course records
+// =============================================================================
+
+struct MarkerRecord {
+    std::string name;
+    double time {};
+
+};
+
+MF_DESCRIBE(MarkerRecord)
+
+/**
+ * @brief Playback of a bound course. @p controls holds its numeric controls by
+ *        name, and @p lost what it holds that cannot be written.
+ */
+struct CourseRecord {
+    std::string name;
+    std::map<std::string, std::string> controls;
+    std::optional<double> range_in;
+    std::optional<double> range_out;
+    double time {};
+    bool paused {};
+    std::vector<MarkerRecord> markers;
+    std::vector<CallRecord> configurations;
+    std::vector<std::string> lost;
+    double step_rate {};
+    std::optional<Kriya::CoursePlayback> playback;
+    std::string follows; ///< Bound name of the course this one follows.
+    double follow_offset {};
+
+};
+
+MF_DESCRIBE(CourseRecord)
+
+/** @brief A principal a motion carries, by its row and the saved id in a fabric. */
+struct CarriedRecord {
+    uint64_t row {};
+    std::string fabric;
+    uint32_t entity {};
+
+};
+
+MF_DESCRIBE(CarriedRecord)
+
+/** @brief A motion to start again. A snapshot's file is relative to the schema's directory. */
+struct MotionRecord {
+    std::string name;
+    std::string file;
+    bool snapshot {};
+    uint64_t motion {};
+    Kriya::CourseEdge edge { Kriya::CourseEdge::Loop };
+    std::vector<std::string> courses;
+    std::vector<CarriedRecord> carried;
+    std::vector<std::string> buffers;
+    std::vector<uint64_t> rows;
+    CallRecord realize;
+    std::optional<glm::vec3> bounds_min;
+    std::optional<glm::vec3> bounds_max;
+
+};
+
+MF_DESCRIBE(MotionRecord)
 
 // =============================================================================
 // Fabric schema
@@ -262,6 +460,9 @@ struct FabricSchema {
     std::vector<ExpanseRecord> expanses;
     std::vector<ComponentRecord> components;
     std::optional<float> cell_size;
+    std::vector<AssetRecord> assets;
+    std::vector<CourseRecord> courses;
+    std::vector<MotionRecord> motions;
 
 };
 
@@ -295,13 +496,16 @@ MF_DESCRIBE(FabricRef)
 struct TapestryExpanseRecord {
     std::string name;
     std::string subkind;
-    std::string fn_name;
-    std::string on_enter_fn_name;
-    std::string on_exit_fn_name;
+    CallRecord contains;
+    CallRecord on_enter;
+    CallRecord on_exit;
+    std::string buffer;
     std::optional<glm::vec3> bounds_min;
     std::optional<glm::vec3> bounds_max;
     std::optional<uint32_t> collection;
     std::string fit_name;
+    std::vector<CallRecord> configurations;
+    std::map<std::string, std::string> controls;
     std::vector<std::string> fabric_names;
 
 };
@@ -313,6 +517,9 @@ struct TapestrySchema {
     std::vector<FabricRef> fabrics;
     std::vector<TapestryExpanseRecord> expanses;
     nlohmann::json user_state;
+    std::vector<AssetRecord> assets;
+    std::vector<CourseRecord> courses;
+    std::vector<MotionRecord> motions;
 
 };
 

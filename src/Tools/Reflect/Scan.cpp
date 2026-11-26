@@ -19,7 +19,7 @@ namespace {
 #ifdef MF_DESCRIBE_FUNCTION
 #undef MF_DESCRIBE_FUNCTION
 #endif
-#define MF_DESCRIBE_FUNCTION(...) inline constexpr auto MF_REFLECT_JOIN(mf_signature_request_, __COUNTER__) = __VA_ARGS__;
+#define MF_DESCRIBE_FUNCTION(...) inline auto MF_REFLECT_JOIN(mf_signature_request_, __COUNTER__) = __VA_ARGS__;
 )";
 
     std::filesystem::path absolute_of(const std::string& file)

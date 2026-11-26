@@ -103,6 +103,13 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
             "InstanceNetworkBuffer: instance textures are ignored for a point or line template");
     }
 
+    const auto& slots = m_network->slots();
+    const bool deformed = !slots.empty() && (slots[0].skin || slots[0].morphs) && topology_draws_triangles;
+    if (deformed && m_render_config.triangulate) {
+        MF_WARN(Journal::Component::Buffers, Journal::Context::Init,
+            "InstanceNetworkBuffer: a milled draw has no template vertex numbers, so the instances are not deformed");
+    }
+
     switch (m_render_config.topology) {
         case Portal::Graphics::PrimitiveTopology::POINT_LIST:
             if (m_render_config.vertex_shader.empty())
@@ -123,7 +130,8 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
 
         default:
             if (m_render_config.vertex_shader.empty())
-                m_render_config.vertex_shader = "instance.vert.spv";
+                m_render_config.vertex_shader = deformed && !m_render_config.triangulate
+                    ? "instance_skinned.vert.spv" : "instance.vert.spv";
             if (m_render_config.fragment_shader.empty()) {
                 m_render_config.fragment_shader = textured
                     ? "instance_textured.frag.spv" : "triangle.frag.spv";
@@ -139,6 +147,13 @@ void InstanceNetworkBuffer::setup_rendering(const RenderConfig& config)
     sc.bindings["instancePayload"] = ShaderBinding(
         0, InstanceSSBOProcessor::k_payload_ssbo_binding,
         vk::DescriptorType::eStorageBuffer);
+
+    if (m_render_config.vertex_shader == "instance_skinned.vert.spv") {
+        sc.bindings["skinInfluences"] = ShaderBinding(0, InstanceSSBOProcessor::k_influence_ssbo_binding, vk::DescriptorType::eStorageBuffer);
+        sc.bindings["morphDeltas"] = ShaderBinding(0, InstanceSSBOProcessor::k_delta_ssbo_binding, vk::DescriptorType::eStorageBuffer);
+        sc.bindings["skinPalettes"] = ShaderBinding(0, InstanceSSBOProcessor::k_palette_ssbo_binding, vk::DescriptorType::eStorageBuffer);
+        sc.bindings["morphWeights"] = ShaderBinding(0, InstanceSSBOProcessor::k_weight_ssbo_binding, vk::DescriptorType::eStorageBuffer);
+    }
 
     const auto texture_count = static_cast<uint32_t>(m_instance_textures.size());
     if (textured) {

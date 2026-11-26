@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ViewTransform.hpp"
+#include "Frustum.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -54,6 +54,10 @@ struct NavigationState {
     float fov_radians { glm::radians(60.0F) };
     float near_plane { 0.01F };
     float far_plane { 1000.0F };
+    float roll { 0.0F }; ///< Radians about the forward axis
+
+    /** @brief A frustum taken over from a viewpoint. While set it replaces the fov and clip planes above. */
+    std::optional<Frustum> frustum;
 
     std::chrono::steady_clock::time_point last_tick { std::chrono::steady_clock::now() };
 
@@ -156,5 +160,27 @@ MAYAFLUX_API void advance_navigation(NavigationState& state, float dt);
  * @return ViewTransform ready for push constant upload
  */
 [[nodiscard]] MAYAFLUX_API ViewTransform build_view_transform(const NavigationState& state, float aspect);
+
+/** @brief The viewpoint a navigation state is at: its placement, and its frustum or its fov fitted by height. */
+[[nodiscard]] MAYAFLUX_API Viewpoint viewpoint_of(const NavigationState& state);
+
+/**
+ * @brief Put a navigation state at a viewpoint, so movement carries on from it.
+ *
+ * A viewpoint the state is already at changes nothing. Otherwise eye, yaw, pitch and roll come from
+ * the placement. A symmetric perspective frustum fitted by height
+ * sets the fov and clip planes; any other is kept whole in NavigationState::frustum.
+ */
+MAYAFLUX_API void set_viewpoint(NavigationState& state, const Viewpoint& view);
+
+/**
+ * @brief The viewpoint part of the way from one to another.
+ *
+ * The position and the frustum's window and clip distances run linearly and the rotation
+ * along the shortest arc. The projection kind is that of the nearer end.
+ *
+ * @param t Zero is @p from, one is @p to. Clamped.
+ */
+[[nodiscard]] MAYAFLUX_API Viewpoint mix_viewpoints(const Viewpoint& from, const Viewpoint& to, float t);
 
 } // namespace MayaFlux::Kinesis

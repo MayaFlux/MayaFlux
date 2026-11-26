@@ -3,6 +3,10 @@
 #include "MayaFlux/IO/WriterRegistry.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::IO {
 
 /**
@@ -70,6 +74,20 @@ public:
     virtual bool write(
         const std::string& filepath,
         const std::vector<Kakshya::MeshData>& meshes,
+        const ModelWriteOptions& options = {})
+        = 0;
+
+    /**
+     * @brief Write a whole assembly: its hierarchy, shared geometry, materials, skins,
+     *        motions, cameras and lights, as far as the format holds them.
+     * @param filepath Destination path.
+     * @param assembly The assembly. Must have at least one row.
+     * @param options  Format-specific options.
+     * @return true on success. On failure call get_last_error().
+     */
+    virtual bool write(
+        const std::string& filepath,
+        const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
         const ModelWriteOptions& options = {})
         = 0;
 

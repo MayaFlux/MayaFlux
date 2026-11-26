@@ -279,7 +279,6 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
         compute_press.bind_descriptor_sets(cmd_id, m_pipeline_id, m_descriptor_set_ids);
     }
 
-    on_before_execute(cmd_id, buffer);
     pump_feeds(false);
 
     if (m_set_zero_is_push) {
@@ -311,8 +310,6 @@ void ComputeProcessor::execute_shader(const std::shared_ptr<VKBuffer>& buffer)
             on_iteration_barrier(cmd_id, buffer, i);
         }
     }
-
-    on_after_execute(cmd_id, buffer);
 
     foundry.memory_barrier(
         cmd_id,

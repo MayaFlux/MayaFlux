@@ -32,6 +32,11 @@ std::shared_ptr<const MeshAssemblyMotionFrames> MeshAssemblyMotionFrames::create
         widen(channel.rotation, first, last, any);
         widen(channel.scale, first, last, any);
     }
+    for (const auto& weights : assembly->get_data().motions[motion].weights) {
+        for (const auto& keys : weights.targets) {
+            widen(std::optional<Kinesis::TimedValues<float>> { keys }, first, last, any);
+        }
+    }
     if (!any) {
         return nullptr;
     }
@@ -46,7 +51,26 @@ std::shared_ptr<const MeshAssemblyLocals> MeshAssemblyMotionFrames::sample(doubl
     if (!matrices) {
         return nullptr;
     }
-    return std::make_shared<const MeshAssemblyLocals>(resolve_world(*m_assembly, std::move(*matrices)));
+
+    auto frame = resolve_world(*m_assembly, std::move(*matrices));
+    const auto& data = m_assembly->get_data();
+    for (const auto& weights : data.motions[m_motion].weights) {
+        const auto placement = m_assembly->placement(weights.row);
+        const auto* morphs = placement && placement->source
+            ? data.sources[*placement->source].facets.get<MeshMorphTargets>()
+            : nullptr;
+        if (!morphs) {
+            continue;
+        }
+        frame.weights.resize(m_assembly->get_total_elements());
+        auto& row = frame.weights[weights.row];
+        row.reserve(morphs->size());
+        for (size_t t = 0; t < morphs->size(); ++t) {
+            const auto value = t < weights.targets.size() ? weights.targets[t].sample(time, m_policy) : std::nullopt;
+            row.push_back(value.value_or((*morphs)[t].second.front().weight));
+        }
+    }
+    return std::make_shared<const MeshAssemblyLocals>(std::move(frame));
 }
 
 std::shared_ptr<const MeshAssemblyRestFrames> MeshAssemblyRestFrames::create(

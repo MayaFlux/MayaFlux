@@ -1,5 +1,8 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
+#include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
+
 #include "Agent.hpp"
 
 #include "MayaFlux/Kinesis/Viewport/NavigationState.hpp"
@@ -7,6 +10,8 @@
 namespace MayaFlux::Buffers {
 class RenderProcessor;
 }
+
+
 
 namespace MayaFlux::Nexus {
 
@@ -25,13 +30,13 @@ namespace MayaFlux::Nexus {
  *   its inherited Agent position follows the eye so the spatial index and any
  *   PerceptionContext observe the same point.
  *
- *   Influence is re-viewing. A Locus holds a set of view targets: render
- *   processors whose view transform it drives. On each influence the current
- *   ViewTransform is pushed to every target. The same motion that determines
- *   what the Locus perceives determines how everything under its influence is
- *   seen. Multiple processors driven by one Locus share its viewpoint; multiple
- *   Loci over disjoint targets partition the scene into independently-viewed
- *   regions.
+ *   A Locus is one driver of a viewpoint cell. It makes one of its own and drives
+ *   it, or joins one it is given, and its view targets draw from that viewpoint,
+ *   each with the aspect of its own size. While it drives, perception writes the
+ *   navigation state's viewpoint. While something else drives, such as a camera
+ *   path, the Locus does not move: its position and orientation follow the
+ *   viewpoint, and when the viewpoint is handed back navigation carries on from
+ *   there, roll and frustum included.
  *
  * The base perception and influence callables still fire. Locus layers its view
  * behaviour on top: the user callables run, then the view is integrated and
@@ -41,12 +46,12 @@ namespace MayaFlux::Nexus {
  *
  * The navigation state is plain data, mutated directly through nav() or via the
  * Kinesis free functions (apply_mouse_delta, apply_scroll, snap_ortho). Wiring a
- * Locus with every(1.0/60.0) drives the whole cycle each frame. Because the view
- * push writes a render processor UBO, wire the Locus so its influence fires on
- * the graphics thread when it drives view targets.
+ * Locus with every(1.0/60.0) drives the whole cycle each frame.
  */
 class MAYAFLUX_API Locus : public Agent {
 public:
+    ~Locus() override;
+
     /**
      * @brief Construct from a NavigationConfig with perception and influence functions.
      * @param config       Initial navigation configuration. eye seeds the position.
@@ -140,28 +145,69 @@ public:
     }
 
     // =========================================================================
-    // View targets — the processors this Locus re-views
+    // The held viewpoint and what draws from it
     // =========================================================================
 
+    /** @brief The viewpoint this Locus is a driver of. */
+    [[nodiscard]] const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view() const { return m_held; }
+
+    /** @brief This Locus's id on its viewpoint, for view()->hand_to(). */
+    [[nodiscard]] uint32_t driver() const { return m_driver; }
+
     /**
-     * @brief Add a render processor whose view transform this Locus drives.
+     * @brief Join another viewpoint in place of the present one, without taking it over.
      *
-     * On each influence the processor receives the Locus's current
-     * ViewTransform. Adding the same processor twice is a no-op. The processor
-     * must outlive the Locus or be removed via remove_view_target().
+     * The view targets move to it. Hand it to driver() for this Locus to drive it. Ignored if null.
+     */
+    void set_view(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view);
+
+    /**
+     * @brief Take this Locus's viewpoint from a function until unfollow().
      *
-     * @param proc Render processor to drive. Ignored if null.
+     * The function is called whenever the view is read, so it must be safe on the threads
+     * that read it. Blend two views with Kinesis::mix_viewpoints over their cells and a
+     * weight, such as one a Presence reports. A function that reads this viewpoint again,
+     * as two Locuses following each other would, answers where this one stood.
+     * @return False for an empty function.
+     */
+    bool follow(std::function<Kinesis::Viewpoint()> source);
+
+    /**
+     * @brief follow() another viewpoint, such as another Locus's view().
+     * @param other The viewpoint to follow. Held weakly.
+     * @param offset Applied in the followed viewpoint's own frame.
+     * @return False for a null cell or this Locus's own.
+     */
+    bool follow(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& other,
+        const glm::mat4& offset = glm::mat4(1.0F));
+
+    /** @brief Stop following, and carry on from where the view is if it was still being followed. */
+    void unfollow();
+
+    /** @brief Whether a follow() has not been ended. */
+    [[nodiscard]] bool is_following() const noexcept { return m_follower != 0; }
+
+    /** @brief The viewpoint followed and its offset, for a follow() of a cell. */
+    [[nodiscard]] std::optional<std::pair<std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>, glm::mat4>>
+    following() const;
+
+    /**
+     * @brief Draw a render processor from this Locus's viewpoint.
+     *
+     * Adding the same processor twice is a no-op.
+     *
+     * @param proc Render processor. Ignored if null.
      */
     void add_view_target(std::shared_ptr<Buffers::RenderProcessor> proc);
 
     /**
-     * @brief Stop driving a render processor's view transform.
+     * @brief Stop drawing a render processor from the viewpoint.
      * @param proc Processor previously added via add_view_target().
      */
     void remove_view_target(const std::shared_ptr<Buffers::RenderProcessor>& proc);
 
     /**
-     * @brief All render processors currently driven by this Locus.
+     * @brief The render processors added as view targets.
      */
     [[nodiscard]] const std::vector<std::shared_ptr<Buffers::RenderProcessor>>& view_targets() const
     {
@@ -185,14 +231,8 @@ public:
     void invoke_perception(const PerceptionContext& ctx) override;
 
     /**
-     * @brief Influence: push the current view to every view target, then run
-     *        the inherited influence path.
-     *
-     * Sets the stored ViewTransform on each render processor in
-     * view_targets(), then fires the inherited influence callable with @p ctx
-     * and dispatches the Locus's audio and render sinks and its attachment.
-     * Everything under this Locus's influence is seen from its viewpoint, and an
-     * attached buffer that is also a view target is placed over the fresh view.
+     * @brief Influence: the inherited influence path, with its audio and render sinks and
+     *        attachment. The view targets need nothing pushed, they draw from the viewpoint.
      *
      * @param ctx Influence context built by Fabric from the Locus's state.
      */
@@ -203,8 +243,15 @@ private:
     Kinesis::NavigationState m_nav;
     Kinesis::ViewTransform m_view {};
     std::vector<std::shared_ptr<Buffers::RenderProcessor>> m_view_targets;
+    std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>> m_held;
+    uint32_t m_driver {};
+    uint32_t m_follower {};
+    std::weak_ptr<Memory::OwnedCell<Kinesis::Viewpoint>> m_followed;
+    glm::mat4 m_follow_offset { 1.0F };
 
     [[nodiscard]] LocusControls& open_locus();
+    void open_view();
+    void join_view(const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view);
 };
 
 } // namespace MayaFlux::Nexus

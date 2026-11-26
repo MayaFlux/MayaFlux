@@ -1,5 +1,8 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
+#include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
+
 #include "MayaFlux/Kinesis/Viewport/NavigationMappings.hpp"
 #include "MayaFlux/Kinesis/Viewport/NavigationState.hpp"
 #include "MayaFlux/Kinesis/Viewport/OrbitState.hpp"
@@ -13,7 +16,18 @@ namespace MayaFlux::Core {
 class Window;
 }
 
+
+
 namespace MayaFlux {
+
+/**
+ * @brief What binding a preset gives back: the viewpoint it drives and the controller's id on it.
+ *
+ * Hand the viewpoint to another driver to take the view from the controller, and back to the id
+ * for the controller to carry on from wherever it was left. Every processor of one binding draws
+ * from the one viewpoint.
+ */
+using ViewportBinding = std::pair<std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>, uint32_t>;
 
 /// @brief Alias for backwards compatibility; prefer Kinesis::NavigationConfig in new code.
 using ViewportPresetConfig = Kinesis::NavigationConfig;
@@ -42,7 +56,7 @@ enum class ViewportPresetMode : uint8_t {
  * controller, call bind_fly_preset(), bind_orbit_preset(), or
  * bind_pan_zoom_preset() directly.
  *
- * Registers event handlers under the prefix "vp_<name>_".
+ * Registers event handlers named for this window and @p name, so one name may be bound on several windows.
  *
  * Mode defaults:
  *   Fly       - WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
@@ -50,11 +64,11 @@ enum class ViewportPresetMode : uint8_t {
  *   PanZoom2D - MMB drag pan, scroll zoom, orthographic projection
  *
  * @param window     Window supplying input events
- * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param processor  RenderProcessor that draws from the viewpoint
  * @param mode       Navigation controller to install, defaults to Fly
  * @param name       Unique prefix for registered events; must be unique per window
  */
-MAYAFLUX_API void bind_viewport_preset(
+MAYAFLUX_API ViewportBinding bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     ViewportPresetMode mode = ViewportPresetMode::Fly,
@@ -64,15 +78,15 @@ MAYAFLUX_API void bind_viewport_preset(
  * @brief Bind a navigation preset to all RenderProcessors currently registered
  *        against a window using default settings.
  *
- * Calls bind_viewport_preset(window, rp, mode, name) for every buffer
- * registered with the window at call time that returns a non-null RenderProcessor.
+ * One viewpoint and one controller for every buffer registered with the window at call time
+ * that has a RenderProcessor.
  * Buffers registered after this call are not covered.
  *
  * @param window  Window supplying input events
  * @param mode    Navigation controller to install, defaults to Fly
  * @param name    Preset name forwarded to bind_viewport_preset()
  */
-MAYAFLUX_API void bind_viewport_preset(
+MAYAFLUX_API ViewportBinding bind_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     ViewportPresetMode mode = ViewportPresetMode::Fly,
     const std::string& name = "default");
@@ -80,18 +94,18 @@ MAYAFLUX_API void bind_viewport_preset(
 /**
  * @brief Bind the fly navigation controller to a window and render processor.
  *
- * Registers event handlers under the prefix "vp_<name>_". Key assignments
+ * Registers event handlers named for this window and @p name, so one name may be bound on several windows. Key assignments
  * default to WASD/QE translation with KP ortho snaps; pass a FlyKeyMap to
  * override any or all bindings. Ortho snap slots set to std::nullopt are
  * silently skipped.
  *
  * @param window     Window supplying input events
- * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param processor  RenderProcessor that draws from the viewpoint
  * @param config     Camera/motion tuning parameters
  * @param key_map    Key assignments; defaults to WASD/QE + KP snaps
  * @param name       Unique prefix for registered events; must be unique per window
  */
-MAYAFLUX_API void bind_fly_preset(
+MAYAFLUX_API ViewportBinding bind_fly_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     const ViewportPresetConfig& config = {},
@@ -102,8 +116,8 @@ MAYAFLUX_API void bind_fly_preset(
  * @brief Bind the fly navigation controller to all RenderProcessors currently
  *        registered against a window.
  *
- * Calls bind_fly_preset(window, rp, config, key_map, name) for every buffer
- * registered with the window at call time that returns a non-null RenderProcessor.
+ * One viewpoint and one controller for every buffer registered with the window at call time
+ * that has a RenderProcessor.
  * Buffers registered after this call are not covered.
  *
  * @param window   Window supplying input events
@@ -111,7 +125,7 @@ MAYAFLUX_API void bind_fly_preset(
  * @param key_map  Key assignments; defaults to WASD/QE + KP snaps
  * @param name     Preset name forwarded to bind_fly_preset()
  */
-MAYAFLUX_API void bind_fly_preset(
+MAYAFLUX_API ViewportBinding bind_fly_preset(
     const std::shared_ptr<Core::Window>& window,
     const ViewportPresetConfig& config = {},
     const Kinesis::FlyKeyMap& key_map = {},
@@ -120,18 +134,18 @@ MAYAFLUX_API void bind_fly_preset(
 /**
  * @brief Bind the orbit navigation controller to a window and render processor.
  *
- * Registers event handlers under the prefix "vp_<name>_". MMB drag rotates
+ * Registers event handlers named for this window and @p name, so one name may be bound on several windows. MMB drag rotates
  * around the focal point; holding key_map.pan_modifier during MMB drag pans
  * the focal point instead. Scroll dollies the distance. Ortho snap slots set
  * to std::nullopt are silently skipped.
  *
  * @param window     Window supplying input events
- * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param processor  RenderProcessor that draws from the viewpoint
  * @param config     Orbit tuning parameters
  * @param key_map    Key assignments; defaults to Shift pan modifier + KP snaps
  * @param name       Unique prefix for registered events; must be unique per window
  */
-MAYAFLUX_API void bind_orbit_preset(
+MAYAFLUX_API ViewportBinding bind_orbit_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     const Kinesis::OrbitConfig& config = {},
@@ -147,7 +161,7 @@ MAYAFLUX_API void bind_orbit_preset(
  * @param key_map  Key assignments
  * @param name     Preset name forwarded to the per-processor overload
  */
-MAYAFLUX_API void bind_orbit_preset(
+MAYAFLUX_API ViewportBinding bind_orbit_preset(
     const std::shared_ptr<Core::Window>& window,
     const Kinesis::OrbitConfig& config = {},
     const Kinesis::OrbitKeyMap& key_map = {},
@@ -160,12 +174,12 @@ MAYAFLUX_API void bind_orbit_preset(
  * View matrix is always identity; only the orthographic projection changes.
  *
  * @param window     Window supplying input events
- * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param processor  RenderProcessor that draws from the viewpoint
  * @param config     Pan/zoom tuning parameters
  * @param key_map    Input assignments; defaults to MMB drag
  * @param name       Unique prefix for registered events; must be unique per window
  */
-MAYAFLUX_API void bind_pan_zoom_preset(
+MAYAFLUX_API ViewportBinding bind_pan_zoom_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     const Kinesis::PanZoom2DConfig& config = {},
@@ -181,7 +195,7 @@ MAYAFLUX_API void bind_pan_zoom_preset(
  * @param key_map  Input assignments
  * @param name     Preset name forwarded to the per-processor overload
  */
-MAYAFLUX_API void bind_pan_zoom_preset(
+MAYAFLUX_API ViewportBinding bind_pan_zoom_preset(
     const std::shared_ptr<Core::Window>& window,
     const Kinesis::PanZoom2DConfig& config = {},
     const Kinesis::PanZoom2DKeyMap& key_map = {},
@@ -199,12 +213,12 @@ MAYAFLUX_API void bind_pan_zoom_preset(
  * construction exactly as in bind_fly_preset.
  *
  * @param window     Window supplying input events
- * @param processor  RenderProcessor that receives the ViewTransform source
+ * @param processor  RenderProcessor that draws from the viewpoint
  * @param config     Camera tuning parameters; move_speed is unused
  * @param key_map    Input assignments; defaults to RMB drag
  * @param name       Unique prefix for registered events; must be unique per window
  */
-MAYAFLUX_API void bind_screenspace_preset(
+MAYAFLUX_API ViewportBinding bind_screenspace_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Buffers::RenderProcessor>& processor,
     const Kinesis::NavigationConfig& config = {},
@@ -220,7 +234,7 @@ MAYAFLUX_API void bind_screenspace_preset(
  * @param key_map  Input assignments
  * @param name     Preset name forwarded to the per-processor overload
  */
-MAYAFLUX_API void bind_screenspace_preset(
+MAYAFLUX_API ViewportBinding bind_screenspace_preset(
     const std::shared_ptr<Core::Window>& window,
     const Kinesis::NavigationConfig& config = {},
     const Kinesis::ScreenspaceKeyMap& key_map = {},

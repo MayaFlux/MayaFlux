@@ -6,12 +6,15 @@
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
 
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
 }
 
 namespace MayaFlux::Nexus {
+
+class StateEncoder;
 
 /**
  * @class Agent
@@ -23,9 +26,10 @@ namespace MayaFlux::Nexus {
  * position the spatial index is not consulted and @c spatial_results will be empty
  * on each commit.
  *
- * Its state is a struct of Quantity members, AgentControls, applied with `set()`
- * from any thread. A member given `Quantity::unset()` is emptied. `extend<C>()`
- * adds a struct of the user's own beside it, as Presence and Locus do for theirs.
+ * Its state is structs of Quantity members, PlacementControls and AgentControls,
+ * applied with `set()` from any thread. A member given `Quantity::unset()` is
+ * emptied. `extend<C>()` adds a struct of the user's own beside them, as Presence
+ * and Locus do for theirs.
  *
  * On each commit the perception function is invoked first, then the influence
  * function. Both receive contexts populated from the same spatial snapshot.
@@ -81,9 +85,9 @@ public:
     Agent(float query_radius,
         std::string perception_fn_name, PerceptionFn perception,
         std::string influence_fn_name, InfluenceFn influence)
-        : m_perception_fn_name(std::move(perception_fn_name))
+        : m_perception_fn_call(std::move(perception_fn_name), Reflect::FunctionCall::second_type {})
         , m_perception_fn(std::move(perception))
-        , m_influence_fn_name(std::move(influence_fn_name))
+        , m_influence_fn_call(std::move(influence_fn_name), Reflect::FunctionCall::second_type {})
         , m_influence_fn(std::move(influence))
     {
         m_controls.query_radius.observe(query_radius);
@@ -93,16 +97,28 @@ public:
     virtual ~Agent() { detach(); }
 
     /** @brief Identifier assigned to the perception function, empty if anonymous. */
-    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_name; }
+    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_call.first; }
+
+    /** @brief The perception function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& perception_fn_call() const { return m_perception_fn_call; }
 
     /** @brief Identifier assigned to the influence function, empty if anonymous. */
-    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_name; }
+    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_call.first; }
+
+    /** @brief The influence function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& influence_fn_call() const { return m_influence_fn_call; }
 
     /** @brief Set or replace the perception function's identifier. */
-    void set_perception_fn_name(std::string name) { m_perception_fn_name = std::move(name); }
+    void set_perception_fn_name(std::string name) { m_perception_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the perception function was made, so it can be made again. */
+    void set_perception_fn_call(Reflect::FunctionCall call) { m_perception_fn_call = std::move(call); }
 
     /** @brief Set or replace the influence function's identifier. */
-    void set_influence_fn_name(std::string name) { m_influence_fn_name = std::move(name); }
+    void set_influence_fn_name(std::string name) { m_influence_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the influence function was made, so it can be made again. */
+    void set_influence_fn_call(Reflect::FunctionCall call) { m_influence_fn_call = std::move(call); }
 
     /** @brief The perception function itself. */
     [[nodiscard]] const PerceptionFn& perception_fn() const { return m_perception_fn; }
@@ -116,32 +132,32 @@ public:
 
     /**
      * @brief Apply the members of @p incoming that hold a value.
-     * @tparam C AgentControls, or the struct of a derived class or one added with extend().
+     * @tparam C PlacementControls, AgentControls, the struct of a derived class or one added with extend().
      *
      * Members left empty are untouched, and `Quantity::unset()` empties a member.
      * Safe from any thread.
      */
-    template <typename C = AgentControls>
+    template <typename C = PlacementControls>
     void set(const C& incoming)
     {
         m_store.merge(incoming);
     }
 
     /** @brief A copy of the controls of type C as they are now. */
-    template <typename C = AgentControls>
+    template <typename C = PlacementControls>
     [[nodiscard]] C get() const
     {
         return m_store.snapshot<C>();
     }
 
-    /** @brief Add a struct of the user's own controls beside AgentControls and return it. */
+    /** @brief Add a struct of the user's own controls beside the built-in ones and return it. */
     template <typename C>
     [[nodiscard]] C& extend()
     {
         return m_store.extend<C>();
     }
 
-    /** @brief The live controls, read without a copy. */
+    /** @brief The live AgentControls, read without a copy. */
     [[nodiscard]] const AgentControls& controls() const noexcept { return m_controls; }
 
     /** @brief Every control by name, for tools that list or set them. */
@@ -152,7 +168,7 @@ public:
      */
     [[nodiscard]] std::optional<glm::vec3> position() const
     {
-        return quantity_value<glm::vec3>(m_controls.position);
+        return quantity_value<glm::vec3>(m_placement.position);
     }
 
     /**
@@ -161,7 +177,7 @@ public:
      */
     [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
     {
-        m_controls.position.assign(Quantity(p));
+        m_placement.position.assign(Quantity(p));
     }
 
     /**
@@ -169,25 +185,25 @@ public:
      */
     [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
     {
-        m_controls.position.assign(Quantity::unset());
+        m_placement.position.assign(Quantity::unset());
     }
 
-    /** @brief Set the orientation. Local +Z is forward. Unset means no rotation. */
+    /** @brief Set the orientation. Local -Z is forward. Unset means no rotation. */
     [[deprecated("use set({ .orientation = ... })")]] void set_orientation(const glm::quat& q)
     {
-        m_controls.orientation.assign(Quantity(q));
+        m_placement.orientation.assign(Quantity(q));
     }
 
     /** @brief Clear the orientation. */
     [[deprecated("use set({ .orientation = Quantity::unset() })")]] void clear_orientation()
     {
-        m_controls.orientation.assign(Quantity::unset());
+        m_placement.orientation.assign(Quantity::unset());
     }
 
     /** @brief Get the current orientation, if set. */
     [[nodiscard]] std::optional<glm::quat> orientation() const
     {
-        return quantity_value<glm::quat>(m_controls.orientation);
+        return quantity_value<glm::quat>(m_placement.orientation);
     }
 
     /**
@@ -202,7 +218,7 @@ public:
      * @brief Set the query radius.
      * @param r New radius in world-space units.
      */
-    [[deprecated("use set({ .query_radius = ... })")]] void set_query_radius(float r)
+    [[deprecated("use set(AgentControls { .query_radius = ... })")]] void set_query_radius(float r)
     {
         m_controls.query_radius.assign(Quantity(r));
     }
@@ -235,6 +251,14 @@ public:
         add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), std::move(fn_name));
     }
 
+    /** @brief sink_audio() with the call that made @p fn, which a saved state makes it from again. */
+    void sink_audio(Buffers::BufferManager& mgr, uint32_t channel, const Reflect::FunctionCall& call,
+        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+    {
+        add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), call.first);
+        m_audio_sinks.back().arguments = call.second;
+    }
+
     /** @brief Unregister the audio sink on @p channel. */
     void remove_audio_sink(Buffers::BufferManager& mgr, uint32_t channel)
     {
@@ -259,6 +283,14 @@ public:
         add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), position());
     }
 
+    /** @brief render() with the call that made @p fn, which a saved state makes it from again. */
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
+        const Reflect::FunctionCall& call, RenderFn fn)
+    {
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), call.first, position());
+        m_render_sinks.back().arguments = call.second;
+    }
+
     /** @brief Unregister every audio and render sink. */
     void release_sinks(Buffers::BufferManager& mgr)
     {
@@ -279,8 +311,7 @@ public:
      * object is moved from outside, config.on_move decides whether the move
      * becomes the new offset or carries the buffer. If the object already has
      * a position, that position is kept and becomes the offset. Replaces any
-     * previous attachment. The buffer is a live object, so an attachment is not
-     * part of encoded state and must be made again after decoding.
+     * previous attachment. StateEncoder saves it when the buffer has a bound name.
      *
      * @param buf    Buffer to attach. Ignored if null.
      * @param config Anchor vertex, offset and move behaviour.
@@ -300,6 +331,33 @@ public:
 
     /** @brief True while a buffer is attached. */
     [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
+
+    /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Agent&)>& apply)
+    {
+        const auto before = sink_buffers();
+        apply(*this);
+        for (const void* sink : sink_buffers()) {
+            if (std::ranges::find(before, sink) == before.end()) {
+                m_configured_sinks.push_back(sink);
+            }
+        }
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
+    /** @brief True for a sink buffer that configure() made, which its call makes again. */
+    [[nodiscard]] bool made_by_configure(const void* sink) const
+    {
+        return std::ranges::find(m_configured_sinks, sink) != m_configured_sinks.end();
+    }
 
     /**
      * @brief Add an influence of any type, with as many targets as are wanted.
@@ -417,7 +475,7 @@ public:
     }
 
     /** @brief Set the intensity, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .intensity = ... })")]] void set_intensity(float i)
+    [[deprecated("use set(AgentControls { .intensity = ... })")]] void set_intensity(float i)
     {
         m_controls.intensity.assign(Quantity(i));
     }
@@ -429,7 +487,7 @@ public:
     }
 
     /** @brief Set the radius, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .radius = ... })")]] void set_radius(float r)
+    [[deprecated("use set(AgentControls { .radius = ... })")]] void set_radius(float r)
     {
         m_controls.radius.assign(Quantity(r));
     }
@@ -441,13 +499,13 @@ public:
     }
 
     /** @brief Set the color, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .color = ... })")]] void set_color(const glm::vec3& c)
+    [[deprecated("use set(AgentControls { .color = ... })")]] void set_color(const glm::vec3& c)
     {
         m_controls.color.assign(Quantity(c));
     }
 
     /** @brief Clear the color, resetting it to an unset state. */
-    [[deprecated("use set({ .color = Quantity::unset() })")]] void clear_color()
+    [[deprecated("use set(AgentControls { .color = Quantity::unset() })")]] void clear_color()
     {
         m_controls.color.assign(Quantity::unset());
     }
@@ -459,13 +517,13 @@ public:
     }
 
     /** @brief Set the size, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .size = ... })")]] void set_size(float s)
+    [[deprecated("use set(AgentControls { .size = ... })")]] void set_size(float s)
     {
         m_controls.size.assign(Quantity(s));
     }
 
     /** @brief Clear the size, resetting it to an unset state. */
-    [[deprecated("use set({ .size = Quantity::unset() })")]] void clear_size()
+    [[deprecated("use set(AgentControls { .size = Quantity::unset() })")]] void clear_size()
     {
         m_controls.size.assign(Quantity::unset());
     }
@@ -474,6 +532,18 @@ public:
     [[nodiscard]] std::optional<float> size() const
     {
         return quantity_value<float>(m_controls.size);
+    }
+
+    /** @brief The cone, if set: inner and outer angles, radians from the axis. */
+    [[nodiscard]] std::optional<glm::vec2> cone() const
+    {
+        return quantity_value<glm::vec2>(m_controls.cone);
+    }
+
+    /** @brief The attenuation, if set: constant, linear and quadratic terms. */
+    [[nodiscard]] std::optional<glm::vec3> attenuation() const
+    {
+        return quantity_value<glm::vec3>(m_controls.attenuation);
     }
 
     /**
@@ -509,17 +579,19 @@ public:
     }
 
 private:
+    [[nodiscard]] static PlacementControls& open_placement(QuantityStore& store);
     [[nodiscard]] static AgentControls& open(QuantityStore& store);
 
     QuantityStore m_store;
 
 protected:
+    PlacementControls& m_placement { open_placement(m_store) };
     AgentControls& m_controls { open(m_store) };
 
 private:
-    std::string m_perception_fn_name;
+    Reflect::FunctionCall m_perception_fn_call;
     PerceptionFn m_perception_fn;
-    std::string m_influence_fn_name;
+    Reflect::FunctionCall m_influence_fn_call;
     InfluenceFn m_influence_fn;
     uint32_t m_id {};
 
@@ -528,10 +600,26 @@ private:
     mutable std::optional<Attachment> m_attachment;
     std::vector<std::pair<std::shared_ptr<void>, InfluenceFn>> m_influences;
     std::vector<std::pair<std::shared_ptr<void>, PerceptionFn>> m_perceptions;
+    [[nodiscard]] std::vector<const void*> sink_buffers() const
+    {
+        std::vector<const void*> held;
+        for (const auto& sink : m_audio_sinks) {
+            held.push_back(sink.buf.get());
+        }
+        for (const auto& sink : m_render_sinks) {
+            held.push_back(sink.buf.get());
+        }
+        return held;
+    }
+
+    std::vector<const void*> m_configured_sinks;
+    std::vector<Reflect::FunctionCall> m_configurations;
 
     void follow_attachment();
 
     friend class Fabric;
+    friend class StateEncoder;
+    friend class StateDecoder;
 };
 
 } // namespace MayaFlux::Nexus

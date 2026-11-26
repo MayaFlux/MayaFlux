@@ -32,7 +32,7 @@ Presence::Presence(float query_radius,
           std::move(perception_fn_name), std::move(perception),
           std::move(influence_fn_name), std::move(influence))
     , m_falloff(linear_falloff)
-    , m_radiate_fn_name(std::move(radiate_fn_name))
+    , m_radiate_fn_call(std::move(radiate_fn_name), Reflect::FunctionCall::second_type {})
     , m_radiate(std::move(radiate))
 {
     m_presence.falloff_curve.observe(FalloffCurve::Linear);

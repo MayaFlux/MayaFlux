@@ -8,7 +8,7 @@ namespace MayaFlux::IO {
 
 /**
  * @class CameraFileFrames
- * @brief A FrameSource of Kinesis::Lens over one camera object of an Alembic archive, read lazily.
+ * @brief A FrameSource of Kakshya::MeshAssemblyLens over one camera object of an Alembic archive, read lazily.
  *
  * Frame i is sample i of the camera: its focal length, film back, clip planes and screen window,
  * as SpatialReader::read_lens gives them. The camera's placement is not a frame of this source:
@@ -17,7 +17,7 @@ namespace MayaFlux::IO {
  * any number of threads may call read(). Every frame is timed by the archive, and a sample that
  * cannot be read gives nullptr and one logged error.
  */
-class CameraFileFrames final : public Kakshya::FrameSource<Kinesis::Lens> {
+class CameraFileFrames final : public Kakshya::FrameSource<Kakshya::MeshAssemblyLens> {
 public:
     /**
      * @brief Open one camera object of an archive.
@@ -40,7 +40,7 @@ public:
 
     [[nodiscard]] const Kinesis::TimeSampling& time_sampling() const override { return m_times; }
 
-    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const Kinesis::Lens> read(size_t index) const override;
+    [[nodiscard]] MAYAFLUX_API std::shared_ptr<const Kakshya::MeshAssemblyLens> read(size_t index) const override;
 
     /** @brief The camera object's path. */
     [[nodiscard]] const std::string& camera() const noexcept { return m_camera; }

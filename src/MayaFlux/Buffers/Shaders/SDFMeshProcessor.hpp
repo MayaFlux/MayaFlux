@@ -158,6 +158,7 @@ private:
     uint32_t m_res_z;
     float m_iso_level;
     bool m_dirty { true };
+    bool m_empty_suppressed {}; ///< Set while this processor suppresses the draw of an empty surface.
     bool m_owns_buffers { true }; ///< false in GPU-field mode; buffers owned by SdfPrepProcessor.
     std::array<glm::vec3, 3> m_palette { glm::vec3(1.0F), glm::vec3(1.0F), glm::vec3(1.0F) };
 

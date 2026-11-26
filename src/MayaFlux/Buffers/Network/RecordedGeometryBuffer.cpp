@@ -113,6 +113,49 @@ void RecordedGeometryBuffer::setup_rendering(const RenderConfig& config)
     apply_draw();
 }
 
+void RecordedGeometryBuffer::set_placement(const glm::mat4& placement)
+{
+    if (!m_placement) {
+        m_placement = std::make_shared<Memory::SnapshotCell<glm::mat4>>(placement);
+    } else {
+        bool changed = true;
+        if (const auto held = m_placement->read()) {
+            changed = *held != placement;
+        }
+        if (changed) {
+            m_placement->publish(placement);
+        }
+    }
+
+    auto renderers = get_additional_render_processors();
+    if (auto primary = get_render_processor()) {
+        renderers.push_back(std::move(primary));
+    }
+
+    for (const auto& renderer : renderers) {
+        const bool known = std::ranges::any_of(m_placed,
+            [&renderer](const auto& placed) { return placed.lock() == renderer; });
+        if (known) {
+            continue;
+        }
+
+        std::function<glm::mat4()> outer = renderer->get_geometry_transform_source();
+        if (!outer) {
+            if (const auto& fixed = renderer->get_geometry_transform()) {
+                outer = [matrix = *fixed] { return matrix; };
+            }
+        }
+        renderer->set_geometry_transform_source([cell = m_placement, outer = std::move(outer)] {
+            glm::mat4 own { 1.0F };
+            if (const auto held = cell->read()) {
+                own = *held;
+            }
+            return outer ? outer() * own : own;
+        });
+        m_placed.emplace_back(renderer);
+    }
+}
+
 void RecordedGeometryBuffer::write_frame(std::shared_ptr<const Kakshya::SpatialData> frame)
 {
     m_pending.publish(std::move(frame));

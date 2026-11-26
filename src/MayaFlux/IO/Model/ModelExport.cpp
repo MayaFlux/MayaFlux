@@ -14,6 +14,7 @@
 #include "MayaFlux/Kakshya/NDData/MeshInsertion.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexFormats.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexPlacement.hpp"
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -55,7 +56,7 @@ namespace {
      * when more than one texture is being written alongside the same model
      * file (one per MeshNetwork slot).
      *
-     * @return The sibling path on success, empty string if there is nothing
+     * @return The sibling's file name on success, empty string if there is nothing
      *         to write or the download/encode fails.
      */
     std::string pack_diffuse_texture(
@@ -80,7 +81,7 @@ namespace {
                 "save_mesh: failed to write diffuse texture to '{}'", image_path);
             return {};
         }
-        return image_path;
+        return name;
     }
 
     /**
@@ -142,6 +143,57 @@ namespace {
         return mesh_data;
     }
 
+    /**
+     * @brief A network as an assembly: a row for every slot, parented and placed as the slot is.
+     * @return nullptr when no slot has geometry.
+     */
+    std::shared_ptr<Kakshya::MeshAssemblyContainer> assembly_of(
+        const Nodes::Network::MeshNetwork& network,
+        const std::string& model_filepath,
+        const std::string& shared_diffuse_path)
+    {
+        auto assembly = std::make_shared<Kakshya::MeshAssemblyContainer>();
+        bool any = false;
+
+        for (const auto& slot : network.slots()) {
+            std::optional<uint64_t> source;
+            std::optional<uint64_t> material;
+
+            if (slot.node) {
+                if (auto data = slot.node->get_mesh_data()) {
+                    source = assembly->add_source({ .geometry = std::move(*data), .name = slot.name });
+                    any = true;
+
+                    std::string diffuse_path = shared_diffuse_path;
+                    if (slot.diffuse_texture) {
+                        const auto suffix = !slot.name.empty() ? slot.name : std::to_string(slot.index);
+                        diffuse_path = pack_diffuse_texture(slot.diffuse_texture, model_filepath, suffix);
+                    }
+                    if (!diffuse_path.empty()) {
+                        material = assembly->add_material({ .name = slot.name, .diffuse_path = diffuse_path });
+                    }
+                }
+            }
+
+            std::optional<uint64_t> parent;
+            if (slot.parent_index) {
+                parent = *slot.parent_index;
+            }
+            std::ignore = assembly->add_placement({ .name = slot.name,
+                .parent = parent,
+                .source = source,
+                .material = material,
+                .local = slot.local_transform });
+        }
+
+        if (!any) {
+            MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+                "save_mesh: no exportable slots in network");
+            return nullptr;
+        }
+        return assembly;
+    }
+
     std::string splice_timestamp(const std::string& pattern)
     {
         const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -181,6 +233,26 @@ bool save_mesh(
 }
 
 bool save_mesh(
+    const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
+    const std::string& filepath,
+    const ModelWriteOptions& options)
+{
+    auto writer = ModelWriterRegistry::instance().create_writer(filepath);
+    if (!writer) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_mesh: no writer registered for '{}'", filepath);
+        return false;
+    }
+
+    if (!writer->write(filepath, assembly, options)) {
+        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
+            "save_mesh: writer failed for '{}': {}", filepath, writer->get_last_error());
+        return false;
+    }
+    return true;
+}
+
+bool save_mesh(
     const std::shared_ptr<Nodes::Network::MeshNetwork>& network,
     const std::string& filepath,
     const ModelWriteOptions& options)
@@ -190,29 +262,8 @@ bool save_mesh(
         return false;
     }
 
-    std::vector<Kakshya::MeshData> meshes;
-    meshes.reserve(network->slots().size());
-    for (const auto& slot : network->slots()) {
-        if (!slot.node) {
-            continue;
-        }
-        std::string diffuse_path;
-        if (slot.diffuse_texture) {
-            const auto suffix = !slot.name.empty() ? slot.name : std::to_string(slot.index);
-            diffuse_path = pack_diffuse_texture(slot.diffuse_texture, filepath, suffix);
-        }
-        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name, diffuse_path)) {
-            meshes.push_back(std::move(*packed));
-        }
-    }
-
-    if (meshes.empty()) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "save_mesh: no exportable slots in network");
-        return false;
-    }
-
-    return write_via_registry(filepath, meshes, options);
+    const auto assembly = assembly_of(*network, filepath, {});
+    return assembly && save_mesh(assembly, filepath, options);
 }
 
 bool save_mesh(
@@ -232,32 +283,12 @@ bool save_mesh(
         return false;
     }
 
-    std::vector<Kakshya::MeshData> meshes;
-    meshes.reserve(net->slots().size());
     const std::string shared_diffuse_path = network_buffer->has_diffuse_texture()
         ? pack_diffuse_texture(network_buffer->get_diffuse_texture(), filepath, "")
         : std::string {};
-    for (const auto& slot : net->slots()) {
-        if (!slot.node) {
-            continue;
-        }
-        std::string diffuse_path = shared_diffuse_path;
-        if (slot.diffuse_texture) {
-            const auto suffix = !slot.name.empty() ? slot.name : std::to_string(slot.index);
-            diffuse_path = pack_diffuse_texture(slot.diffuse_texture, filepath, suffix);
-        }
-        if (auto packed = pack_node(slot.node, slot.world_transform, slot.name, diffuse_path)) {
-            meshes.push_back(std::move(*packed));
-        }
-    }
 
-    if (meshes.empty()) {
-        MF_ERROR(Journal::Component::IO, Journal::Context::FileIO,
-            "save_mesh: no exportable slots in network");
-        return false;
-    }
-
-    return write_via_registry(filepath, meshes, options);
+    const auto assembly = assembly_of(*net, filepath, shared_diffuse_path);
+    return assembly && save_mesh(assembly, filepath, options);
 }
 
 bool save_mesh(

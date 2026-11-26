@@ -25,6 +25,30 @@ struct Description<::MayaFlux::Kriya::CourseControls> {
     }
 };
 
+template <>
+struct Description<::MayaFlux::Kriya::CoursePlayback> {
+    static constexpr std::string_view name = "MayaFlux::Kriya::CoursePlayback";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Kriya::CoursePlayback::clock> { "clock" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::anchor> { "anchor" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::shift> { "shift" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::repeat_origin> { "repeat_origin" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::repeat_length> { "repeat_length" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::crossings> { "crossings" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::passes> { "passes" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::finished> { "finished" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::reversed> { "reversed" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::time> { "time" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::paused> { "paused" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::fade_to> { "fade_to" },
+            Member<&::MayaFlux::Kriya::CoursePlayback::fade_seconds> { "fade_seconds" },
+        };
+    }
+};
+
 }
 
 #endif

@@ -99,6 +99,120 @@ namespace {
         return V::Invariant;
     }
 
+    constexpr double k_rotation_epsilon = 1.0E-5;
+    constexpr double k_cell_epsilon = 1.0E-4;
+    constexpr double k_offset_epsilon = 1.0E-3;
+
+    bool is_identity_linear(const glm::dmat4& m, double epsilon)
+    {
+        for (int column = 0; column < 3; ++column) {
+            for (int row = 0; row < 3; ++row) {
+                if (std::abs(m[column][row] - (column == row ? 1.0 : 0.0)) > epsilon) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    glm::dvec3 transformed(const glm::dmat4& m, const glm::dvec3& p)
+    {
+        return glm::dvec3(m * glm::dvec4(p, 1.0));
+    }
+
+    glm::dvec3 column_lengths(const glm::dmat4& m)
+    {
+        return { glm::length(glm::dvec3(m[0])), glm::length(glm::dvec3(m[1])), glm::length(glm::dvec3(m[2])) };
+    }
+
+    /**
+     * One grid's values on the output lattice: copied when its voxels are the lattice's cells,
+     * resampled otherwise. cell_to_index takes an output cell number to the grid's voxel index.
+     */
+    bool read_onto(
+        const Detail::VDBArchive& archive,
+        size_t index,
+        const glm::dmat4& cell_to_index,
+        const glm::uvec3& resolution,
+        const glm::dvec3& background,
+        Kakshya::VolumeField::ValueStorage& out,
+        bool& resampled)
+    {
+        const glm::dvec3 offset(cell_to_index[3]);
+        const glm::dvec3 whole = glm::round(offset);
+        resampled = !is_identity_linear(cell_to_index, k_cell_epsilon)
+            || glm::any(glm::greaterThan(glm::abs(offset - whole), glm::dvec3(k_offset_epsilon)));
+        if (!resampled) {
+            return archive.read_dense(index, glm::ivec3(whole), resolution, out);
+        }
+
+        glm::dvec3 low(std::numeric_limits<double>::max());
+        glm::dvec3 high(std::numeric_limits<double>::lowest());
+        for (int corner = 0; corner < 8; ++corner) {
+            const glm::dvec3 cell {
+                (corner & 1) != 0 ? resolution.x - 1.0 : 0.0,
+                (corner & 2) != 0 ? resolution.y - 1.0 : 0.0,
+                (corner & 4) != 0 ? resolution.z - 1.0 : 0.0,
+            };
+            const glm::dvec3 at = transformed(cell_to_index, cell);
+            low = glm::min(low, at);
+            high = glm::max(high, at);
+        }
+
+        const glm::ivec3 first(glm::floor(low) - 1.0);
+        const glm::uvec3 size(glm::ivec3(glm::ceil(high) + 2.0) - first);
+
+        Kakshya::VolumeField::ValueStorage source;
+        if (!archive.read_dense(index, first, size, source)) {
+            return false;
+        }
+
+        Kinesis::Lattice3D grid;
+        grid.resolution = size;
+        grid.bounds.min = glm::vec3(first) - 0.5F;
+        grid.bounds.max = glm::vec3(first) + glm::vec3(size) - 0.5F;
+
+        std::visit(
+            [&](const auto& values) {
+                using T = typename std::decay_t<decltype(values)>::value_type;
+                T outside {};
+                if constexpr (std::is_same_v<T, glm::vec3> || std::is_same_v<T, glm::dvec3>) {
+                    outside = T(background);
+                } else {
+                    outside = static_cast<T>(background.x);
+                }
+
+                std::vector<T> result;
+                result.reserve(static_cast<size_t>(resolution.x) * resolution.y * resolution.z);
+                for (uint32_t z = 0; z < resolution.z; ++z) {
+                    for (uint32_t y = 0; y < resolution.y; ++y) {
+                        for (uint32_t x = 0; x < resolution.x; ++x) {
+                            glm::vec3 at(transformed(cell_to_index, glm::dvec3(x, y, z)));
+                            if constexpr (std::is_same_v<T, int32_t>) {
+                                at = glm::round(at);
+                            }
+                            result.push_back(Kinesis::sample_trilinear(grid, std::span<const T>(values), at, outside));
+                        }
+                    }
+                }
+                out = std::move(result);
+            },
+            source);
+        return true;
+    }
+
+    bool own_metadata_key(const std::string& key)
+    {
+        return key == "class" || key == "vector_type" || key == "name" || key.starts_with("file_");
+    }
+
+    std::string text_of(const std::vector<Kakshya::MeshAssemblyMetadata::Entry>& entries, std::string_view key)
+    {
+        const auto found = std::ranges::find(entries, key, &Kakshya::MeshAssemblyMetadata::Entry::key);
+        const auto* text = found != entries.end() ? std::get_if<std::string>(&found->value) : nullptr;
+        return text ? *text : std::string {};
+    }
+
 } // namespace
 
 // =============================================================================
@@ -163,8 +277,18 @@ std::optional<Kakshya::VolumeData> VolumeReader::extract(
         return std::nullopt;
     }
 
-    glm::ivec3 union_min { 0 };
-    glm::ivec3 union_max { 0 };
+    const auto first = m_archive->grid_summary(indices.front());
+    const glm::dmat4 placement = placement_for(indices.front(), options);
+    const glm::dmat4 reference = glm::inverse(placement) * first.index_to_world;
+    const glm::dvec3 voxel = column_lengths(reference);
+    const glm::dvec3 origin(reference[3]);
+    if (glm::any(glm::lessThanEqual(voxel, glm::dvec3(0.0)))) {
+        set_error("First selected grid has a degenerate voxel size");
+        return std::nullopt;
+    }
+
+    glm::dvec3 low(std::numeric_limits<double>::max());
+    glm::dvec3 high(std::numeric_limits<double>::lowest());
     bool have_any = false;
 
     for (size_t idx : indices) {
@@ -172,14 +296,17 @@ std::optional<Kakshya::VolumeData> VolumeReader::extract(
         if (!summary.has_active) {
             continue;
         }
-        if (!have_any) {
-            union_min = summary.active_min;
-            union_max = summary.active_max;
-            have_any = true;
-        } else {
-            union_min = glm::min(union_min, summary.active_min);
-            union_max = glm::max(union_max, summary.active_max);
+        const glm::dmat4 to_lattice = glm::inverse(placement) * summary.index_to_world;
+        for (int corner = 0; corner < 8; ++corner) {
+            glm::dvec3 edge;
+            for (int axis = 0; axis < 3; ++axis) {
+                edge[axis] = ((corner >> axis) & 1) != 0 ? summary.active_max[axis] - 0.5 : summary.active_min[axis] - 0.5;
+            }
+            const glm::dvec3 at = (transformed(to_lattice, edge) - origin) / voxel;
+            low = glm::min(low, at);
+            high = glm::max(high, at);
         }
+        have_any = true;
     }
 
     if (!have_any) {
@@ -187,14 +314,15 @@ std::optional<Kakshya::VolumeData> VolumeReader::extract(
         return std::nullopt;
     }
 
-    const auto first = m_archive->grid_summary(indices.front());
+    const glm::dvec3 min_index = glm::floor(low + 0.5 + k_offset_epsilon);
+    const glm::dvec3 max_index = glm::ceil(high + 0.5 - k_offset_epsilon);
 
     Kinesis::Lattice3D lattice;
-    lattice.resolution = glm::uvec3(union_max - union_min);
-    lattice.bounds.min = first.translation + first.voxel_size * (glm::vec3(union_min) - 0.5F);
-    lattice.bounds.max = first.translation + first.voxel_size * (glm::vec3(union_max) - 0.5F);
+    lattice.resolution = glm::uvec3(glm::max(max_index - min_index, glm::dvec3(1.0)));
+    lattice.bounds.min = glm::vec3(origin + voxel * (min_index - 0.5));
+    lattice.bounds.max = glm::vec3(origin + voxel * (max_index - 0.5));
 
-    return materialize(indices, union_min, lattice);
+    return materialize(indices, placement, lattice);
 }
 
 std::optional<Kakshya::VolumeData> VolumeReader::extract(
@@ -217,84 +345,83 @@ std::optional<Kakshya::VolumeData> VolumeReader::extract(
         return std::nullopt;
     }
 
-    const auto first = m_archive->grid_summary(indices.front());
-    if (glm::any(glm::lessThanEqual(first.voxel_size, glm::vec3(0.0F)))) {
-        set_error("First selected grid has a degenerate voxel size");
-        return std::nullopt;
+    return materialize(indices, placement_for(indices.front(), options), lattice);
+}
+
+glm::dmat4 VolumeReader::placement_for(size_t first, const VolumeReadOptions& options) const
+{
+    if (options.placement) {
+        return glm::dmat4(*options.placement);
     }
 
-    const glm::vec3 region_min_f = (lattice.bounds.min - first.translation) / first.voxel_size + glm::vec3(0.5F);
-    const glm::ivec3 region_min = glm::ivec3(glm::round(region_min_f));
+    const glm::dmat4 matrix = m_archive->grid_summary(first).index_to_world;
+    const glm::dvec3 lengths = column_lengths(matrix);
+    if (glm::any(glm::lessThanEqual(lengths, glm::dvec3(0.0)))) {
+        return glm::dmat4(1.0);
+    }
 
-    return materialize(indices, region_min, lattice);
+    const glm::dvec3 x = glm::dvec3(matrix[0]) / lengths.x;
+    glm::dvec3 y = glm::dvec3(matrix[1]) / lengths.y;
+    y = glm::normalize(y - x * glm::dot(x, y));
+    glm::dvec3 z = glm::cross(x, y);
+    if (glm::dot(z, glm::dvec3(matrix[2])) < 0.0) {
+        z = -z;
+    }
+
+    glm::dmat4 rigid(1.0);
+    rigid[0] = glm::dvec4(x, 0.0);
+    rigid[1] = glm::dvec4(y, 0.0);
+    rigid[2] = glm::dvec4(z, 0.0);
+    if (is_identity_linear(rigid, k_rotation_epsilon)) {
+        return glm::dmat4(1.0);
+    }
+    rigid[3] = matrix[3];
+    return rigid;
 }
 
 std::optional<Kakshya::VolumeData> VolumeReader::materialize(
     const std::vector<size_t>& indices,
-    const glm::ivec3& region_min,
+    const glm::dmat4& placement,
     const Kinesis::Lattice3D& lattice) const
 {
-    constexpr float k_transform_epsilon = 1e-5F;
-
-    const auto reference = m_archive->grid_summary(indices.front());
-    for (size_t idx : indices) {
-        if (idx == indices.front()) {
-            continue;
-        }
-        const auto summary = m_archive->grid_summary(idx);
-        const bool mismatched = glm::any(glm::greaterThan(
-                                     glm::abs(summary.voxel_size - reference.voxel_size), glm::vec3(k_transform_epsilon)))
-            || glm::any(glm::greaterThan(
-                glm::abs(summary.translation - reference.translation), glm::vec3(k_transform_epsilon)));
-        if (mismatched) {
-            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "VolumeReader: grid '{}' has a different voxel size or translation than '{}', "
-                "its voxel indices are read directly against the shared region and will not be aligned",
-                summary.name, reference.name);
-        }
-    }
-
     Kakshya::VolumeData result;
     result.lattice = lattice;
     result.fields.reserve(indices.size());
+
+    const glm::dvec3 cell(lattice.cell_size());
+    glm::dmat4 cell_to_lattice(1.0);
+    for (int axis = 0; axis < 3; ++axis) {
+        cell_to_lattice[axis][axis] = cell[axis];
+        cell_to_lattice[3][axis] = lattice.bounds.min[axis] + 0.5 * cell[axis];
+    }
 
     for (size_t idx : indices) {
         const auto summary = m_archive->grid_summary(idx);
 
         Kakshya::VolumeField field;
         field.name = summary.name;
-        field.semantics.value_class = class_from_token(m_archive->grid_metadata(idx, "class"));
-
-        bool precision_lost = false;
-
+        field.semantics.value_class = class_from_token(text_of(summary.metadata, "class"));
         if (summary.is_vector) {
-            field.semantics.variance = variance_from_token(m_archive->grid_metadata(idx, "vector_type"));
-
-            std::vector<glm::vec3> values;
-            if (!m_archive->read_dense_vector(
-                    idx, region_min, lattice.resolution, summary.background_vector, values, &precision_lost)) {
-                set_error(std::string(m_archive->last_error()));
-                return std::nullopt;
-            }
-            field.values = std::move(values);
-        } else {
-            std::vector<float> values;
-            if (!m_archive->read_dense_scalar(
-                    idx, region_min, lattice.resolution, summary.background_scalar, values, &precision_lost)) {
-                set_error(std::string(m_archive->last_error()));
-                return std::nullopt;
-            }
-            field.values = std::move(values);
+            field.semantics.variance = variance_from_token(text_of(summary.metadata, "vector_type"));
         }
 
-        if (precision_lost) {
+        const glm::dmat4 cell_to_index = glm::inverse(glm::inverse(placement) * summary.index_to_world) * cell_to_lattice;
+        bool resampled = false;
+        if (!read_onto(*m_archive, idx, cell_to_index, lattice.resolution, summary.background, field.values, resampled)) {
+            set_error(std::string(m_archive->last_error()));
+            return std::nullopt;
+        }
+        if (resampled) {
             MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "VolumeReader: grid '{}' is not float/vec3f, narrowing to {} lost precision in at least one value",
-                summary.name, summary.is_vector ? "vec3" : "float");
-        } else if (summary.narrowed) {
-            MF_WARN(Journal::Component::IO, Journal::Context::FileIO,
-                "VolumeReader: grid '{}' is not float/vec3f, narrowing to {} losslessly",
-                summary.name, summary.is_vector ? "vec3" : "float");
+                "VolumeReader: grid '{}' does not lie on the lattice's cells and was resampled", summary.name);
+        }
+
+        field.facets.set(Kakshya::volume_background, summary.background);
+        Kakshya::MeshAssemblyMetadata metadata;
+        std::ranges::copy_if(summary.metadata, std::back_inserter(metadata.entries),
+            [](const auto& entry) { return !own_metadata_key(entry.key); });
+        if (!metadata.entries.empty()) {
+            field.facets.set(std::move(metadata));
         }
 
         MF_DEBUG(Journal::Component::IO, Journal::Context::FileIO,
@@ -306,6 +433,13 @@ std::optional<Kakshya::VolumeData> VolumeReader::materialize(
     if (result.fields.empty()) {
         set_error("No fields materialized");
         return std::nullopt;
+    }
+
+    if (glm::mat4(placement) != glm::mat4(1.0F)) {
+        result.facets.set(Kakshya::volume_placement, glm::mat4(placement));
+    }
+    if (auto entries = m_archive->file_metadata(); !entries.empty()) {
+        result.facets.set(Kakshya::MeshAssemblyMetadata { .entries = std::move(entries) });
     }
 
     if (!result.is_consistent()) {

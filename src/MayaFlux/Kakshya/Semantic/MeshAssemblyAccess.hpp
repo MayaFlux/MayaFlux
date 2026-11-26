@@ -91,7 +91,7 @@ public:
     [[nodiscard]] const SpatialData* spatial(size_t source) const noexcept { return m_assembly->spatial(source); }
 
     /** @brief The lens of a camera source, or nullptr. */
-    [[nodiscard]] const Kinesis::Lens* lens(size_t source) const noexcept { return m_assembly->lens(source); }
+    [[nodiscard]] const Kakshya::MeshAssemblyLens* lens(size_t source) const noexcept { return m_assembly->lens(source); }
 
     /** @brief The source a row shows, or nullopt for a joint. */
     [[nodiscard]] std::optional<uint64_t> source_of(size_t row) const;

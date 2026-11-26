@@ -2,8 +2,11 @@
 
 #include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Nexus {
+
+class StateEncoder;
 
 /**
  * @class Sensor
@@ -14,8 +17,9 @@ namespace MayaFlux::Nexus {
  * @c Fabric if spatial queries are required. A Sensor without a position receives an
  * empty @c spatial_results span on each commit.
  *
- * Its state is a struct of Quantity members, SensorControls, applied with `set()`
- * from any thread. `extend<C>()` adds a struct of the user's own beside it.
+ * Its state is structs of Quantity members, PlacementControls and SensorControls,
+ * applied with `set()` from any thread. `extend<C>()` adds a struct of the user's
+ * own beside them.
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime.
@@ -55,7 +59,7 @@ public:
      * @param fn           Called on every commit with the current context.
      */
     Sensor(float query_radius, std::string fn_name, PerceptionFn fn)
-        : m_fn_name(std::move(fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
         , m_fn(std::move(fn))
     {
         m_controls.query_radius.observe(query_radius);
@@ -63,42 +67,48 @@ public:
 
     /**
      * @brief Apply the members of @p incoming that hold a value.
-     * @tparam C SensorControls, or a struct added with extend().
+     * @tparam C PlacementControls, SensorControls, or a struct added with extend().
      *
      * Members left empty are untouched, and `Quantity::unset()` empties a member.
      * Safe from any thread.
      */
-    template <typename C = SensorControls>
+    template <typename C = PlacementControls>
     void set(const C& incoming)
     {
         m_store.merge(incoming);
     }
 
     /** @brief A copy of the controls of type C as they are now. */
-    template <typename C = SensorControls>
+    template <typename C = PlacementControls>
     [[nodiscard]] C get() const
     {
         return m_store.snapshot<C>();
     }
 
-    /** @brief Add a struct of the user's own controls beside SensorControls and return it. */
+    /** @brief Add a struct of the user's own controls beside the built-in ones and return it. */
     template <typename C>
     [[nodiscard]] C& extend()
     {
         return m_store.extend<C>();
     }
 
-    /** @brief The live controls, read without a copy. */
+    /** @brief The live SensorControls, read without a copy. */
     [[nodiscard]] const SensorControls& controls() const noexcept { return m_controls; }
 
     /** @brief Every control by name, for tools that list or set them. */
     [[nodiscard]] const QuantityStore& store() const noexcept { return m_store; }
 
     /** @brief Identifier assigned to the perception function, empty if anonymous. */
-    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_call.first; }
+
+    /** @brief The perception function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& fn_call() const { return m_fn_call; }
 
     /** @brief Set or replace the perception function's identifier. */
-    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+    void set_fn_name(std::string name) { m_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the perception function was made, so it can be made again. */
+    void set_fn_call(Reflect::FunctionCall call) { m_fn_call = std::move(call); }
 
     /** @brief The perception function itself. */
     [[nodiscard]] const PerceptionFn& fn() const { return m_fn; }
@@ -108,7 +118,7 @@ public:
      */
     [[nodiscard]] std::optional<glm::vec3> position() const
     {
-        return quantity_value<glm::vec3>(m_controls.position);
+        return quantity_value<glm::vec3>(m_placement.position);
     }
 
     /**
@@ -117,7 +127,7 @@ public:
      */
     [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
     {
-        m_controls.position.assign(Quantity(p));
+        m_placement.position.assign(Quantity(p));
     }
 
     /**
@@ -125,7 +135,13 @@ public:
      */
     [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
     {
-        m_controls.position.assign(Quantity::unset());
+        m_placement.position.assign(Quantity::unset());
+    }
+
+    /** @brief Return the current orientation, if set. Local -Z is forward. */
+    [[nodiscard]] std::optional<glm::quat> orientation() const
+    {
+        return quantity_value<glm::quat>(m_placement.orientation);
     }
 
     /**
@@ -140,7 +156,7 @@ public:
      * @brief Set the query radius.
      * @param r New radius in world-space units.
      */
-    [[deprecated("use set({ .query_radius = ... })")]] void set_query_radius(float r)
+    [[deprecated("use set(SensorControls { .query_radius = ... })")]] void set_query_radius(float r)
     {
         m_controls.query_radius.assign(Quantity(r));
     }
@@ -167,6 +183,21 @@ public:
         m_perception = [perception](const PerceptionContext& ctx) { perception->invoke(ctx); };
     }
 
+    /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Sensor&)>& apply)
+    {
+        apply(*this);
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
     /** @brief Remove the source set with set_perception(). */
     void clear_perception() { m_perception = nullptr; }
 
@@ -185,16 +216,20 @@ public:
     }
 
 private:
+    [[nodiscard]] static PlacementControls& open_placement(QuantityStore& store);
     [[nodiscard]] static SensorControls& open(QuantityStore& store);
 
     QuantityStore m_store;
+    PlacementControls& m_placement { open_placement(m_store) };
     SensorControls& m_controls { open(m_store) };
-    std::string m_fn_name;
+    Reflect::FunctionCall m_fn_call;
     PerceptionFn m_fn;
     PerceptionFn m_perception;
+    std::vector<Reflect::FunctionCall> m_configurations;
     uint32_t m_id { 0 };
 
     friend class Fabric;
+    friend class StateEncoder;
 };
 
 } // namespace MayaFlux::Nexus

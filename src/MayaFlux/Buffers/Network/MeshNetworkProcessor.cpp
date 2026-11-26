@@ -216,6 +216,10 @@ void MeshNetworkProcessor::upload_combined(
         const auto& verts = slot.node->get_mesh_vertices();
         const auto& indices = slot.node->get_mesh_indices();
 
+        if (m_geometry_observer) {
+            m_geometry_observer(idx, verts);
+        }
+
         if (m_milling_slot_attribute) {
             const auto slot_id = static_cast<uint32_t>(m_model_aggregate.size());
             const float slot_low = static_cast<float>(slot_id & 0xFFFFU);

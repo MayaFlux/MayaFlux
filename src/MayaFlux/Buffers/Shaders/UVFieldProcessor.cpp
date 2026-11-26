@@ -130,7 +130,7 @@ void UVFieldProcessor::collect_push_writes(
 }
 
 bool UVFieldProcessor::on_before_execute(
-    Portal::Graphics::CommandBufferID cmd_id,
+    Portal::Graphics::CommandBufferID /*cmd_id*/,
     const std::shared_ptr<VKBuffer>& buffer)
 {
     if (!buffer) {
@@ -142,15 +142,22 @@ bool UVFieldProcessor::on_before_execute(
         return false;
     }
 
-    if (m_texture) {
-        Portal::Graphics::get_shader_foundry().hold_image(cmd_id, m_texture);
-    }
-
     MF_RT_DEBUG(Journal::Component::Buffers, Journal::Context::BufferProcessing,
         "UVFieldProcessor dispatch: {} vertices, mode={}, write_colour={}, has_texture={}",
         m_pc.vertex_count, m_pc.mode, m_pc.write_colour, m_texture != nullptr);
 
     set_push_constant_data(m_pc);
+    return true;
+}
+
+bool UVFieldProcessor::on_iteration(
+    Portal::Graphics::CommandBufferID cmd_id,
+    const std::shared_ptr<VKBuffer>& /*buffer*/,
+    uint32_t /*index*/)
+{
+    if (m_texture) {
+        Portal::Graphics::get_shader_foundry().hold_image(cmd_id, m_texture);
+    }
     return true;
 }
 

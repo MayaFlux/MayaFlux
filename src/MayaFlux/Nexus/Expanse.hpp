@@ -4,6 +4,7 @@
 #include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -105,7 +106,7 @@ public:
      * @param on_exit  Fired with the entity id when it leaves. May be empty.
      */
     Expanse(std::string fn_name, ContainsFn contains, CrossingFn on_enter, CrossingFn on_exit)
-        : m_fn_name(std::move(fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
         , m_contains(std::move(contains))
         , m_on_enter(std::move(on_enter))
         , m_on_exit(std::move(on_exit))
@@ -127,9 +128,9 @@ public:
         ContainsFn contains,
         CrossingFn on_enter,
         CrossingFn on_exit)
-        : m_fn_name(std::move(fn_name))
-        , m_on_enter_fn_name(std::move(on_enter_fn_name))
-        , m_on_exit_fn_name(std::move(on_exit_fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
+        , m_on_enter_fn_call(std::move(on_enter_fn_name), Reflect::FunctionCall::second_type {})
+        , m_on_exit_fn_call(std::move(on_exit_fn_name), Reflect::FunctionCall::second_type {})
         , m_contains(std::move(contains))
         , m_on_enter(std::move(on_enter))
         , m_on_exit(std::move(on_exit))
@@ -146,6 +147,38 @@ public:
             return false;
         }
         return m_contains ? m_contains(p) : box.has_value();
+    }
+
+    /**
+     * @brief Where a ray first lies inside the region.
+     *
+     * Answered for a region that is a box. An Expanse with a predicate answers
+     * nullopt, box or not, since a box hit need not satisfy the predicate.
+     *
+     * @param ray World-space ray.
+     * @return Distance along the ray, zero when the origin is inside, or nullopt.
+     */
+    [[nodiscard]] virtual std::optional<float> intersect(const Kinesis::Ray& ray) const
+    {
+        const auto box = bounds();
+        if (!box || m_contains) {
+            return std::nullopt;
+        }
+        return box->ray_entry(ray);
+    }
+
+    /**
+     * @brief Where the region is centred and how far it reaches.
+     *
+     * The centre and the half diagonal of the box if there is one, else the
+     * origin and zero. A derived Expanse whose region is not the box overrides it.
+     */
+    [[nodiscard]] virtual std::pair<glm::vec3, float> reach() const
+    {
+        if (const auto box = bounds()) {
+            return { box->center(), glm::length(box->half_extent()) };
+        }
+        return { glm::vec3(0.0F), 0.0F };
     }
 
     // =========================================================================
@@ -213,22 +246,55 @@ public:
     [[nodiscard]] const CrossingFn& on_exit_fn() const { return m_on_exit; }
 
     /** @brief Identifier assigned to the containment predicate, empty if anonymous. */
-    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_call.first; }
+
+    /** @brief The containment predicate as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& fn_call() const { return m_fn_call; }
 
     /** @brief Set or replace the predicate identifier. */
-    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+    void set_fn_name(std::string name) { m_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the containment predicate was made, so it can be made again. */
+    void set_fn_call(Reflect::FunctionCall call) { m_fn_call = std::move(call); }
 
     /** @brief Identifier assigned to the on_enter callable, empty if anonymous. */
-    [[nodiscard]] const std::string& on_enter_fn_name() const { return m_on_enter_fn_name; }
+    [[nodiscard]] const std::string& on_enter_fn_name() const { return m_on_enter_fn_call.first; }
+
+    /** @brief The on_enter callable as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& on_enter_fn_call() const { return m_on_enter_fn_call; }
 
     /** @brief Set or replace the on_enter callable identifier. */
-    void set_on_enter_fn_name(std::string name) { m_on_enter_fn_name = std::move(name); }
+    void set_on_enter_fn_name(std::string name) { m_on_enter_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the on_enter callable was made, so it can be made again. */
+    void set_on_enter_fn_call(Reflect::FunctionCall call) { m_on_enter_fn_call = std::move(call); }
 
     /** @brief Identifier assigned to the on_exit callable, empty if anonymous. */
-    [[nodiscard]] const std::string& on_exit_fn_name() const { return m_on_exit_fn_name; }
+    [[nodiscard]] const std::string& on_exit_fn_name() const { return m_on_exit_fn_call.first; }
+
+    /** @brief The on_exit callable as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& on_exit_fn_call() const { return m_on_exit_fn_call; }
 
     /** @brief Set or replace the on_exit callable identifier. */
-    void set_on_exit_fn_name(std::string name) { m_on_exit_fn_name = std::move(name); }
+    void set_on_exit_fn_name(std::string name) { m_on_exit_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the on_exit callable was made, so it can be made again. */
+    void set_on_exit_fn_call(Reflect::FunctionCall call) { m_on_exit_fn_call = std::move(call); }
+
+    /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Expanse&)>& apply)
+    {
+        apply(*this);
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
 
     /** @brief Id assigned at construction. Unique across Expanses and stable for its lifetime. */
     [[nodiscard]] uint32_t id() const { return m_id; }
@@ -368,20 +434,6 @@ protected:
     /** @brief Called at the start of every evaluate(), before any position is tested. */
     virtual void begin_evaluate() { }
 
-    /**
-     * @brief Where the region is centred and how far it reaches, for perceptions.
-     *
-     * The centre and the half diagonal of the box if there is one, else the
-     * origin and zero. A derived Expanse whose region is not the box overrides it.
-     */
-    [[nodiscard]] virtual std::pair<glm::vec3, float> reach() const
-    {
-        if (const auto box = bounds()) {
-            return { box->center(), glm::length(box->half_extent()) };
-        }
-        return { glm::vec3(0.0F), 0.0F };
-    }
-
     /** @brief The live controls, for a derived class to consume what changed. */
     ExpanseControls& m_controls { open(m_store) };
 
@@ -389,6 +441,8 @@ private:
     [[nodiscard]] static ExpanseControls& open(QuantityStore& store);
 
     using Action = std::function<void(const CrossingContext&)>;
+    friend class StateEncoder;
+
     using Actions = std::vector<std::pair<std::shared_ptr<void>, Action>>;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
 
@@ -403,9 +457,10 @@ private:
         return action;
     }
 
-    std::string m_fn_name;
-    std::string m_on_enter_fn_name;
-    std::string m_on_exit_fn_name;
+    Reflect::FunctionCall m_fn_call;
+    Reflect::FunctionCall m_on_enter_fn_call;
+    Reflect::FunctionCall m_on_exit_fn_call;
+    std::vector<Reflect::FunctionCall> m_configurations;
     ContainsFn m_contains;
     CrossingFn m_on_enter;
     CrossingFn m_on_exit;

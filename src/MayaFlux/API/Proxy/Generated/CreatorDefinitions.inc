@@ -593,6 +593,13 @@ std::shared_ptr<Buffers::RecordedGeometryBuffer> Creator::RecordedGeometryBuffer
     return obj;
 }
 
+std::shared_ptr<Buffers::AssembledGeometryBuffer> Creator::AssembledGeometryBuffer(const std::shared_ptr<Nodes::Network::AssemblyNetwork> & network, float over_allocate_factor)
+{
+    auto obj = std::make_shared<MayaFlux::Buffers::AssembledGeometryBuffer>(std::forward<decltype(network)>(network), std::forward<decltype(over_allocate_factor)>(over_allocate_factor));
+    MF_LIVE_EXPOSE_NAMED("AssembledGeometryBuffer", obj);
+    return obj;
+}
+
 std::shared_ptr<Buffers::VolumeGridBuffer> Creator::VolumeGridBuffer(Kinesis::Lattice3D lattice, std::initializer_list<Buffers::VolumeGridBuffer::FieldDecl> fields, std::optional<Buffers::VolumeGridBuffer::SurfaceConfig> surface)
 {
     auto obj = std::make_shared<MayaFlux::Buffers::VolumeGridBuffer>(std::forward<decltype(lattice)>(lattice), std::forward<decltype(fields)>(fields), std::forward<decltype(surface)>(surface));

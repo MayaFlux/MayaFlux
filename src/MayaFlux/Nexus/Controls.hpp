@@ -20,28 +20,44 @@ template <typename T>
 }
 
 /**
- * @struct EmitterControls
- * @brief The state of an Emitter. An empty member is unset, and `Quantity::unset()` empties one.
+ * @struct PlacementControls
+ * @brief Where an Emitter, Sensor or Agent stands and which way it faces.
  *
- * `position` is a glm::vec3 and an Emitter without one is not indexed. `color` is a
- * glm::vec3. `intensity`, `radius` and `size` are numbers.
+ * `position` is a glm::vec3 and an entity without one is not indexed. `orientation`
+ * is a glm::quat, local -Z forward. An empty member is unset, and
+ * `Quantity::unset()` empties one.
+ */
+struct PlacementControls {
+    Quantity position;
+    Quantity orientation;
+};
+
+MF_DESCRIBE(PlacementControls)
+
+/**
+ * @struct EmitterControls
+ * @brief What an Emitter puts out. `color` is a glm::vec3, the rest are numbers but for two.
+ *
+ * `cone` is a glm::vec2 of inner and outer angles about forward, radians from the axis, and
+ * `attenuation` a glm::vec3 of constant, linear and quadratic terms. Empty, the Emitter
+ * lights all ways and falls to its radius alone.
  */
 struct EmitterControls {
-    Quantity position;
     Quantity intensity;
     Quantity radius;
     Quantity color;
     Quantity size;
+    Quantity cone;
+    Quantity attenuation;
 };
 
 MF_DESCRIBE(EmitterControls)
 
 /**
  * @struct SensorControls
- * @brief The state of a Sensor: a glm::vec3 position and the radius it queries.
+ * @brief What a Sensor takes in: the radius it queries.
  */
 struct SensorControls {
-    Quantity position;
     Quantity query_radius;
 };
 
@@ -49,16 +65,16 @@ MF_DESCRIBE(SensorControls)
 
 /**
  * @struct AgentControls
- * @brief The state of an Agent. `orientation` is a glm::quat, local +Z forward.
+ * @brief What an Agent puts out and the radius it queries. `cone` and `attenuation` as EmitterControls.
  */
 struct AgentControls {
-    Quantity position;
-    Quantity orientation;
     Quantity intensity;
     Quantity radius;
     Quantity color;
     Quantity size;
     Quantity query_radius;
+    Quantity cone;
+    Quantity attenuation;
 };
 
 MF_DESCRIBE(AgentControls)

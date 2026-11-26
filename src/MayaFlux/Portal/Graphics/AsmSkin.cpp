@@ -4,8 +4,9 @@
  * @file AsmSkin.cpp
  * @brief SPIR-V assembly emitter of KernelTemplate::Skin.
  *
- * One thread skins one vertex. It blends up to four joint matrices of a palette by the vertex's
- * weights, adding the identity for whatever weight is left over, so a vertex no joint moves stays
+ * One thread deforms one vertex. It first adds to the rest record each morph target's difference by
+ * that target's weight, in a loop over target_count. It then blends up to four joint matrices of a
+ * palette by the vertex's weights, adding the identity for whatever weight is left over, so a vertex no joint moves stays
  * where it is. The blended matrix carries the position, its upper 3x3 carries the tangent, and the
  * cofactor of that 3x3 carries the normal, which is exact under non uniform scale and needs no
  * inverse. The tangent's handedness follows the sign of the 3x3's determinant.
@@ -24,6 +25,7 @@ namespace {
     };
 
     constexpr uint32_t k_rest_words = 10;
+    constexpr uint32_t k_delta_words = 9;
     constexpr uint32_t k_normal_word = 10;
     constexpr uint32_t k_tangent_word = 13;
 
@@ -36,6 +38,8 @@ namespace {
             const std::string& weights = spec.bindings[2].name;
             const std::string& palette = spec.bindings[3].name;
             const std::string& vertices = spec.bindings[4].name;
+            const std::string& deltas = spec.bindings[5].name;
+            const std::string& morph_weights = spec.bindings[6].name;
 
             m_text += "%main = OpFunction %void None %voidfn\n";
             m_text += "%entry = OpLabel\n";
@@ -45,6 +49,7 @@ namespace {
             const Id count = push_constant(1);
             const Id stride = push_constant(2);
             const Id base = push_constant(3);
+            const Id targets = push_constant(4);
 
             const Id inside = ins("%bool", "OpULessThan", { v, count });
             m_text += "OpSelectionMerge %sk_end None\n";
@@ -56,6 +61,37 @@ namespace {
             std::array<Id, 10> r;
             for (uint32_t i = 0; i < k_rest_words; ++i) {
                 r[i] = load_f32(rest, uadd(rest_base, u(i)));
+            }
+
+            const Id zero = u(0);
+            const Id one = u(1);
+            m_text += "OpBranch %sk_morph_pre\n";
+            m_text += "%sk_morph_pre = OpLabel\n";
+            m_text += "OpBranch %sk_morph_head\n";
+            m_text += "%sk_morph_head = OpLabel\n";
+            m_text += "%sk_t = OpPhi %u32 " + zero + " %sk_morph_pre %sk_t_next %sk_morph_next\n";
+            std::array<Id, k_delta_words> morphed;
+            for (uint32_t i = 0; i < k_delta_words; ++i) {
+                morphed[i] = "%sk_acc" + std::to_string(i);
+                m_text += morphed[i] + " = OpPhi %f32 " + r[i] + " %sk_morph_pre %sk_sum" + std::to_string(i) + " %sk_morph_next\n";
+            }
+            const Id more = ins("%bool", "OpULessThan", { "%sk_t", targets });
+            m_text += "OpLoopMerge %sk_morph_done %sk_morph_next None\n";
+            m_text += "OpBranchConditional " + more + " %sk_morph_body %sk_morph_done\n";
+            m_text += "%sk_morph_body = OpLabel\n";
+            const Id weight_t = load_f32(morph_weights, "%sk_t");
+            const Id delta_base = umul(uadd(umul("%sk_t", count), v), u(k_delta_words));
+            for (uint32_t i = 0; i < k_delta_words; ++i) {
+                const Id scaled = fmul(weight_t, load_f32(deltas, uadd(delta_base, u(i))));
+                m_text += "%sk_sum" + std::to_string(i) + " = OpFAdd %f32 " + morphed[i] + " " + scaled + "\n";
+            }
+            m_text += "OpBranch %sk_morph_next\n";
+            m_text += "%sk_morph_next = OpLabel\n";
+            m_text += "%sk_t_next = OpIAdd %u32 %sk_t " + one + "\n";
+            m_text += "OpBranch %sk_morph_head\n";
+            m_text += "%sk_morph_done = OpLabel\n";
+            for (uint32_t i = 0; i < k_delta_words; ++i) {
+                r[i] = morphed[i];
             }
 
             std::array<Id, 4> joint;
@@ -224,9 +260,11 @@ namespace {
 std::string emit_skin(const ShaderSpec& spec)
 {
     using Format = Kakshya::GpuDataFormat;
-    constexpr std::array<Format, 5> formats { Format::FLOAT32, Format::UINT32, Format::FLOAT32, Format::FLOAT32, Format::FLOAT32 };
+    constexpr std::array<Format, 7> formats {
+        Format::FLOAT32, Format::UINT32, Format::FLOAT32, Format::FLOAT32, Format::FLOAT32, Format::FLOAT32, Format::FLOAT32
+    };
 
-    bool shaped = spec.bindings.size() == formats.size() && spec.pc_fields.size() == 4;
+    bool shaped = spec.bindings.size() == formats.size() && spec.pc_fields.size() == 5;
     for (size_t i = 0; shaped && i < formats.size(); ++i) {
         shaped = spec.bindings[i].format == formats[i];
     }

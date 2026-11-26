@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/BufferProcessingChain.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
+#include "MayaFlux/Kinesis/Polyhedral/AffineBlend.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
 #include "MayaFlux/Nodes/Network/Operators/GpuFieldOperator.hpp"
 #include "MayaFlux/Nodes/Network/Operators/OperatorChain.hpp"
@@ -199,56 +200,85 @@ void MeshNetworkBuffer::setup_rendering(const RenderConfig& config)
         textured);
 }
 
-void MeshNetworkBuffer::set_slot_skin(uint32_t slot, std::shared_ptr<const Kakshya::MeshSkin> skin)
-{
-    if (m_render_processor) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "MeshNetworkBuffer::set_slot_skin: rendering is already set up, the skin passes are wired there");
-        return;
-    }
-
-    std::erase_if(m_skins, [slot](const SkinEntry& entry) { return entry.slot == slot; });
-    if (skin) {
-        m_skins.push_back({ .slot = slot, .skin = std::move(skin), .processor = nullptr });
-    }
-}
-
 bool MeshNetworkBuffer::set_slot_palette(uint32_t slot, std::vector<glm::mat4> palette)
 {
     const auto entry = std::ranges::find(m_skins, slot, &SkinEntry::slot);
     return entry != m_skins.end() && entry->processor && entry->processor->set_palette(std::move(palette));
 }
 
+std::vector<glm::mat4> MeshNetworkBuffer::get_slot_palette(uint32_t slot) const
+{
+    const auto entry = std::ranges::find(m_skins, slot, &SkinEntry::slot);
+    return entry != m_skins.end() && entry->processor ? entry->processor->get_palette() : std::vector<glm::mat4> {};
+}
+
 void MeshNetworkBuffer::wire_skin_passes(size_t record_bytes)
 {
-    if (m_skins.empty()) {
-        return;
-    }
-
     if (record_bytes < sizeof(Kakshya::MeshVertex)) {
-        MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-            "MeshNetworkBuffer: records of {} bytes are smaller than a MeshVertex, so no skin pass is wired", record_bytes);
+        if (std::ranges::any_of(m_network->slots(), [](const auto& slot) { return slot.skin || slot.morphs; })) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                "MeshNetworkBuffer: records of {} bytes are smaller than a MeshVertex, so no skin pass is wired", record_bytes);
+        }
         return;
     }
 
-    const auto& slots = m_network->slots();
-    for (auto& entry : m_skins) {
-        if (entry.slot >= slots.size() || !slots[entry.slot].node) {
+    for (const auto& slot : m_network->slots()) {
+        if (!slot.skin && !slot.morphs) {
+            continue;
+        }
+        if (!slot.node) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-                "MeshNetworkBuffer: slot {} has no geometry, so it is not skinned", entry.slot);
+                "MeshNetworkBuffer: slot {} has no geometry, so it is not skinned", slot.index);
             continue;
         }
 
-        const auto& vertices = slots[entry.slot].node->get_mesh_vertices();
+        const auto& vertices = slot.node->get_mesh_vertices();
         const std::span<const uint8_t> rest(
             reinterpret_cast<const uint8_t*>(vertices.data()), vertices.size() * sizeof(Kakshya::MeshVertex));
 
+        SkinEntry entry { .slot = slot.index, .processor = nullptr };
         try {
-            entry.processor = std::make_shared<SkinProcessor>(entry.skin, rest, "slot" + std::to_string(entry.slot));
+            entry.processor = std::make_shared<SkinProcessor>(slot.skin, rest, "slot" + std::to_string(entry.slot), slot.morphs);
         } catch (const std::invalid_argument& e) {
             MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
-                "MeshNetworkBuffer: the skin of slot {} does not fit its mesh, so it is not skinned: {}", entry.slot, e.what());
+                "MeshNetworkBuffer: the skin or morph targets of slot {} do not fit its mesh, so it is not deformed: {}", entry.slot, e.what());
             continue;
+        }
+
+        bool follows_joints = slot.skin && !slot.joints.empty();
+        if (follows_joints) {
+            const size_t slots = m_network->slot_count();
+            if (slot.joints.size() != slot.skin->joint_count()
+                || std::ranges::any_of(slot.joints, [slots](uint32_t joint) { return joint >= slots; })) {
+                MF_ERROR(Journal::Component::Buffers, Journal::Context::Init,
+                    "MeshNetworkBuffer: the joints of slot {} do not match its skin, so its palette is the caller's", entry.slot);
+                follows_joints = false;
+            }
+        }
+
+        if (follows_joints || slot.morphs) {
+            entry.processor->set_palette_source(
+                [weak = std::weak_ptr<Nodes::Network::MeshNetwork>(m_network), index = entry.slot, follows_joints,
+                    processor = entry.processor.get(), weights = std::vector<float> {}]() mutable -> std::vector<glm::mat4> {
+                    const auto network = weak.lock();
+                    if (!network) {
+                        return {};
+                    }
+                    const auto& all = network->slots();
+                    const auto& deformed = all[index];
+                    if (deformed.morph_weights != weights && processor->set_morph_weights(deformed.morph_weights)) {
+                        weights = deformed.morph_weights;
+                    }
+                    if (!follows_joints) {
+                        return {};
+                    }
+                    std::vector<glm::mat4> joints;
+                    joints.reserve(deformed.joints.size());
+                    for (const uint32_t joint : deformed.joints) {
+                        joints.push_back(all[joint].world_transform);
+                    }
+                    return Kinesis::relative_transforms(deformed.world_transform, joints, deformed.skin->inverse_bind);
+                });
         }
 
         entry.processor->set_first_vertex_source(
@@ -271,10 +301,21 @@ void MeshNetworkBuffer::wire_skin_passes(size_t record_bytes)
             });
 
         get_processing_chain()->add_processor(entry.processor, shared_from_this());
+        m_skins.push_back(std::move(entry));
     }
 
-    MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
-        "MeshNetworkBuffer: {} skin passes wired", m_skins.size());
+    if (!m_skins.empty()) {
+        m_processor->m_geometry_observer = [this](uint32_t slot, const std::vector<Kakshya::MeshVertex>& vertices) {
+            const auto entry = std::ranges::find(m_skins, slot, &SkinEntry::slot);
+            if (entry != m_skins.end()) {
+                entry->processor->set_rest({ reinterpret_cast<const uint8_t*>(vertices.data()),
+                    vertices.size() * sizeof(Kakshya::MeshVertex) });
+            }
+        };
+
+        MF_INFO(Journal::Component::Buffers, Journal::Context::Init,
+            "MeshNetworkBuffer: {} skin passes wired", m_skins.size());
+    }
 }
 
 void MeshNetworkBuffer::wire_field_pass(size_t record_bytes)

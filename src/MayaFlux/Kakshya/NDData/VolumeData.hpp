@@ -2,15 +2,29 @@
 
 #include "MayaFlux/Kinesis/Spatial/Lattice.hpp"
 #include "MayaFlux/Kinesis/Spatial/LatticeSemantics.hpp"
+#include "MayaFlux/Transitive/Facet/Facets.hpp"
 
 namespace MayaFlux::Kakshya {
+
+/**
+ * @brief In VolumeData::facets, the rigid placement of a lattice that is not axis aligned in the
+ *        world: a lattice point p sits at volume_placement * p. Absent for an axis aligned one.
+ */
+inline const Facet<glm::mat4> volume_placement { glm::mat4(1.0F) };
+
+/**
+ * @brief In VolumeField::facets, the value of the cells nothing stores, a scalar in x. For a level
+ *        set it is the narrow band's half width. Absent means zero.
+ */
+inline const Facet<glm::dvec3> volume_background { glm::dvec3(0.0) };
 
 /**
  * @struct VolumeField
  * @brief One named quantity sampled over a lattice, held in host memory.
  *
- * Value storage is a variant over float and glm::vec3, chosen by the
- * producer from the source field's per-cell stride. There is no vec4
+ * Value storage is a variant over float, glm::vec3, double, glm::dvec3 and
+ * int32_t, so a producer keeps the precision its source had. Consumers that
+ * need single precision, the GPU among them, take narrowed(). There is no vec4
  * variant: padding is a GPU alignment concern and is stripped on the way
  * out, so no consumer of this struct ever sees a component it must skip.
  *
@@ -22,22 +36,49 @@ namespace MayaFlux::Kakshya {
  * The name is the producer's own string, taken verbatim from wherever the
  * field was declared. Consumers that care about conventional names
  * (density, temperature, velocity) match on it; nothing rewrites it.
+ *
+ * facets carries what else is known of the field: volume_background, and the
+ * name and value pairs a file attached, as a MeshAssemblyMetadata.
  */
 struct VolumeField {
     using ValueStorage = std::variant<
         std::vector<float>,
-        std::vector<glm::vec3>>;
+        std::vector<glm::vec3>,
+        std::vector<double>,
+        std::vector<glm::dvec3>,
+        std::vector<int32_t>>;
 
     std::string name;
     Kinesis::LatticeSemantics semantics {};
     ValueStorage values;
+    Facets facets {};
 
     /**
      * @brief Whether the active variant holds vectors rather than scalars.
      */
     [[nodiscard]] bool is_vector() const
     {
-        return std::holds_alternative<std::vector<glm::vec3>>(values);
+        return std::holds_alternative<std::vector<glm::vec3>>(values)
+            || std::holds_alternative<std::vector<glm::dvec3>>(values);
+    }
+
+    /**
+     * @brief The values in single precision: floats for a scalar field, vec3 for a vector one.
+     */
+    [[nodiscard]] ValueStorage narrowed() const
+    {
+        return std::visit(
+            [](const auto& vec) -> ValueStorage {
+                using Element = typename std::decay_t<decltype(vec)>::value_type;
+                if constexpr (std::is_same_v<Element, glm::vec3> || std::is_same_v<Element, glm::dvec3>) {
+                    return std::vector<glm::vec3>(vec.begin(), vec.end());
+                } else {
+                    std::vector<float> out(vec.size());
+                    std::ranges::transform(vec, out.begin(), [](auto v) { return static_cast<float>(v); });
+                    return out;
+                }
+            },
+            values);
     }
 
     /**
@@ -105,10 +146,14 @@ struct VolumeField {
  *
  * Field order is the producer's order and is preserved. Nothing depends on
  * it, but a reader diffing two files will thank you.
+ *
+ * facets carries volume_placement when the lattice is rotated or sheared, and
+ * the name and value pairs a file attached to itself, as a MeshAssemblyMetadata.
  */
 struct VolumeData {
     Kinesis::Lattice3D lattice;
     std::vector<VolumeField> fields;
+    Facets facets {};
 
     /**
      * @brief Cells in the lattice, which every field's element_count()
