@@ -405,18 +405,19 @@ std::shared_ptr<Core::VKImage> VisionAnalyzer::resolve_image(
 
     const uint32_t w = vc->get_width();
     const uint32_t h = vc->get_height();
+    const auto format = vc->get_format();
 
     const void* raw = source->get_raw_data();
     if (!raw)
         return nullptr;
 
-    if (!m_upload_image || m_upload_w != w || m_upload_h != h) {
+    if (!m_upload_image || m_upload_w != w || m_upload_h != h || m_upload_format != format) {
         auto& loom = Portal::Graphics::TextureLoom::instance();
         loom.release_image(m_upload_image);
-        m_upload_image = loom.create_2d(
-            w, h, Portal::Graphics::ImageFormat::RGBA8, nullptr);
+        m_upload_image = loom.create_2d(w, h, format, nullptr);
         m_upload_w = w;
         m_upload_h = h;
+        m_upload_format = format;
     }
     if (!m_upload_image)
         return nullptr;

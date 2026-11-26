@@ -350,6 +350,7 @@ private:
     std::shared_ptr<Core::VKImage> m_upload_image;
     uint32_t m_upload_w { 0 };
     uint32_t m_upload_h { 0 };
+    Portal::Graphics::ImageFormat m_upload_format { Portal::Graphics::ImageFormat::RGBA8 };
 
     /**
      * @brief The two contexts every method shares, one shader swapped in per

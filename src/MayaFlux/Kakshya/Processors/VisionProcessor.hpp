@@ -113,6 +113,7 @@ private:
 
     uint32_t m_width {};
     uint32_t m_height {};
+    ImageFormat m_frame_format { ImageFormat::RGBA8 };
 
     mutable std::vector<float> m_float_storage;
 
