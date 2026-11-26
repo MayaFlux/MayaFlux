@@ -1,0 +1,78 @@
+name: CI Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      fedora:
+        description: "Test Fedora"
+        type: boolean
+        default: true
+      arch:
+        description: "Test Arch Linux"
+        type: boolean
+        default: true
+      macos:
+        description: "Test macOS"
+        type: boolean
+        default: true
+      windows:
+        description: "Test Windows"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  test_fedora:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.fedora }}
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      version: "ci-${{ github.run_number }}"
+      clean_version: "0.0.0"
+      preset: linux-check
+      test_preset: linux-test
+      run_tests: true
+      create_distribution: false
+      artifact_name: ci-tests-fedora
+      distribution_name: linux-fedora
+      os_display_name: Fedora
+
+  test_arch:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.arch }}
+    uses: ./.github/workflows/build-linux-arch.yml
+    with:
+      version: "ci-${{ github.run_number }}"
+      clean_version: "0.0.0"
+      preset: linux-check
+      test_preset: linux-test
+      run_tests: true
+      create_distribution: false
+      artifact_name: ci-tests-arch
+      distribution_name: linux-arch
+      os_display_name: Arch Linux
+
+  test_macos:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.macos }}
+    uses: ./.github/workflows/build-macos.yml
+    with:
+      version: "ci-${{ github.run_number }}"
+      clean_version: "0.0.0"
+      preset: macos-check
+      test_preset: macos-test
+      run_tests: true
+      create_distribution: false
+
+  test_windows:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows }}
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      version: "ci-${{ github.run_number }}"
+      clean_version: "0.0.0"
+      preset: windows-check
+      test_preset: windows-check-test
+      run_tests: true
+      create_distribution: false
+      artifact_name: ci-tests-windows
+      distribution_name: windows-x64
+      os_display_name: Windows
