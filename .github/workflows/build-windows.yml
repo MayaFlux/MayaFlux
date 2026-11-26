@@ -20,6 +20,10 @@ on:
         required: false
         type: boolean
         default: false
+      test_preset:
+        required: false
+        type: string
+        default: ''
       create_distribution:
         required: false
         type: boolean
@@ -57,6 +61,8 @@ jobs:
       # ============================================
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: ${{ inputs.run_tests && inputs.test_preset != '' }}
 
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
@@ -174,7 +180,7 @@ jobs:
         id: vcpkg-cache
         with:
           path: ${{ env.VCPKG_ROOT }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('.github/workflows/vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('.github/workflows/vcpkg.json') }}-${{ inputs.run_tests && inputs.test_preset != '' && 'tests' || 'base' }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -222,8 +228,21 @@ jobs:
 
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
 
+      - name: Install test dependencies
+        id: install-test-dependencies
+        if: ${{ inputs.run_tests && inputs.test_preset != '' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
+        shell: pwsh
+        run: |
+          cd ${{ github.workspace }}/.github/workflows
+          & "${{ env.VCPKG_ROOT }}\vcpkg.exe" install `
+            --triplet x64-windows `
+            --x-install-root=${{ env.VCPKG_ROOT }}/installed `
+            --x-feature=tests `
+            --clean-buildtrees-after-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Save vcpkg cache
-        if: ${{ always() && steps.install-vcpkg.outcome == 'success' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() && steps.install-vcpkg.outcome == 'success' && steps.install-test-dependencies.outcome != 'failure' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: ${{ env.VCPKG_ROOT }}
@@ -407,6 +426,13 @@ jobs:
 
           Write-Host "✓ Environment variables set" -ForegroundColor Green
 
+      - name: Add test runtime paths
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        shell: pwsh
+        run: |
+          Join-Path $env:GITHUB_WORKSPACE 'build\src\MayaFlux' >> $env:GITHUB_PATH
+          Join-Path $env:GITHUB_WORKSPACE 'build\bin' >> $env:GITHUB_PATH
+
       - name: Configure CMake
         shell: pwsh
         run: |
@@ -438,6 +464,23 @@ jobs:
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
           cmake --build --preset "${{ inputs.preset }}"
 
+      - name: Configure tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        shell: pwsh
+        run: cmake --preset "${{ inputs.test_preset }}"
+
+      - name: Build tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        shell: pwsh
+        run: cmake --build --preset "${{ inputs.test_preset }}"
+
+      - name: Run portable tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        uses: lukka/run-cmake@v10.9
+        with:
+          testPreset: ${{ inputs.test_preset }}
+          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
+
       - name: ccache stats
         if: ${{ always() && env.CCACHE_EXE != '' }}
         shell: pwsh
@@ -447,12 +490,6 @@ jobs:
         if: ${{ inputs.run_reflect_check }}
         shell: pwsh
         run: ./build/mayaflux_reflect.exe --check
-
-      # - name: Run Tests (optional)
-      #   if: ${{ inputs.run_tests != false }}
-      #   shell: pwsh
-      #   working-directory: build
-      #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}

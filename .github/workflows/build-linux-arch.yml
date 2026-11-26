@@ -19,6 +19,10 @@ on:
         required: false
         type: boolean
         default: false
+      test_preset:
+        required: false
+        type: string
+        default: ''
       create_distribution:
         required: false
         type: boolean
@@ -44,9 +48,6 @@ jobs:
       options: --privileged
     name: "Arch Linux (Clang, LLVM 21)"
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
 
@@ -104,6 +105,15 @@ jobs:
             ccache \
             git
 
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: ${{ inputs.run_tests && inputs.test_preset != '' }}
+
+      - name: Install test dependencies
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        run: pacman -S --noconfirm gtest
+
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
@@ -128,6 +138,21 @@ jobs:
       - name: Build
         shell: bash
         run: cmake --build --preset "${{ inputs.preset }}"
+
+      - name: Configure tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        run: cmake --preset "${{ inputs.test_preset }}"
+
+      - name: Build tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        run: cmake --build --preset "${{ inputs.test_preset }}"
+
+      - name: Run portable tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        uses: lukka/run-cmake@v10.9
+        with:
+          testPreset: ${{ inputs.test_preset }}
+          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
 
       - name: ccache stats
         if: always()

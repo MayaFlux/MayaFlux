@@ -20,6 +20,10 @@ on:
         required: false
         type: boolean
         default: false
+      test_preset:
+        required: false
+        type: string
+        default: ''
       create_distribution:
         required: false
         type: boolean
@@ -37,6 +41,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          submodules: ${{ inputs.run_tests && inputs.test_preset != '' }}
 
       - name: Use version
         run: echo "Version is ${{ inputs.version }}"
@@ -264,6 +270,30 @@ jobs:
         shell: bash
         run: cmake --build --preset "${{ inputs.preset }}"
 
+      - name: Configure tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        shell: bash
+        run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
+          cmake --preset "${{ inputs.test_preset }}"
+
+      - name: Build tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        shell: bash
+        env:
+          DYLD_LIBRARY_PATH: ${{ github.workspace }}/build/src/MayaFlux:${{ github.workspace }}/build/src/Lila
+        run: cmake --build --preset "${{ inputs.test_preset }}"
+
+      - name: Run portable tests
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
+        env:
+          DYLD_LIBRARY_PATH: ${{ github.workspace }}/build/src/MayaFlux:${{ github.workspace }}/build/src/Lila
+        uses: lukka/run-cmake@v10.9
+        with:
+          testPreset: ${{ inputs.test_preset }}
+          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
+
       - name: ccache stats
         if: always()
         run: ccache -s
@@ -272,12 +302,6 @@ jobs:
         if: ${{ inputs.run_reflect_check }}
         shell: bash
         run: ./build/mayaflux_reflect --check
-
-      # - name: Test (conditional)
-      #   if: ${{ inputs.run_tests != false }}
-      #   shell: bash
-      #   working-directory: build
-      #   run: ctest --output-on-failure --parallel 4
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}

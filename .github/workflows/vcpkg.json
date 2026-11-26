@@ -15,5 +15,11 @@
     "freetype",
     "nlohmann-json",
     "pugixml"
-  ]
+  ],
+  "features": {
+    "tests": {
+      "description": "Dependencies for MayaFlux tests",
+      "dependencies": ["gtest"]
+    }
+  }
 }
