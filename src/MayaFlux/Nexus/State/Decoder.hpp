@@ -53,6 +53,7 @@ public:
         int skipped { 0 };
         std::vector<std::string> warnings;
         nlohmann::json user_state;
+        State::BufferNames buffers; ///< Loaded from the state's assets, for names the Bindings do not hold.
     };
 
     /**
@@ -115,6 +116,10 @@ public:
     [[nodiscard]] size_t missing_count() const { return m_missing_count; }
 
 private:
+    /** reconstruct() with buffers already loaded for names the Bindings do not hold. */
+    [[nodiscard]] ReconstructionResult reconstruct_fabric(
+        Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded);
+
     /** Whether a live Expanse is of a record's kind and, for a Hull or Mantle, wraps its buffer. */
     [[nodiscard]] static bool wraps(const Expanse& live, const std::string& subkind,
         const std::shared_ptr<Buffers::VKBuffer>& buffer);

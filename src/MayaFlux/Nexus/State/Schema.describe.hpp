@@ -7,6 +7,22 @@
 namespace MayaFlux::Reflect::Generated {
 
 template <>
+struct Description<::MayaFlux::Nexus::State::AssetRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::AssetRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::AssetRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::file> { "file" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::form> { "form" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::index> { "index" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::snapshot> { "snapshot" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::State::AttachRecord> {
     static constexpr std::string_view name = "MayaFlux::Nexus::State::AttachRecord";
 
@@ -132,6 +148,7 @@ struct Description<::MayaFlux::Nexus::State::FabricSchema> {
             Member<&::MayaFlux::Nexus::State::FabricSchema::expanses> { "expanses" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::components> { "components" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::cell_size> { "cell_size" },
+            Member<&::MayaFlux::Nexus::State::FabricSchema::assets> { "assets" },
         };
     }
 };
@@ -224,6 +241,7 @@ struct Description<::MayaFlux::Nexus::State::TapestrySchema> {
             Member<&::MayaFlux::Nexus::State::TapestrySchema::fabrics> { "fabrics" },
             Member<&::MayaFlux::Nexus::State::TapestrySchema::expanses> { "expanses" },
             Member<&::MayaFlux::Nexus::State::TapestrySchema::user_state> { "user_state" },
+            Member<&::MayaFlux::Nexus::State::TapestrySchema::assets> { "assets" },
         };
     }
 };

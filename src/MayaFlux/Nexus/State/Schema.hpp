@@ -307,6 +307,32 @@ struct ExpanseRecord {
 MF_DESCRIBE(ExpanseRecord)
 
 // =============================================================================
+// Asset records
+// =============================================================================
+
+/** @brief How a buffer is made from its file. */
+enum class AssetForm : uint8_t {
+    Mesh, ///< One of ModelReader::create_mesh_buffers().
+    Network, ///< A MeshNetworkBuffer over ModelReader::create_mesh_network().
+    Part, ///< The buffer that shows a row of a realized assembly.
+};
+
+/**
+ * @brief A buffer by its bound name and the file that holds it. A snapshot's path
+ *        is relative to the directory of the schema that lists it.
+ */
+struct AssetRecord {
+    std::string name;
+    std::string file;
+    AssetForm form { AssetForm::Mesh };
+    uint64_t index {};
+    bool snapshot {};
+
+};
+
+MF_DESCRIBE(AssetRecord)
+
+// =============================================================================
 // Fabric schema
 // =============================================================================
 
@@ -317,6 +343,7 @@ struct FabricSchema {
     std::vector<ExpanseRecord> expanses;
     std::vector<ComponentRecord> components;
     std::optional<float> cell_size;
+    std::vector<AssetRecord> assets;
 
 };
 
@@ -369,6 +396,7 @@ struct TapestrySchema {
     std::vector<FabricRef> fabrics;
     std::vector<TapestryExpanseRecord> expanses;
     nlohmann::json user_state;
+    std::vector<AssetRecord> assets;
 
 };
 

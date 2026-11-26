@@ -6,12 +6,15 @@
 #include "MayaFlux/Nexus/Expanses/Mantle.hpp"
 
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 #include "MayaFlux/Nexus/Principals/Presence.hpp"
 
 #include "MayaFlux/IO/Image/ImageWriter.hpp"
+#include "MayaFlux/IO/Model/ModelExport.hpp"
 #include "MayaFlux/IO/StagedFileSet.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -256,6 +259,67 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
             "StateEncoder: entity {} loses {}", id, what);
     }
     return rec;
+}
+
+std::vector<State::AssetRecord> StateEncoder::save_assets(const std::string& directory) const
+{
+    std::vector<State::AssetRecord> records;
+    if (!m_bindings) {
+        return records;
+    }
+
+    namespace fs = std::filesystem;
+    std::string folder;
+    const auto snapshot_folder = [&]() -> const std::string& {
+        if (folder.empty()) {
+            folder = "assets";
+            for (uint32_t n = 1; fs::exists(fs::path(directory) / folder); ++n) {
+                folder = "assets_" + std::to_string(n);
+            }
+            std::error_code ec;
+            fs::create_directories(fs::path(directory) / folder, ec);
+        }
+        return folder;
+    };
+
+    for (const auto& [name, buffer] : m_bindings->buffers) {
+        if (const auto declared = m_bindings->assets.find(name); declared != m_bindings->assets.end()) {
+            const auto& source = declared->second;
+            records.push_back({
+                .name = name,
+                .file = source.file,
+                .form = source.row ? State::AssetForm::Part : State::AssetForm::Mesh,
+                .index = source.row.value_or(source.mesh),
+            });
+            continue;
+        }
+
+        const auto mesh = std::dynamic_pointer_cast<Buffers::MeshBuffer>(buffer);
+        const auto network = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buffer);
+        if (!mesh && !network) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateEncoder: buffer '{}' has no declared file and no snapshot writer", name);
+            continue;
+        }
+
+        const bool plain = name.find_first_of("/\\") == std::string::npos && name != "." && name != "..";
+        const std::string file = snapshot_folder() + "/"
+            + (plain ? name : "asset_" + std::to_string(records.size())) + ".glb";
+        const std::string path = (fs::path(directory) / file).string();
+
+        if (!(mesh ? IO::save_mesh(mesh, path) : IO::save_mesh(network, path))) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateEncoder: buffer '{}' could not be written as a snapshot", name);
+            continue;
+        }
+        records.push_back({
+            .name = name,
+            .file = file,
+            .form = mesh ? State::AssetForm::Mesh : State::AssetForm::Network,
+            .snapshot = true,
+        });
+    }
+    return records;
 }
 
 template <typename Entity>
@@ -539,6 +603,9 @@ bool StateEncoder::encode_fabric(
     schema.version = State::k_schema_version;
     schema.fabric_name = fabric.name();
     schema.cell_size = fabric.m_cell_size;
+    if (staged == nullptr) {
+        schema.assets = save_assets(std::filesystem::path(IO::resolve_write_path(json_path)).parent_path().string());
+    }
     schema.components = std::move(components);
     schema.entities = std::move(entities);
 
@@ -621,6 +688,7 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
     }
 
     schema.user_state = std::move(user_state);
+    schema.assets = save_assets(set.directory());
 
     IO::JSONSerializer ser;
     std::string error;

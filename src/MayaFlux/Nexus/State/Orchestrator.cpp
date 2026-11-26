@@ -1,5 +1,7 @@
 #include "Orchestrator.hpp"
 
+#include "AssemblySource.hpp"
+
 #include "MayaFlux/Nexus/Pheme/Survey.hpp"
 
 #include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
@@ -16,6 +18,31 @@
 #include <glm/gtc/quaternion.hpp>
 
 namespace MayaFlux::Nexus {
+
+namespace Detail {
+
+    std::shared_ptr<Kakshya::MeshAssemblyContainer> read_assembly(const std::string& filepath)
+    {
+        auto extension = std::filesystem::path(filepath).extension().string();
+        std::ranges::transform(extension, extension.begin(),
+            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (extension == ".abc") {
+            return IO::open_spatial_assembly(filepath);
+        }
+
+        auto reader = std::make_shared<IO::ModelReader>();
+        if (!reader->can_read(filepath) || !reader->open(filepath)) {
+            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateOrchestrator: cannot read '{}': {}", filepath, reader->get_last_error());
+            return nullptr;
+        }
+
+        auto assembly = reader->create_mesh_assembly();
+        reader->close();
+        return assembly;
+    }
+
+}
 
 namespace {
 
@@ -53,27 +80,6 @@ namespace {
     }
 
     /** Alembic through its archive, so animated sources keep their frames; anything else as a model. */
-    std::shared_ptr<Kakshya::MeshAssemblyContainer> read_assembly(const std::string& filepath)
-    {
-        auto extension = std::filesystem::path(filepath).extension().string();
-        std::ranges::transform(extension, extension.begin(),
-            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-        if (extension == ".abc") {
-            return IO::open_spatial_assembly(filepath);
-        }
-
-        auto reader = std::make_shared<IO::ModelReader>();
-        if (!reader->can_read(filepath) || !reader->open(filepath)) {
-            MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateOrchestrator: cannot read '{}': {}", filepath, reader->get_last_error());
-            return nullptr;
-        }
-
-        auto assembly = reader->create_mesh_assembly();
-        reader->close();
-        return assembly;
-    }
-
     std::shared_ptr<Locus> new_locus()
     {
         return std::make_shared<Locus>(
@@ -363,7 +369,7 @@ std::tuple<
     StateOrchestrator::Rows>
 StateOrchestrator::orchestrate(const std::string& filepath)
 {
-    auto assembly = read_assembly(filepath);
+    auto assembly = Detail::read_assembly(filepath);
     if (!assembly) {
         MF_ERROR(Journal::Component::Nexus, Journal::Context::FileIO,
             "StateOrchestrator: no assembly from '{}'", filepath);

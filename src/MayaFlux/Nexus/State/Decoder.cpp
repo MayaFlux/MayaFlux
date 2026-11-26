@@ -1,13 +1,21 @@
 #include "Decoder.hpp"
 
+#include "AssemblySource.hpp"
+#include "Orchestrator.hpp"
+
 #include "MayaFlux/Nexus/Expanses/Hull.hpp"
 #include "MayaFlux/Nexus/Expanses/Mantle.hpp"
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
+#include "MayaFlux/IO/Detail/IOTransitions.hpp"
+#include "MayaFlux/IO/FileReader.hpp"
+#include "MayaFlux/IO/Model/ModelReader.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
 
 #include "MayaFlux/Transitive/Facet/ControlValueText.hpp"
@@ -41,7 +49,19 @@ namespace {
         const State::Bindings* bindings {};
         std::shared_ptr<Buffers::BufferManager> buffer_manager;
         std::vector<std::string>& warnings;
+        State::BufferNames buffers; ///< Bound buffers and those loaded from assets.
     };
+
+    State::BufferNames buffers_with(const State::Bindings* bindings, const State::BufferNames& loaded)
+    {
+        State::BufferNames buffers = loaded;
+        if (bindings) {
+            for (const auto& [name, buffer] : bindings->buffers) {
+                buffers.insert_or_assign(name, buffer);
+            }
+        }
+        return buffers;
+    }
 
     Reflect::FunctionCall call_of(const State::CallRecord& record)
     {
@@ -57,7 +77,7 @@ namespace {
     std::optional<Slot> make_bound(const Loading& load, const State::CallRecord& record, std::string& error)
     {
         return load.bindings->functions.make<Slot>(call_of(record), error,
-            load.bindings->buffers, load.bindings->windows, load.bindings->sources);
+            load.buffers, load.bindings->windows, load.bindings->sources);
     }
 
     /** The function a call names, made from the bound functions, or nullopt with a warning. */
@@ -102,7 +122,7 @@ namespace {
 
     std::shared_ptr<Buffers::VKBuffer> bound_buffer(const Loading& load, const std::string& name)
     {
-        return bound_object(load.bindings ? &load.bindings->buffers : nullptr, name);
+        return bound_object(&load.buffers, name);
     }
 
     std::shared_ptr<Core::Window> bound_window(const Loading& load, const std::string& name)
@@ -845,6 +865,60 @@ namespace {
         return Restored::Constructed;
     }
 
+    // -------------------------------------------------------------------------
+    // Assets
+    // -------------------------------------------------------------------------
+
+    /** The buffers of the records whose names are not bound, made from their files. */
+    State::BufferNames load_assets(
+        const std::vector<State::AssetRecord>& records,
+        const std::string& schema_path,
+        const State::Bindings* bindings,
+        std::vector<std::string>& warnings)
+    {
+        State::BufferNames loaded;
+        std::map<std::string, std::shared_ptr<Kriya::MeshAssemblyRealization>> realized;
+        const auto directory = std::filesystem::path(IO::FileReader::resolve_path(schema_path)).parent_path();
+
+        for (const auto& record : records) {
+            if (bindings && bindings->buffers.contains(record.name)) {
+                continue;
+            }
+            const std::string path = record.snapshot ? (directory / record.file).string() : record.file;
+            std::shared_ptr<Buffers::VKBuffer> buffer;
+
+            if (record.form == State::AssetForm::Part) {
+                auto& realization = realized[path];
+                if (!realization) {
+                    if (const auto assembly = Detail::read_assembly(path)) {
+                        realization = Kriya::MeshAssemblyRealization::create(assembly, {});
+                        if (realization) {
+                            realization->bind_materials(IO::Detail::make_material_resolver(path));
+                        }
+                    }
+                }
+                buffer = StateOrchestrator::buffer_of(realization, record.index).first;
+            } else if (IO::ModelReader reader; reader.can_read(path) && reader.open(path)) {
+                const auto resolver = IO::Detail::make_default_resolver(path);
+                if (record.form == State::AssetForm::Network) {
+                    if (const auto network = reader.create_mesh_network(resolver)) {
+                        buffer = std::make_shared<Buffers::MeshNetworkBuffer>(network);
+                    }
+                } else if (const auto meshes = reader.create_mesh_buffers(resolver); record.index < meshes.size()) {
+                    buffer = meshes[record.index];
+                }
+                reader.close();
+            }
+
+            if (buffer) {
+                loaded.emplace(record.name, std::move(buffer));
+            } else {
+                warnings.push_back("asset '" + record.name + "' could not be loaded from " + path);
+            }
+        }
+        return loaded;
+    }
+
     std::optional<float> read_cell_size(const std::string& json_path)
     {
         IO::JSONSerializer ser;
@@ -903,7 +977,12 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
 
     std::vector<std::string> warnings;
-    const Loading load { .bindings = m_bindings.get(), .buffer_manager = fabric.m_buffers, .warnings = warnings };
+    const Loading load {
+        .bindings = m_bindings.get(),
+        .buffer_manager = fabric.m_buffers,
+        .warnings = warnings,
+        .buffers = buffers_with(m_bindings.get(), {}),
+    };
 
     for (const auto& entry : schema.entities) {
         if (!State::kind_known(entry.kind)) {
@@ -944,6 +1023,12 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
 
 StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, const std::string& base_path)
 {
+    return reconstruct_fabric(fabric, base_path, {});
+}
+
+StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
+    Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded)
+{
     ReconstructionResult result;
     m_last_error.clear();
 
@@ -964,7 +1049,15 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
-    const Loading load { .bindings = m_bindings.get(), .buffer_manager = fabric.m_buffers, .warnings = result.warnings };
+    result.buffers = load_assets(schema.assets, json_path, m_bindings.get(), result.warnings);
+    State::BufferNames given = loaded;
+    given.insert(result.buffers.begin(), result.buffers.end());
+    const Loading load {
+        .bindings = m_bindings.get(),
+        .buffer_manager = fabric.m_buffers,
+        .warnings = result.warnings,
+        .buffers = buffers_with(m_bindings.get(), given),
+    };
 
     const auto existing_ids = fabric.all_ids();
     const std::unordered_set<uint32_t> existing(existing_ids.begin(), existing_ids.end());
@@ -1035,13 +1128,15 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         return total;
     }
 
+    total.buffers = load_assets(schema.assets, tapestry_path, m_bindings.get(), total.warnings);
+
     for (const auto& ref : schema.fabrics) {
         auto fabric = tapestry.get_fabric(ref.name);
         if (!fabric) {
             fabric = tapestry.create_fabric(ref.name,
                 read_cell_size(ref.base_path + ".json").value_or(1.0F));
         }
-        auto result = reconstruct(*fabric, ref.base_path);
+        auto result = reconstruct_fabric(*fabric, ref.base_path, total.buffers);
         total.constructed += result.constructed;
         total.patched += result.patched;
         total.skipped += result.skipped;
@@ -1050,7 +1145,12 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         }
     }
 
-    const Loading load { .bindings = m_bindings.get(), .buffer_manager = nullptr, .warnings = total.warnings };
+    const Loading load {
+        .bindings = m_bindings.get(),
+        .buffer_manager = nullptr,
+        .warnings = total.warnings,
+        .buffers = buffers_with(m_bindings.get(), total.buffers),
+    };
 
     for (const auto& xrec : schema.expanses) {
         const std::string label = "TapestryExpanse '" + xrec.name + "'";
