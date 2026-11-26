@@ -312,6 +312,8 @@ StateOrchestrator::Reflows StateOrchestrator::motion_from(
             .courses = {},
             .carried = std::move(carried),
         };
+        source.realize = m_realize_call;
+        source.realize_bounds = m_realize_options.bounds;
         for (const auto& [held, file] : m_files) {
             if (held.lock() == source.assembly) {
                 source.file = file;
@@ -459,6 +461,11 @@ StateOrchestrator::orchestrate_rows(
         return {};
     }
 
+    if (m_bindings && m_realize_call.first.empty()
+        && (m_realize_options.partition || m_realize_options.placement || m_realize_options.spatial_field)) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::Init,
+            "StateOrchestrator: realize options holding functions were set without a call, so a saved state cannot realize with them");
+    }
     auto realization = Kriya::MeshAssemblyRealization::create(assembly, m_realize_options);
     if (realization && materials) {
         realization->bind_materials(materials);
@@ -541,7 +548,9 @@ std::string StateOrchestrator::name_buffer(const std::shared_ptr<Buffers::VKBuff
 
     m_bindings->buffers.emplace(name, buffer);
     if (!file.empty() && row) {
-        m_bindings->assets.insert_or_assign(name, State::AssetSource { .file = file, .row = row });
+        m_bindings->assets.insert_or_assign(name,
+            State::AssetSource {
+                .file = file, .row = row, .realize = m_realize_call, .realize_bounds = m_realize_options.bounds });
     }
     return name;
 }

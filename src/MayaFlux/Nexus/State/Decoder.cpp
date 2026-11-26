@@ -1120,21 +1120,42 @@ namespace {
         return any;
     }
 
+    glm::mat4 matrix_at(const std::vector<float>& values, size_t first)
+    {
+        glm::mat4 matrix { 1.0F };
+        for (glm::length_t column = 0; column < 4; ++column) {
+            for (glm::length_t row = 0; row < 4; ++row) {
+                matrix[column][row] = values[first + static_cast<size_t>(column * 4 + row)];
+            }
+        }
+        return matrix;
+    }
+
     std::shared_ptr<Buffers::VKBuffer> load_instances(const State::AssetRecord& record, const std::string& path)
     {
         IO::ModelReader reader;
         if (!reader.can_read(path) || !reader.open(path)) {
             return nullptr;
         }
-        const auto meshes = reader.create_mesh_buffers();
+        const auto assembly = reader.create_mesh_assembly();
         reader.close();
-        if (meshes.empty()) {
+        if (!assembly) {
             return nullptr;
         }
 
-        const auto& data = meshes.front()->get_mesh_data();
+        std::optional<size_t> source;
+        for (size_t row = 0; row < assembly->get_total_elements() && !source; ++row) {
+            const auto placement = assembly->placement(row);
+            if (placement && placement->source && assembly->mesh(*placement->source)) {
+                source = *placement->source;
+            }
+        }
+        if (!source) {
+            return nullptr;
+        }
+
         auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>();
-        node->set_mesh(data);
+        node->set_mesh(*assembly->mesh(*source));
         node->compute_frame();
 
         auto network = std::make_shared<Nodes::Network::InstanceNetwork>();
@@ -1142,16 +1163,23 @@ namespace {
             const uint32_t index = network->add_slot(instance.name, node);
             auto& slot = network->get_slot(index);
             if (instance.transform.size() == 16) {
-                for (glm::length_t column = 0; column < 4; ++column) {
-                    for (glm::length_t row = 0; row < 4; ++row) {
-                        slot.transform[column][row] = instance.transform[static_cast<size_t>(column * 4 + row)];
-                    }
-                }
+                slot.transform = matrix_at(instance.transform, 0);
+            }
+            for (size_t first = 0; first + 16 <= instance.palette.size(); first += 16) {
+                slot.palette.push_back(matrix_at(instance.palette, first));
             }
             slot.tint = instance.tint;
             slot.scalar = instance.scalar;
             slot.texture = instance.texture;
             slot.morph_weights = instance.morph_weights;
+        }
+        if (network->slot_count() > 0) {
+            auto& first = network->get_slot(0);
+            first.skin = assembly->skin(*source);
+            if (const auto* morphs
+                = assembly->get_data().sources[*source].facets.get<Kakshya::MeshMorphTargets>()) {
+                first.morphs = std::make_shared<const Kakshya::MeshMorphTargets>(*morphs);
+            }
         }
         return std::make_shared<Buffers::InstanceNetworkBuffer>(network);
     }
@@ -1182,6 +1210,41 @@ namespace {
         return data ? IO::Detail::create_volume_grid_buffer(manager, *data) : nullptr;
     }
 
+    /** One realization for each file and way of realizing it. */
+    std::string realization_key(const std::string& path, const State::CallRecord& call)
+    {
+        std::string key = path + '\n' + call.name;
+        for (const auto& [name, value] : call.arguments) {
+            key += '\n' + name + '=' + value;
+        }
+        return key;
+    }
+
+    /** The assembly of a file realized with the options a record names, and its materials bound. */
+    std::shared_ptr<Kriya::MeshAssemblyRealization> realize_file(const std::string& path,
+        const State::CallRecord& call, const std::optional<glm::vec3>& low, const std::optional<glm::vec3>& high,
+        const Loading& load)
+    {
+        const auto assembly = Detail::read_assembly(path);
+        if (!assembly) {
+            return nullptr;
+        }
+
+        Kriya::MeshAssemblyRealizeOptions options;
+        if (auto saved = made<Kriya::MeshAssemblyRealizeOptions>(load, call, "realize options of " + path)) {
+            options = std::move(*saved);
+        }
+        if (low && high) {
+            options.bounds = Kinesis::SamplerBounds { .min = *low, .max = *high };
+        }
+
+        auto realization = Kriya::MeshAssemblyRealization::create(assembly, options);
+        if (realization) {
+            realization->bind_materials(IO::Detail::make_material_resolver(path));
+        }
+        return realization;
+    }
+
     /** The buffers of the records whose names are not bound, made from their files. */
     State::BufferNames load_assets(
         const std::vector<State::AssetRecord>& records,
@@ -1201,6 +1264,12 @@ namespace {
             const std::string path = record.snapshot ? (directory / record.file).string() : record.file;
             std::shared_ptr<Buffers::VKBuffer> buffer;
 
+            const Loading realizing {
+                .bindings = bindings,
+                .buffer_manager = nullptr,
+                .warnings = warnings,
+                .buffers = buffers_with(bindings, {}),
+            };
             if (record.form == State::AssetForm::Spatial) {
                 if (!load_spatial(record, path, loaded)) {
                     warnings.push_back("asset '" + record.name + "' could not be loaded from " + path);
@@ -1214,14 +1283,10 @@ namespace {
             } else if (record.form == State::AssetForm::Volume) {
                 buffer = load_volume_asset(record, path, manager);
             } else if (record.form == State::AssetForm::Part) {
-                auto& realization = realized[path];
+                auto& realization = realized[realization_key(path, record.realize)];
                 if (!realization) {
-                    if (const auto assembly = Detail::read_assembly(path)) {
-                        realization = Kriya::MeshAssemblyRealization::create(assembly, {});
-                        if (realization) {
-                            realization->bind_materials(IO::Detail::make_material_resolver(path));
-                        }
-                    }
+                    realization = realize_file(
+                        path, record.realize, record.bounds_min, record.bounds_max, realizing);
                 }
                 buffer = StateOrchestrator::buffer_of(realization, record.index).first;
             } else if (IO::ModelReader reader; reader.can_read(path) && reader.open(path)) {
@@ -1412,14 +1477,15 @@ StateDecoder::Moving StateDecoder::start_motions(const std::vector<State::Motion
             continue;
         }
         const std::string path = record.snapshot ? (directory / record.file).string() : record.file;
-        auto& realization = realized[path];
+        auto& realization = realized[realization_key(path, record.realize)];
         if (!realization) {
-            if (const auto assembly = Detail::read_assembly(path)) {
-                realization = Kriya::MeshAssemblyRealization::create(assembly, {});
-                if (realization) {
-                    realization->bind_materials(IO::Detail::make_material_resolver(path));
-                }
-            }
+            const Loading realizing {
+                .bindings = m_bindings.get(),
+                .buffer_manager = nullptr,
+                .warnings = result.warnings,
+                .buffers = buffers_with(m_bindings.get(), result.buffers),
+            };
+            realization = realize_file(path, record.realize, record.bounds_min, record.bounds_max, realizing);
         }
 
         const auto cell = std::make_shared<Memory::SnapshotCell<State::Carried>>();

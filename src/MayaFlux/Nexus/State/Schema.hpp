@@ -356,6 +356,7 @@ struct InstanceRecord {
     float scalar { 1.0F };
     uint32_t texture {};
     std::vector<float> morph_weights;
+    std::vector<float> palette; ///< Sixteen values for each joint, column by column.
 
 };
 
@@ -374,6 +375,7 @@ struct AssetRecord {
     CallRecord make;
     std::vector<InstanceRecord> instances;
     std::vector<uint32_t> resolution; ///< Cells of a volume per axis, over bounds_min to bounds_max.
+    CallRecord realize; ///< Of a Part, the call that makes its realize options; its bounds are bounds_min to bounds_max.
     std::optional<glm::vec3> bounds_min;
     std::optional<glm::vec3> bounds_max;
 
@@ -437,6 +439,9 @@ struct MotionRecord {
     std::vector<CarriedRecord> carried;
     std::vector<std::string> buffers;
     std::vector<uint64_t> rows;
+    CallRecord realize;
+    std::optional<glm::vec3> bounds_min;
+    std::optional<glm::vec3> bounds_max;
 
 };
 

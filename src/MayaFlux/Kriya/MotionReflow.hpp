@@ -115,12 +115,11 @@ using PlacementEdit = std::function<void(std::span<glm::mat4> locals, const Fram
 
 /**
  * @brief A sink that places a buffer that shows points or curves at the world placement of a row.
- * @param buffer The buffer. Its render processor is given a geometry transform source the first
- *        time a frame arrives after rendering is set up, which replaces any placement it had.
+ * @param buffer The buffer, given each placement by set_placement(), so a transform its
+ *        renderers already have stays and applies outside the placement.
  * @param row The row the buffer shows.
  *
- * The placement is held in a cell the draw reads, so the sink may run on any thread. The buffer is
- * held weakly.
+ * For the graphics thread. The buffer is held weakly.
  */
 [[nodiscard]] MAYAFLUX_API MotionReflow::Sink placement_sink(
     const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer, uint64_t row);

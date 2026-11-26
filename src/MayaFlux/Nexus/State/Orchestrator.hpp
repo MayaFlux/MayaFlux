@@ -112,7 +112,22 @@ public:
     void set_bindings(const std::shared_ptr<State::Bindings>& bindings);
 
     /** @brief How orchestrate() cuts an assembly into buffers. */
-    void set_realize_options(Kriya::MeshAssemblyRealizeOptions options) { m_realize_options = std::move(options); }
+    void set_realize_options(Kriya::MeshAssemblyRealizeOptions options)
+    {
+        m_realize_options = std::move(options);
+        m_realize_call = {};
+    }
+
+    /**
+     * @brief set_realize_options() with the call that makes them, which a saved state uses
+     *        to realize the same way again.
+     * @param call A function of the bindings answering Kriya::MeshAssemblyRealizeOptions.
+     */
+    void set_realize_options(Reflect::FunctionCall call, Kriya::MeshAssemblyRealizeOptions options)
+    {
+        m_realize_options = std::move(options);
+        m_realize_call = std::move(call);
+    }
 
     /**
      * @brief The rows whose principal is a T, in row order.
@@ -339,6 +354,7 @@ private:
     WiringRule m_wiring_rule;
     RowRule m_row_rule;
     Kriya::MeshAssemblyRealizeOptions m_realize_options;
+    Reflect::FunctionCall m_realize_call;
     Kriya::MeshAssemblyMaterialResolver m_material_resolver;
     std::shared_ptr<State::Bindings> m_bindings;
     mutable std::vector<std::pair<std::weak_ptr<const Kakshya::MeshAssemblyContainer>, std::string>> m_files;

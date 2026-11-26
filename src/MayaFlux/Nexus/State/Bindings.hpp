@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/VertexSampler.hpp"
 #include "MayaFlux/Kriya/Course.hpp"
 #include "MayaFlux/Nexus/Fabric.hpp"
 #include "MayaFlux/Transitive/Reflect/FunctionTable.hpp"
@@ -48,6 +49,8 @@ struct AssetSource {
     std::optional<uint64_t> row; ///< A row of the file's assembly, as StateOrchestrator realizes it.
     uint32_t mesh {}; ///< Without a row, the index among ModelReader::create_mesh_buffers().
     Reflect::FunctionCall make {}; ///< With a name, the buffer is made by this call instead of read from a file.
+    Reflect::FunctionCall realize {}; ///< With a name, makes the options a row is realized with.
+    std::optional<Kinesis::SamplerBounds> realize_bounds {}; ///< The bounds of those options.
 };
 
 /** @brief Rows and the principals a motion carries because nothing draws them. None are retained. */
@@ -67,6 +70,8 @@ struct MotionSource {
     Carried carried;
     std::vector<std::string> buffers {}; ///< Names in buffers this motion moves.
     std::vector<uint64_t> rows {}; ///< The row each of those shows.
+    Reflect::FunctionCall realize {}; ///< With a name, makes the options the assembly is realized with.
+    std::optional<Kinesis::SamplerBounds> realize_bounds {}; ///< The bounds of those options.
 };
 
 /** @brief Anything a struct of the user's own controls can be added to. */

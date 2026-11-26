@@ -21,6 +21,7 @@ struct Description<::MayaFlux::Nexus::State::AssetRecord> {
             Member<&::MayaFlux::Nexus::State::AssetRecord::make> { "make" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::instances> { "instances" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::resolution> { "resolution" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::realize> { "realize" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::bounds_min> { "bounds_min" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::bounds_max> { "bounds_max" },
         };
@@ -218,6 +219,7 @@ struct Description<::MayaFlux::Nexus::State::InstanceRecord> {
             Member<&::MayaFlux::Nexus::State::InstanceRecord::scalar> { "scalar" },
             Member<&::MayaFlux::Nexus::State::InstanceRecord::texture> { "texture" },
             Member<&::MayaFlux::Nexus::State::InstanceRecord::morph_weights> { "morph_weights" },
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::palette> { "palette" },
         };
     }
 };
@@ -270,6 +272,9 @@ struct Description<::MayaFlux::Nexus::State::MotionRecord> {
             Member<&::MayaFlux::Nexus::State::MotionRecord::carried> { "carried" },
             Member<&::MayaFlux::Nexus::State::MotionRecord::buffers> { "buffers" },
             Member<&::MayaFlux::Nexus::State::MotionRecord::rows> { "rows" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::realize> { "realize" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::bounds_min> { "bounds_min" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::bounds_max> { "bounds_max" },
         };
     }
 };

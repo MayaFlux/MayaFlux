@@ -1634,7 +1634,8 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
         | aiProcess_JoinIdenticalVertices
         | aiProcess_LimitBoneWeights;
 
-    m_impl->scene = m_impl->importer.ReadFile(resolved, m_keep_polygons ? polygons : triangles_only);
+    const unsigned int steps = m_keep_polygons ? polygons : triangles_only;
+    m_impl->scene = m_impl->importer.ReadFile(resolved, m_flatten ? 0U : steps);
     if (m_flatten && m_impl->scene) {
         const bool skinned = std::any_of(m_impl->scene->mMeshes, m_impl->scene->mMeshes + m_impl->scene->mNumMeshes,
             [](const aiMesh* mesh) { return mesh->mNumBones > 0; });
@@ -1647,7 +1648,7 @@ bool ModelReader::open(const std::string& filepath, FileReadOptions /*options*/)
                 skinned ? "skins " : "", morphed ? "morph targets " : "",
                 m_impl->scene->mNumAnimations > 0 ? "animations" : "");
         }
-        m_impl->scene = m_impl->importer.ApplyPostProcessing(aiProcess_PreTransformVertices);
+        m_impl->scene = m_impl->importer.ApplyPostProcessing(steps | aiProcess_PreTransformVertices);
     }
     m_polygons_imported = m_keep_polygons;
 

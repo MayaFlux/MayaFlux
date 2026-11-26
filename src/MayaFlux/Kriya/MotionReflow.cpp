@@ -2,10 +2,8 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
-#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 #include "MayaFlux/Nodes/Network/MeshNetwork.hpp"
-#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 
 namespace MayaFlux::Kriya {
 
@@ -192,15 +190,7 @@ MotionReflow::Sink instance_sink(
 
 MotionReflow::Sink placement_sink(const std::shared_ptr<Buffers::RecordedGeometryBuffer>& buffer, uint64_t row)
 {
-    struct Placed {
-        Memory::SnapshotCell<glm::mat4> cell;
-        glm::mat4 last { 1.0F };
-        bool published {};
-        bool installed {};
-        bool warned {};
-    };
-
-    return [target = std::weak_ptr<Buffers::RecordedGeometryBuffer>(buffer), row, placed = std::make_shared<Placed>()](
+    return [target = std::weak_ptr<Buffers::RecordedGeometryBuffer>(buffer), row, warned = std::make_shared<bool>(false)](
                const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame, const FrameContext&) {
         if (!frame) {
             return;
@@ -211,8 +201,8 @@ MotionReflow::Sink placement_sink(const std::shared_ptr<Buffers::RecordedGeometr
         }
 
         if (row >= frame->world.size()) {
-            if (!placed->warned) {
-                placed->warned = true;
+            if (!*warned) {
+                *warned = true;
                 MF_RT_WARN(Journal::Component::Kriya, Journal::Context::CoroutineScheduling,
                     "placement_sink: a frame has {} world placements and the buffer shows row {}; resolve_world fills them",
                     frame->world.size(), row);
@@ -220,21 +210,7 @@ MotionReflow::Sink placement_sink(const std::shared_ptr<Buffers::RecordedGeometr
             return;
         }
 
-        if (!placed->published || placed->last != frame->world[row]) {
-            placed->last = frame->world[row];
-            placed->published = true;
-            placed->cell.publish(placed->last);
-        }
-
-        if (!placed->installed) {
-            if (const auto renderer = held->get_render_processor()) {
-                renderer->set_geometry_transform_source([placed] {
-                    const auto pinned = placed->cell.read();
-                    return pinned ? *pinned : glm::mat4(1.0F);
-                });
-                placed->installed = true;
-            }
-        }
+        held->set_placement(frame->world[row]);
     };
 }
 

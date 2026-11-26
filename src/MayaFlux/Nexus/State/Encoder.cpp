@@ -28,6 +28,7 @@
 #include "MayaFlux/IO/StagedFileSet.hpp"
 #include "MayaFlux/IO/Volume/VolumeTransfer.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexInsertion.hpp"
+#include "MayaFlux/Kakshya/Semantic/MeshAssemblyContainer.hpp"
 #include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
 #include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
@@ -196,6 +197,57 @@ namespace {
         return held(written, file, State::AssetForm::Spatial);
     }
 
+    void append_matrix(std::vector<float>& values, const glm::mat4& matrix)
+    {
+        for (glm::length_t column = 0; column < 4; ++column) {
+            for (glm::length_t row = 0; row < 4; ++row) {
+                values.push_back(matrix[column][row]);
+            }
+        }
+    }
+
+    /**
+     * The template of an instance network as an assembly of one mesh, so its skin and morph
+     * targets are written with it. A skin's joints become rows where the mesh was bound.
+     */
+    std::shared_ptr<Kakshya::MeshAssemblyContainer> template_assembly(
+        const Kakshya::MeshData& mesh,
+        const std::shared_ptr<const Kakshya::MeshSkin>& skin,
+        const std::shared_ptr<const Kakshya::MeshMorphTargets>& morphs)
+    {
+        auto assembly = std::make_shared<Kakshya::MeshAssemblyContainer>();
+
+        std::vector<uint64_t> joints;
+        if (skin) {
+            for (size_t j = 0; j < skin->joint_count(); ++j) {
+                const auto row = assembly->add_placement(
+                    { .name = "joint_" + std::to_string(j), .local = glm::inverse(skin->inverse_bind[j]) });
+                if (!row) {
+                    return nullptr;
+                }
+                joints.push_back(*row);
+            }
+        }
+
+        Kakshya::MeshAssemblySource source { .geometry = mesh, .name = "template" };
+        if (skin) {
+            source.facets.set(skin);
+        }
+        if (morphs) {
+            source.facets.set(Kakshya::MeshMorphTargets { *morphs });
+        }
+        const size_t held = assembly->add_source(std::move(source));
+
+        std::optional<uint64_t> skeleton;
+        if (skin) {
+            skeleton = assembly->add_skeleton(std::move(joints));
+        }
+        if (!assembly->add_placement({ .name = "template", .source = held, .skeleton = skeleton })) {
+            return nullptr;
+        }
+        return assembly;
+    }
+
     std::optional<State::AssetRecord> snapshot_instances(
         const std::shared_ptr<Buffers::InstanceNetworkBuffer>& buffer,
         const std::filesystem::path& directory, const std::string& stem)
@@ -205,17 +257,20 @@ namespace {
             return std::nullopt;
         }
         const auto& first = network->get_slot(0);
-        const auto mesh = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(first.node);
+        const auto node = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(first.node);
+        const auto mesh = node ? node->get_mesh_data() : std::nullopt;
         if (!mesh) {
             return std::nullopt;
         }
-        if (first.skin || first.morphs) {
-            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateEncoder: the skin and morph targets of an instance template are not in its snapshot; declare its file");
+        const auto assembly = template_assembly(*mesh, first.skin, first.morphs);
+        if (!assembly) {
+            return std::nullopt;
         }
 
         const std::string file = stem + ".glb";
-        auto record = held(IO::save_mesh(mesh, (directory / file).string()), file, State::AssetForm::Instances);
+        auto record = held(
+            IO::save_mesh(std::shared_ptr<const Kakshya::MeshAssemblyContainer>(assembly), (directory / file).string()),
+            file, State::AssetForm::Instances);
         if (!record) {
             return std::nullopt;
         }
@@ -227,10 +282,9 @@ namespace {
                 .texture = slot.texture,
                 .morph_weights = slot.morph_weights,
             };
-            for (glm::length_t column = 0; column < 4; ++column) {
-                for (glm::length_t row = 0; row < 4; ++row) {
-                    instance.transform.push_back(slot.transform[column][row]);
-                }
+            append_matrix(instance.transform, slot.transform);
+            for (const auto& joint : slot.palette) {
+                append_matrix(instance.palette, joint);
             }
             record->instances.push_back(std::move(instance));
         }
@@ -591,6 +645,11 @@ std::vector<State::AssetRecord> StateEncoder::save_assets(const std::string& dir
                 .form = source.row ? State::AssetForm::Part : State::AssetForm::Mesh,
                 .index = source.row.value_or(source.mesh),
             });
+            records.back().realize = call_record(source.realize);
+            if (source.realize_bounds) {
+                records.back().bounds_min = source.realize_bounds->min;
+                records.back().bounds_max = source.realize_bounds->max;
+            }
             continue;
         }
 
@@ -629,6 +688,11 @@ std::vector<State::MotionRecord> StateEncoder::save_motions(
             .buffers = source.buffers,
             .rows = source.rows,
         };
+        record.realize = call_record(source.realize);
+        if (source.realize_bounds) {
+            record.bounds_min = source.realize_bounds->min;
+            record.bounds_max = source.realize_bounds->max;
+        }
 
         if (record.file.empty()) {
             if (folder.empty()) {
