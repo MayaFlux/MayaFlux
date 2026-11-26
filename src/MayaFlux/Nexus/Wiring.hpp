@@ -29,6 +29,38 @@ class Fabric;
 class StateEncoder;
 
 /**
+ * @struct WiringEnding
+ * @brief The completion and detach callbacks of one finalised wiring, each run at most once.
+ */
+struct WiringEnding {
+    std::function<void()> complete;
+    std::function<void()> detach;
+    bool closed {};
+
+    /** @brief The wiring ran out by itself: complete, then detach. Ignored once closed. */
+    void finish()
+    {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        if (auto fn = std::exchange(complete, nullptr)) {
+            fn();
+        }
+        release();
+    }
+
+    /** @brief The wiring is being taken away: close it and detach. */
+    void release()
+    {
+        closed = true;
+        if (auto fn = std::exchange(detach, nullptr)) {
+            fn();
+        }
+    }
+};
+
+/**
  * @class Wiring
  * @brief Fluent builder that wires an entity into Fabric's scheduling infrastructure.
  *
@@ -37,8 +69,8 @@ class StateEncoder;
  *
  * No coroutine is created unless a scheduling modifier is set. @c bind()
  * performs an immediate single call with no coroutine. Any scheduling
- * modifier (@c every, @c on, @c move_to, @c position_from, @c use) creates
- * and registers a coroutine owned by Fabric.
+ * modifier (@c every, @c on, @c move_to, @c use) creates and registers a
+ * coroutine owned by Fabric. A wiring with none of these is fired by commit.
  *
  * @c on and @c on_scroll add a trigger, so one wiring may hold any number of them:
  * every key, button and window event an entity answers to goes through one wiring.
@@ -48,6 +80,7 @@ class StateEncoder;
 class MAYAFLUX_API Wiring {
 public:
     using PositionFn = std::function<glm::vec3()>;
+    using PlacementFn = std::function<PlacementControls()>;
     using SoundFactory = std::function<Vruta::SoundRoutine()>;
     using GraphicsFactory = std::function<Vruta::GraphicsRoutine()>;
     using CrossFactory = std::function<Vruta::CrossRoutine()>;
@@ -191,15 +224,33 @@ public:
     Wiring& move_to(const glm::vec3& pos, double delay_seconds = 0.0);
 
     /**
-     * @brief Drive position from a callable evaluated on each @c every() tick.
-     * @param fn Returns the new position on each invocation.
+     * @brief Drive position and orientation from a callable evaluated before each firing.
+     *
+     * Applies to every way the entity is fired: commit, every, triggers, move_to and
+     * Fabric::fire. A member the source leaves empty stays as it is. Where move_to
+     * also sets the position, the source wins. A Locus takes its placement from its
+     * viewpoint instead.
+     * @param fn Returns the placement to apply.
+     */
+    Wiring& place_from(PlacementFn fn);
+
+    /**
+     * @brief Same, with a name used for state encoding.
+     * @param fn_name Identifier used for state encoding.
+     * @param fn      Returns the placement to apply.
+     */
+    Wiring& place_from(std::string fn_name, PlacementFn fn);
+
+    /**
+     * @brief place_from for position alone.
+     * @param fn Returns the new position.
      */
     Wiring& position_from(PositionFn fn);
 
     /**
-     * @brief Drive position from a named callable evaluated on each @c every() tick.
+     * @brief place_from for position alone, with a name used for state encoding.
      * @param fn_name Identifier used for state encoding.
-     * @param fn      Returns the new position on each invocation.
+     * @param fn      Returns the new position.
      */
     Wiring& position_from(std::string fn_name, PositionFn fn);
 
@@ -261,6 +312,30 @@ public:
         std::string detach_name, std::function<void()> detach);
 
     // =====================================================================
+    // Endings
+    // =====================================================================
+
+    /**
+     * @brief Run @p fn when the wiring runs out by itself.
+     *
+     * That is: times is used up, for_duration expires, a move_to choreography ends
+     * or the routine or event from use returns. Never runs for cancel, remove or
+     * the end of the Fabric. times(1) on every or on a trigger means no limit, so it
+     * never runs out. Replaces any on_complete a factory set on its own routine.
+     * @param fn Called once, on the thread that ends the wiring.
+     */
+    Wiring& on_complete(std::function<void()> fn);
+
+    /**
+     * @brief Run @p fn once when the wiring stops, for whatever reason.
+     *
+     * After on_complete when it runs out, and on cancel, Fabric::remove or the end
+     * of the Fabric. Runs after a bind detach, if there is one.
+     * @param fn Called once.
+     */
+    Wiring& on_detach(std::function<void()> fn);
+
+    // =====================================================================
     // Terminal
     // =====================================================================
 
@@ -276,17 +351,14 @@ public:
     /**
      * @brief Cancel an active wiring and release any owned coroutine.
      *
-     * Runs the bind detach once, whether it is called again or a duration
-     * timer fires afterwards.
+     * Runs the bind detach and on_detach once, whether it is called again or a
+     * duration timer fires afterwards. The placement source stops with it.
      */
     void cancel();
 
 private:
     friend class Fabric;
     friend class StateEncoder;
-
-    /** @brief Run the bind detach if it has not run yet. Does nothing otherwise. */
-    void detach();
 
     explicit Wiring(Fabric& fabric, uint32_t entity_id)
         : m_fabric(fabric)
@@ -353,7 +425,9 @@ private:
 
     std::optional<double> m_interval;
     std::optional<double> m_duration;
-    std::optional<PositionFn> m_position_fn;
+    PlacementFn m_placement_fn;
+    std::function<void()> m_on_complete;
+    std::function<void()> m_on_detach;
     std::string m_position_fn_name;
     std::vector<MoveStep> m_move_steps;
     size_t m_times { 1 };
@@ -416,8 +490,8 @@ public:
     /** @brief Active event-factory, if @c use(EventFactory) was called. */
     [[nodiscard]] const EFactory& event_factory() const { return m_event_factory; }
 
-    /** @brief True if @c position_from was called. */
-    [[nodiscard]] bool has_position_fn() const { return m_position_fn.has_value(); }
+    /** @brief True if @c place_from or @c position_from was called. */
+    [[nodiscard]] bool has_position_fn() const { return static_cast<bool>(m_placement_fn); }
 
     /** @brief True if any @c bind overload was called. */
     [[nodiscard]] bool has_bind() const { return m_bind_attach.has_value(); }
@@ -425,7 +499,7 @@ public:
     /** @brief True if @c bind(attach, detach) was called. */
     [[nodiscard]] bool has_bind_detach() const { return m_bind_detach.has_value(); }
 
-    /** @brief Name of the position function, empty if anonymous. */
+    /** @brief Name of the placement source, empty if anonymous. */
     [[nodiscard]] const std::string& position_fn_name() const { return m_position_fn_name; }
 
     /** @brief Name of the active factory, empty if anonymous or none. */

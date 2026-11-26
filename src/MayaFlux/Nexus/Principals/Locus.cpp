@@ -11,7 +11,7 @@ Locus::Locus(const Kinesis::NavigationConfig& config,
     : Agent(query_radius, std::move(perception), std::move(influence))
     , m_nav(Kinesis::make_navigation_state(config))
 {
-    m_controls.position.observe(m_nav.eye);
+    m_placement.position.observe(m_nav.eye);
     m_view = Kinesis::compute_view_transform(m_nav, aspect());
     open_view();
 }
@@ -25,7 +25,7 @@ Locus::Locus(const Kinesis::NavigationConfig& config,
           std::move(influence_fn_name), std::move(influence))
     , m_nav(Kinesis::make_navigation_state(config))
 {
-    m_controls.position.observe(m_nav.eye);
+    m_placement.position.observe(m_nav.eye);
     m_view = Kinesis::compute_view_transform(m_nav, aspect());
     open_view();
 }
@@ -94,8 +94,8 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
     if (!m_held->drives(m_driver)) {
         const auto [placement, frustum] = m_held->read();
         m_view = Kinesis::view_from_frustum(placement, frustum, aspect());
-        m_controls.position.observe(glm::vec3(placement[3]));
-        m_controls.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(placement))));
+        m_placement.position.observe(glm::vec3(placement[3]));
+        m_placement.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(placement))));
         return;
     }
 
@@ -113,8 +113,8 @@ void Locus::invoke_perception(const PerceptionContext& ctx)
     m_view = Kinesis::build_view_transform(m_nav, aspect());
     const auto viewpoint = Kinesis::viewpoint_of(m_nav);
     m_held->write(m_driver, viewpoint);
-    m_controls.position.observe(m_nav.eye);
-    m_controls.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(viewpoint.first))));
+    m_placement.position.observe(m_nav.eye);
+    m_placement.orientation.observe(glm::normalize(glm::quat_cast(glm::mat3(viewpoint.first))));
 }
 
 void Locus::invoke_influence(const InfluenceContext& ctx) const

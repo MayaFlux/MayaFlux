@@ -15,9 +15,9 @@ namespace MayaFlux::Nexus {
  * @class Emitter
  * @brief Object that acts on existing MayaFlux objects when committed.
  *
- * Constructed with an optional influence function. Position is optional: call
- * @c set_position before registering with @c Fabric if spatial indexing is
- * required. Entities without a position are committed normally but are not
+ * Constructed with an optional influence function. Position is optional: set one
+ * with `set({ .position = ... })` before registering with @c Fabric if spatial
+ * indexing is required. Entities without a position are committed normally but are not
  * inserted into the spatial index.
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's
@@ -25,13 +25,15 @@ namespace MayaFlux::Nexus {
  *
  * RenderConfig takes a designated initializer.
  *
- * Its state is a struct of Quantity members, EmitterControls. `set()` applies the
- * members that hold a value, from any thread, and a member given
- * `Quantity::unset()` is emptied. The getters read the state as it is now.
- * `extend<C>()` adds a struct of the user's own beside it.
+ * Its state is structs of Quantity members: PlacementControls for where it stands
+ * and EmitterControls for what it puts out. `set()` applies the members that hold
+ * a value, from any thread, and a member given `Quantity::unset()` is emptied.
+ * The getters read the state as it is now. `extend<C>()` adds a struct of the
+ * user's own beside them.
  *
  * @code
- * emitter->set({ .position = glm::vec3(0, 1, 0), .intensity = 0.5 });
+ * emitter->set({ .position = glm::vec3(0, 1, 0) });
+ * emitter->set(EmitterControls { .intensity = 0.5 });
  * emitter->set({ .position = Quantity::unset() });
  * emitter->set_influence<InfluenceBlock>(InfluenceBlock::from, bind_influence_block(proc));
  * emitter->render(mgr, { .target_window = window });
@@ -86,32 +88,32 @@ public:
 
     /**
      * @brief Apply the members of @p incoming that hold a value.
-     * @tparam C EmitterControls, or a struct added with extend().
+     * @tparam C PlacementControls, EmitterControls, or a struct added with extend().
      *
      * Members left empty are untouched, and `Quantity::unset()` empties a member.
      * Safe from any thread.
      */
-    template <typename C = EmitterControls>
+    template <typename C = PlacementControls>
     void set(const C& incoming)
     {
         m_store.merge(incoming);
     }
 
     /** @brief A copy of the controls of type C as they are now. */
-    template <typename C = EmitterControls>
+    template <typename C = PlacementControls>
     [[nodiscard]] C get() const
     {
         return m_store.snapshot<C>();
     }
 
-    /** @brief Add a struct of the user's own controls beside EmitterControls and return it. */
+    /** @brief Add a struct of the user's own controls beside the built-in ones and return it. */
     template <typename C>
     [[nodiscard]] C& extend()
     {
         return m_store.extend<C>();
     }
 
-    /** @brief The live controls, read without a copy. */
+    /** @brief The live EmitterControls, read without a copy. */
     [[nodiscard]] const EmitterControls& controls() const noexcept { return m_controls; }
 
     /** @brief Every control by name, for tools that list or set them. */
@@ -122,7 +124,7 @@ public:
      */
     [[nodiscard]] std::optional<glm::vec3> position() const
     {
-        return quantity_value<glm::vec3>(m_controls.position);
+        return quantity_value<glm::vec3>(m_placement.position);
     }
 
     /**
@@ -131,7 +133,7 @@ public:
      */
     [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
     {
-        m_controls.position.assign(Quantity(p));
+        m_placement.position.assign(Quantity(p));
     }
 
     /**
@@ -139,7 +141,13 @@ public:
      */
     [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
     {
-        m_controls.position.assign(Quantity::unset());
+        m_placement.position.assign(Quantity::unset());
+    }
+
+    /** @brief Return the current orientation, if set. Local -Z is forward. */
+    [[nodiscard]] std::optional<glm::quat> orientation() const
+    {
+        return quantity_value<glm::quat>(m_placement.orientation);
     }
 
     /**
@@ -261,7 +269,7 @@ public:
     }
 
     /** @brief Set the intensity, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .intensity = ... })")]] void set_intensity(float i)
+    [[deprecated("use set(EmitterControls { .intensity = ... })")]] void set_intensity(float i)
     {
         m_controls.intensity.assign(Quantity(i));
     }
@@ -273,7 +281,7 @@ public:
     }
 
     /** @brief Set the radius, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .radius = ... })")]] void set_radius(float r)
+    [[deprecated("use set(EmitterControls { .radius = ... })")]] void set_radius(float r)
     {
         m_controls.radius.assign(Quantity(r));
     }
@@ -285,13 +293,13 @@ public:
     }
 
     /** @brief Set the color, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .color = ... })")]] void set_color(const glm::vec3& c)
+    [[deprecated("use set(EmitterControls { .color = ... })")]] void set_color(const glm::vec3& c)
     {
         m_controls.color.assign(Quantity(c));
     }
 
     /** @brief Clear the color, resetting it to an unset state. */
-    [[deprecated("use set({ .color = Quantity::unset() })")]] void clear_color()
+    [[deprecated("use set(EmitterControls { .color = Quantity::unset() })")]] void clear_color()
     {
         m_controls.color.assign(Quantity::unset());
     }
@@ -303,13 +311,13 @@ public:
     }
 
     /** @brief Set the size, a general-purpose parameter for influence functions. */
-    [[deprecated("use set({ .size = ... })")]] void set_size(float s)
+    [[deprecated("use set(EmitterControls { .size = ... })")]] void set_size(float s)
     {
         m_controls.size.assign(Quantity(s));
     }
 
     /** @brief Clear the size, resetting it to an unset state. */
-    [[deprecated("use set({ .size = Quantity::unset() })")]] void clear_size()
+    [[deprecated("use set(EmitterControls { .size = Quantity::unset() })")]] void clear_size()
     {
         m_controls.size.assign(Quantity::unset());
     }
@@ -323,12 +331,11 @@ public:
     /**
      * @brief Make an existing, already rendered buffer the look of this object.
      *
-     * Works as Agent::attach does, except that an Emitter has no orientation:
-     * every render processor the buffer has is moved to the object's position
-     * and never rotated. If the object already has a position, that position is
-     * kept and becomes the offset. Replaces any previous attachment. An
-     * attachment is not part of encoded state and must be made again after
-     * decoding.
+     * Works as Agent::attach does: every render processor the buffer has is
+     * placed at the object's position and orientation. If the object already has
+     * a position, that position is kept and becomes the offset. Replaces any
+     * previous attachment. An attachment is not part of encoded state and must be
+     * made again after decoding.
      *
      * @param buf    Buffer to attach. Ignored if null.
      * @param config Anchor vertex, offset and move behaviour.
@@ -389,9 +396,11 @@ public:
     }
 
 private:
+    [[nodiscard]] static PlacementControls& open_placement(QuantityStore& store);
     [[nodiscard]] static EmitterControls& open(QuantityStore& store);
 
     QuantityStore m_store;
+    PlacementControls& m_placement { open_placement(m_store) };
     EmitterControls& m_controls { open(m_store) };
 
     InfluenceFn m_fn;

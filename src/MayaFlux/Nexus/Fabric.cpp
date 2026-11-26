@@ -46,6 +46,9 @@ Fabric::~Fabric()
     }
 
     for (auto& [id, reg] : m_registrations) {
+        if (reg.ending) {
+            reg.ending->closed = true;
+        }
         if (!reg.task_name.empty()) {
             m_scheduler->cancel_task(reg.task_name);
         }
@@ -61,8 +64,8 @@ Fabric::~Fabric()
 
 void Fabric::release(Registration& reg)
 {
-    if (reg.wiring.has_value()) {
-        reg.wiring->detach();
+    if (reg.ending) {
+        reg.ending->release();
     }
 
     std::visit([this](const auto& ptr) {
@@ -124,6 +127,9 @@ void Fabric::remove(uint32_t id)
 
     auto& reg = it->second;
 
+    if (reg.ending) {
+        reg.ending->closed = true;
+    }
     if (!reg.task_name.empty()) {
         m_scheduler->cancel_task(reg.task_name);
     }
@@ -287,6 +293,9 @@ std::shared_ptr<Agent> Fabric::get_agent(uint32_t id) const
 void Fabric::commit()
 {
     for (auto& [id, reg] : m_registrations) {
+        if (reg.commit_driven) {
+            apply_placement(reg);
+        }
         std::visit([&](const auto& ptr) {
             const auto position = ptr->position();
             if (!position.has_value()) {
@@ -331,7 +340,17 @@ void Fabric::fire(uint32_t id, std::optional<glm::vec2> cursor, const Core::Wind
             "Fabric::fire: id {} not registered", id);
         return;
     }
+    apply_placement(it->second);
     fire(it->second, cursor, input);
+}
+
+void Fabric::apply_placement(const Registration& reg)
+{
+    if (!reg.placement) {
+        return;
+    }
+    const PlacementControls incoming = reg.placement();
+    std::visit([&incoming](const auto& ptr) { ptr->set(incoming); }, reg.member);
 }
 
 // =============================================================================
@@ -416,6 +435,7 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             if (const auto position = ptr->position()) {
                 ctx.position = *position;
             }
+            ctx.orientation = ptr->orientation();
             ctx.intensity = ptr->intensity();
             ctx.radius = ptr->radius();
             ctx.color = ptr->color();
@@ -428,6 +448,7 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             PerceptionContext ctx;
             const float query_radius = ptr->query_radius();
             ctx.radius = query_radius;
+            ctx.orientation = ptr->orientation();
             std::vector<Kinesis::QueryResult> results;
             if (const auto position = ptr->position()) {
                 ctx.position = *position;

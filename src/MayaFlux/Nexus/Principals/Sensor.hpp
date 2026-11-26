@@ -14,8 +14,9 @@ namespace MayaFlux::Nexus {
  * @c Fabric if spatial queries are required. A Sensor without a position receives an
  * empty @c spatial_results span on each commit.
  *
- * Its state is a struct of Quantity members, SensorControls, applied with `set()`
- * from any thread. `extend<C>()` adds a struct of the user's own beside it.
+ * Its state is structs of Quantity members, PlacementControls and SensorControls,
+ * applied with `set()` from any thread. `extend<C>()` adds a struct of the user's
+ * own beside them.
  *
  * The id is assigned by @c Fabric::wire and is stable for the object's
  * lifetime.
@@ -63,32 +64,32 @@ public:
 
     /**
      * @brief Apply the members of @p incoming that hold a value.
-     * @tparam C SensorControls, or a struct added with extend().
+     * @tparam C PlacementControls, SensorControls, or a struct added with extend().
      *
      * Members left empty are untouched, and `Quantity::unset()` empties a member.
      * Safe from any thread.
      */
-    template <typename C = SensorControls>
+    template <typename C = PlacementControls>
     void set(const C& incoming)
     {
         m_store.merge(incoming);
     }
 
     /** @brief A copy of the controls of type C as they are now. */
-    template <typename C = SensorControls>
+    template <typename C = PlacementControls>
     [[nodiscard]] C get() const
     {
         return m_store.snapshot<C>();
     }
 
-    /** @brief Add a struct of the user's own controls beside SensorControls and return it. */
+    /** @brief Add a struct of the user's own controls beside the built-in ones and return it. */
     template <typename C>
     [[nodiscard]] C& extend()
     {
         return m_store.extend<C>();
     }
 
-    /** @brief The live controls, read without a copy. */
+    /** @brief The live SensorControls, read without a copy. */
     [[nodiscard]] const SensorControls& controls() const noexcept { return m_controls; }
 
     /** @brief Every control by name, for tools that list or set them. */
@@ -108,7 +109,7 @@ public:
      */
     [[nodiscard]] std::optional<glm::vec3> position() const
     {
-        return quantity_value<glm::vec3>(m_controls.position);
+        return quantity_value<glm::vec3>(m_placement.position);
     }
 
     /**
@@ -117,7 +118,7 @@ public:
      */
     [[deprecated("use set({ .position = ... })")]] void set_position(const glm::vec3& p)
     {
-        m_controls.position.assign(Quantity(p));
+        m_placement.position.assign(Quantity(p));
     }
 
     /**
@@ -125,7 +126,13 @@ public:
      */
     [[deprecated("use set({ .position = Quantity::unset() })")]] void clear_position()
     {
-        m_controls.position.assign(Quantity::unset());
+        m_placement.position.assign(Quantity::unset());
+    }
+
+    /** @brief Return the current orientation, if set. Local -Z is forward. */
+    [[nodiscard]] std::optional<glm::quat> orientation() const
+    {
+        return quantity_value<glm::quat>(m_placement.orientation);
     }
 
     /**
@@ -140,7 +147,7 @@ public:
      * @brief Set the query radius.
      * @param r New radius in world-space units.
      */
-    [[deprecated("use set({ .query_radius = ... })")]] void set_query_radius(float r)
+    [[deprecated("use set(SensorControls { .query_radius = ... })")]] void set_query_radius(float r)
     {
         m_controls.query_radius.assign(Quantity(r));
     }
@@ -185,9 +192,11 @@ public:
     }
 
 private:
+    [[nodiscard]] static PlacementControls& open_placement(QuantityStore& store);
     [[nodiscard]] static SensorControls& open(QuantityStore& store);
 
     QuantityStore m_store;
+    PlacementControls& m_placement { open_placement(m_store) };
     SensorControls& m_controls { open(m_store) };
     std::string m_fn_name;
     PerceptionFn m_fn;

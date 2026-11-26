@@ -11,8 +11,8 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/SkinProcessor.hpp"
 #include "MayaFlux/Buffers/Shaders/VertexFieldProcessor.hpp"
-#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Buffers/Staging/StagingUtils.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
 #include "MayaFlux/Kakshya/NDData/SpatialAccess.hpp"
 #include "MayaFlux/Kakshya/NDData/VertexInsertion.hpp"
 #include "MayaFlux/Kinesis/Morphology.hpp"
@@ -36,7 +36,7 @@ namespace {
 
     std::vector<uint8_t> download_records(const std::shared_ptr<Buffers::VKBuffer>& buffer, size_t bytes)
     {
-        std::vector<uint8_t> records(std::min(bytes, buffer->get_size_bytes()));
+        std::vector<uint8_t> records(std::min<size_t>(bytes, buffer->get_size_bytes()));
         std::shared_ptr<Buffers::VKBuffer> staging;
         Buffers::download_back_buffer(
             Buffers::generation_slot(Buffers::gpu_buffer_handle(buffer)), records.data(), records.size(), staging);

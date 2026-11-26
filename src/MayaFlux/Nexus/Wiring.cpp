@@ -112,9 +112,35 @@ Wiring& Wiring::move_to(const glm::vec3& pos, double delay_seconds)
     return *this;
 }
 
+Wiring& Wiring::place_from(PlacementFn fn)
+{
+    m_placement_fn = std::move(fn);
+    return *this;
+}
+
+Wiring& Wiring::place_from(std::string fn_name, PlacementFn fn)
+{
+    m_position_fn_name = std::move(fn_name);
+    return place_from(std::move(fn));
+}
+
 Wiring& Wiring::position_from(PositionFn fn)
 {
-    m_position_fn = std::move(fn);
+    if (!fn) {
+        return place_from(PlacementFn {});
+    }
+    return place_from([fn = std::move(fn)] { return PlacementControls { .position = fn() }; });
+}
+
+Wiring& Wiring::on_complete(std::function<void()> fn)
+{
+    m_on_complete = std::move(fn);
+    return *this;
+}
+
+Wiring& Wiring::on_detach(std::function<void()> fn)
+{
+    m_on_detach = std::move(fn);
     return *this;
 }
 
@@ -151,8 +177,7 @@ Wiring& Wiring::use(EventFactory factory)
 Wiring& Wiring::position_from(std::string fn_name, PositionFn fn)
 {
     m_position_fn_name = std::move(fn_name);
-    m_position_fn = std::move(fn);
-    return *this;
+    return position_from(std::move(fn));
 }
 
 Wiring& Wiring::use(std::string fn_name, SoundFactory factory)
@@ -235,12 +260,21 @@ std::string Wiring::make_name(const char* prefix) const
 
 namespace {
 
-    template <typename Entity>
-    void place_entity(Entity& entity, const glm::vec3& position)
+    /**
+     * Completion handler for a routine or event the caller made. It reports a
+     * termination request as well as a natural end, and only the latter counts.
+     */
+    template <typename Handler>
+    std::function<void()> finish_unless_stopped(
+        const std::shared_ptr<Handler>& handler,
+        const std::shared_ptr<WiringEnding>& ending)
     {
-        typename Entity::Controls incoming;
-        incoming.position = position;
-        entity.set(incoming);
+        return [running = std::weak_ptr<Handler>(handler), ending] {
+            const auto live = running.lock();
+            if (live && !live->get_should_terminate()) {
+                ending->finish();
+            }
+        };
     }
 
     struct FireLimit {
@@ -280,6 +314,22 @@ void Wiring::finalise()
         || m_interval.has_value();
 
     reg.commit_driven = !has_any_path;
+    reg.placement = m_placement_fn;
+
+    const auto ending = std::make_shared<WiringEnding>();
+    ending->complete = m_on_complete;
+    if (m_bind_detach.has_value() || m_on_detach) {
+        ending->detach = [bound = m_bind_detach.value_or(nullptr), then = m_on_detach] {
+            if (bound) {
+                bound();
+            }
+            if (then) {
+                then();
+            }
+        };
+    }
+    reg.ending = ending;
+    const bool watched = ending->complete || ending->detach;
 
     // ------------------------------------------------------------------
     // Register named callables before any early return.
@@ -323,9 +373,11 @@ void Wiring::finalise()
         std::visit([&](auto& factory) {
             using F = std::decay_t<decltype(factory)>;
             if constexpr (!std::is_same_v<F, std::monostate>) {
-                scheduler.add_task(
-                    std::make_shared<std::invoke_result_t<F>>(factory()),
-                    name, false);
+                const auto routine = std::make_shared<std::invoke_result_t<F>>(factory());
+                if (watched) {
+                    routine->on_complete(finish_unless_stopped(routine, ending));
+                }
+                scheduler.add_task(routine, name, false);
             }
         },
             m_factory);
@@ -339,9 +391,11 @@ void Wiring::finalise()
     if (m_event_factory.has_value()) {
         auto name = make_name("nexus_event");
         reg.event_names.push_back(name);
-        ev_manager.add_event(
-            std::make_shared<Vruta::Event>((*m_event_factory)(scheduler)),
-            name);
+        const auto event = std::make_shared<Vruta::Event>((*m_event_factory)(scheduler));
+        if (watched) {
+            event->on_complete(finish_unless_stopped(event, ending));
+        }
+        ev_manager.add_event(event, name);
         m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
         return;
     }
@@ -352,21 +406,10 @@ void Wiring::finalise()
     if (m_bind_attach.has_value()) {
         (*m_bind_attach)();
 
-        if (m_bind_detach.has_value()) {
-            const auto once = std::make_shared<std::function<void()>>(std::move(*m_bind_detach));
-            m_bind_detach = [once]() {
-                if (*once) {
-                    const auto detach = std::exchange(*once, nullptr);
-                    detach();
-                }
-            };
-        }
-
-        if (m_duration.has_value() && m_bind_detach.has_value()) {
+        if (m_duration.has_value() && watched) {
             auto timer = std::make_shared<Kriya::Timer>(scheduler_ptr, m_duration_token);
-            auto detach = *m_bind_detach;
-            timer->schedule(*m_duration, [timer, detach]() {
-                detach();
+            timer->schedule(*m_duration, [timer, ending]() {
+                ending->finish();
             });
         }
         m_fabric.m_registrations[m_entity_id].wiring.emplace(std::move(*this));
@@ -383,14 +426,18 @@ void Wiring::finalise()
         Kriya::EventChain chain(
             scheduler_ptr, name, m_metro_token);
         auto& fab = m_fabric;
+        const auto steps_left = std::make_shared<size_t>(m_move_steps.size() * std::max<size_t>(m_times, 1));
         for (auto& step : m_move_steps) {
             glm::vec3 pos = step.position;
-            chain.then([&fab, pos, id]() {
+            chain.then([&fab, pos, id, ending, steps_left]() {
                 std::visit([&pos](const auto& ptr) {
-                    place_entity(*ptr, pos);
+                    ptr->set(PlacementControls { .position = pos });
                 },
                     fab.m_registrations[id].member);
                 fab.fire(id);
+                if (*steps_left > 0 && --*steps_left == 0) {
+                    ending->finish();
+                }
             },
                 step.delay_seconds);
         }
@@ -408,12 +455,13 @@ void Wiring::finalise()
     if (!m_triggers.empty()) {
         const auto limit = std::make_shared<FireLimit>(FireLimit { .remaining = m_times, .limited = m_times > 1, .stop = {} });
         const auto stoppable = std::make_shared<std::vector<std::string>>();
-        limit->stop = [ev_manager_ptr, stoppable]() {
+        limit->stop = [ev_manager_ptr, stoppable, ending]() {
             for (const auto& name : *stoppable) {
                 if (const auto event = ev_manager_ptr->get_event(name)) {
                     event->set_should_terminate(true);
                 }
             }
+            ending->finish();
         };
 
         using FireAt = std::function<void(std::optional<glm::vec2>, const Core::WindowEvent*)>;
@@ -547,22 +595,14 @@ void Wiring::finalise()
             }
         }
 
-        auto pos_fn = m_position_fn;
         auto name = make_name("nexus_metro");
         reg.task_name = name;
         auto& fab = m_fabric;
         const auto limit = std::make_shared<FireLimit>(FireLimit { .remaining = m_times, .limited = m_times > 1, .stop = {} });
 
-        const auto cycle = [&fab, id, pos_fn, limit]() {
+        const auto cycle = [&fab, id, limit]() {
             if (limit->spent()) {
                 return;
-            }
-            if (pos_fn.has_value()) {
-                glm::vec3 p = (*pos_fn)();
-                std::visit([&p](const auto& ptr) {
-                    place_entity(*ptr, p);
-                },
-                    fab.m_registrations[id].member);
             }
             fab.fire(id);
             limit->fired();
@@ -578,17 +618,19 @@ void Wiring::finalise()
             return;
         }
 
-        limit->stop = [running = std::weak_ptr<Vruta::Routine>(routine)]() {
+        limit->stop = [running = std::weak_ptr<Vruta::Routine>(routine), ending]() {
             if (const auto live = running.lock()) {
                 live->set_should_terminate(true);
             }
+            ending->finish();
         };
         scheduler.add_task(routine, name, false);
 
         if (m_duration.has_value()) {
             auto timer = std::make_shared<Kriya::Timer>(scheduler_ptr, m_duration_token);
-            timer->schedule(*m_duration, [name, timer, scheduler_ptr]() {
+            timer->schedule(*m_duration, [name, timer, scheduler_ptr, ending]() {
                 scheduler_ptr->cancel_task(name);
+                ending->finish();
             });
         }
     }
@@ -603,6 +645,11 @@ void Wiring::finalise()
 void Wiring::cancel()
 {
     auto& reg = m_fabric.m_registrations[m_entity_id];
+    const auto ending = reg.ending;
+    if (ending) {
+        ending->closed = true;
+    }
+    reg.placement = nullptr;
 
     if (!reg.task_name.empty()) {
         m_fabric.m_scheduler->cancel_task(reg.task_name);
@@ -617,14 +664,8 @@ void Wiring::cancel()
     }
     reg.event_names.clear();
 
-    detach();
-}
-
-void Wiring::detach()
-{
-    if (m_bind_detach.has_value() && *m_bind_detach) {
-        const auto action = std::exchange(*m_bind_detach, nullptr);
-        action();
+    if (ending) {
+        ending->release();
     }
 }
 

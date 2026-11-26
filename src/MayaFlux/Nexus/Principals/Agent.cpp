@@ -7,9 +7,14 @@
 
 namespace MayaFlux::Nexus {
 
+PlacementControls& Agent::open_placement(QuantityStore& store)
+{
+    return store.declare<PlacementControls>();
+}
+
 AgentControls& Agent::open(QuantityStore& store)
 {
-    auto& controls = store.declare<AgentControls>();
+    auto& controls = store.extend<AgentControls>();
     controls.intensity.observe(1.0F);
     controls.radius.observe(1.0F);
     return controls;
@@ -50,7 +55,7 @@ void Agent::recenter()
     auto placed = position();
     recenter_attachment(*m_attachment, placed, orientation());
     if (placed) {
-        m_controls.position.observe(*placed);
+        m_placement.position.observe(*placed);
     }
 }
 
@@ -62,7 +67,7 @@ void Agent::follow_attachment()
     auto placed = position();
     Nexus::follow_attachment(*m_attachment, placed, orientation());
     if (placed) {
-        m_controls.position.observe(*placed);
+        m_placement.position.observe(*placed);
     }
 }
 

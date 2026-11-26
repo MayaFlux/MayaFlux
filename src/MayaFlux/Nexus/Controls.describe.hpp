@@ -13,8 +13,6 @@ struct Description<::MayaFlux::Nexus::AgentControls> {
     static constexpr auto members()
     {
         return std::tuple {
-            Member<&::MayaFlux::Nexus::AgentControls::position> { "position" },
-            Member<&::MayaFlux::Nexus::AgentControls::orientation> { "orientation" },
             Member<&::MayaFlux::Nexus::AgentControls::intensity> { "intensity" },
             Member<&::MayaFlux::Nexus::AgentControls::radius> { "radius" },
             Member<&::MayaFlux::Nexus::AgentControls::color> { "color" },
@@ -31,7 +29,6 @@ struct Description<::MayaFlux::Nexus::EmitterControls> {
     static constexpr auto members()
     {
         return std::tuple {
-            Member<&::MayaFlux::Nexus::EmitterControls::position> { "position" },
             Member<&::MayaFlux::Nexus::EmitterControls::intensity> { "intensity" },
             Member<&::MayaFlux::Nexus::EmitterControls::radius> { "radius" },
             Member<&::MayaFlux::Nexus::EmitterControls::color> { "color" },
@@ -91,6 +88,19 @@ struct Description<::MayaFlux::Nexus::MantleControls> {
 };
 
 template <>
+struct Description<::MayaFlux::Nexus::PlacementControls> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::PlacementControls";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::PlacementControls::position> { "position" },
+            Member<&::MayaFlux::Nexus::PlacementControls::orientation> { "orientation" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::PresenceControls> {
     static constexpr std::string_view name = "MayaFlux::Nexus::PresenceControls";
 
@@ -110,7 +120,6 @@ struct Description<::MayaFlux::Nexus::SensorControls> {
     static constexpr auto members()
     {
         return std::tuple {
-            Member<&::MayaFlux::Nexus::SensorControls::position> { "position" },
             Member<&::MayaFlux::Nexus::SensorControls::query_radius> { "query_radius" },
         };
     }
