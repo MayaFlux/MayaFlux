@@ -289,6 +289,27 @@ public:
      */
     bool follow(const std::shared_ptr<const Course>& other, double offset = 0.0);
 
+    /**
+     * @brief Take source time from a value instead of the clock, such as a place on a path.
+     *
+     * Each advance reads @p playhead on the driving thread, so what it reads must be
+     * safe to read there. The range and edge still fold the value, and markers it
+     * passes are announced either way. Use CourseEdge::Hold: a Once course finishes
+     * at an end and no longer follows the value. A value that is not finite holds the
+     * last one. Sets the time map, as follow() does; unfollow() ends it.
+     *
+     * @return false for an empty function.
+     *
+     * @code
+     * course->edge(Kriya::CourseEdge::Hold);
+     * course->scrub([walker, from, along = to - from] {
+     *     const glm::vec3 at = walker->position().value_or(from);
+     *     return 12.0 * glm::dot(at - from, along) / glm::dot(along, along);
+     * });
+     * @endcode
+     */
+    bool scrub(std::function<double()> playhead);
+
     /** @brief Stop following. Source time runs with the clock again, from where the course is. */
     void unfollow();
 

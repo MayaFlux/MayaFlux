@@ -244,6 +244,21 @@ bool Course::follow(const std::shared_ptr<const Course>& other, double offset)
     return true;
 }
 
+bool Course::scrub(std::function<double()> playhead)
+{
+    if (!playhead) {
+        return false;
+    }
+    time_map(Kinesis::TimeMap { .fn = [playhead = std::move(playhead),
+                                    last = std::make_shared<double>(time())](const double&) {
+        if (const double value = playhead(); std::isfinite(value)) {
+            *last = value;
+        }
+        return *last;
+    } });
+    return true;
+}
+
 void Course::unfollow()
 {
     clear_time_map();
