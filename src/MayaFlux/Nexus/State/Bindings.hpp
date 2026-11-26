@@ -10,6 +10,10 @@ namespace MayaFlux::Core {
 class Window;
 }
 
+namespace MayaFlux::Kriya {
+class Course;
+}
+
 namespace MayaFlux::Vruta {
 class NetworkSource;
 }
@@ -51,6 +55,12 @@ struct AssetSource {
  * keeps its own buffer, and one that does not gets the buffer loaded for it in
  * StateDecoder::ReconstructionResult::buffers, neither registered nor drawn.
  *
+ * A bound course has its playback saved: its numeric controls, range, time,
+ * whether it is paused and its markers. Loading applies that to the course bound
+ * under the same name and never makes one; the commands take effect on its next
+ * advance. A time map or repeat, and so following another course, is a closure
+ * and is not saved.
+ *
  * @code
  * auto bindings = std::make_shared<Nexus::State::Bindings>();
  * bindings->buffers["wolf"] = wolf;
@@ -68,6 +78,7 @@ struct Bindings {
     SourceNames sources;
     Functions functions;
     std::map<std::string, AssetSource, std::less<>> assets;
+    std::map<std::string, std::shared_ptr<Kriya::Course>, std::less<>> courses;
 };
 
 }

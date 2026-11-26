@@ -17,6 +17,7 @@
 #include "MayaFlux/IO/FileReader.hpp"
 #include "MayaFlux/IO/Model/ModelReader.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kriya/Course.hpp"
 
 #include "MayaFlux/Transitive/Facet/ControlValueText.hpp"
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
@@ -919,6 +920,58 @@ namespace {
         return loaded;
     }
 
+    // -------------------------------------------------------------------------
+    // Courses
+    // -------------------------------------------------------------------------
+
+    void apply_courses(
+        const std::vector<State::CourseRecord>& records,
+        const State::Bindings* bindings,
+        std::vector<std::string>& warnings)
+    {
+        for (const auto& record : records) {
+            const std::string label = "course '" + record.name + "'";
+            const auto found = bindings ? bindings->courses.find(record.name) : decltype(bindings->courses.end()) {};
+            if (!bindings || found == bindings->courses.end() || !found->second) {
+                warnings.push_back(label + " is not bound, its playback is not restored");
+                continue;
+            }
+            Kriya::Course& course = *found->second;
+
+            for (const auto& what : record.lost) {
+                warnings.push_back(label + ": " + what + " was not saved");
+            }
+            for (const auto& [control, text] : record.controls) {
+                ControlValue* slot = course.store().find(control);
+                ControlValue decoded;
+                Reflect::TextError reason = Reflect::TextError::Invalid;
+                if (slot && Reflect::TextCodec<ControlValue>::decode(text, decoded, reason)) {
+                    slot->assign(decoded);
+                } else {
+                    warnings.push_back(label + ": control '" + control + "' could not be applied");
+                }
+            }
+            if (record.range_in && record.range_out && !course.range(*record.range_in, *record.range_out)) {
+                warnings.push_back(label + ": its range was refused");
+            }
+
+            const auto held = course.markers();
+            for (const auto& marker : record.markers) {
+                const bool present = std::ranges::any_of(held, [&marker](const Kriya::CourseMarker& live) {
+                    return live.name == marker.name && live.time == marker.time;
+                });
+                if (!present) {
+                    course.add_marker(marker.name, marker.time);
+                }
+            }
+
+            const bool queued = (record.paused ? course.pause() : course.start()) && course.seek(record.time);
+            if (!queued) {
+                warnings.push_back(label + ": its time could not be queued");
+            }
+        }
+    }
+
     std::optional<float> read_cell_size(const std::string& json_path)
     {
         IO::JSONSerializer ser;
@@ -1007,6 +1060,8 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
                 return wraps(live, subkind, buffer);
             });
     }
+
+    apply_courses(schema.courses, m_bindings.get(), warnings);
 
     log_warnings(warnings);
 
@@ -1098,6 +1153,8 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
             break;
         }
     }
+
+    apply_courses(schema.courses, m_bindings.get(), result.warnings);
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
         "StateDecoder::reconstruct: constructed={} patched={} skipped={} warnings={}",
@@ -1213,6 +1270,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         }
     }
 
+    apply_courses(schema.courses, m_bindings.get(), total.warnings);
     total.user_state = schema.user_state;
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,

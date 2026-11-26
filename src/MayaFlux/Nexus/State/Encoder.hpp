@@ -29,7 +29,7 @@ namespace MayaFlux::Nexus {
  * the arguments of its call. Buffers, windows and network sources are written by
  * the names the Bindings give them, and every bound buffer is recorded as its
  * declared file or written as a snapshot into a new assets directory beside the
- * state. What cannot be written, such as an anonymous
+ * state. Bound courses have their playback written. What cannot be written, such as an anonymous
  * function or an unbound window, is warned and listed in the record.
  */
 class MAYAFLUX_API StateEncoder {
@@ -83,6 +83,9 @@ private:
         const std::string& base_path,
         const std::unordered_set<const Expanse*>& tapestry_owned,
         IO::StagedFileSet* staged = nullptr);
+
+    /** Record the playback of every bound course. */
+    [[nodiscard]] std::vector<State::CourseRecord> save_courses() const;
 
     /** Record every bound buffer, writing snapshots into a new directory under @p directory. */
     [[nodiscard]] std::vector<State::AssetRecord> save_assets(const std::string& directory) const;

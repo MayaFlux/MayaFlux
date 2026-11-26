@@ -17,6 +17,7 @@
 #include "MayaFlux/IO/Model/ModelExport.hpp"
 #include "MayaFlux/IO/StagedFileSet.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kriya/Course.hpp"
 
 #include "MayaFlux/Transitive/Facet/ControlValueText.hpp"
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
@@ -322,6 +323,54 @@ std::vector<State::AssetRecord> StateEncoder::save_assets(const std::string& dir
     return records;
 }
 
+std::vector<State::CourseRecord> StateEncoder::save_courses() const
+{
+    std::vector<State::CourseRecord> records;
+    if (!m_bindings) {
+        return records;
+    }
+
+    for (const auto& [name, course] : m_bindings->courses) {
+        if (!course) {
+            continue;
+        }
+        State::CourseRecord record {
+            .name = name,
+            .time = course->time(),
+            .paused = course->paused(),
+        };
+        course->store().for_each([&record](std::string_view control, const ControlValue& slot) {
+            if (!slot.has_value()) {
+                return;
+            }
+            if (auto text = Reflect::control_text(slot); !text.empty()) {
+                record.controls.emplace(std::string(control), std::move(text));
+            }
+        });
+
+        const auto held = course->get<Kriya::CourseControls>();
+        if (const auto range = held.range.value()) {
+            record.range_in = range->in;
+            record.range_out = range->out;
+        }
+        if (const auto map = held.time_map.value(); map && map->fn) {
+            record.lost.emplace_back("its time map");
+        }
+        if (const auto map = held.repeat.value(); map && map->fn) {
+            record.lost.emplace_back("its repeat");
+        }
+        for (const auto& marker : course->markers()) {
+            record.markers.push_back({ .name = marker.name, .time = marker.time });
+        }
+        for (const auto& what : record.lost) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateEncoder: course '{}' loses {}", name, what);
+        }
+        records.push_back(std::move(record));
+    }
+    return records;
+}
+
 template <typename Entity>
 void StateEncoder::fill_attachment(State::EntityRecord& record, const Entity& entity) const
 {
@@ -605,6 +654,7 @@ bool StateEncoder::encode_fabric(
     schema.cell_size = fabric.m_cell_size;
     if (staged == nullptr) {
         schema.assets = save_assets(std::filesystem::path(IO::resolve_write_path(json_path)).parent_path().string());
+        schema.courses = save_courses();
     }
     schema.components = std::move(components);
     schema.entities = std::move(entities);
@@ -689,6 +739,7 @@ bool StateEncoder::encode(const Tapestry& tapestry, const std::string& base_dir,
 
     schema.user_state = std::move(user_state);
     schema.assets = save_assets(set.directory());
+    schema.courses = save_courses();
 
     IO::JSONSerializer ser;
     std::string error;

@@ -333,6 +333,36 @@ struct AssetRecord {
 MF_DESCRIBE(AssetRecord)
 
 // =============================================================================
+// Course records
+// =============================================================================
+
+struct MarkerRecord {
+    std::string name;
+    double time {};
+
+};
+
+MF_DESCRIBE(MarkerRecord)
+
+/**
+ * @brief Playback of a bound course. @p controls holds its numeric controls by
+ *        name, and @p lost what it holds that cannot be written.
+ */
+struct CourseRecord {
+    std::string name;
+    std::map<std::string, std::string> controls;
+    std::optional<double> range_in;
+    std::optional<double> range_out;
+    double time {};
+    bool paused {};
+    std::vector<MarkerRecord> markers;
+    std::vector<std::string> lost;
+
+};
+
+MF_DESCRIBE(CourseRecord)
+
+// =============================================================================
 // Fabric schema
 // =============================================================================
 
@@ -344,6 +374,7 @@ struct FabricSchema {
     std::vector<ComponentRecord> components;
     std::optional<float> cell_size;
     std::vector<AssetRecord> assets;
+    std::vector<CourseRecord> courses;
 
 };
 
@@ -397,6 +428,7 @@ struct TapestrySchema {
     std::vector<TapestryExpanseRecord> expanses;
     nlohmann::json user_state;
     std::vector<AssetRecord> assets;
+    std::vector<CourseRecord> courses;
 
 };
 

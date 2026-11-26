@@ -78,6 +78,25 @@ struct Description<::MayaFlux::Nexus::State::ComponentRecord> {
 };
 
 template <>
+struct Description<::MayaFlux::Nexus::State::CourseRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::CourseRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::CourseRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::controls> { "controls" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::range_in> { "range_in" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::range_out> { "range_out" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::time> { "time" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::paused> { "paused" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::markers> { "markers" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::lost> { "lost" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::State::EntityRecord> {
     static constexpr std::string_view name = "MayaFlux::Nexus::State::EntityRecord";
 
@@ -149,6 +168,7 @@ struct Description<::MayaFlux::Nexus::State::FabricSchema> {
             Member<&::MayaFlux::Nexus::State::FabricSchema::components> { "components" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::cell_size> { "cell_size" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::assets> { "assets" },
+            Member<&::MayaFlux::Nexus::State::FabricSchema::courses> { "courses" },
         };
     }
 };
@@ -168,6 +188,19 @@ struct Description<::MayaFlux::Nexus::State::LocusNavRecord> {
             Member<&::MayaFlux::Nexus::State::LocusNavRecord::speed> { "speed" },
             Member<&::MayaFlux::Nexus::State::LocusNavRecord::mouse_sensitivity> { "mouse_sensitivity" },
             Member<&::MayaFlux::Nexus::State::LocusNavRecord::scroll_speed> { "scroll_speed" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::State::MarkerRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::MarkerRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::MarkerRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::MarkerRecord::time> { "time" },
         };
     }
 };
@@ -242,6 +275,7 @@ struct Description<::MayaFlux::Nexus::State::TapestrySchema> {
             Member<&::MayaFlux::Nexus::State::TapestrySchema::expanses> { "expanses" },
             Member<&::MayaFlux::Nexus::State::TapestrySchema::user_state> { "user_state" },
             Member<&::MayaFlux::Nexus::State::TapestrySchema::assets> { "assets" },
+            Member<&::MayaFlux::Nexus::State::TapestrySchema::courses> { "courses" },
         };
     }
 };
