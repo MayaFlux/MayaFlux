@@ -317,6 +317,33 @@ public:
     [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
 
     /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Agent&)>& apply)
+    {
+        const auto before = sink_buffers();
+        apply(*this);
+        for (const void* sink : sink_buffers()) {
+            if (std::ranges::find(before, sink) == before.end()) {
+                m_configured_sinks.push_back(sink);
+            }
+        }
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
+    /** @brief True for a sink buffer that configure() made, which its call makes again. */
+    [[nodiscard]] bool made_by_configure(const void* sink) const
+    {
+        return std::ranges::find(m_configured_sinks, sink) != m_configured_sinks.end();
+    }
+
+    /**
      * @brief Add an influence of any type, with as many targets as are wanted.
      * @tparam T Type the producer returns; whatever the targets take.
      * @param producer Builds the value from the influence context.
@@ -545,6 +572,20 @@ private:
     mutable std::optional<Attachment> m_attachment;
     std::vector<std::pair<std::shared_ptr<void>, InfluenceFn>> m_influences;
     std::vector<std::pair<std::shared_ptr<void>, PerceptionFn>> m_perceptions;
+    [[nodiscard]] std::vector<const void*> sink_buffers() const
+    {
+        std::vector<const void*> held;
+        for (const auto& sink : m_audio_sinks) {
+            held.push_back(sink.buf.get());
+        }
+        for (const auto& sink : m_render_sinks) {
+            held.push_back(sink.buf.get());
+        }
+        return held;
+    }
+
+    std::vector<const void*> m_configured_sinks;
+    std::vector<Reflect::FunctionCall> m_configurations;
 
     void follow_attachment();
 

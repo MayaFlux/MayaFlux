@@ -365,6 +365,33 @@ public:
     [[nodiscard]] bool attached() const { return m_attachment.has_value(); }
 
     /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Emitter&)>& apply)
+    {
+        const auto before = sink_buffers();
+        apply(*this);
+        for (const void* sink : sink_buffers()) {
+            if (std::ranges::find(before, sink) == before.end()) {
+                m_configured_sinks.push_back(sink);
+            }
+        }
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
+    /** @brief True for a sink buffer that configure() made, which its call makes again. */
+    [[nodiscard]] bool made_by_configure(const void* sink) const
+    {
+        return std::ranges::find(m_configured_sinks, sink) != m_configured_sinks.end();
+    }
+
+    /**
      * @brief Set the one target of an influence of any type.
      * @tparam T Type the producer returns; whatever the target takes.
      * @param producer Builds the value from the influence context.
@@ -418,6 +445,20 @@ private:
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;
     InfluenceFn m_influence;
+    [[nodiscard]] std::vector<const void*> sink_buffers() const
+    {
+        std::vector<const void*> held;
+        for (const auto& sink : m_audio_sinks) {
+            held.push_back(sink.buf.get());
+        }
+        for (const auto& sink : m_render_sinks) {
+            held.push_back(sink.buf.get());
+        }
+        return held;
+    }
+
+    std::vector<const void*> m_configured_sinks;
+    std::vector<Reflect::FunctionCall> m_configurations;
     mutable std::optional<Attachment> m_attachment;
 
     void follow_attachment();

@@ -121,8 +121,8 @@ private:
         Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded);
 
     /** Whether a live Expanse is of a record's kind and, for a Hull or Mantle, wraps its buffer. */
-    [[nodiscard]] static bool wraps(const Expanse& live, const std::string& subkind,
-        const std::shared_ptr<Buffers::VKBuffer>& buffer);
+    [[nodiscard]] bool wraps(const Expanse& live, const std::string& subkind,
+        const std::shared_ptr<Buffers::VKBuffer>& buffer) const;
 
     std::string m_last_error;
     size_t m_patched_count { 0 };

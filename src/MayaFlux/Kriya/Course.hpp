@@ -7,6 +7,7 @@
 #include "MayaFlux/Transitive/Facet/ControlValueStore.hpp"
 #include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 #include "MayaFlux/Vruta/BroadcastSource.hpp"
 
 namespace MayaFlux::Kriya {
@@ -298,6 +299,23 @@ public:
     /** @brief Seek to the first marker of this name, as seek does. false for no such marker or when the seek is not queued. */
     bool jump(std::string_view name);
 
+    // Saved setup
+
+    /**
+     * @brief Run @p apply on this course and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a time map, a repeat or following
+     * another course. Belongs to the thread that sets the course up.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Course&)>& apply)
+    {
+        apply(*this);
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
     // State
 
     /** @brief Source seconds after the last advance. */
@@ -381,6 +399,7 @@ private:
     void scan_markers(double before, const CourseStep& step, const CourseSetting& setting) const;
     void refuse();
 
+    std::vector<Reflect::FunctionCall> m_configurations;
     CourseStore m_store;
     CourseControls& m_controls { open(m_store) };
     Memory::PendingQueue<Detail::CourseCommand, 64> m_commands;

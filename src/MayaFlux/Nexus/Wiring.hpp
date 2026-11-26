@@ -371,6 +371,16 @@ public:
     /** @brief on_detach with the call that made the function. */
     Wiring& on_detach(Reflect::FunctionCall call, std::function<void()> fn);
 
+    /**
+     * @brief Set up the wiring with code and keep its call, so a loaded state can run it again.
+     *
+     * For what the other methods cannot name, such as a broadcast trigger. The
+     * triggers and choreography steps @p apply adds are saved as the call alone.
+     * @param call  Call that makes @p apply from a Reflect::FunctionTable.
+     * @param apply Run now on this wiring.
+     */
+    Wiring& configure(Reflect::FunctionCall call, const std::function<void(Wiring&)>& apply);
+
     // =====================================================================
     // Terminal
     // =====================================================================
@@ -482,6 +492,9 @@ private:
 
     std::optional<std::function<void()>> m_bind_attach;
     bool m_bind_self {};
+    std::vector<Reflect::FunctionCall> m_configurations;
+    std::vector<size_t> m_configured_triggers;
+    std::vector<size_t> m_configured_steps;
     std::optional<std::function<void()>> m_bind_detach;
     Reflect::FunctionCall m_bind_attach_call;
     Reflect::FunctionCall m_bind_detach_call;

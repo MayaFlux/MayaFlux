@@ -92,6 +92,10 @@ private:
 
     [[nodiscard]] State::WiringRecord build_wiring(const Fabric& fabric, uint32_t id) const;
 
+    /** The registered name of a live object's exact type, empty when it has none. */
+    [[nodiscard]] std::string class_name(const Agent& agent) const;
+    [[nodiscard]] std::string class_name(const Expanse& expanse) const;
+
     template <typename Record>
     void fill_expanse(Record& record, const Expanse& expanse) const;
 

@@ -4,6 +4,7 @@
 #include "MayaFlux/API/Depot.hpp"
 #include "MayaFlux/API/Graph.hpp"
 
+#include "MayaFlux/Nexus/State/Encoder.hpp"
 #include "MayaFlux/Nexus/Tapestry.hpp"
 
 namespace MayaFlux {
@@ -40,6 +41,26 @@ orchestrate_chosen_model(const std::shared_ptr<Nexus::StateOrchestrator>& orches
         return {};
     }
     return orchestrator->orchestrate(path);
+}
+
+bool save_state(const std::shared_ptr<Nexus::Tapestry>& tapestry, const std::string& directory,
+    const std::shared_ptr<const Nexus::State::Bindings>& bindings)
+{
+    if (!tapestry) {
+        return false;
+    }
+    Nexus::StateEncoder encoder(bindings);
+    return encoder.encode(*tapestry, directory);
+}
+
+Nexus::StateDecoder::ReconstructionResult load_state(const std::shared_ptr<Nexus::Tapestry>& tapestry,
+    const std::string& directory, const std::shared_ptr<const Nexus::State::Bindings>& bindings)
+{
+    if (!tapestry) {
+        return {};
+    }
+    Nexus::StateDecoder decoder(bindings);
+    return decoder.reconstruct(*tapestry, directory);
 }
 
 } // namespace MayaFlux

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/API/Graph.hpp"
+#include "MayaFlux/Nexus/State/Decoder.hpp"
 #include "MayaFlux/Nexus/State/Orchestrator.hpp"
 
 /**
@@ -66,6 +67,44 @@ MAYAFLUX_API std::shared_ptr<Nexus::Tapestry> create_tapestry();
  */
 MAYAFLUX_API std::shared_ptr<Nexus::StateOrchestrator> create_orchestrator(
     const std::shared_ptr<Nexus::Tapestry>& tapestry = nullptr);
+
+/**
+ * @brief Save a Tapestry and what the bindings name into a directory.
+ *
+ * Writes as Nexus::StateEncoder does: every Fabric, the playback of bound courses
+ * and every bound buffer as a file reference or a snapshot.
+ *
+ * @param tapestry  What to save.
+ * @param directory Where to save it.
+ * @param bindings  Names for the live objects the state refers to, if any.
+ * @return False with a logged error on failure or a null Tapestry.
+ *
+ * @code
+ * auto bindings = std::make_shared<Nexus::State::Bindings>();
+ * auto orchestrator = MayaFlux::create_orchestrator(tapestry);
+ * orchestrator->set_bindings(bindings);
+ * auto [assembly, realization, rows] = orchestrator->orchestrate("res/wolf.glb");
+ *
+ * MayaFlux::save_state(tapestry, "scene", bindings);
+ * @endcode
+ */
+MAYAFLUX_API bool save_state(
+    const std::shared_ptr<Nexus::Tapestry>& tapestry,
+    const std::string& directory,
+    const std::shared_ptr<const Nexus::State::Bindings>& bindings = nullptr);
+
+/**
+ * @brief Load what save_state() wrote into a Tapestry.
+ *
+ * Reads as Nexus::StateDecoder does. Buffers loaded for names the bindings do
+ * not hold come back in the result, neither registered nor drawn.
+ *
+ * @return What was constructed, patched and skipped, with the warnings.
+ */
+MAYAFLUX_API Nexus::StateDecoder::ReconstructionResult load_state(
+    const std::shared_ptr<Nexus::Tapestry>& tapestry,
+    const std::string& directory,
+    const std::shared_ptr<const Nexus::State::Bindings>& bindings = nullptr);
 
 /**
  * @brief Let the user pick a 3D model or Alembic file and orchestrate it.

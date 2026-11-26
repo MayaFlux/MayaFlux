@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
+#include "MayaFlux/Nexus/State/Bindings.hpp"
 #include "MayaFlux/Nexus/Tapestry.hpp"
 
 #include "MayaFlux/Kriya/Realization/MeshAssemblyRealization.hpp"
@@ -93,6 +94,16 @@ public:
      * image retains it; release the hold your resolver took.
      */
     void set_material_resolver(Kriya::MeshAssemblyMaterialResolver resolver) { m_material_resolver = std::move(resolver); }
+
+    /**
+     * @brief Name what is made here, so a saved state can find it again.
+     *
+     * Every followed buffer is added to the bindings under a name, with the file
+     * and row it came from when orchestrate() read one, and its following is
+     * wired through a follow_buffer() call. follow_buffer is exposed in the
+     * bindings' functions if it is not already.
+     */
+    void set_bindings(const std::shared_ptr<State::Bindings>& bindings);
 
     /** @brief How orchestrate() cuts an assembly into buffers. */
     void set_realize_options(Kriya::MeshAssemblyRealizeOptions options) { m_realize_options = std::move(options); }
@@ -266,13 +277,20 @@ private:
     /** Realize, bind materials with @p materials and make the rows. */
     [[nodiscard]] std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, Rows> orchestrate_rows(
         const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
-        const Kriya::MeshAssemblyMaterialResolver& materials);
+        const Kriya::MeshAssemblyMaterialResolver& materials,
+        const std::string& file = {});
 
     /** Place a principal where its buffer is drawn, then wire it to follow. */
-    void wrap(const Fabric::Member& member, const BufferSlot& shown);
+    void wrap(const Fabric::Member& member, const BufferSlot& shown,
+        const std::string& file = {}, std::optional<uint64_t> row = std::nullopt);
 
     /** Wire a principal into the Fabric, when there is a Tapestry and it is not wired yet. */
-    void admit(const Fabric::Member& member, Wiring::PlacementFn follow = {});
+    void admit(const Fabric::Member& member, Wiring::PlacementFn follow = {},
+        const Reflect::FunctionCall& call = {});
+
+    /** The bound name of a buffer, adding it and its source when it has none. */
+    [[nodiscard]] std::string name_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer,
+        const std::string& file, std::optional<uint64_t> row);
 
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::shared_ptr<Tapestry> m_tapestry;
@@ -281,6 +299,7 @@ private:
     RowRule m_row_rule;
     Kriya::MeshAssemblyRealizeOptions m_realize_options;
     Kriya::MeshAssemblyMaterialResolver m_material_resolver;
+    std::shared_ptr<State::Bindings> m_bindings;
 };
 
 /**

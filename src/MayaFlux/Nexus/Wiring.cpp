@@ -137,20 +137,23 @@ Wiring& Wiring::move_to(const glm::vec3& pos, double delay_seconds)
 
 Wiring& Wiring::place_from(PlacementFn fn)
 {
+    m_position_call = {};
     m_placement_fn = std::move(fn);
     return *this;
 }
 
 Wiring& Wiring::place_from(std::string fn_name, PlacementFn fn)
 {
+    place_from(std::move(fn));
     m_position_call = { std::move(fn_name), {} };
-    return place_from(std::move(fn));
+    return *this;
 }
 
 Wiring& Wiring::place_from(Reflect::FunctionCall call, PlacementFn fn)
 {
+    place_from(std::move(fn));
     m_position_call = std::move(call);
-    return place_from(std::move(fn));
+    return *this;
 }
 
 Wiring& Wiring::position_from(PositionFn fn)
@@ -163,26 +166,30 @@ Wiring& Wiring::position_from(PositionFn fn)
 
 Wiring& Wiring::on_complete(std::function<void()> fn)
 {
+    m_complete_call = {};
     m_on_complete = std::move(fn);
     return *this;
 }
 
 Wiring& Wiring::on_complete(Reflect::FunctionCall call, std::function<void()> fn)
 {
+    on_complete(std::move(fn));
     m_complete_call = std::move(call);
-    return on_complete(std::move(fn));
+    return *this;
 }
 
 Wiring& Wiring::on_detach(std::function<void()> fn)
 {
+    m_detach_call = {};
     m_on_detach = std::move(fn);
     return *this;
 }
 
 Wiring& Wiring::on_detach(Reflect::FunctionCall call, std::function<void()> fn)
 {
+    on_detach(std::move(fn));
     m_detach_call = std::move(call);
-    return on_detach(std::move(fn));
+    return *this;
 }
 
 Wiring& Wiring::times(size_t count)
@@ -193,38 +200,44 @@ Wiring& Wiring::times(size_t count)
 
 Wiring& Wiring::use(SoundFactory factory)
 {
+    m_factory_call = {};
     m_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::use(GraphicsFactory factory)
 {
+    m_factory_call = {};
     m_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::use(CrossFactory factory)
 {
+    m_factory_call = {};
     m_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::use(EventFactory factory)
 {
+    m_factory_call = {};
     m_event_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::position_from(std::string fn_name, PositionFn fn)
 {
+    position_from(std::move(fn));
     m_position_call = { std::move(fn_name), {} };
-    return position_from(std::move(fn));
+    return *this;
 }
 
 Wiring& Wiring::position_from(Reflect::FunctionCall call, PositionFn fn)
 {
+    position_from(std::move(fn));
     m_position_call = std::move(call);
-    return position_from(std::move(fn));
+    return *this;
 }
 
 Wiring& Wiring::use(std::string fn_name, SoundFactory factory)
@@ -289,6 +302,7 @@ Wiring& Wiring::use(Reflect::FunctionCall call, EventFactory factory)
 
 Wiring& Wiring::bind()
 {
+    m_bind_attach_call = {};
     m_bind_self = true;
     m_bind_attach = [this]() { m_fabric.fire(m_entity_id); };
     return *this;
@@ -296,12 +310,17 @@ Wiring& Wiring::bind()
 
 Wiring& Wiring::bind(std::function<void()> fn)
 {
+    m_bind_self = false;
+    m_bind_attach_call = {};
     m_bind_attach = std::move(fn);
     return *this;
 }
 
 Wiring& Wiring::bind(std::function<void()> attach, std::function<void()> detach)
 {
+    m_bind_self = false;
+    m_bind_attach_call = {};
+    m_bind_detach_call = {};
     m_bind_attach = std::move(attach);
     m_bind_detach = std::move(detach);
     return *this;
@@ -340,6 +359,21 @@ Wiring& Wiring::bind(
     m_bind_attach = std::move(attach);
     m_bind_detach_call = std::move(detach_call);
     m_bind_detach = std::move(detach);
+    return *this;
+}
+
+Wiring& Wiring::configure(Reflect::FunctionCall call, const std::function<void(Wiring&)>& apply)
+{
+    const size_t triggers = m_triggers.size();
+    const size_t steps = m_move_steps.size();
+    apply(*this);
+    for (size_t i = triggers; i < m_triggers.size(); ++i) {
+        m_configured_triggers.push_back(i);
+    }
+    for (size_t i = steps; i < m_move_steps.size(); ++i) {
+        m_configured_steps.push_back(i);
+    }
+    m_configurations.push_back(std::move(call));
     return *this;
 }
 

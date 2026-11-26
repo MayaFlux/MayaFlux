@@ -49,6 +49,16 @@ namespace {
         return (value - r.min) / (r.max - r.min);
     }
 
+    std::vector<State::CallRecord> call_records(const std::vector<Reflect::FunctionCall>& calls)
+    {
+        std::vector<State::CallRecord> records;
+        records.reserve(calls.size());
+        for (const auto& call : calls) {
+            records.push_back({ .name = call.first, .arguments = { call.second.begin(), call.second.end() } });
+        }
+        return records;
+    }
+
     std::map<std::string, std::string> controls_of(const QuantityStore& store)
     {
         std::map<std::string, std::string> held;
@@ -97,16 +107,22 @@ namespace {
     // Sink records
     // -------------------------------------------------------------------------
 
+    template <typename Entity>
     void fill_sinks(
         State::EntityRecord& ent,
-        const std::vector<AudioSink>& audio_sinks,
-        const std::vector<RenderSink>& render_sinks,
+        const Entity& entity,
         const State::WindowNames* windows)
     {
-        for (const auto& s : audio_sinks)
-            ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
+        for (const auto& s : entity.audio_sinks()) {
+            if (!entity.made_by_configure(s.buf.get())) {
+                ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
+            }
+        }
 
-        for (const auto& s : render_sinks) {
+        for (const auto& s : entity.render_sinks()) {
+            if (entity.made_by_configure(s.buf.get())) {
+                continue;
+            }
             State::RenderSinkRecord rec { .fn_name = s.fn_name };
             if (windows && s.window) {
                 rec.window = bound_name(*windows, s.window);
@@ -166,8 +182,12 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
     if (w->times_count() > 1) {
         rec.times = w->times_count();
     }
-    for (const auto& step : w->move_steps()) {
-        rec.steps.push_back({ .position = step.position, .delay_seconds = step.delay_seconds });
+    rec.configurations = call_records(w->m_configurations);
+    for (size_t i = 0; i < w->move_steps().size(); ++i) {
+        if (std::ranges::find(w->m_configured_steps, i) == w->m_configured_steps.end()) {
+            const auto& step = w->move_steps()[i];
+            rec.steps.push_back({ .position = step.position, .delay_seconds = step.delay_seconds });
+        }
     }
     if (rec.interval || !rec.steps.empty()) {
         rec.interval_token = w->m_metro_token;
@@ -204,7 +224,10 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
         return true;
     };
 
-    for (const auto& held : w->triggers()) {
+    for (size_t index = 0; index < w->triggers().size(); ++index) {
+        if (std::ranges::find(w->m_configured_triggers, index) != w->m_configured_triggers.end()) {
+            continue;
+        }
         std::visit([&](const auto& trigger) {
             using T = std::decay_t<decltype(trigger)>;
             State::TriggerRecord record;
@@ -252,7 +275,7 @@ State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id
                 rec.lost.emplace_back("a broadcast trigger");
             }
         },
-            held);
+            w->triggers()[index]);
     }
 
     for (const auto& what : rec.lost) {
@@ -286,6 +309,14 @@ std::vector<State::AssetRecord> StateEncoder::save_assets(const std::string& dir
     for (const auto& [name, buffer] : m_bindings->buffers) {
         if (const auto declared = m_bindings->assets.find(name); declared != m_bindings->assets.end()) {
             const auto& source = declared->second;
+            if (!source.make.first.empty()) {
+                records.push_back({
+                    .name = name,
+                    .form = State::AssetForm::Call,
+                    .make = call_record(source.make),
+                });
+                continue;
+            }
             records.push_back({
                 .name = name,
                 .file = source.file,
@@ -353,11 +384,14 @@ std::vector<State::CourseRecord> StateEncoder::save_courses() const
             record.range_in = range->in;
             record.range_out = range->out;
         }
-        if (const auto map = held.time_map.value(); map && map->fn) {
-            record.lost.emplace_back("its time map");
-        }
-        if (const auto map = held.repeat.value(); map && map->fn) {
-            record.lost.emplace_back("its repeat");
+        record.configurations = call_records(course->configurations());
+        if (record.configurations.empty()) {
+            if (const auto map = held.time_map.value(); map && map->fn) {
+                record.lost.emplace_back("its time map");
+            }
+            if (const auto map = held.repeat.value(); map && map->fn) {
+                record.lost.emplace_back("its repeat");
+            }
         }
         for (const auto& marker : course->markers()) {
             record.markers.push_back({ .name = marker.name, .time = marker.time });
@@ -369,6 +403,30 @@ std::vector<State::CourseRecord> StateEncoder::save_courses() const
         records.push_back(std::move(record));
     }
     return records;
+}
+
+std::string StateEncoder::class_name(const Agent& agent) const
+{
+    if (m_bindings) {
+        for (const auto& [name, registered] : m_bindings->agents) {
+            if (registered.type == std::type_index(typeid(agent))) {
+                return name;
+            }
+        }
+    }
+    return {};
+}
+
+std::string StateEncoder::class_name(const Expanse& expanse) const
+{
+    if (m_bindings) {
+        for (const auto& [name, registered] : m_bindings->expanses) {
+            if (registered.type == std::type_index(typeid(expanse))) {
+                return name;
+            }
+        }
+    }
+    return {};
 }
 
 template <typename Entity>
@@ -416,6 +474,14 @@ void StateEncoder::fill_expanse(Record& record, const Expanse& expanse) const
         wrapped = mantle->m_look.buf;
     }
 
+    if (auto registered = class_name(expanse); !registered.empty()) {
+        record.subkind = std::move(registered);
+        wrapped = nullptr;
+    }
+    record.configurations = call_records(expanse.configurations());
+    record.controls = controls_of(expanse.store());
+    record.controls.erase("bounds");
+
     record.buffer = buffer_name(wrapped);
     if (wrapped && record.buffer.empty()) {
         MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
@@ -461,7 +527,12 @@ bool StateEncoder::encode_fabric(
             }
             ent.controls = controls_of(e->store());
             ent.influence = named_call(e->fn_call(), static_cast<bool>(e->fn()), "the function of Emitter", id);
-            fill_sinks(ent, e->audio_sinks(), e->render_sinks(), windows);
+            fill_sinks(ent, *e, windows);
+            ent.configurations = call_records(e->configurations());
+            if (e->m_influence && e->configurations().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: the typed influence of Emitter {} was not set through configure() and is lost", id);
+            }
             fill_attachment(ent, *e);
             break;
         }
@@ -472,6 +543,11 @@ bool StateEncoder::encode_fabric(
             }
             ent.controls = controls_of(s->store());
             ent.perception = named_call(s->fn_call(), static_cast<bool>(s->fn()), "the function of Sensor", id);
+            ent.configurations = call_records(s->configurations());
+            if (s->m_perception && s->configurations().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: the typed perception of Sensor {} was not set through configure() and is lost", id);
+            }
             break;
         }
         case Fabric::Kind::Agent: {
@@ -484,7 +560,12 @@ bool StateEncoder::encode_fabric(
                 "the influence function of Agent", id);
             ent.perception = named_call(a->perception_fn_call(), static_cast<bool>(a->perception_fn()),
                 "the perception function of Agent", id);
-            fill_sinks(ent, a->audio_sinks(), a->render_sinks(), windows);
+            fill_sinks(ent, *a, windows);
+            ent.configurations = call_records(a->configurations());
+            if ((!a->m_influences.empty() || !a->m_perceptions.empty()) && a->configurations().empty()) {
+                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                    "StateEncoder: typed influences or perceptions of Agent {} were not added through configure() and are lost", id);
+            }
             fill_attachment(ent, *a);
 
             if (auto locus = std::dynamic_pointer_cast<Locus>(a)) {
@@ -521,9 +602,27 @@ bool StateEncoder::encode_fabric(
                 ent.subkind = "presence";
                 ent.radiate = named_call(presence->radiate_fn_call(), static_cast<bool>(presence->radiate_fn()),
                     "the radiate function of Presence", id);
-                if (!presence->falloff_curve()) {
+                if (!presence->falloff_curve() && presence->configurations().empty()) {
                     MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
                         "StateEncoder: Presence {} has a custom falloff, which is not encoded", id);
+                }
+            }
+            if (auto registered = class_name(*a); !registered.empty()) {
+                ent.subkind = std::move(registered);
+            }
+            if (auto locus = std::dynamic_pointer_cast<Locus>(a); locus && locus->view()) {
+                for (const uint32_t earlier : ids) {
+                    if (earlier == id) {
+                        break;
+                    }
+                    if (fabric.kind(earlier) != Fabric::Kind::Agent) {
+                        continue;
+                    }
+                    const auto other = std::dynamic_pointer_cast<Locus>(fabric.get_agent(earlier));
+                    if (other && other->view() == locus->view()) {
+                        ent.view_of = earlier;
+                        break;
+                    }
                 }
             }
             break;

@@ -1,6 +1,10 @@
 #pragma once
 
+#include "MayaFlux/Kriya/Course.hpp"
+#include "MayaFlux/Nexus/Fabric.hpp"
 #include "MayaFlux/Transitive/Reflect/FunctionTable.hpp"
+
+#include <typeindex>
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
@@ -8,10 +12,6 @@ class VKBuffer;
 
 namespace MayaFlux::Core {
 class Window;
-}
-
-namespace MayaFlux::Kriya {
-class Course;
 }
 
 namespace MayaFlux::Vruta {
@@ -38,6 +38,22 @@ struct AssetSource {
     std::string file;
     std::optional<uint64_t> row; ///< A row of the file's assembly, as StateOrchestrator realizes it.
     uint32_t mesh {}; ///< Without a row, the index among ModelReader::create_mesh_buffers().
+    Reflect::FunctionCall make {}; ///< With a name, the buffer is made by this call instead of read from a file.
+};
+
+/** @brief Anything a struct of the user's own controls can be added to. */
+using Extendable = std::variant<Emitter*, Sensor*, Agent*, Expanse*, Kriya::Course*>;
+
+/** @brief A subclass of Agent a saved state can make again. */
+struct AgentClass {
+    std::type_index type { typeid(void) };
+    std::function<std::shared_ptr<Agent>()> make;
+};
+
+/** @brief A subclass of Expanse a saved state can make again. */
+struct ExpanseClass {
+    std::type_index type { typeid(void) };
+    std::function<std::shared_ptr<Expanse>()> make;
 };
 
 /**
@@ -61,12 +77,19 @@ struct AssetSource {
  * advance. A time map or repeat, and so following another course, is a closure
  * and is not saved.
  *
+ * A struct added with extend() is only restored when registered with
+ * register_controls(), and a subclass of Agent or Expanse only when registered
+ * with register_class(). A function that sets something up through configure(),
+ * on a principal, a Wiring or a course, is made from functions like any other.
+ *
  * @code
  * auto bindings = std::make_shared<Nexus::State::Bindings>();
  * bindings->buffers["wolf"] = wolf;
  * bindings->assets["wolf"] = { .file = "res/wolf.glb", .mesh = 0 };
  * bindings->windows["main"] = window;
  * bindings->functions.expose<&Nexus::follow_buffer>();
+ * bindings->register_controls<WolfControls>();
+ * bindings->register_class<Wolf>("wolf", [] { return std::make_shared<Wolf>(); });
  *
  * Nexus::StateEncoder encoder(bindings);
  * Nexus::StateDecoder decoder(bindings);
@@ -79,6 +102,47 @@ struct Bindings {
     Functions functions;
     std::map<std::string, AssetSource, std::less<>> assets;
     std::map<std::string, std::shared_ptr<Kriya::Course>, std::less<>> courses;
+
+    std::map<std::string, std::function<void(const Extendable&)>, std::less<>> controls;
+    std::map<std::string, AgentClass, std::less<>> agents;
+    std::map<std::string, ExpanseClass, std::less<>> expanses;
+
+    /**
+     * @brief Let a loaded state add a described controls struct back to whatever held it.
+     * @tparam C Struct given to extend(), found by its unqualified name.
+     */
+    template <typename C>
+    void register_controls()
+    {
+        const std::string_view full = Reflect::Generated::Description<C>::name;
+        const size_t scope = full.rfind("::");
+        controls.insert_or_assign(
+            std::string(scope == std::string_view::npos ? full : full.substr(scope + 2)),
+            [](const Extendable& target) {
+                std::visit([](auto* host) {
+                    if constexpr (requires { host->template extend<C>(); }) {
+                        static_cast<void>(host->template extend<C>());
+                    }
+                },
+                    target);
+            });
+    }
+
+    /**
+     * @brief Name a subclass of Agent or Expanse, so a loaded state gets it back.
+     * @param name  Written into the state for every object of exactly this type.
+     * @param make  Builds one, with the functions it needs.
+     */
+    template <typename T>
+        requires(std::is_base_of_v<Agent, T> || std::is_base_of_v<Expanse, T>)
+    void register_class(std::string name, std::function<std::shared_ptr<T>()> make)
+    {
+        if constexpr (std::is_base_of_v<Agent, T>) {
+            agents.insert_or_assign(std::move(name), AgentClass { std::type_index(typeid(T)), std::move(make) });
+        } else {
+            expanses.insert_or_assign(std::move(name), ExpanseClass { std::type_index(typeid(T)), std::move(make) });
+        }
+    }
 };
 
 }

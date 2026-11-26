@@ -6,6 +6,8 @@
 
 namespace MayaFlux::Nexus {
 
+class StateEncoder;
+
 /**
  * @class Sensor
  * @brief Object that reacts to nearby entities when committed.
@@ -181,6 +183,21 @@ public:
         m_perception = [perception](const PerceptionContext& ctx) { perception->invoke(ctx); };
     }
 
+    /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Sensor&)>& apply)
+    {
+        apply(*this);
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
     /** @brief Remove the source set with set_perception(). */
     void clear_perception() { m_perception = nullptr; }
 
@@ -208,9 +225,11 @@ private:
     Reflect::FunctionCall m_fn_call;
     PerceptionFn m_fn;
     PerceptionFn m_perception;
+    std::vector<Reflect::FunctionCall> m_configurations;
     uint32_t m_id { 0 };
 
     friend class Fabric;
+    friend class StateEncoder;
 };
 
 } // namespace MayaFlux::Nexus

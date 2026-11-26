@@ -145,6 +145,15 @@ public:
     }
 
     /**
+     * @brief Register an Expanse built elsewhere under a name.
+     * @return The Expanse for that name; a name already in use warns and returns the existing one.
+     */
+    std::shared_ptr<Expanse> adopt_expanse(std::string name, std::shared_ptr<Expanse> expanse)
+    {
+        return claim(std::move(name), std::move(expanse));
+    }
+
+    /**
      * @brief Look up a named Expanse.
      * @return The Expanse, or nullptr if name is not registered.
      */

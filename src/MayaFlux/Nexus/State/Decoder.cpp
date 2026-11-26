@@ -131,6 +131,37 @@ namespace {
         return bound_object(load.bindings ? &load.bindings->windows : nullptr, name);
     }
 
+    /** Run the saved configure() calls on an object. */
+    template <typename Host>
+    void apply_configurations(Host& host, const std::vector<State::CallRecord>& calls,
+        const Loading& load, const std::string& label)
+    {
+        for (const auto& call : calls) {
+            if (auto apply = made<std::function<void(Host&)>>(load, call, label + " configure")) {
+                host.configure(call_of(call), *apply);
+            }
+        }
+    }
+
+    /** Add back the registered structs a record holds values of. */
+    void extend_controls(const State::Extendable& target,
+        const std::map<std::string, std::string>& controls, const Loading& load)
+    {
+        if (!load.bindings) {
+            return;
+        }
+        for (const auto& [name, text] : controls) {
+            const size_t dot = name.find('.');
+            if (dot == std::string::npos) {
+                continue;
+            }
+            const auto found = load.bindings->controls.find(std::string_view(name).substr(0, dot));
+            if (found != load.bindings->controls.end()) {
+                found->second(target);
+            }
+        }
+    }
+
     bool apply_trigger(Wiring& wiring, const State::TriggerRecord& rec, const Loading& load, const std::string& label)
     {
         if (rec.kind == State::TriggerKind::Network) {
@@ -280,6 +311,13 @@ namespace {
                 } else {
                     wiring.bind(call_of(rec.bind_attach), std::move(*attach));
                 }
+                scheduled = true;
+            }
+        }
+
+        for (const auto& call : rec.configurations) {
+            if (auto apply = made<std::function<void(Wiring&)>>(load, call, label + " configure")) {
+                wiring.configure(call_of(call), *apply);
                 scheduled = true;
             }
         }
@@ -489,6 +527,17 @@ namespace {
             fabric.resolve_influence_fn(entry.influence.name), who + " influence_fn");
 
         std::shared_ptr<Agent> agent;
+        const auto registered = load.bindings
+            ? load.bindings->agents.find(entry.subkind)
+            : decltype(load.bindings->agents.end()) {};
+        if (load.bindings && registered != load.bindings->agents.end()) {
+            agent = registered->second.make();
+            if (!agent) {
+                load.warnings.push_back(who + ": '" + entry.subkind + "' made nothing, reconstructed as plain Agent");
+                return std::make_shared<Agent>(k_built_radius);
+            }
+            return agent;
+        }
         if (entry.subkind == "locus" && entry.locus_nav) {
             const auto& nav = *entry.locus_nav;
             const Kinesis::NavigationConfig config {
@@ -612,7 +661,7 @@ namespace {
         }
     }
 
-    void construct_entity(
+    std::shared_ptr<Agent> construct_entity(
         Fabric& fabric,
         const State::EntityRecord& entry,
         const Loading& load)
@@ -630,8 +679,10 @@ namespace {
                         fabric.resolve_influence_fn(entry.influence.name), who + " influence_fn"));
                 emitter->set_fn_call(call_of(entry.influence));
             }
+            extend_controls(emitter.get(), entry.controls, load);
             apply_controls(emitter->store(), entry, load.warnings);
             restore_attachment(*emitter, entry, load);
+            apply_configurations(*emitter, entry.configurations, load, who);
             auto wiring = fabric.wire(emitter);
             note_runtime_id(entry, emitter->id(), load.warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, load);
@@ -648,7 +699,9 @@ namespace {
                         fabric.resolve_perception_fn(entry.perception.name), who + " perception_fn"));
                 sensor->set_fn_call(call_of(entry.perception));
             }
+            extend_controls(sensor.get(), entry.controls, load);
             apply_controls(sensor->store(), entry, load.warnings);
+            apply_configurations(*sensor, entry.configurations, load, who);
             auto wiring = fabric.wire(sensor);
             note_runtime_id(entry, sensor->id(), load.warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, load);
@@ -656,16 +709,19 @@ namespace {
         }
         case Fabric::Kind::Agent: {
             auto agent = construct_agent(fabric, entry, load);
+            extend_controls(agent.get(), entry.controls, load);
             apply_agent(*agent, entry, load.warnings);
             restore_attachment(*agent, entry, load);
+            apply_configurations(*agent, entry.configurations, load, who);
             restore_view_targets(*agent, entry, load);
             auto wiring = fabric.wire(agent);
             note_runtime_id(entry, agent->id(), load.warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, load);
             restore_sinks(*agent, entry, load);
-            break;
+            return agent;
         }
         }
+        return nullptr;
     }
 
     // -------------------------------------------------------------------------
@@ -697,6 +753,9 @@ namespace {
     template <typename Record>
     std::string rebuilt_subkind(const Record& rec, const Loading& load)
     {
+        if (load.bindings && load.bindings->expanses.contains(rec.subkind)) {
+            return rec.subkind;
+        }
         return rec.subkind.empty() || !bound_buffer(load, rec.buffer) ? std::string {} : rec.subkind;
     }
 
@@ -709,6 +768,9 @@ namespace {
     template <typename Record>
     bool expanse_restorable(const Record& rec, const std::string& label, const Loading& load)
     {
+        if (load.bindings && load.bindings->expanses.contains(rec.subkind)) {
+            return true;
+        }
         const bool bound = bound_buffer(load, rec.buffer) != nullptr;
         if (rec.subkind == "hull") {
             if (!bound) {
@@ -786,6 +848,32 @@ namespace {
         };
     }
 
+    /** An Expanse of a registered class, or nullptr. */
+    std::shared_ptr<Expanse> make_registered(const std::string& subkind, const Loading& load)
+    {
+        if (!load.bindings) {
+            return nullptr;
+        }
+        const auto found = load.bindings->expanses.find(subkind);
+        return found == load.bindings->expanses.end() ? nullptr : found->second.make();
+    }
+
+    template <typename Record>
+    void finish_expanse(Expanse& expanse, const Record& rec, const Loading& load, const std::string& label)
+    {
+        extend_controls(&expanse, rec.controls, load);
+        for (const auto& [name, text] : rec.controls) {
+            if (Quantity* slot = expanse.store().find(name)) {
+                Quantity decoded;
+                Reflect::TextError reason = Reflect::TextError::Invalid;
+                if (Reflect::TextCodec<Quantity>::decode(text, decoded, reason)) {
+                    slot->assign(decoded);
+                }
+            }
+        }
+        apply_configurations(expanse, rec.configurations, load, label);
+    }
+
     template <typename Record>
     void keep_calls(Expanse& expanse, const Record& rec)
     {
@@ -849,8 +937,10 @@ namespace {
             return Restored::Skipped;
         }
 
-        std::shared_ptr<Expanse> expanse;
-        if (subkind == "hull") {
+        std::shared_ptr<Expanse> expanse = make_registered(subkind, load);
+        if (expanse) {
+            apply_bounds(*expanse, rec);
+        } else if (subkind == "hull") {
             expanse = std::make_shared<Hull>(parts.buffer, std::move(parts.on_enter),
                 std::move(parts.on_exit), rec.collection);
         } else if (subkind == "mantle") {
@@ -862,6 +952,7 @@ namespace {
             apply_bounds(*expanse, rec);
         }
         keep_calls(*expanse, rec);
+        finish_expanse(*expanse, rec, load, label);
         fabric.add_expanse(std::move(expanse));
         return Restored::Constructed;
     }
@@ -882,7 +973,7 @@ namespace {
         const auto directory = std::filesystem::path(IO::FileReader::resolve_path(schema_path)).parent_path();
 
         for (const auto& record : records) {
-            if (bindings && bindings->buffers.contains(record.name)) {
+            if (record.form == State::AssetForm::Call || (bindings && bindings->buffers.contains(record.name))) {
                 continue;
             }
             const std::string path = record.snapshot ? (directory / record.file).string() : record.file;
@@ -917,6 +1008,21 @@ namespace {
                 warnings.push_back("asset '" + record.name + "' could not be loaded from " + path);
             }
         }
+        const Loading load {
+            .bindings = bindings,
+            .buffer_manager = nullptr,
+            .warnings = warnings,
+            .buffers = buffers_with(bindings, loaded),
+        };
+        for (const auto& record : records) {
+            if (record.form != State::AssetForm::Call || (bindings && bindings->buffers.contains(record.name))) {
+                continue;
+            }
+            auto buffer = made<std::shared_ptr<Buffers::VKBuffer>>(load, record.make, "asset '" + record.name + "'");
+            if (buffer && *buffer) {
+                loaded.emplace(record.name, std::move(*buffer));
+            }
+        }
         return loaded;
     }
 
@@ -941,6 +1047,15 @@ namespace {
             for (const auto& what : record.lost) {
                 warnings.push_back(label + ": " + what + " was not saved");
             }
+            const Loading load {
+                .bindings = bindings,
+                .buffer_manager = nullptr,
+                .warnings = warnings,
+                .buffers = buffers_with(bindings, {}),
+            };
+            extend_controls(&course, record.controls, load);
+            apply_configurations(course, record.configurations, load, label);
+
             for (const auto& [control, text] : record.controls) {
                 ControlValue* slot = course.store().find(control);
                 ControlValue decoded;
@@ -989,8 +1104,13 @@ namespace {
 } // namespace
 
 bool StateDecoder::wraps(const Expanse& live, const std::string& subkind,
-    const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    const std::shared_ptr<Buffers::VKBuffer>& buffer) const
 {
+    if (m_bindings) {
+        if (const auto found = m_bindings->expanses.find(subkind); found != m_bindings->expanses.end()) {
+            return std::type_index(typeid(live)) == found->second.type;
+        }
+    }
     if (subkind == "hull") {
         const auto* hull = dynamic_cast<const Hull*>(&live);
         return hull && hull->m_buf == buffer;
@@ -1056,7 +1176,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
 
     for (const auto& xrec : schema.expanses) {
         restore_expanse(fabric, xrec, load,
-            [buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
+            [this, buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
                 return wraps(live, subkind, buffer);
             });
     }
@@ -1117,6 +1237,8 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
     const auto existing_ids = fabric.all_ids();
     const std::unordered_set<uint32_t> existing(existing_ids.begin(), existing_ids.end());
 
+    std::map<uint32_t, std::shared_ptr<Agent>> restored;
+
     for (const auto& entry : schema.entities) {
         if (!State::kind_known(entry.kind)) {
             result.warnings.push_back("Unknown kind '" + entry.kind
@@ -1132,13 +1254,30 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
                 ++result.skipped;
             }
         } else {
-            construct_entity(fabric, entry, load);
+            if (auto agent = construct_entity(fabric, entry, load)) {
+                restored.emplace(entry.id, std::move(agent));
+            }
             ++result.constructed;
         }
     }
 
+    for (const auto& entry : schema.entities) {
+        if (!entry.view_of) {
+            continue;
+        }
+        const auto shared = restored.find(*entry.view_of);
+        const auto follower = restored.find(entry.id);
+        const auto from = shared == restored.end() ? nullptr : std::dynamic_pointer_cast<Locus>(shared->second);
+        const auto into = follower == restored.end() ? nullptr : std::dynamic_pointer_cast<Locus>(follower->second);
+        if (from && into && from->view()) {
+            into->set_view(from->view());
+        } else {
+            result.warnings.push_back(who_is(entry) + ": the view it shared could not be shared again");
+        }
+    }
+
     for (const auto& xrec : schema.expanses) {
-        const auto same = [buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
+        const auto same = [this, buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
             return wraps(live, subkind, buffer);
         };
         switch (restore_expanse(fabric, xrec, load, same)) {
@@ -1238,7 +1377,10 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
             }
 
             const std::string subkind = rebuilt_subkind(xrec, load);
-            if (subkind == "hull") {
+            if (auto registered = make_registered(subkind, load)) {
+                apply_bounds(*registered, xrec);
+                expanse = tapestry.adopt_expanse(xrec.name, std::move(registered));
+            } else if (subkind == "hull") {
                 expanse = tapestry.create_expanse<Hull>(xrec.name, parts.buffer,
                     std::move(parts.on_enter), std::move(parts.on_exit), xrec.collection);
             } else if (subkind == "mantle") {
@@ -1258,6 +1400,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
                 continue;
             }
             keep_calls(*expanse, xrec);
+            finish_expanse(*expanse, xrec, load, label);
         }
 
         for (Fabric* fabric : fabrics) {

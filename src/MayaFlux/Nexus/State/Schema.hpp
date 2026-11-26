@@ -161,6 +161,7 @@ struct WiringRecord {
     CallRecord bind_detach;
     CallRecord on_complete;
     CallRecord on_detach;
+    std::vector<CallRecord> configurations;
     std::vector<std::string> lost;
 
 };
@@ -266,6 +267,8 @@ struct EntityRecord {
     WiringRecord wiring;
     std::optional<AttachRecord> attach;
     std::vector<std::string> view_targets;
+    std::optional<uint32_t> view_of;
+    std::vector<CallRecord> configurations;
     std::vector<AudioSinkRecord> audio_sinks;
     std::vector<RenderSinkRecord> render_sinks;
     std::optional<LocusNavRecord> locus_nav;
@@ -301,6 +304,8 @@ struct ExpanseRecord {
     std::optional<glm::vec3> bounds_max;
     std::optional<uint32_t> collection;
     std::string fit_name;
+    std::vector<CallRecord> configurations;
+    std::map<std::string, std::string> controls;
 
 };
 
@@ -315,6 +320,7 @@ enum class AssetForm : uint8_t {
     Mesh, ///< One of ModelReader::create_mesh_buffers().
     Network, ///< A MeshNetworkBuffer over ModelReader::create_mesh_network().
     Part, ///< The buffer that shows a row of a realized assembly.
+    Call, ///< Made by a bound function.
 };
 
 /**
@@ -327,6 +333,7 @@ struct AssetRecord {
     AssetForm form { AssetForm::Mesh };
     uint64_t index {};
     bool snapshot {};
+    CallRecord make;
 
 };
 
@@ -356,6 +363,7 @@ struct CourseRecord {
     double time {};
     bool paused {};
     std::vector<MarkerRecord> markers;
+    std::vector<CallRecord> configurations;
     std::vector<std::string> lost;
 
 };
@@ -416,6 +424,8 @@ struct TapestryExpanseRecord {
     std::optional<glm::vec3> bounds_max;
     std::optional<uint32_t> collection;
     std::string fit_name;
+    std::vector<CallRecord> configurations;
+    std::map<std::string, std::string> controls;
     std::vector<std::string> fabric_names;
 
 };

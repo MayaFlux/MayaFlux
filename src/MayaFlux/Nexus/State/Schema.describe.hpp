@@ -18,6 +18,7 @@ struct Description<::MayaFlux::Nexus::State::AssetRecord> {
             Member<&::MayaFlux::Nexus::State::AssetRecord::form> { "form" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::index> { "index" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::snapshot> { "snapshot" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::make> { "make" },
         };
     }
 };
@@ -91,6 +92,7 @@ struct Description<::MayaFlux::Nexus::State::CourseRecord> {
             Member<&::MayaFlux::Nexus::State::CourseRecord::time> { "time" },
             Member<&::MayaFlux::Nexus::State::CourseRecord::paused> { "paused" },
             Member<&::MayaFlux::Nexus::State::CourseRecord::markers> { "markers" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::configurations> { "configurations" },
             Member<&::MayaFlux::Nexus::State::CourseRecord::lost> { "lost" },
         };
     }
@@ -113,6 +115,8 @@ struct Description<::MayaFlux::Nexus::State::EntityRecord> {
             Member<&::MayaFlux::Nexus::State::EntityRecord::wiring> { "wiring" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::attach> { "attach" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::view_targets> { "view_targets" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::view_of> { "view_of" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::configurations> { "configurations" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::audio_sinks> { "audio_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::render_sinks> { "render_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::locus_nav> { "locus_nav" },
@@ -137,6 +141,8 @@ struct Description<::MayaFlux::Nexus::State::ExpanseRecord> {
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::bounds_max> { "bounds_max" },
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::collection> { "collection" },
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::fit_name> { "fit_name" },
+            Member<&::MayaFlux::Nexus::State::ExpanseRecord::configurations> { "configurations" },
+            Member<&::MayaFlux::Nexus::State::ExpanseRecord::controls> { "controls" },
         };
     }
 };
@@ -258,6 +264,8 @@ struct Description<::MayaFlux::Nexus::State::TapestryExpanseRecord> {
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::bounds_max> { "bounds_max" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::collection> { "collection" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::fit_name> { "fit_name" },
+            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::configurations> { "configurations" },
+            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::controls> { "controls" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::fabric_names> { "fabric_names" },
         };
     }
@@ -322,6 +330,7 @@ struct Description<::MayaFlux::Nexus::State::WiringRecord> {
             Member<&::MayaFlux::Nexus::State::WiringRecord::bind_detach> { "bind_detach" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::on_complete> { "on_complete" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::on_detach> { "on_detach" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::configurations> { "configurations" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::lost> { "lost" },
         };
     }

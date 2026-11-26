@@ -324,7 +324,8 @@ StateOrchestrator::orchestrate(const std::shared_ptr<const Kakshya::MeshAssembly
 std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, StateOrchestrator::Rows>
 StateOrchestrator::orchestrate_rows(
     const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
-    const Kriya::MeshAssemblyMaterialResolver& materials)
+    const Kriya::MeshAssemblyMaterialResolver& materials,
+    const std::string& file)
 {
     if (!assembly) {
         return {};
@@ -350,7 +351,7 @@ StateOrchestrator::orchestrate_rows(
                 look_from_row(locus, world[row]);
                 admit(member);
             } else if (shown.first) {
-                wrap(member, shown);
+                wrap(member, shown, file, row);
                 fill(member, placement_of(world[row]));
             } else {
                 fill(member, placement_of(world[row]));
@@ -377,7 +378,7 @@ StateOrchestrator::orchestrate(const std::string& filepath)
     }
 
     auto [realization, rows] = orchestrate_rows(assembly,
-        m_material_resolver ? m_material_resolver : IO::Detail::make_material_resolver(filepath));
+        m_material_resolver ? m_material_resolver : IO::Detail::make_material_resolver(filepath), filepath);
     return { std::move(assembly), std::move(realization), std::move(rows) };
 }
 
@@ -385,14 +386,55 @@ StateOrchestrator::orchestrate(const std::string& filepath)
 // Private
 // =============================================================================
 
-void StateOrchestrator::wrap(const Fabric::Member& member, const BufferSlot& shown)
+void StateOrchestrator::set_bindings(const std::shared_ptr<State::Bindings>& bindings)
+{
+    m_bindings = bindings;
+    if (m_bindings && !m_bindings->functions.contains("follow_buffer")) {
+        m_bindings->functions.expose<&follow_buffer>();
+    }
+}
+
+std::string StateOrchestrator::name_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer,
+    const std::string& file, std::optional<uint64_t> row)
+{
+    for (const auto& [name, held] : m_bindings->buffers) {
+        if (held == buffer) {
+            return name;
+        }
+    }
+
+    const std::string stem = file.empty() ? "buffer" : std::filesystem::path(file).stem().string();
+    uint64_t number = row.value_or(0);
+    std::string name = stem + "_" + std::to_string(number);
+    while (m_bindings->buffers.contains(name)) {
+        name = stem + "_" + std::to_string(++number);
+    }
+
+    m_bindings->buffers.emplace(name, buffer);
+    if (!file.empty() && row) {
+        m_bindings->assets.insert_or_assign(name, State::AssetSource { .file = file, .row = row });
+    }
+    return name;
+}
+
+void StateOrchestrator::wrap(const Fabric::Member& member, const BufferSlot& shown,
+    const std::string& file, std::optional<uint64_t> row)
 {
     auto follow = placement_from(shown.first, shown.second);
     fill(member, follow());
-    admit(member, std::move(follow));
+
+    Reflect::FunctionCall call;
+    if (m_bindings && shown.first) {
+        call = { "follow_buffer", { { "buffer", name_buffer(shown.first, file, row) } } };
+        if (shown.second) {
+            call.second.emplace("slot", std::to_string(*shown.second));
+        }
+    }
+    admit(member, std::move(follow), call);
 }
 
-void StateOrchestrator::admit(const Fabric::Member& member, Wiring::PlacementFn follow)
+void StateOrchestrator::admit(const Fabric::Member& member, Wiring::PlacementFn follow,
+    const Reflect::FunctionCall& call)
 {
     if (!m_tapestry || std::visit([](const auto& ptr) { return ptr->id() != 0; }, member)) {
         return;
@@ -403,7 +445,11 @@ void StateOrchestrator::admit(const Fabric::Member& member, Wiring::PlacementFn 
 
     auto wiring = std::visit([this](const auto& ptr) { return m_fabric->wire(ptr); }, member);
     if (follow && !as_locus(member)) {
-        wiring.place_from(std::move(follow));
+        if (call.first.empty()) {
+            wiring.place_from(std::move(follow));
+        } else {
+            wiring.place_from(call, std::move(follow));
+        }
     }
     if (m_wiring_rule) {
         m_wiring_rule(wiring);

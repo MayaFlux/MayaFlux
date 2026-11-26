@@ -281,6 +281,21 @@ public:
     /** @brief Say how the on_exit callable was made, so it can be made again. */
     void set_on_exit_fn_call(Reflect::FunctionCall call) { m_on_exit_fn_call = std::move(call); }
 
+    /**
+     * @brief Run @p apply on this object and keep its call, so a loaded state can run it again.
+     *
+     * For what only code can set up, such as a typed influence or perception.
+     * Make @p apply from the same call with a Reflect::FunctionTable.
+     */
+    void configure(Reflect::FunctionCall call, const std::function<void(Expanse&)>& apply)
+    {
+        apply(*this);
+        m_configurations.push_back(std::move(call));
+    }
+
+    /** @brief The calls configure() was given, in order. */
+    [[nodiscard]] const std::vector<Reflect::FunctionCall>& configurations() const { return m_configurations; }
+
     /** @brief Id assigned at construction. Unique across Expanses and stable for its lifetime. */
     [[nodiscard]] uint32_t id() const { return m_id; }
 
@@ -443,6 +458,7 @@ private:
     Reflect::FunctionCall m_fn_call;
     Reflect::FunctionCall m_on_enter_fn_call;
     Reflect::FunctionCall m_on_exit_fn_call;
+    std::vector<Reflect::FunctionCall> m_configurations;
     ContainsFn m_contains;
     CrossingFn m_on_enter;
     CrossingFn m_on_exit;
