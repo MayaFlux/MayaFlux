@@ -4,6 +4,7 @@
 #include "MayaFlux/Nexus/Tapestry.hpp"
 
 #include "MayaFlux/Kriya/Realization/MeshAssemblyRealization.hpp"
+#include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
@@ -282,4 +283,30 @@ private:
     Kriya::MeshAssemblyMaterialResolver m_material_resolver;
 };
 
+/**
+ * @brief StateOrchestrator::placement_from as a free function, so a saved call can make it.
+ *
+ * Expose it in a Reflect::FunctionTable whose table holds the buffers by name.
+ *
+ * @code
+ * using Followed = std::map<std::string, std::shared_ptr<Buffers::VKBuffer>, std::less<>>;
+ *
+ * Reflect::FunctionTable<Followed> calls;
+ * calls.expose<&Nexus::follow_buffer>();
+ *
+ * Reflect::FunctionCall call { "follow_buffer", { { "buffer", "wolf" }, { "slot", "3" } } };
+ * std::string error;
+ * if (auto follow = calls.make<Nexus::Wiring::PlacementFn>(call, error, followed)) {
+ *     fabric->wire(agent).place_from(call, *follow).finalise();
+ * }
+ * @endcode
+ */
+[[nodiscard]] MAYAFLUX_API Wiring::PlacementFn follow_buffer(
+    const std::shared_ptr<Buffers::VKBuffer>& buffer,
+    std::optional<uint32_t> slot = std::nullopt);
+
 } // namespace MayaFlux::Nexus
+
+MF_DESCRIBE_FUNCTION(&MayaFlux::Nexus::follow_buffer)
+
+#include "Orchestrator.signatures.hpp"

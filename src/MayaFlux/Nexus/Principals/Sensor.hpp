@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -56,7 +57,7 @@ public:
      * @param fn           Called on every commit with the current context.
      */
     Sensor(float query_radius, std::string fn_name, PerceptionFn fn)
-        : m_fn_name(std::move(fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
         , m_fn(std::move(fn))
     {
         m_controls.query_radius.observe(query_radius);
@@ -96,10 +97,16 @@ public:
     [[nodiscard]] const QuantityStore& store() const noexcept { return m_store; }
 
     /** @brief Identifier assigned to the perception function, empty if anonymous. */
-    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_call.first; }
+
+    /** @brief The perception function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& fn_call() const { return m_fn_call; }
 
     /** @brief Set or replace the perception function's identifier. */
-    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+    void set_fn_name(std::string name) { m_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the perception function was made, so it can be made again. */
+    void set_fn_call(Reflect::FunctionCall call) { m_fn_call = std::move(call); }
 
     /** @brief The perception function itself. */
     [[nodiscard]] const PerceptionFn& fn() const { return m_fn; }
@@ -198,7 +205,7 @@ private:
     QuantityStore m_store;
     PlacementControls& m_placement { open_placement(m_store) };
     SensorControls& m_controls { open(m_store) };
-    std::string m_fn_name;
+    Reflect::FunctionCall m_fn_call;
     PerceptionFn m_fn;
     PerceptionFn m_perception;
     uint32_t m_id { 0 };

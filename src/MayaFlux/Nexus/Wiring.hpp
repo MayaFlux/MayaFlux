@@ -4,6 +4,7 @@
 
 #include "MayaFlux/IO/Keys.hpp"
 #include "MayaFlux/Kriya/BroadcastEvents.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 #include "MayaFlux/Vruta/NetworkSource.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -241,6 +242,9 @@ public:
      */
     Wiring& place_from(std::string fn_name, PlacementFn fn);
 
+    /** @brief place_from with the call that made the source, so it can be made again. */
+    Wiring& place_from(Reflect::FunctionCall call, PlacementFn fn);
+
     /**
      * @brief place_from for position alone.
      * @param fn Returns the new position.
@@ -253,6 +257,9 @@ public:
      * @param fn      Returns the new position.
      */
     Wiring& position_from(std::string fn_name, PositionFn fn);
+
+    /** @brief position_from with the call that made the source. */
+    Wiring& position_from(Reflect::FunctionCall call, PositionFn fn);
 
     /**
      * @brief Repeat the configured sequence or choreography N times.
@@ -274,9 +281,13 @@ public:
 
     /** @brief Register a named factory. */
     Wiring& use(std::string fn_name, SoundFactory factory);
+    Wiring& use(Reflect::FunctionCall call, SoundFactory factory);
     Wiring& use(std::string fn_name, GraphicsFactory factory);
+    Wiring& use(Reflect::FunctionCall call, GraphicsFactory factory);
     Wiring& use(std::string fn_name, CrossFactory factory);
+    Wiring& use(Reflect::FunctionCall call, CrossFactory factory);
     Wiring& use(std::string fn_name, EventFactory factory);
+    Wiring& use(Reflect::FunctionCall call, EventFactory factory);
 
     // =====================================================================
     // Immediate bind — no coroutine
@@ -307,9 +318,16 @@ public:
     /** @brief Call a named custom function once immediately. */
     Wiring& bind(std::string fn_name, std::function<void()> fn);
 
+    /** @brief Call once a custom function, with the call that made it. */
+    Wiring& bind(Reflect::FunctionCall call, std::function<void()> fn);
+
     /** @brief Call named attach/detach functions. */
     Wiring& bind(std::string attach_name, std::function<void()> attach,
         std::string detach_name, std::function<void()> detach);
+
+    /** @brief Attach and detach functions, with the calls that made them. */
+    Wiring& bind(Reflect::FunctionCall attach_call, std::function<void()> attach,
+        Reflect::FunctionCall detach_call, std::function<void()> detach);
 
     // =====================================================================
     // Endings
@@ -326,6 +344,9 @@ public:
      */
     Wiring& on_complete(std::function<void()> fn);
 
+    /** @brief on_complete with the call that made the function. */
+    Wiring& on_complete(Reflect::FunctionCall call, std::function<void()> fn);
+
     /**
      * @brief Run @p fn once when the wiring stops, for whatever reason.
      *
@@ -334,6 +355,9 @@ public:
      * @param fn Called once.
      */
     Wiring& on_detach(std::function<void()> fn);
+
+    /** @brief on_detach with the call that made the function. */
+    Wiring& on_detach(Reflect::FunctionCall call, std::function<void()> fn);
 
     // =====================================================================
     // Terminal
@@ -428,7 +452,9 @@ private:
     PlacementFn m_placement_fn;
     std::function<void()> m_on_complete;
     std::function<void()> m_on_detach;
-    std::string m_position_fn_name;
+    Reflect::FunctionCall m_complete_call;
+    Reflect::FunctionCall m_detach_call;
+    Reflect::FunctionCall m_position_call;
     std::vector<MoveStep> m_move_steps;
     size_t m_times { 1 };
     Vruta::ProcessingToken m_metro_token { Vruta::ProcessingToken::SAMPLE_ACCURATE };
@@ -437,12 +463,12 @@ private:
     std::vector<Trigger> m_triggers;
     Factory m_factory;
     EFactory m_event_factory;
-    std::string m_factory_name;
+    Reflect::FunctionCall m_factory_call;
 
     std::optional<std::function<void()>> m_bind_attach;
     std::optional<std::function<void()>> m_bind_detach;
-    std::string m_bind_attach_name;
-    std::string m_bind_detach_name;
+    Reflect::FunctionCall m_bind_attach_call;
+    Reflect::FunctionCall m_bind_detach_call;
 
     Wiring& window_filter(std::shared_ptr<Core::Window> window, Vruta::WindowEventFilter filter);
 
@@ -500,16 +526,34 @@ public:
     [[nodiscard]] bool has_bind_detach() const { return m_bind_detach.has_value(); }
 
     /** @brief Name of the placement source, empty if anonymous. */
-    [[nodiscard]] const std::string& position_fn_name() const { return m_position_fn_name; }
+    [[nodiscard]] const std::string& position_fn_name() const { return m_position_call.first; }
+
+    /** @brief The placement source as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& position_call() const { return m_position_call; }
 
     /** @brief Name of the active factory, empty if anonymous or none. */
-    [[nodiscard]] const std::string& factory_name() const { return m_factory_name; }
+    [[nodiscard]] const std::string& factory_name() const { return m_factory_call.first; }
+
+    /** @brief The active factory as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& factory_call() const { return m_factory_call; }
 
     /** @brief Name of the bind attach function, empty if anonymous or none. */
-    [[nodiscard]] const std::string& bind_attach_name() const { return m_bind_attach_name; }
+    [[nodiscard]] const std::string& bind_attach_name() const { return m_bind_attach_call.first; }
+
+    /** @brief The bind attach function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& bind_attach_call() const { return m_bind_attach_call; }
 
     /** @brief Name of the bind detach function, empty if anonymous or none. */
-    [[nodiscard]] const std::string& bind_detach_name() const { return m_bind_detach_name; }
+    [[nodiscard]] const std::string& bind_detach_name() const { return m_bind_detach_call.first; }
+
+    /** @brief The bind detach function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& bind_detach_call() const { return m_bind_detach_call; }
+
+    /** @brief The on_complete function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& complete_call() const { return m_complete_call; }
+
+    /** @brief The on_detach function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& detach_call() const { return m_detach_call; }
 };
 
 } // namespace MayaFlux::Nexus

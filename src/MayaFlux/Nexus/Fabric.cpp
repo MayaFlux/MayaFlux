@@ -157,15 +157,15 @@ uint32_t Fabric::add_expanse(std::shared_ptr<Expanse> expanse)
 {
     const uint32_t id = expanse->id();
 
-    if (!expanse->fn_name().empty() && expanse->contains_fn()) {
+    if (!expanse->fn_name().empty() && expanse->fn_call().second.empty() && expanse->contains_fn()) {
         m_expanse_fns.try_emplace(
             expanse->fn_name(), std::make_shared<Expanse::ContainsFn>(expanse->contains_fn()));
     }
-    if (!expanse->on_enter_fn_name().empty() && expanse->on_enter_fn()) {
+    if (!expanse->on_enter_fn_name().empty() && expanse->on_enter_fn_call().second.empty() && expanse->on_enter_fn()) {
         m_crossing_fns.try_emplace(
             expanse->on_enter_fn_name(), std::make_shared<Expanse::CrossingFn>(expanse->on_enter_fn()));
     }
-    if (!expanse->on_exit_fn_name().empty() && expanse->on_exit_fn()) {
+    if (!expanse->on_exit_fn_name().empty() && expanse->on_exit_fn_call().second.empty() && expanse->on_exit_fn()) {
         m_crossing_fns.try_emplace(
             expanse->on_exit_fn_name(), std::make_shared<Expanse::CrossingFn>(expanse->on_exit_fn()));
     }

@@ -4,6 +4,7 @@
 #include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
@@ -68,16 +69,22 @@ public:
      * @param fn      Called on every commit with the current context.
      */
     Emitter(std::string fn_name, InfluenceFn fn)
-        : m_fn_name(std::move(fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
         , m_fn(std::move(fn))
     {
     }
 
     /** @brief Identifier assigned to the influence function, empty if anonymous. */
-    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_call.first; }
+
+    /** @brief The influence function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& fn_call() const { return m_fn_call; }
 
     /** @brief Set or replace the influence function's identifier. */
-    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+    void set_fn_name(std::string name) { m_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the influence function was made, so it can be made again. */
+    void set_fn_call(Reflect::FunctionCall call) { m_fn_call = std::move(call); }
 
     /** @brief The influence function itself. */
     [[nodiscard]] const InfluenceFn& fn() const { return m_fn; }
@@ -405,7 +412,7 @@ private:
 
     InfluenceFn m_fn;
     uint32_t m_id {};
-    std::string m_fn_name;
+    Reflect::FunctionCall m_fn_call;
 
     mutable std::vector<AudioSink> m_audio_sinks;
     mutable std::vector<RenderSink> m_render_sinks;

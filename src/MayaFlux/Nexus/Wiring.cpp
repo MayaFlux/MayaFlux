@@ -120,7 +120,13 @@ Wiring& Wiring::place_from(PlacementFn fn)
 
 Wiring& Wiring::place_from(std::string fn_name, PlacementFn fn)
 {
-    m_position_fn_name = std::move(fn_name);
+    m_position_call = { std::move(fn_name), {} };
+    return place_from(std::move(fn));
+}
+
+Wiring& Wiring::place_from(Reflect::FunctionCall call, PlacementFn fn)
+{
+    m_position_call = std::move(call);
     return place_from(std::move(fn));
 }
 
@@ -138,10 +144,22 @@ Wiring& Wiring::on_complete(std::function<void()> fn)
     return *this;
 }
 
+Wiring& Wiring::on_complete(Reflect::FunctionCall call, std::function<void()> fn)
+{
+    m_complete_call = std::move(call);
+    return on_complete(std::move(fn));
+}
+
 Wiring& Wiring::on_detach(std::function<void()> fn)
 {
     m_on_detach = std::move(fn);
     return *this;
+}
+
+Wiring& Wiring::on_detach(Reflect::FunctionCall call, std::function<void()> fn)
+{
+    m_detach_call = std::move(call);
+    return on_detach(std::move(fn));
 }
 
 Wiring& Wiring::times(size_t count)
@@ -176,34 +194,68 @@ Wiring& Wiring::use(EventFactory factory)
 
 Wiring& Wiring::position_from(std::string fn_name, PositionFn fn)
 {
-    m_position_fn_name = std::move(fn_name);
+    m_position_call = { std::move(fn_name), {} };
+    return position_from(std::move(fn));
+}
+
+Wiring& Wiring::position_from(Reflect::FunctionCall call, PositionFn fn)
+{
+    m_position_call = std::move(call);
     return position_from(std::move(fn));
 }
 
 Wiring& Wiring::use(std::string fn_name, SoundFactory factory)
 {
-    m_factory_name = std::move(fn_name);
+    m_factory_call = { std::move(fn_name), {} };
+    m_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(Reflect::FunctionCall call, SoundFactory factory)
+{
+    m_factory_call = std::move(call);
     m_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::use(std::string fn_name, GraphicsFactory factory)
 {
-    m_factory_name = std::move(fn_name);
+    m_factory_call = { std::move(fn_name), {} };
+    m_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(Reflect::FunctionCall call, GraphicsFactory factory)
+{
+    m_factory_call = std::move(call);
     m_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::use(std::string fn_name, CrossFactory factory)
 {
-    m_factory_name = std::move(fn_name);
+    m_factory_call = { std::move(fn_name), {} };
+    m_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(Reflect::FunctionCall call, CrossFactory factory)
+{
+    m_factory_call = std::move(call);
     m_factory = std::move(factory);
     return *this;
 }
 
 Wiring& Wiring::use(std::string fn_name, EventFactory factory)
 {
-    m_factory_name = std::move(fn_name);
+    m_factory_call = { std::move(fn_name), {} };
+    m_event_factory = std::move(factory);
+    return *this;
+}
+
+Wiring& Wiring::use(Reflect::FunctionCall call, EventFactory factory)
+{
+    m_factory_call = std::move(call);
     m_event_factory = std::move(factory);
     return *this;
 }
@@ -233,7 +285,14 @@ Wiring& Wiring::bind(std::function<void()> attach, std::function<void()> detach)
 
 Wiring& Wiring::bind(std::string fn_name, std::function<void()> fn)
 {
-    m_bind_attach_name = std::move(fn_name);
+    m_bind_attach_call = { std::move(fn_name), {} };
+    m_bind_attach = std::move(fn);
+    return *this;
+}
+
+Wiring& Wiring::bind(Reflect::FunctionCall call, std::function<void()> fn)
+{
+    m_bind_attach_call = std::move(call);
     m_bind_attach = std::move(fn);
     return *this;
 }
@@ -242,9 +301,20 @@ Wiring& Wiring::bind(
     std::string attach_name, std::function<void()> attach,
     std::string detach_name, std::function<void()> detach)
 {
-    m_bind_attach_name = std::move(attach_name);
+    m_bind_attach_call = { std::move(attach_name), {} };
     m_bind_attach = std::move(attach);
-    m_bind_detach_name = std::move(detach_name);
+    m_bind_detach_call = { std::move(detach_name), {} };
+    m_bind_detach = std::move(detach);
+    return *this;
+}
+
+Wiring& Wiring::bind(
+    Reflect::FunctionCall attach_call, std::function<void()> attach,
+    Reflect::FunctionCall detach_call, std::function<void()> detach)
+{
+    m_bind_attach_call = std::move(attach_call);
+    m_bind_attach = std::move(attach);
+    m_bind_detach_call = std::move(detach_call);
     m_bind_detach = std::move(detach);
     return *this;
 }
@@ -337,26 +407,27 @@ void Wiring::finalise()
     std::visit([&](const auto& ptr) {
         using T = std::decay_t<decltype(*ptr)>;
         if constexpr (std::is_same_v<T, Emitter>) {
-            if (!ptr->fn_name().empty()) {
+            if (!ptr->fn_name().empty() && ptr->fn_call().second.empty()) {
                 m_fabric.m_influence_fns.try_emplace(
                     ptr->fn_name(), std::make_shared<Emitter::InfluenceFn>(ptr->fn()));
             }
         } else if constexpr (std::is_same_v<T, Sensor>) {
-            if (!ptr->fn_name().empty()) {
+            if (!ptr->fn_name().empty() && ptr->fn_call().second.empty()) {
                 m_fabric.m_perception_fns.try_emplace(
                     ptr->fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->fn()));
             }
         } else if constexpr (std::is_same_v<T, Agent>) {
-            if (!ptr->influence_fn_name().empty()) {
+            if (!ptr->influence_fn_name().empty() && ptr->influence_fn_call().second.empty()) {
                 m_fabric.m_influence_fns.try_emplace(
                     ptr->influence_fn_name(), std::make_shared<Emitter::InfluenceFn>(ptr->influence_fn()));
             }
-            if (!ptr->perception_fn_name().empty()) {
+            if (!ptr->perception_fn_name().empty() && ptr->perception_fn_call().second.empty()) {
                 m_fabric.m_perception_fns.try_emplace(
                     ptr->perception_fn_name(), std::make_shared<Sensor::PerceptionFn>(ptr->perception_fn()));
             }
             if (const auto presence = std::dynamic_pointer_cast<Presence>(ptr);
-                presence && !presence->radiate_fn_name().empty() && presence->radiate_fn()) {
+                presence && !presence->radiate_fn_name().empty() && presence->radiate_fn_call().second.empty()
+                && presence->radiate_fn()) {
                 m_fabric.m_radiate_fns.try_emplace(
                     presence->radiate_fn_name(), std::make_shared<Presence::RadiateFn>(presence->radiate_fn()));
             }

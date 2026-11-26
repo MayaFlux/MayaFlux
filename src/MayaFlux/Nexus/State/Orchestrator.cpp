@@ -405,4 +405,10 @@ void StateOrchestrator::admit(const Fabric::Member& member, Wiring::PlacementFn 
     wiring.finalise();
 }
 
+Wiring::PlacementFn follow_buffer(
+    const std::shared_ptr<Buffers::VKBuffer>& buffer, std::optional<uint32_t> slot)
+{
+    return StateOrchestrator::placement_from(buffer, slot);
+}
+
 } // namespace MayaFlux::Nexus

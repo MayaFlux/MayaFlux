@@ -139,10 +139,16 @@ public:
     [[nodiscard]] const RadiateFn& radiate_fn() const { return m_radiate; }
 
     /** @brief Identifier for the radiate callable, empty if anonymous. */
-    [[nodiscard]] const std::string& radiate_fn_name() const { return m_radiate_fn_name; }
+    [[nodiscard]] const std::string& radiate_fn_name() const { return m_radiate_fn_call.first; }
+
+    /** @brief The radiate callable as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& radiate_fn_call() const { return m_radiate_fn_call; }
 
     /** @brief Set or replace the radiate callable identifier. */
-    void set_radiate_fn_name(std::string name) { m_radiate_fn_name = std::move(name); }
+    void set_radiate_fn_name(std::string name) { m_radiate_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the radiate callable was made, so it can be made again. */
+    void set_radiate_fn_call(Reflect::FunctionCall call) { m_radiate_fn_call = std::move(call); }
 
     /**
      * @brief Neighbors captured on the most recent perception, with weights.
@@ -178,7 +184,7 @@ private:
     FalloffFn m_falloff;
     RadiateFn m_radiate;
 
-    std::string m_radiate_fn_name;
+    Reflect::FunctionCall m_radiate_fn_call;
     std::optional<FalloffCurve> m_falloff_curve { FalloffCurve::Linear };
     mutable std::vector<std::pair<uint32_t, float>> m_neighbors;
 };

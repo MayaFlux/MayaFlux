@@ -6,6 +6,7 @@
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
 
 #include "MayaFlux/Nexus/Pheme/Sinks.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Buffers {
 class VKBuffer;
@@ -82,9 +83,9 @@ public:
     Agent(float query_radius,
         std::string perception_fn_name, PerceptionFn perception,
         std::string influence_fn_name, InfluenceFn influence)
-        : m_perception_fn_name(std::move(perception_fn_name))
+        : m_perception_fn_call(std::move(perception_fn_name), Reflect::FunctionCall::second_type {})
         , m_perception_fn(std::move(perception))
-        , m_influence_fn_name(std::move(influence_fn_name))
+        , m_influence_fn_call(std::move(influence_fn_name), Reflect::FunctionCall::second_type {})
         , m_influence_fn(std::move(influence))
     {
         m_controls.query_radius.observe(query_radius);
@@ -94,16 +95,28 @@ public:
     virtual ~Agent() { detach(); }
 
     /** @brief Identifier assigned to the perception function, empty if anonymous. */
-    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_name; }
+    [[nodiscard]] const std::string& perception_fn_name() const { return m_perception_fn_call.first; }
+
+    /** @brief The perception function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& perception_fn_call() const { return m_perception_fn_call; }
 
     /** @brief Identifier assigned to the influence function, empty if anonymous. */
-    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_name; }
+    [[nodiscard]] const std::string& influence_fn_name() const { return m_influence_fn_call.first; }
+
+    /** @brief The influence function as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& influence_fn_call() const { return m_influence_fn_call; }
 
     /** @brief Set or replace the perception function's identifier. */
-    void set_perception_fn_name(std::string name) { m_perception_fn_name = std::move(name); }
+    void set_perception_fn_name(std::string name) { m_perception_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the perception function was made, so it can be made again. */
+    void set_perception_fn_call(Reflect::FunctionCall call) { m_perception_fn_call = std::move(call); }
 
     /** @brief Set or replace the influence function's identifier. */
-    void set_influence_fn_name(std::string name) { m_influence_fn_name = std::move(name); }
+    void set_influence_fn_name(std::string name) { m_influence_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the influence function was made, so it can be made again. */
+    void set_influence_fn_call(Reflect::FunctionCall call) { m_influence_fn_call = std::move(call); }
 
     /** @brief The perception function itself. */
     [[nodiscard]] const PerceptionFn& perception_fn() const { return m_perception_fn; }
@@ -520,9 +533,9 @@ protected:
     AgentControls& m_controls { open(m_store) };
 
 private:
-    std::string m_perception_fn_name;
+    Reflect::FunctionCall m_perception_fn_call;
     PerceptionFn m_perception_fn;
-    std::string m_influence_fn_name;
+    Reflect::FunctionCall m_influence_fn_call;
     InfluenceFn m_influence_fn;
     uint32_t m_id {};
 

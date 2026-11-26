@@ -4,6 +4,7 @@
 #include "MayaFlux/Nexus/Controls.hpp"
 #include "MayaFlux/Nexus/Pheme/Influence.hpp"
 #include "MayaFlux/Nexus/Pheme/Perception.hpp"
+#include "MayaFlux/Transitive/Reflect/FunctionCall.hpp"
 
 namespace MayaFlux::Nexus {
 
@@ -105,7 +106,7 @@ public:
      * @param on_exit  Fired with the entity id when it leaves. May be empty.
      */
     Expanse(std::string fn_name, ContainsFn contains, CrossingFn on_enter, CrossingFn on_exit)
-        : m_fn_name(std::move(fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
         , m_contains(std::move(contains))
         , m_on_enter(std::move(on_enter))
         , m_on_exit(std::move(on_exit))
@@ -127,9 +128,9 @@ public:
         ContainsFn contains,
         CrossingFn on_enter,
         CrossingFn on_exit)
-        : m_fn_name(std::move(fn_name))
-        , m_on_enter_fn_name(std::move(on_enter_fn_name))
-        , m_on_exit_fn_name(std::move(on_exit_fn_name))
+        : m_fn_call(std::move(fn_name), Reflect::FunctionCall::second_type {})
+        , m_on_enter_fn_call(std::move(on_enter_fn_name), Reflect::FunctionCall::second_type {})
+        , m_on_exit_fn_call(std::move(on_exit_fn_name), Reflect::FunctionCall::second_type {})
         , m_contains(std::move(contains))
         , m_on_enter(std::move(on_enter))
         , m_on_exit(std::move(on_exit))
@@ -245,22 +246,40 @@ public:
     [[nodiscard]] const CrossingFn& on_exit_fn() const { return m_on_exit; }
 
     /** @brief Identifier assigned to the containment predicate, empty if anonymous. */
-    [[nodiscard]] const std::string& fn_name() const { return m_fn_name; }
+    [[nodiscard]] const std::string& fn_name() const { return m_fn_call.first; }
+
+    /** @brief The containment predicate as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& fn_call() const { return m_fn_call; }
 
     /** @brief Set or replace the predicate identifier. */
-    void set_fn_name(std::string name) { m_fn_name = std::move(name); }
+    void set_fn_name(std::string name) { m_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the containment predicate was made, so it can be made again. */
+    void set_fn_call(Reflect::FunctionCall call) { m_fn_call = std::move(call); }
 
     /** @brief Identifier assigned to the on_enter callable, empty if anonymous. */
-    [[nodiscard]] const std::string& on_enter_fn_name() const { return m_on_enter_fn_name; }
+    [[nodiscard]] const std::string& on_enter_fn_name() const { return m_on_enter_fn_call.first; }
+
+    /** @brief The on_enter callable as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& on_enter_fn_call() const { return m_on_enter_fn_call; }
 
     /** @brief Set or replace the on_enter callable identifier. */
-    void set_on_enter_fn_name(std::string name) { m_on_enter_fn_name = std::move(name); }
+    void set_on_enter_fn_name(std::string name) { m_on_enter_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the on_enter callable was made, so it can be made again. */
+    void set_on_enter_fn_call(Reflect::FunctionCall call) { m_on_enter_fn_call = std::move(call); }
 
     /** @brief Identifier assigned to the on_exit callable, empty if anonymous. */
-    [[nodiscard]] const std::string& on_exit_fn_name() const { return m_on_exit_fn_name; }
+    [[nodiscard]] const std::string& on_exit_fn_name() const { return m_on_exit_fn_call.first; }
+
+    /** @brief The on_exit callable as a name and its arguments. */
+    [[nodiscard]] const Reflect::FunctionCall& on_exit_fn_call() const { return m_on_exit_fn_call; }
 
     /** @brief Set or replace the on_exit callable identifier. */
-    void set_on_exit_fn_name(std::string name) { m_on_exit_fn_name = std::move(name); }
+    void set_on_exit_fn_name(std::string name) { m_on_exit_fn_call = { std::move(name), {} }; }
+
+    /** @brief Say how the on_exit callable was made, so it can be made again. */
+    void set_on_exit_fn_call(Reflect::FunctionCall call) { m_on_exit_fn_call = std::move(call); }
 
     /** @brief Id assigned at construction. Unique across Expanses and stable for its lifetime. */
     [[nodiscard]] uint32_t id() const { return m_id; }
@@ -421,9 +440,9 @@ private:
         return action;
     }
 
-    std::string m_fn_name;
-    std::string m_on_enter_fn_name;
-    std::string m_on_exit_fn_name;
+    Reflect::FunctionCall m_fn_call;
+    Reflect::FunctionCall m_on_enter_fn_call;
+    Reflect::FunctionCall m_on_exit_fn_call;
     ContainsFn m_contains;
     CrossingFn m_on_enter;
     CrossingFn m_on_exit;
