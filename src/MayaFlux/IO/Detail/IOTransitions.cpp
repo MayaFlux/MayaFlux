@@ -131,7 +131,22 @@ MaterialResolver make_material_resolver(const std::string& filepath)
             resolved->images.emplace("\ncutout" + std::to_string(resolved->images.size()), cut);
             return cut;
         }
-        if (material.diffuse_path.empty() || material.diffuse_embedded) {
+        if (material.diffuse_embedded) {
+            const auto* maps = material.facets.get<Kakshya::MeshAssemblyMaps>();
+            const auto pixels = maps && maps->base_color ? maps->base_color->image : nullptr;
+            if (!pixels) {
+                return nullptr;
+            }
+            const std::string key = "\nembedded" + material.diffuse_path;
+            if (const auto found = resolved->images.find(key); found != resolved->images.end()) {
+                return found->second;
+            }
+            auto image = Portal::Graphics::get_texture_manager().create_2d(
+                pixels->width, pixels->height, pixels->format, pixels->data());
+            resolved->images.emplace(key, image);
+            return image;
+        }
+        if (material.diffuse_path.empty()) {
             return nullptr;
         }
 

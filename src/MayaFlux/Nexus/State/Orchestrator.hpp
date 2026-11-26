@@ -44,8 +44,13 @@ public:
     /** @brief Row and principal pairs in row order. */
     using Rows = std::vector<std::pair<uint64_t, Fabric::Member>>;
 
-    /** @brief Decides how a principal is wired, before the wiring is finalised. */
-    using WiringRule = std::function<void(Wiring&)>;
+    /**
+     * @brief Decides how a principal is wired, before the wiring is finalised.
+     *
+     * @p row is the assembly row the principal was made from, or nullopt for one
+     * made from plain values or a buffer.
+     */
+    using WiringRule = std::function<void(Wiring&, std::optional<uint64_t> row)>;
 
     /** @brief A buffer, and the slot of it when it holds several things. */
     using BufferSlot = std::pair<std::shared_ptr<Buffers::VKBuffer>, std::optional<uint32_t>>;
@@ -132,6 +137,22 @@ public:
                 member);
         }
         return found;
+    }
+
+    /**
+     * @brief The row whose principal has an id, such as one a spatial query answered.
+     * @return nullopt when no principal of @p rows has it, and for id 0.
+     */
+    [[nodiscard]] static std::optional<uint64_t> row_with_id(const Rows& rows, uint32_t id)
+    {
+        if (id != 0) {
+            for (const auto& [row, member] : rows) {
+                if (std::visit([](const auto& ptr) { return ptr->id(); }, member) == id) {
+                    return row;
+                }
+            }
+        }
+        return std::nullopt;
     }
 
     // =========================================================================
@@ -286,7 +307,7 @@ private:
 
     /** Wire a principal into the Fabric, when there is a Tapestry and it is not wired yet. */
     void admit(const Fabric::Member& member, Wiring::PlacementFn follow = {},
-        const Reflect::FunctionCall& call = {});
+        const Reflect::FunctionCall& call = {}, std::optional<uint64_t> row = std::nullopt);
 
     /** The bound name of a buffer, adding it and its source when it has none. */
     [[nodiscard]] std::string name_buffer(const std::shared_ptr<Buffers::VKBuffer>& buffer,

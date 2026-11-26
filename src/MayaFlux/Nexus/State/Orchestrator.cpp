@@ -161,7 +161,7 @@ std::shared_ptr<Locus> StateOrchestrator::locus_from(
     auto locus = new_locus();
     take_lens(locus, assembly, row);
     look_from_row(locus, world[row]);
-    admit(Fabric::Member { std::shared_ptr<Agent>(locus) });
+    admit(Fabric::Member { std::shared_ptr<Agent>(locus) }, {}, {}, row);
     return locus;
 }
 
@@ -189,7 +189,7 @@ std::shared_ptr<Emitter> StateOrchestrator::emitter_from(
     auto emitter = std::make_shared<Emitter>();
     take_color(emitter, assembly, row);
     emitter->set(placement_of(world[row]));
-    admit(Fabric::Member { emitter });
+    admit(Fabric::Member { emitter }, {}, {}, row);
     return emitter;
 }
 
@@ -349,13 +349,13 @@ StateOrchestrator::orchestrate_rows(
             const auto shown = buffer_of(realization, row);
             if (const auto locus = as_locus(member)) {
                 look_from_row(locus, world[row]);
-                admit(member);
+                admit(member, {}, {}, row);
             } else if (shown.first) {
                 wrap(member, shown, file, row);
                 fill(member, placement_of(world[row]));
             } else {
                 fill(member, placement_of(world[row]));
-                admit(member);
+                admit(member, {}, {}, row);
             }
         }
 
@@ -430,11 +430,11 @@ void StateOrchestrator::wrap(const Fabric::Member& member, const BufferSlot& sho
             call.second.emplace("slot", std::to_string(*shown.second));
         }
     }
-    admit(member, std::move(follow), call);
+    admit(member, std::move(follow), call, row);
 }
 
 void StateOrchestrator::admit(const Fabric::Member& member, Wiring::PlacementFn follow,
-    const Reflect::FunctionCall& call)
+    const Reflect::FunctionCall& call, std::optional<uint64_t> row)
 {
     if (!m_tapestry || std::visit([](const auto& ptr) { return ptr->id() != 0; }, member)) {
         return;
@@ -452,7 +452,7 @@ void StateOrchestrator::admit(const Fabric::Member& member, Wiring::PlacementFn 
         }
     }
     if (m_wiring_rule) {
-        m_wiring_rule(wiring);
+        m_wiring_rule(wiring, row);
     }
     wiring.finalise();
 }
