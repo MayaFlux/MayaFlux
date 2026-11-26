@@ -1,6 +1,12 @@
 #include "Decoder.hpp"
 
+#include "MayaFlux/Nexus/Expanses/Hull.hpp"
+#include "MayaFlux/Nexus/Expanses/Mantle.hpp"
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
+
+#include "MayaFlux/Buffers/BufferManager.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Buffers/VKBuffer.hpp"
 
 #include "MayaFlux/Journal/Archivist.hpp"
 
@@ -28,94 +34,268 @@ namespace {
     }
 
     // -------------------------------------------------------------------------
-    // Callables and wiring
+    // Calls and wiring
     // -------------------------------------------------------------------------
 
-    template <typename Fn>
-    Fn resolve_fn(
-        const std::shared_ptr<Fn>& resolved,
-        const std::string& name,
-        std::string_view label,
-        std::vector<std::string>& warnings)
+    struct Loading {
+        const State::Bindings* bindings {};
+        std::shared_ptr<Buffers::BufferManager> buffer_manager;
+        std::vector<std::string>& warnings;
+    };
+
+    Reflect::FunctionCall call_of(const State::CallRecord& record)
     {
-        if (name.empty()) {
+        return { record.name, { record.arguments.begin(), record.arguments.end() } };
+    }
+
+    bool bound_function(const Loading& load, const State::CallRecord& record)
+    {
+        return load.bindings && load.bindings->functions.contains(record.name);
+    }
+
+    template <typename Slot>
+    std::optional<Slot> make_bound(const Loading& load, const State::CallRecord& record, std::string& error)
+    {
+        return load.bindings->functions.make<Slot>(call_of(record), error,
+            load.bindings->buffers, load.bindings->windows, load.bindings->sources);
+    }
+
+    /** The function a call names, made from the bound functions, or nullopt with a warning. */
+    template <typename Slot>
+    std::optional<Slot> made(const Loading& load, const State::CallRecord& record, const std::string& label)
+    {
+        if (record.name.empty()) {
+            return std::nullopt;
+        }
+        if (!bound_function(load, record)) {
+            load.warnings.push_back(label + ": unknown '" + record.name + "', left empty");
+            return std::nullopt;
+        }
+        std::string error;
+        auto function = make_bound<Slot>(load, record, error);
+        if (!function) {
+            load.warnings.push_back(label + ": " + error);
+        }
+        return function;
+    }
+
+    /** made(), falling back to a Fabric registry entry for a function without arguments. */
+    template <typename Slot>
+    Slot resolve_fn(const Loading& load, const State::CallRecord& record,
+        const std::shared_ptr<Slot>& registered, const std::string& label)
+    {
+        if (!bound_function(load, record) && record.arguments.empty() && registered && *registered) {
+            return *registered;
+        }
+        return made<Slot>(load, record, label).value_or(Slot {});
+    }
+
+    template <typename Map>
+    typename Map::mapped_type bound_object(const Map* names, const std::string& name)
+    {
+        if (!names) {
             return {};
         }
-        if (!resolved || !*resolved) {
-            warnings.push_back(std::string(label) + ": unknown '" + name + "', left empty");
-            return {};
+        const auto found = names->find(name);
+        return found == names->end() ? typename Map::mapped_type {} : found->second;
+    }
+
+    std::shared_ptr<Buffers::VKBuffer> bound_buffer(const Loading& load, const std::string& name)
+    {
+        return bound_object(load.bindings ? &load.bindings->buffers : nullptr, name);
+    }
+
+    std::shared_ptr<Core::Window> bound_window(const Loading& load, const std::string& name)
+    {
+        return bound_object(load.bindings ? &load.bindings->windows : nullptr, name);
+    }
+
+    bool apply_trigger(Wiring& wiring, const State::TriggerRecord& rec, const Loading& load, const std::string& label)
+    {
+        if (rec.kind == State::TriggerKind::Network) {
+            const auto source = bound_object(load.bindings ? &load.bindings->sources : nullptr, rec.source);
+            if (!source) {
+                load.warnings.push_back(label + ": network source '" + rec.source + "' is not bound");
+                return false;
+            }
+            wiring.on(source);
+            return true;
         }
-        return *resolved;
+
+        const auto window = bound_window(load, rec.source);
+        if (!window) {
+            load.warnings.push_back(label + ": window '" + rec.source + "' is not bound");
+            return false;
+        }
+
+        switch (rec.kind) {
+        case State::TriggerKind::Key: {
+            if (!rec.key) {
+                return false;
+            }
+            const IO::ModifiedKey key = rec.modifiers
+                ? IO::ModifiedKey { *rec.key, *rec.modifiers }
+                : IO::ModifiedKey { *rec.key };
+            if (auto release = made<std::function<void()>>(load, rec.callback, label + " key release")) {
+                wiring.on(window, key, rec.held, call_of(rec.callback), std::move(*release));
+            } else if (rec.held) {
+                wiring.on(window, key, true);
+            } else {
+                wiring.on(window, key);
+            }
+            return true;
+        }
+        case State::TriggerKind::Mouse: {
+            if (!rec.button) {
+                return false;
+            }
+            if (auto release = made<std::function<void(double, double)>>(load, rec.callback, label + " mouse release")) {
+                wiring.on(window, *rec.button, rec.held, call_of(rec.callback), std::move(*release));
+            } else if (rec.held) {
+                wiring.on(window, *rec.button, true);
+            } else {
+                wiring.on(window, *rec.button);
+            }
+            return true;
+        }
+        case State::TriggerKind::Scroll: {
+            auto fn = made<std::function<void(double, double)>>(load, rec.callback, label + " scroll");
+            if (!fn) {
+                return false;
+            }
+            wiring.on_scroll(window, call_of(rec.callback), std::move(*fn));
+            return true;
+        }
+        case State::TriggerKind::WindowEvent: {
+            Vruta::WindowEventFilter filter;
+            filter.event_type = rec.event_type;
+            filter.key_code = rec.key;
+            filter.button = rec.button;
+            filter.modifiers = rec.modifiers;
+            wiring.on(window, std::move(filter));
+            return true;
+        }
+        case State::TriggerKind::Network:
+            break;
+        }
+        return false;
+    }
+
+    template <typename Factory>
+    bool apply_factory(Wiring& wiring, const State::CallRecord& rec, const Loading& load, const std::string& label)
+    {
+        auto factory = made<Factory>(load, rec, label + " factory");
+        if (!factory) {
+            return false;
+        }
+        wiring.use(call_of(rec), std::move(*factory));
+        return true;
+    }
+
+    bool apply_placement_source(Wiring& wiring, const State::CallRecord& rec, const Loading& load, const std::string& label)
+    {
+        if (rec.name.empty()) {
+            return false;
+        }
+        if (bound_function(load, rec)) {
+            std::string error;
+            if (auto place = make_bound<Wiring::PlacementFn>(load, rec, error)) {
+                wiring.place_from(call_of(rec), std::move(*place));
+                return true;
+            }
+            if (auto position = make_bound<Wiring::PositionFn>(load, rec, error)) {
+                wiring.position_from(call_of(rec), std::move(*position));
+                return true;
+            }
+            load.warnings.push_back(label + " placement source: " + error);
+            return false;
+        }
+        load.warnings.push_back(label + " placement source: unknown '" + rec.name + "'");
+        return false;
     }
 
     void apply_wiring(
         Wiring wiring,
         const State::WiringRecord& rec,
-        std::string_view who,
-        std::vector<std::string>& warnings)
+        const std::string& who,
+        const Loading& load)
     {
-        const auto fallback = [&](const std::string& why) {
-            warnings.push_back(std::string(who) + " wiring: " + why + ", commit_driven instead");
-        };
+        const std::string label = who + " wiring";
+        for (const auto& what : rec.lost) {
+            load.warnings.push_back(label + ": " + what + " was not saved");
+        }
 
-        switch (rec.kind) {
-        case State::WiringKind::Every:
-            if (!rec.interval) {
-                fallback("every has no interval");
-                break;
+        const bool was_scheduled = rec.interval || !rec.steps.empty() || !rec.triggers.empty()
+            || rec.factory_kind != State::FactoryKind::None || rec.bound;
+        bool scheduled = false;
+
+        switch (rec.factory_kind) {
+        case State::FactoryKind::Sound:
+            scheduled |= apply_factory<Wiring::SoundFactory>(wiring, rec.factory, load, label);
+            break;
+        case State::FactoryKind::Graphics:
+            scheduled |= apply_factory<Wiring::GraphicsFactory>(wiring, rec.factory, load, label);
+            break;
+        case State::FactoryKind::Cross:
+            scheduled |= apply_factory<Wiring::CrossFactory>(wiring, rec.factory, load, label);
+            break;
+        case State::FactoryKind::Event:
+            scheduled |= apply_factory<Wiring::EventFactory>(wiring, rec.factory, load, label);
+            break;
+        case State::FactoryKind::None:
+            break;
+        }
+
+        apply_placement_source(wiring, rec.place, load, label);
+
+        if (rec.bound) {
+            if (rec.bound_to_entity) {
+                wiring.bind();
+                scheduled = true;
+            } else if (auto attach = made<std::function<void()>>(load, rec.bind_attach, label + " bind")) {
+                if (auto detach = made<std::function<void()>>(load, rec.bind_detach, label + " bind detach")) {
+                    wiring.bind(call_of(rec.bind_attach), std::move(*attach),
+                        call_of(rec.bind_detach), std::move(*detach));
+                } else {
+                    wiring.bind(call_of(rec.bind_attach), std::move(*attach));
+                }
+                scheduled = true;
             }
+        }
+
+        for (const auto& trigger : rec.triggers) {
+            scheduled |= apply_trigger(wiring, trigger, load, label);
+        }
+
+        if (rec.interval) {
             wiring.every(*rec.interval,
                 rec.interval_token.value_or(Vruta::ProcessingToken::SAMPLE_ACCURATE));
-            if (rec.duration) {
-                wiring.for_duration(*rec.duration,
-                    rec.duration_token.value_or(Vruta::ProcessingToken::SAMPLE_ACCURATE));
-            }
-            if (rec.times && *rec.times > 1) {
-                wiring.times(*rec.times);
-            }
-            if (!rec.position_fn_name.empty()) {
-                warnings.push_back(std::string(who) + " wiring: position function '"
-                    + rec.position_fn_name + "' cannot be restored");
-            }
-            break;
+            scheduled = true;
+        }
+        for (const auto& step : rec.steps) {
+            wiring.move_to(step.position, step.delay_seconds);
+            scheduled = true;
+        }
+        if (!rec.steps.empty() && !rec.interval && rec.interval_token) {
+            wiring.every(0.0, *rec.interval_token);
+        }
+        if (rec.duration) {
+            wiring.for_duration(*rec.duration,
+                rec.duration_token.value_or(Vruta::ProcessingToken::SAMPLE_ACCURATE));
+        }
+        if (rec.times) {
+            wiring.times(*rec.times);
+        }
 
-        case State::WiringKind::MoveTo:
-            if (rec.steps) {
-                for (const auto& s : *rec.steps) {
-                    wiring.move_to(s.position, s.delay_seconds);
-                }
-            }
-            if (rec.times && *rec.times > 1) {
-                wiring.times(*rec.times);
-            }
-            break;
+        if (auto fn = made<std::function<void()>>(load, rec.on_complete, label + " on_complete")) {
+            wiring.on_complete(call_of(rec.on_complete), std::move(*fn));
+        }
+        if (auto fn = made<std::function<void()>>(load, rec.on_detach, label + " on_detach")) {
+            wiring.on_detach(call_of(rec.on_detach), std::move(*fn));
+        }
 
-        case State::WiringKind::Scroll:
-            fallback("scroll needs a live window");
-            break;
-        case State::WiringKind::Key:
-            fallback("a key trigger needs a live window");
-            break;
-        case State::WiringKind::Mouse:
-            fallback("a mouse trigger needs a live window");
-            break;
-        case State::WiringKind::Network:
-            fallback("a network trigger needs a live source");
-            break;
-        case State::WiringKind::WindowEvent:
-            fallback("a window event trigger needs a live source");
-            break;
-        case State::WiringKind::Factory:
-            fallback("factory '" + rec.factory_name + "' cannot be restored");
-            break;
-        case State::WiringKind::Bind:
-            fallback("bind callables cannot be restored");
-            break;
-        case State::WiringKind::Unsupported:
-            fallback("the saved wiring kind is unsupported");
-            break;
-        case State::WiringKind::CommitDriven:
-            break;
+        if ((was_scheduled || !rec.lost.empty()) && !scheduled) {
+            load.warnings.push_back(label + ": nothing left to schedule it, commit_driven instead");
         }
         wiring.finalise();
     }
@@ -235,7 +415,7 @@ namespace {
             if (!e) {
                 return false;
             }
-            note_name_mismatch(entry, "fn_name", entry.influence_fn_name, e->fn_name(), warnings);
+            note_name_mismatch(entry, "fn_name", entry.influence.name, e->fn_name(), warnings);
             apply_controls(e->store(), entry, warnings);
             return true;
         }
@@ -244,7 +424,7 @@ namespace {
             if (!s) {
                 return false;
             }
-            note_name_mismatch(entry, "fn_name", entry.perception_fn_name, s->fn_name(), warnings);
+            note_name_mismatch(entry, "fn_name", entry.perception.name, s->fn_name(), warnings);
             apply_controls(s->store(), entry, warnings);
             return true;
         }
@@ -253,8 +433,8 @@ namespace {
             if (!a) {
                 return false;
             }
-            note_name_mismatch(entry, "perception_fn_name", entry.perception_fn_name, a->perception_fn_name(), warnings);
-            note_name_mismatch(entry, "influence_fn_name", entry.influence_fn_name, a->influence_fn_name(), warnings);
+            note_name_mismatch(entry, "perception_fn_name", entry.perception.name, a->perception_fn_name(), warnings);
+            note_name_mismatch(entry, "influence_fn_name", entry.influence.name, a->influence_fn_name(), warnings);
             apply_agent(*a, entry, warnings);
             return true;
         }
@@ -278,15 +458,16 @@ namespace {
     std::shared_ptr<Agent> construct_agent(
         Fabric& fabric,
         const State::EntityRecord& entry,
-        std::vector<std::string>& warnings)
+        const Loading& load)
     {
         const std::string who = who_is(entry);
 
-        auto pfn = resolve_fn(fabric.resolve_perception_fn(entry.perception_fn_name),
-            entry.perception_fn_name, who + " perception_fn", warnings);
-        auto ifn = resolve_fn(fabric.resolve_influence_fn(entry.influence_fn_name),
-            entry.influence_fn_name, who + " influence_fn", warnings);
+        auto pfn = resolve_fn(load, entry.perception,
+            fabric.resolve_perception_fn(entry.perception.name), who + " perception_fn");
+        auto ifn = resolve_fn(load, entry.influence,
+            fabric.resolve_influence_fn(entry.influence.name), who + " influence_fn");
 
+        std::shared_ptr<Agent> agent;
         if (entry.subkind == "locus" && entry.locus_nav) {
             const auto& nav = *entry.locus_nav;
             const Kinesis::NavigationConfig config {
@@ -299,84 +480,168 @@ namespace {
                 .mouse_sensitivity = nav.mouse_sensitivity,
                 .scroll_speed = nav.scroll_speed,
             };
-            warnings.push_back(who + ": view_targets must be reconnected by caller");
-            return std::make_shared<Locus>(config, k_built_radius,
-                entry.perception_fn_name, std::move(pfn),
-                entry.influence_fn_name, std::move(ifn));
+            agent = std::make_shared<Locus>(config, k_built_radius, std::move(pfn), std::move(ifn));
+        } else if (entry.subkind == "presence") {
+            auto rfn = resolve_fn(load, entry.radiate,
+                fabric.resolve_radiate_fn(entry.radiate.name), who + " radiate_fn");
+            auto presence = std::make_shared<Presence>(k_built_radius,
+                entry.perception.name, std::move(pfn),
+                entry.influence.name, std::move(ifn),
+                entry.radiate.name, std::move(rfn));
+            presence->set_radiate_fn_call(call_of(entry.radiate));
+            agent = std::move(presence);
+        } else {
+            if (entry.subkind == "locus") {
+                load.warnings.push_back(who + ": no locus_nav in schema, reconstructed as plain Agent");
+            } else if (!entry.subkind.empty()) {
+                load.warnings.push_back(who + ": unknown subkind '" + entry.subkind
+                    + "', reconstructed as plain Agent");
+            }
+            if (!pfn && !ifn && entry.perception.name.empty() && entry.influence.name.empty()) {
+                agent = std::make_shared<Agent>(k_built_radius);
+            } else {
+                agent = std::make_shared<Agent>(k_built_radius,
+                    entry.perception.name, std::move(pfn),
+                    entry.influence.name, std::move(ifn));
+            }
+        }
+        agent->set_perception_fn_call(call_of(entry.perception));
+        agent->set_influence_fn_call(call_of(entry.influence));
+        return agent;
+    }
+
+    template <typename Entity>
+    void restore_attachment(Entity& entity, const State::EntityRecord& entry, const Loading& load)
+    {
+        if (!entry.attach) {
+            return;
+        }
+        const auto buffer = bound_buffer(load, entry.attach->buffer);
+        if (!buffer) {
+            load.warnings.push_back(who_is(entry) + ": attached buffer '" + entry.attach->buffer + "' is not bound");
+            return;
+        }
+        entity.attach(buffer, { .index = entry.attach->index, .offset = entry.attach->offset, .on_move = entry.attach->on_move });
+    }
+
+    template <typename Entity>
+    void restore_sinks(Entity& entity, const State::EntityRecord& entry, const Loading& load)
+    {
+        if (entry.audio_sinks.empty() && entry.render_sinks.empty()) {
+            return;
+        }
+        const std::string who = who_is(entry);
+        if (!load.buffer_manager) {
+            load.warnings.push_back(who + ": sinks need the Fabric's BufferManager");
+            return;
         }
 
-        if (entry.subkind == "presence") {
-            auto rfn = resolve_fn(fabric.resolve_radiate_fn(entry.radiate_fn_name),
-                entry.radiate_fn_name, who + " radiate_fn", warnings);
-            return std::make_shared<Presence>(k_built_radius,
-                entry.perception_fn_name, std::move(pfn),
-                entry.influence_fn_name, std::move(ifn),
-                entry.radiate_fn_name, std::move(rfn));
+        for (const auto& sink : entry.audio_sinks) {
+            const State::CallRecord call { .name = sink.fn_name, .arguments = {} };
+            using Producer = std::function<Kakshya::DataVariant(const InfluenceContext&)>;
+            if (auto fn = made<Producer>(load, call, who + " audio sink")) {
+                entity.sink_audio(*load.buffer_manager, sink.channel, std::move(*fn), sink.fn_name);
+            } else {
+                entity.sink_audio(*load.buffer_manager, sink.channel);
+            }
         }
 
-        if (entry.subkind == "locus") {
-            warnings.push_back(who + ": no locus_nav in schema, reconstructed as plain Agent");
-        } else if (!entry.subkind.empty()) {
-            warnings.push_back(who + ": unknown subkind '" + entry.subkind
-                + "', reconstructed as plain Agent");
-        }
+        for (const auto& sink : entry.render_sinks) {
+            const auto window = bound_window(load, sink.window);
+            if (!window) {
+                load.warnings.push_back(who + ": render sink window '" + sink.window + "' is not bound, sink skipped");
+                continue;
+            }
+            Portal::Graphics::RenderConfig config;
+            config.target_window = window;
+            config.vertex_shader = sink.vertex_shader;
+            config.fragment_shader = sink.fragment_shader;
+            config.geometry_shader = sink.geometry_shader;
+            config.default_texture_binding = sink.default_texture_binding;
+            config.topology = sink.topology;
+            config.polygon_mode = sink.polygon_mode;
+            config.cull_mode = sink.cull_mode;
+            config.triangulate = sink.triangulate;
+            config.draw_priority = sink.draw_priority;
+            config.extra_string_params = sink.extra_string_params;
 
-        if (entry.perception_fn_name.empty() && entry.influence_fn_name.empty()) {
-            return std::make_shared<Agent>(k_built_radius);
+            const State::CallRecord call { .name = sink.fn_name, .arguments = {} };
+            if (auto fn = made<RenderFn>(load, call, who + " render sink")) {
+                entity.render(*load.buffer_manager, config, sink.fn_name, std::move(*fn));
+            } else {
+                entity.render(*load.buffer_manager, config);
+            }
         }
-        return std::make_shared<Agent>(k_built_radius,
-            entry.perception_fn_name, std::move(pfn),
-            entry.influence_fn_name, std::move(ifn));
+    }
+
+    void restore_view_targets(Agent& agent, const State::EntityRecord& entry, const Loading& load)
+    {
+        auto* locus = dynamic_cast<Locus*>(&agent);
+        if (!locus) {
+            return;
+        }
+        for (const auto& name : entry.view_targets) {
+            const auto buffer = bound_buffer(load, name);
+            if (const auto processor = buffer ? buffer->get_render_processor() : nullptr) {
+                locus->add_view_target(processor);
+            } else {
+                load.warnings.push_back(who_is(entry) + ": view target '" + name
+                    + "' is not a bound buffer with a render processor");
+            }
+        }
     }
 
     void construct_entity(
         Fabric& fabric,
         const State::EntityRecord& entry,
-        std::vector<std::string>& warnings)
+        const Loading& load)
     {
         const std::string who = who_is(entry);
-
-        if (!entry.audio_sinks.empty() || !entry.render_sinks.empty()) {
-            warnings.push_back(who + ": sinks are not restored, they need a BufferManager and a window");
-        }
 
         switch (State::parse_kind(entry.kind)) {
         case Fabric::Kind::Emitter: {
             std::shared_ptr<Emitter> emitter;
-            if (entry.influence_fn_name.empty()) {
+            if (entry.influence.name.empty()) {
                 emitter = std::make_shared<Emitter>();
             } else {
-                emitter = std::make_shared<Emitter>(entry.influence_fn_name,
-                    resolve_fn(fabric.resolve_influence_fn(entry.influence_fn_name),
-                        entry.influence_fn_name, who + " influence_fn", warnings));
+                emitter = std::make_shared<Emitter>(entry.influence.name,
+                    resolve_fn(load, entry.influence,
+                        fabric.resolve_influence_fn(entry.influence.name), who + " influence_fn"));
+                emitter->set_fn_call(call_of(entry.influence));
             }
-            apply_controls(emitter->store(), entry, warnings);
+            apply_controls(emitter->store(), entry, load.warnings);
+            restore_attachment(*emitter, entry, load);
             auto wiring = fabric.wire(emitter);
-            note_runtime_id(entry, emitter->id(), warnings);
-            apply_wiring(std::move(wiring), entry.wiring, who, warnings);
+            note_runtime_id(entry, emitter->id(), load.warnings);
+            apply_wiring(std::move(wiring), entry.wiring, who, load);
+            restore_sinks(*emitter, entry, load);
             break;
         }
         case Fabric::Kind::Sensor: {
             std::shared_ptr<Sensor> sensor;
-            if (entry.perception_fn_name.empty()) {
+            if (entry.perception.name.empty()) {
                 sensor = std::make_shared<Sensor>(k_built_radius);
             } else {
-                sensor = std::make_shared<Sensor>(k_built_radius, entry.perception_fn_name,
-                    resolve_fn(fabric.resolve_perception_fn(entry.perception_fn_name),
-                        entry.perception_fn_name, who + " perception_fn", warnings));
+                sensor = std::make_shared<Sensor>(k_built_radius, entry.perception.name,
+                    resolve_fn(load, entry.perception,
+                        fabric.resolve_perception_fn(entry.perception.name), who + " perception_fn"));
+                sensor->set_fn_call(call_of(entry.perception));
             }
-            apply_controls(sensor->store(), entry, warnings);
+            apply_controls(sensor->store(), entry, load.warnings);
             auto wiring = fabric.wire(sensor);
-            note_runtime_id(entry, sensor->id(), warnings);
-            apply_wiring(std::move(wiring), entry.wiring, who, warnings);
+            note_runtime_id(entry, sensor->id(), load.warnings);
+            apply_wiring(std::move(wiring), entry.wiring, who, load);
             break;
         }
         case Fabric::Kind::Agent: {
-            auto agent = construct_agent(fabric, entry, warnings);
-            apply_agent(*agent, entry, warnings);
+            auto agent = construct_agent(fabric, entry, load);
+            apply_agent(*agent, entry, load.warnings);
+            restore_attachment(*agent, entry, load);
+            restore_view_targets(*agent, entry, load);
             auto wiring = fabric.wire(agent);
-            note_runtime_id(entry, agent->id(), warnings);
-            apply_wiring(std::move(wiring), entry.wiring, who, warnings);
+            note_runtime_id(entry, agent->id(), load.warnings);
+            apply_wiring(std::move(wiring), entry.wiring, who, load);
+            restore_sinks(*agent, entry, load);
             break;
         }
         }
@@ -396,6 +661,7 @@ namespace {
         Expanse::ContainsFn contains;
         Expanse::CrossingFn on_enter;
         Expanse::CrossingFn on_exit;
+        std::shared_ptr<Buffers::VKBuffer> buffer;
     };
 
     template <typename Record>
@@ -406,26 +672,38 @@ namespace {
         }
     }
 
+    /** What a record can be rebuilt as with what is bound: its own kind, or a plain Expanse. */
+    template <typename Record>
+    std::string rebuilt_subkind(const Record& rec, const Loading& load)
+    {
+        return rec.subkind.empty() || !bound_buffer(load, rec.buffer) ? std::string {} : rec.subkind;
+    }
+
     /**
      * @brief Whether a record can become an Expanse at all.
      *
-     * A Hull wraps a live buffer and cannot be rebuilt from data. A Mantle is
-     * restored as its plain box. Anything else needs a predicate name or a box.
+     * A Hull needs its buffer bound. A Mantle without one is restored as its plain
+     * box. Anything else needs a predicate name or a box.
      */
     template <typename Record>
-    bool expanse_restorable(const Record& rec, const std::string& label, std::vector<std::string>& warnings)
+    bool expanse_restorable(const Record& rec, const std::string& label, const Loading& load)
     {
+        const bool bound = bound_buffer(load, rec.buffer) != nullptr;
         if (rec.subkind == "hull") {
-            warnings.push_back(label + ": a Hull wraps a live buffer that is not encoded, skipping");
-            return false;
+            if (!bound) {
+                load.warnings.push_back(label + ": the buffer of a Hull is not bound, skipping");
+            }
+            return bound;
         }
         if (rec.subkind == "mantle") {
-            warnings.push_back(label + ": a Mantle is restored as a plain boxed Expanse, its look must be made again");
+            if (!bound) {
+                load.warnings.push_back(label + ": the buffer of a Mantle is not bound, restored as a plain boxed Expanse");
+            }
         } else if (!rec.subkind.empty()) {
-            warnings.push_back(label + ": unknown subkind '" + rec.subkind + "', restored as a plain Expanse");
+            load.warnings.push_back(label + ": unknown subkind '" + rec.subkind + "', restored as a plain Expanse");
         }
-        if (rec.fn_name.empty() && !(rec.bounds_min && rec.bounds_max)) {
-            warnings.push_back(label + ": neither fn_name nor bounds, skipping");
+        if (rec.contains.name.empty() && !(rec.bounds_min && rec.bounds_max)) {
+            load.warnings.push_back(label + ": neither fn_name nor bounds, skipping");
             return false;
         }
         return true;
@@ -437,62 +715,87 @@ namespace {
         const std::vector<Fabric*>& fabrics,
         const std::string& label,
         ExpanseParts& parts,
-        std::vector<std::string>& warnings)
+        const Loading& load)
     {
-        if (!rec.fn_name.empty()) {
+        const auto registered = [&fabrics](auto resolve, const std::string& name) {
+            decltype(resolve(std::declval<const Fabric&>(), name)) found;
             for (const Fabric* fabric : fabrics) {
-                if (auto ptr = fabric->resolve_expanse_fn(rec.fn_name); ptr && *ptr) {
-                    parts.contains = *ptr;
+                if (found = resolve(*fabric, name); found && *found) {
                     break;
                 }
             }
+            return found;
+        };
+        const auto contains_in = [](const Fabric& fabric, const std::string& name) { return fabric.resolve_expanse_fn(name); };
+        const auto crossing_in = [](const Fabric& fabric, const std::string& name) { return fabric.resolve_crossing_fn(name); };
+
+        parts.buffer = bound_buffer(load, rec.buffer);
+        if (!rec.contains.name.empty() && rec.subkind != "hull") {
+            parts.contains = resolve_fn(load, rec.contains,
+                registered(contains_in, rec.contains.name), label + " contains");
             if (!parts.contains) {
-                warnings.push_back(label + ": fn '" + rec.fn_name + "' not in registry, skipping");
+                load.warnings.push_back(label + ": no predicate, skipping");
                 return false;
             }
         }
-
-        const auto resolve_crossing = [&](const std::string& name, Expanse::CrossingFn& out) {
-            if (name.empty()) {
-                return;
-            }
-            for (const Fabric* fabric : fabrics) {
-                if (auto ptr = fabric->resolve_crossing_fn(name); ptr && *ptr) {
-                    out = *ptr;
-                    return;
-                }
-            }
-            warnings.push_back(label + ": crossing '" + name + "' not in registry, left empty");
-        };
-        resolve_crossing(rec.on_enter_fn_name, parts.on_enter);
-        resolve_crossing(rec.on_exit_fn_name, parts.on_exit);
+        if (!rec.on_enter.name.empty()) {
+            parts.on_enter = resolve_fn(load, rec.on_enter,
+                registered(crossing_in, rec.on_enter.name), label + " on_enter");
+        }
+        if (!rec.on_exit.name.empty()) {
+            parts.on_exit = resolve_fn(load, rec.on_exit,
+                registered(crossing_in, rec.on_exit.name), label + " on_exit");
+        }
         return true;
     }
 
+    template <typename Record>
+    Portal::Graphics::FitMode fit_of(const Record& rec)
+    {
+        return Reflect::string_to_enum_case_insensitive<Portal::Graphics::FitMode>(rec.fit_name)
+            .value_or(Portal::Graphics::FitMode::STRETCH);
+    }
+
+    template <typename Record>
+    Kinesis::AABB3D box_of(const Record& rec)
+    {
+        return Kinesis::AABB3D {
+            .min = rec.bounds_min.value_or(glm::vec3(0.0F)),
+            .max = rec.bounds_max.value_or(glm::vec3(0.0F)),
+        };
+    }
+
+    template <typename Record>
+    void keep_calls(Expanse& expanse, const Record& rec)
+    {
+        expanse.set_fn_call(call_of(rec.contains));
+        expanse.set_on_enter_fn_call(call_of(rec.on_enter));
+        expanse.set_on_exit_fn_call(call_of(rec.on_exit));
+    }
+
     /**
-     * @brief A plain Expanse already on the Fabric that this record describes.
+     * @brief An Expanse already on the Fabric that this record describes.
      *
-     * Matched by predicate and crossing names. A box-only Expanse has no name to
-     * match on, so its box must be equal.
+     * Matched by kind and calls. A box-only Expanse has no name to match on, so
+     * its box must be equal. A Hull or Mantle must also wrap the same buffer,
+     * which @p wraps answers.
      */
-    std::shared_ptr<Expanse> find_equivalent(const Fabric& fabric, const State::ExpanseRecord& rec)
+    template <typename Wraps>
+    std::shared_ptr<Expanse> find_equivalent(const Fabric& fabric, const State::ExpanseRecord& rec,
+        const std::string& subkind, const Wraps& wraps)
     {
         for (uint32_t id : fabric.all_expanse_ids()) {
             auto x = fabric.get_expanse(id);
-            if (!x) {
+            if (!x || !wraps(*x, subkind)) {
                 continue;
             }
-            const Expanse& live = *x;
-            if (typeid(live) != typeid(Expanse)) {
+            if (x->fn_call() != call_of(rec.contains)
+                || x->on_enter_fn_call() != call_of(rec.on_enter)
+                || x->on_exit_fn_call() != call_of(rec.on_exit)) {
                 continue;
             }
-            if (x->fn_name() != rec.fn_name
-                || x->on_enter_fn_name() != rec.on_enter_fn_name
-                || x->on_exit_fn_name() != rec.on_exit_fn_name) {
-                continue;
-            }
-            if (const auto box = x->bounds();
-                rec.fn_name.empty() && (!box || box->min != *rec.bounds_min || box->max != *rec.bounds_max)) {
+            if (const auto box = x->bounds(); subkind != "hull" && rec.contains.name.empty()
+                && (!box || box->min != *rec.bounds_min || box->max != *rec.bounds_max)) {
                 continue;
             }
             return x;
@@ -500,34 +803,44 @@ namespace {
         return nullptr;
     }
 
+    template <typename Wraps>
     Restored restore_expanse(
         Fabric& fabric,
         const State::ExpanseRecord& rec,
-        std::vector<std::string>& warnings)
+        const Loading& load,
+        const Wraps& wraps)
     {
         const std::string label = "Expanse " + std::to_string(rec.id);
-        if (!expanse_restorable(rec, label, warnings)) {
+        if (!expanse_restorable(rec, label, load)) {
             return Restored::Skipped;
         }
 
-        if (auto existing = find_equivalent(fabric, rec)) {
-            apply_bounds(*existing, rec);
+        const std::string subkind = rebuilt_subkind(rec, load);
+        if (auto existing = find_equivalent(fabric, rec, subkind, wraps)) {
+            if (subkind != "hull") {
+                apply_bounds(*existing, rec);
+            }
             return Restored::Patched;
         }
 
         ExpanseParts parts;
-        if (!resolve_expanse_parts(rec, { &fabric }, label, parts, warnings)) {
+        if (!resolve_expanse_parts(rec, { &fabric }, label, parts, load)) {
             return Restored::Skipped;
         }
 
-        auto expanse = std::make_shared<Expanse>(
-            rec.fn_name,
-            rec.on_enter_fn_name,
-            rec.on_exit_fn_name,
-            std::move(parts.contains),
-            std::move(parts.on_enter),
-            std::move(parts.on_exit));
-        apply_bounds(*expanse, rec);
+        std::shared_ptr<Expanse> expanse;
+        if (subkind == "hull") {
+            expanse = std::make_shared<Hull>(parts.buffer, std::move(parts.on_enter),
+                std::move(parts.on_exit), rec.collection);
+        } else if (subkind == "mantle") {
+            expanse = std::make_shared<Mantle>(box_of(rec), parts.buffer, fit_of(rec),
+                std::move(parts.on_enter), std::move(parts.on_exit));
+        } else {
+            expanse = std::make_shared<Expanse>(rec.contains.name, rec.on_enter.name, rec.on_exit.name,
+                std::move(parts.contains), std::move(parts.on_enter), std::move(parts.on_exit));
+            apply_bounds(*expanse, rec);
+        }
+        keep_calls(*expanse, rec);
         fabric.add_expanse(std::move(expanse));
         return Restored::Constructed;
     }
@@ -547,6 +860,20 @@ namespace {
     }
 
 } // namespace
+
+bool StateDecoder::wraps(const Expanse& live, const std::string& subkind,
+    const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    if (subkind == "hull") {
+        const auto* hull = dynamic_cast<const Hull*>(&live);
+        return hull && hull->m_buf == buffer;
+    }
+    if (subkind == "mantle") {
+        const auto* mantle = dynamic_cast<const Mantle*>(&live);
+        return mantle && mantle->m_look.buf == buffer;
+    }
+    return typeid(live) == typeid(Expanse);
+}
 
 // -------------------------------------------------------------------------
 // decode()
@@ -576,6 +903,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
 
     std::vector<std::string> warnings;
+    const Loading load { .bindings = m_bindings.get(), .buffer_manager = fabric.m_buffers, .warnings = warnings };
 
     for (const auto& entry : schema.entities) {
         if (!State::kind_known(entry.kind)) {
@@ -595,7 +923,10 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
     }
 
     for (const auto& xrec : schema.expanses) {
-        restore_expanse(fabric, xrec, warnings);
+        restore_expanse(fabric, xrec, load,
+            [buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
+                return wraps(live, subkind, buffer);
+            });
     }
 
     log_warnings(warnings);
@@ -633,6 +964,8 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
         return result;
     }
 
+    const Loading load { .bindings = m_bindings.get(), .buffer_manager = fabric.m_buffers, .warnings = result.warnings };
+
     const auto existing_ids = fabric.all_ids();
     const std::unordered_set<uint32_t> existing(existing_ids.begin(), existing_ids.end());
 
@@ -651,13 +984,16 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, con
                 ++result.skipped;
             }
         } else {
-            construct_entity(fabric, entry, result.warnings);
+            construct_entity(fabric, entry, load);
             ++result.constructed;
         }
     }
 
     for (const auto& xrec : schema.expanses) {
-        switch (restore_expanse(fabric, xrec, result.warnings)) {
+        const auto same = [buffer = bound_buffer(load, xrec.buffer)](const Expanse& live, const std::string& subkind) {
+            return wraps(live, subkind, buffer);
+        };
+        switch (restore_expanse(fabric, xrec, load, same)) {
         case Restored::Constructed:
             ++result.constructed;
             break;
@@ -714,9 +1050,11 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         }
     }
 
+    const Loading load { .bindings = m_bindings.get(), .buffer_manager = nullptr, .warnings = total.warnings };
+
     for (const auto& xrec : schema.expanses) {
         const std::string label = "TapestryExpanse '" + xrec.name + "'";
-        if (!expanse_restorable(xrec, label, total.warnings)) {
+        if (!expanse_restorable(xrec, label, load)) {
             ++total.skipped;
             continue;
         }
@@ -737,23 +1075,24 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
             apply_bounds(*expanse, xrec);
         } else {
             ExpanseParts parts;
-            if (!resolve_expanse_parts(xrec, fabrics, label, parts, total.warnings)) {
+            if (!resolve_expanse_parts(xrec, fabrics, label, parts, load)) {
                 ++total.skipped;
                 continue;
             }
 
-            if (xrec.fn_name.empty()) {
-                expanse = tapestry.create_expanse<Expanse>(
-                    xrec.name,
-                    Kinesis::AABB3D { .min = *xrec.bounds_min, .max = *xrec.bounds_max },
-                    std::move(parts.on_enter),
-                    std::move(parts.on_exit));
+            const std::string subkind = rebuilt_subkind(xrec, load);
+            if (subkind == "hull") {
+                expanse = tapestry.create_expanse<Hull>(xrec.name, parts.buffer,
+                    std::move(parts.on_enter), std::move(parts.on_exit), xrec.collection);
+            } else if (subkind == "mantle") {
+                expanse = tapestry.create_expanse<Mantle>(xrec.name, box_of(xrec), parts.buffer, fit_of(xrec),
+                    std::move(parts.on_enter), std::move(parts.on_exit));
+            } else if (xrec.contains.name.empty()) {
+                expanse = tapestry.create_expanse<Expanse>(xrec.name, box_of(xrec),
+                    std::move(parts.on_enter), std::move(parts.on_exit));
             } else {
-                expanse = tapestry.create_expanse(
-                    xrec.name,
-                    std::move(parts.contains),
-                    std::move(parts.on_enter),
-                    std::move(parts.on_exit));
+                expanse = tapestry.create_expanse(xrec.name, std::move(parts.contains),
+                    std::move(parts.on_enter), std::move(parts.on_exit));
                 apply_bounds(*expanse, xrec);
             }
 
@@ -761,9 +1100,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
                 ++total.skipped;
                 continue;
             }
-            expanse->set_fn_name(xrec.fn_name);
-            expanse->set_on_enter_fn_name(xrec.on_enter_fn_name);
-            expanse->set_on_exit_fn_name(xrec.on_exit_fn_name);
+            keep_calls(*expanse, xrec);
         }
 
         for (Fabric* fabric : fabrics) {

@@ -1,7 +1,9 @@
 #pragma once
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
+#include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
 #include "MayaFlux/Nexus/Fabric.hpp"
+#include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
 #include "MayaFlux/Transitive/Reflect/EnumReflect.hpp"
 
@@ -29,7 +31,10 @@ namespace MayaFlux::Nexus::State {
  *       written by name as the text its TextCodec reads back, so nothing is
  *       listed by hand and a control added to an entity is saved without a
  *       change here. The EXR is a normalized picture of those same numbers and
- *       the decoder does not read it.
+ *       the decoder does not read it. Functions are written with their
+ *       arguments, wirings with every trigger and ending, and buffers, windows
+ *       and network sources by their bound names. Changed in place while
+ *       unpublished.
  */
 inline constexpr uint32_t k_schema_version = 7;
 
@@ -78,26 +83,51 @@ MF_DESCRIBE(ComponentRecord)
 // =============================================================================
 
 /**
- * @brief Serializable wiring strategies.
- *
- * Written as the underlying integer, so new enumerators are only ever
- * appended. Key, Mouse, Network, WindowEvent, Factory and Bind describe a wiring
- * whose source is live (a window, a network source, a callable) and is not
- * encoded; the record keeps what is plain data. Unsupported marks a wiring the
- * encoder could not describe.
+ * @brief A function as it was named and, when a FunctionTable made it, the arguments.
+ *        An empty name is an anonymous or absent function.
  */
-enum class WiringKind : uint8_t {
-    CommitDriven,
-    Every,
-    MoveTo,
-    Scroll,
-    Unsupported,
+struct CallRecord {
+    std::string name;
+    std::map<std::string, std::string> arguments;
+
+};
+
+MF_DESCRIBE(CallRecord)
+
+enum class TriggerKind : uint8_t {
     Key,
     Mouse,
+    Scroll,
     Network,
     WindowEvent,
-    Factory,
-    Bind,
+};
+
+/**
+ * @brief One trigger. @p source is the bound name of its window or network source.
+ *        @p callback is the release callback of a key or mouse trigger, or the
+ *        function of a scroll trigger.
+ */
+struct TriggerRecord {
+    TriggerKind kind { TriggerKind::Key };
+    std::string source;
+    std::optional<IO::Keys> key;
+    std::optional<IO::Modifiers> modifiers;
+    std::optional<IO::MouseButtons> button;
+    std::optional<Core::WindowEventType> event_type;
+    bool held {};
+    CallRecord callback;
+
+};
+
+MF_DESCRIBE(TriggerRecord)
+
+/** @brief Which Wiring::use overload a factory was given to. */
+enum class FactoryKind : uint8_t {
+    None,
+    Sound,
+    Graphics,
+    Cross,
+    Event,
 };
 
 struct WiringStep {
@@ -108,22 +138,30 @@ struct WiringStep {
 
 MF_DESCRIBE(WiringStep)
 
+/**
+ * @brief Everything a Wiring was told, as data.
+ *
+ * @p lost lists what could not be written down, such as an anonymous factory or
+ * a window with no bound name.
+ */
 struct WiringRecord {
-    WiringKind kind { WiringKind::CommitDriven };
     std::optional<double> interval;
     std::optional<double> duration;
     std::optional<size_t> times;
-    std::optional<std::vector<WiringStep>> steps;
+    std::vector<WiringStep> steps;
     std::optional<Vruta::ProcessingToken> interval_token;
     std::optional<Vruta::ProcessingToken> duration_token;
-    std::optional<IO::Keys> key;
-    std::optional<IO::Modifiers> key_modifiers;
-    std::optional<IO::MouseButtons> button;
-    std::optional<bool> held;
-    std::string position_fn_name;
-    std::string factory_name;
-    std::string attach_fn_name;
-    std::string detach_fn_name;
+    std::vector<TriggerRecord> triggers;
+    FactoryKind factory_kind { FactoryKind::None };
+    CallRecord factory;
+    CallRecord place;
+    bool bound {};
+    bool bound_to_entity {};
+    CallRecord bind_attach;
+    CallRecord bind_detach;
+    CallRecord on_complete;
+    CallRecord on_detach;
+    std::vector<std::string> lost;
 
 };
 
@@ -147,6 +185,7 @@ MF_DESCRIBE(AudioSinkRecord)
  */
 struct RenderSinkRecord {
     std::string fn_name;
+    std::string window;
     std::string vertex_shader;
     std::string fragment_shader;
     std::string geometry_shader;
@@ -193,6 +232,19 @@ MF_DESCRIBE(LocusNavRecord)
 // =============================================================================
 
 /**
+ * @brief A buffer an entity is attached to, by its bound name.
+ */
+struct AttachRecord {
+    std::string buffer;
+    std::optional<uint32_t> index;
+    glm::vec3 offset {};
+    AttachConfig::OnMove on_move { AttachConfig::OnMove::Offset };
+
+};
+
+MF_DESCRIBE(AttachRecord)
+
+/**
  * @brief Per-entity JSON record.
  *
  * `kind` is one of "emitter", "sensor", "agent".
@@ -208,10 +260,12 @@ struct EntityRecord {
     std::string kind;
     std::string subkind;
     std::map<std::string, std::string> controls;
-    std::string influence_fn_name;
-    std::string perception_fn_name;
-    std::string radiate_fn_name;
+    CallRecord influence;
+    CallRecord perception;
+    CallRecord radiate;
     WiringRecord wiring;
+    std::optional<AttachRecord> attach;
+    std::vector<std::string> view_targets;
     std::vector<AudioSinkRecord> audio_sinks;
     std::vector<RenderSinkRecord> render_sinks;
     std::optional<LocusNavRecord> locus_nav;
@@ -227,21 +281,22 @@ MF_DESCRIBE(EntityRecord)
 /**
  * @brief Per-expanse JSON record.
  *
- * The containment predicate and crossing callbacks are closures, so only their
- * names are serializable and they are resolved from the Fabric's function
- * registry on reconstruct. The box is plain data and is stored as is.
+ * The containment predicate and crossing callbacks are written as calls and made
+ * again from the bound functions, or resolved by name from the Fabric's function
+ * registry. The box is plain data and is stored as is.
  *
  * `subkind` is empty for a plain Expanse, "hull" for a Hull and "mantle" for a
  * Mantle. A Hull keeps its collection index and a Mantle its fit mode, as the
- * lowercase FitMode name. The buffer both wrap is live and is not encoded.
+ * lowercase FitMode name. The buffer both wrap is written by its bound name.
  * `id` is the id the Expanse had when saved and is informational.
  */
 struct ExpanseRecord {
     uint32_t id {};
     std::string subkind;
-    std::string fn_name;
-    std::string on_enter_fn_name;
-    std::string on_exit_fn_name;
+    CallRecord contains;
+    CallRecord on_enter;
+    CallRecord on_exit;
+    std::string buffer;
     std::optional<glm::vec3> bounds_min;
     std::optional<glm::vec3> bounds_max;
     std::optional<uint32_t> collection;
@@ -295,9 +350,10 @@ MF_DESCRIBE(FabricRef)
 struct TapestryExpanseRecord {
     std::string name;
     std::string subkind;
-    std::string fn_name;
-    std::string on_enter_fn_name;
-    std::string on_exit_fn_name;
+    CallRecord contains;
+    CallRecord on_enter;
+    CallRecord on_exit;
+    std::string buffer;
     std::optional<glm::vec3> bounds_min;
     std::optional<glm::vec3> bounds_max;
     std::optional<uint32_t> collection;

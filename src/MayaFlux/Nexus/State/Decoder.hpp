@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Nexus/Tapestry.hpp"
+#include "Bindings.hpp"
 #include "Schema.hpp"
 
 namespace MayaFlux::Nexus {
@@ -18,16 +19,24 @@ namespace MayaFlux::Nexus {
  * schema and live entity are warned but do not abort the patch. Values are read
  * from the JSON; the EXR is not read.
  *
- * Live objects are never invented. Sinks, typed influences and perceptions,
- * attachments, a Locus's view targets and every wiring source that needs a
- * window, a network source or a callable are reported as warnings, and a wiring
- * that cannot be restored falls back to commit_driven. A Hull needs a buffer
- * and is skipped; a Mantle comes back as its plain box. Only files of schema
- * version k_schema_version are read.
+ * Live objects are never invented. A function is made from the Bindings'
+ * FunctionTable with the arguments saved for it, or taken from the Fabric's
+ * registry by name when it has none. Buffers, windows and network sources are
+ * looked up by the names saved for them, which restores triggers, sinks,
+ * attachments, view targets, Hull and Mantle. What is not bound is reported, and
+ * a wiring with nothing left to schedule it falls back to commit_driven. Only
+ * files of schema version k_schema_version are read.
  */
 class MAYAFLUX_API StateDecoder {
 public:
     StateDecoder() = default;
+
+    /** @param bindings Names for the live objects the state refers to. */
+    explicit StateDecoder(const std::shared_ptr<const State::Bindings>& bindings)
+        : m_bindings(bindings)
+    {
+    }
+
     ~StateDecoder() = default;
 
     StateDecoder(const StateDecoder&) = delete;
@@ -62,11 +71,9 @@ public:
     /**
      * @brief Patch existing entities and construct missing ones from schema.
      *
-     * Entities whose id exists in the fabric are patched in place. Missing
-     * entities are constructed, their callables resolved via the fabric's
-     * function registry (left empty with a warning if absent), and wired.
-     * Restorable wiring kinds: every (with its scheduler tokens), move_to and
-     * commit_driven. Any other kind falls back to commit_driven with a warning.
+     * Entities whose id exists in the fabric have their controls patched in
+     * place. Missing entities are constructed with their functions, sinks,
+     * attachment and view targets, and wired as they were.
      * Entity ids are assigned by the Fabric, so a reconstructed entity may get a
      * different id, which is warned.
      * Hard failure (bad schema, unreadable EXR, dimension mismatch) sets
@@ -108,9 +115,14 @@ public:
     [[nodiscard]] size_t missing_count() const { return m_missing_count; }
 
 private:
+    /** Whether a live Expanse is of a record's kind and, for a Hull or Mantle, wraps its buffer. */
+    [[nodiscard]] static bool wraps(const Expanse& live, const std::string& subkind,
+        const std::shared_ptr<Buffers::VKBuffer>& buffer);
+
     std::string m_last_error;
     size_t m_patched_count { 0 };
     size_t m_missing_count { 0 };
+    std::shared_ptr<const State::Bindings> m_bindings;
 };
 
 } // namespace MayaFlux::Nexus

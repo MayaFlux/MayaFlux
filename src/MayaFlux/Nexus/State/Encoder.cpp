@@ -5,6 +5,7 @@
 #include "MayaFlux/Nexus/Expanses/Hull.hpp"
 #include "MayaFlux/Nexus/Expanses/Mantle.hpp"
 
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
 #include "MayaFlux/Nexus/Principals/Locus.hpp"
@@ -59,19 +60,53 @@ namespace {
     }
 
     // -------------------------------------------------------------------------
+    // Calls and names
+    // -------------------------------------------------------------------------
+
+    State::CallRecord call_record(const Reflect::FunctionCall& call)
+    {
+        return { .name = call.first, .arguments = { call.second.begin(), call.second.end() } };
+    }
+
+    template <typename Map, typename Object>
+    std::string bound_name(const Map& names, const std::shared_ptr<Object>& object)
+    {
+        for (const auto& [name, held] : names) {
+            if (held == object) {
+                return name;
+            }
+        }
+        return {};
+    }
+
+    /** The call of a function that exists, warned about when it has no name. */
+    State::CallRecord named_call(const Reflect::FunctionCall& call, bool exists, std::string_view what, uint32_t id)
+    {
+        if (exists && call.first.empty()) {
+            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                "StateEncoder: {} {} has no name and is not encoded", what, id);
+        }
+        return call_record(call);
+    }
+
+    // -------------------------------------------------------------------------
     // Sink records
     // -------------------------------------------------------------------------
 
     void fill_sinks(
         State::EntityRecord& ent,
         const std::vector<AudioSink>& audio_sinks,
-        const std::vector<RenderSink>& render_sinks)
+        const std::vector<RenderSink>& render_sinks,
+        const State::WindowNames* windows)
     {
         for (const auto& s : audio_sinks)
             ent.audio_sinks.push_back({ .channel = s.channel, .fn_name = s.fn_name });
 
         for (const auto& s : render_sinks) {
             State::RenderSinkRecord rec { .fn_name = s.fn_name };
+            if (windows && s.window) {
+                rec.window = bound_name(*windows, s.window);
+            }
             if (s.buf) {
                 const auto config = s.buf->get_render_config();
                 rec.vertex_shader = config.vertex_shader;
@@ -91,108 +126,187 @@ namespace {
 
 } // namespace
 
-State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id)
+std::string StateEncoder::buffer_name(const std::shared_ptr<Buffers::VKBuffer>& buffer) const
 {
-    const Wiring* w = fabric.wiring_for(id);
-    if (!w)
-        return { .kind = State::WiringKind::Unsupported };
+    return m_bindings && buffer ? bound_name(m_bindings->buffers, buffer) : std::string {};
+}
 
+std::string StateEncoder::window_name(const std::shared_ptr<Core::Window>& window) const
+{
+    return m_bindings && window ? bound_name(m_bindings->windows, window) : std::string {};
+}
+
+std::string StateEncoder::source_name(const std::shared_ptr<Vruta::NetworkSource>& source) const
+{
+    return m_bindings && source ? bound_name(m_bindings->sources, source) : std::string {};
+}
+
+State::WiringRecord StateEncoder::build_wiring(const Fabric& fabric, uint32_t id) const
+{
     State::WiringRecord rec;
-    rec.position_fn_name = w->position_fn_name();
-
-    const auto take_times = [&] {
-        if (w->times_count() > 1)
-            rec.times = w->times_count();
-    };
-    const auto take_duration = [&] {
-        if (w->duration()) {
-            rec.duration = w->duration();
-            rec.duration_token = w->m_duration_token;
-        }
-    };
-
-    if (!std::holds_alternative<std::monostate>(w->factory()) || w->event_factory()) {
-        rec.kind = State::WiringKind::Factory;
-        rec.factory_name = w->factory_name();
-
-    } else if (w->has_bind()) {
-        rec.kind = State::WiringKind::Bind;
-        rec.attach_fn_name = w->bind_attach_name();
-        rec.detach_fn_name = w->bind_detach_name();
-        take_duration();
-
-    } else if (!w->move_steps().empty()) {
-        rec.kind = State::WiringKind::MoveTo;
-        std::vector<State::WiringStep> steps;
-        steps.reserve(w->move_steps().size());
-        for (const auto& s : w->move_steps())
-            steps.push_back({ .position = s.position, .delay_seconds = s.delay_seconds });
-        rec.steps = std::move(steps);
-        take_times();
-
-    } else if (!w->triggers().empty()) {
-        if (w->triggers().size() > 1) {
-            MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateEncoder: entity {} has {} triggers, only the first is encoded", id, w->triggers().size());
-        }
-        std::visit([&rec](const auto& trigger) {
-            using T = std::decay_t<decltype(trigger)>;
-            if constexpr (std::is_same_v<T, Wiring::KeyTrigger>) {
-                rec.kind = State::WiringKind::Key;
-                rec.key = trigger.key.key;
-                rec.key_modifiers = trigger.key.modifiers;
-                rec.held = trigger.held;
-            } else if constexpr (std::is_same_v<T, Wiring::MouseTrigger>) {
-                rec.kind = State::WiringKind::Mouse;
-                rec.button = trigger.button;
-                rec.held = trigger.held;
-            } else if constexpr (std::is_same_v<T, Wiring::ScrollTrigger>) {
-                rec.kind = State::WiringKind::Scroll;
-            } else if constexpr (std::is_same_v<T, Wiring::NetworkTrigger>) {
-                rec.kind = State::WiringKind::Network;
-            } else if constexpr (std::is_same_v<T, Wiring::WindowEventTrigger>) {
-                rec.kind = State::WiringKind::WindowEvent;
-            } else {
-                rec.kind = State::WiringKind::Unsupported;
-            }
-        },
-            w->triggers().front());
-
-    } else if (w->interval()) {
-        rec.kind = State::WiringKind::Every;
-        rec.interval = w->interval();
-        rec.interval_token = w->m_metro_token;
-        take_duration();
-        take_times();
+    const Wiring* w = fabric.wiring_for(id);
+    if (!w) {
+        rec.lost.emplace_back("an unfinished wiring");
+        return rec;
     }
 
+    const auto keep = [&rec](const Reflect::FunctionCall& call, bool exists, std::string_view what) {
+        if (exists && call.first.empty()) {
+            rec.lost.emplace_back(what);
+        }
+        return call_record(call);
+    };
+
+    rec.interval = w->interval();
+    rec.duration = w->duration();
+    if (w->times_count() > 1) {
+        rec.times = w->times_count();
+    }
+    for (const auto& step : w->move_steps()) {
+        rec.steps.push_back({ .position = step.position, .delay_seconds = step.delay_seconds });
+    }
+    if (rec.interval || !rec.steps.empty()) {
+        rec.interval_token = w->m_metro_token;
+    }
+    if (rec.duration) {
+        rec.duration_token = w->m_duration_token;
+    }
+
+    if (w->event_factory()) {
+        rec.factory_kind = State::FactoryKind::Event;
+    } else if (std::holds_alternative<Wiring::SoundFactory>(w->factory())) {
+        rec.factory_kind = State::FactoryKind::Sound;
+    } else if (std::holds_alternative<Wiring::GraphicsFactory>(w->factory())) {
+        rec.factory_kind = State::FactoryKind::Graphics;
+    } else if (std::holds_alternative<Wiring::CrossFactory>(w->factory())) {
+        rec.factory_kind = State::FactoryKind::Cross;
+    }
+    rec.factory = keep(w->factory_call(), rec.factory_kind != State::FactoryKind::None, "a factory");
+    rec.place = keep(w->position_call(), w->has_position_fn(), "a placement source");
+
+    rec.bound = w->has_bind();
+    rec.bound_to_entity = w->m_bind_self;
+    rec.bind_attach = keep(w->bind_attach_call(), rec.bound && !rec.bound_to_entity, "a bind function");
+    rec.bind_detach = keep(w->bind_detach_call(), w->has_bind_detach(), "a bind detach function");
+    rec.on_complete = keep(w->complete_call(), static_cast<bool>(w->m_on_complete), "an on_complete function");
+    rec.on_detach = keep(w->detach_call(), static_cast<bool>(w->m_on_detach), "an on_detach function");
+
+    const auto windowed = [&](State::TriggerRecord& trigger, const std::shared_ptr<Core::Window>& window) {
+        trigger.source = window_name(window);
+        if (trigger.source.empty()) {
+            rec.lost.emplace_back("a trigger whose window has no bound name");
+            return false;
+        }
+        return true;
+    };
+
+    for (const auto& held : w->triggers()) {
+        std::visit([&](const auto& trigger) {
+            using T = std::decay_t<decltype(trigger)>;
+            State::TriggerRecord record;
+            if constexpr (std::is_same_v<T, Wiring::KeyTrigger>) {
+                record.kind = State::TriggerKind::Key;
+                record.key = trigger.key.key;
+                record.modifiers = trigger.key.modifiers;
+                record.held = trigger.held;
+                record.callback = keep(trigger.release_call, trigger.on_release.has_value(), "a key release function");
+                if (windowed(record, trigger.window)) {
+                    rec.triggers.push_back(std::move(record));
+                }
+            } else if constexpr (std::is_same_v<T, Wiring::MouseTrigger>) {
+                record.kind = State::TriggerKind::Mouse;
+                record.button = trigger.button;
+                record.held = trigger.held;
+                record.callback = keep(trigger.release_call, trigger.on_release.has_value(), "a mouse release function");
+                if (windowed(record, trigger.window)) {
+                    rec.triggers.push_back(std::move(record));
+                }
+            } else if constexpr (std::is_same_v<T, Wiring::ScrollTrigger>) {
+                record.kind = State::TriggerKind::Scroll;
+                record.callback = keep(trigger.call, true, "a scroll function");
+                if (windowed(record, trigger.window)) {
+                    rec.triggers.push_back(std::move(record));
+                }
+            } else if constexpr (std::is_same_v<T, Wiring::WindowEventTrigger>) {
+                record.kind = State::TriggerKind::WindowEvent;
+                record.event_type = trigger.filter.event_type;
+                record.key = trigger.filter.key_code;
+                record.button = trigger.filter.button;
+                record.modifiers = trigger.filter.modifiers;
+                if (windowed(record, trigger.window)) {
+                    rec.triggers.push_back(std::move(record));
+                }
+            } else if constexpr (std::is_same_v<T, Wiring::NetworkTrigger>) {
+                record.kind = State::TriggerKind::Network;
+                record.source = source_name(trigger.source);
+                if (record.source.empty()) {
+                    rec.lost.emplace_back("a network trigger whose source has no bound name");
+                } else {
+                    rec.triggers.push_back(std::move(record));
+                }
+            } else if constexpr (std::is_same_v<T, Wiring::BroadcastTrigger>) {
+                rec.lost.emplace_back("a broadcast trigger");
+            }
+        },
+            held);
+    }
+
+    for (const auto& what : rec.lost) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+            "StateEncoder: entity {} loses {}", id, what);
+    }
     return rec;
 }
 
-template <typename Record>
-void StateEncoder::fill_expanse(Record& record, const Expanse& expanse)
+template <typename Entity>
+void StateEncoder::fill_attachment(State::EntityRecord& record, const Entity& entity) const
 {
-    record.fn_name = expanse.fn_name();
-    record.on_enter_fn_name = expanse.on_enter_fn_name();
-    record.on_exit_fn_name = expanse.on_exit_fn_name();
+    if (!entity.m_attachment) {
+        return;
+    }
+    const auto name = buffer_name(entity.m_attachment->buf);
+    if (name.empty()) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+            "StateEncoder: entity {} is attached to a buffer with no bound name", record.id);
+        return;
+    }
+    const auto& config = entity.m_attachment->config;
+    record.attach = State::AttachRecord {
+        .buffer = name,
+        .index = config.index,
+        .offset = config.offset,
+        .on_move = config.on_move,
+    };
+}
+
+template <typename Record>
+void StateEncoder::fill_expanse(Record& record, const Expanse& expanse) const
+{
+    record.contains = call_record(expanse.fn_call());
+    record.on_enter = call_record(expanse.on_enter_fn_call());
+    record.on_exit = call_record(expanse.on_exit_fn_call());
     if (const auto box = expanse.bounds()) {
         record.bounds_min = box->min;
         record.bounds_max = box->max;
     }
 
+    std::shared_ptr<Buffers::VKBuffer> wrapped;
     if (const auto* hull = dynamic_cast<const Hull*>(&expanse)) {
         record.subkind = "hull";
         record.collection = hull->m_collection;
+        wrapped = hull->m_buf;
     } else if (const auto* mantle = dynamic_cast<const Mantle*>(&expanse)) {
         record.subkind = "mantle";
         record.fit_name = Reflect::enum_to_lowercase_string(
             quantity_value<Portal::Graphics::FitMode>(mantle->m_mantle.fit)
                 .value_or(Portal::Graphics::FitMode::STRETCH));
+        wrapped = mantle->m_look.buf;
     }
 
-    if (!record.subkind.empty()) {
+    record.buffer = buffer_name(wrapped);
+    if (wrapped && record.buffer.empty()) {
         MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-            "StateEncoder: {} wraps a live buffer that is not encoded", record.subkind);
+            "StateEncoder: {} wraps a buffer with no bound name", record.subkind);
     }
 }
 
@@ -224,19 +338,18 @@ bool StateEncoder::encode_fabric(
         ent.kind = State::kind_to_string(k);
         ent.wiring = build_wiring(fabric, id);
 
+        const auto* windows = m_bindings ? &m_bindings->windows : nullptr;
+
         switch (k) {
         case Fabric::Kind::Emitter: {
             auto e = fabric.get_emitter(id);
             if (!e) {
                 continue;
             }
-            if (e->fn() && e->fn_name().empty()) {
-                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Emitter {} has a function but no fn_name", id);
-            }
             ent.controls = controls_of(e->store());
-            ent.influence_fn_name = e->fn_name();
-            fill_sinks(ent, e->audio_sinks(), e->render_sinks());
+            ent.influence = named_call(e->fn_call(), static_cast<bool>(e->fn()), "the function of Emitter", id);
+            fill_sinks(ent, e->audio_sinks(), e->render_sinks(), windows);
+            fill_attachment(ent, *e);
             break;
         }
         case Fabric::Kind::Sensor: {
@@ -244,12 +357,8 @@ bool StateEncoder::encode_fabric(
             if (!s) {
                 continue;
             }
-            if (s->fn() && s->fn_name().empty()) {
-                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Sensor {} has a function but no fn_name", id);
-            }
             ent.controls = controls_of(s->store());
-            ent.perception_fn_name = s->fn_name();
+            ent.perception = named_call(s->fn_call(), static_cast<bool>(s->fn()), "the function of Sensor", id);
             break;
         }
         case Fabric::Kind::Agent: {
@@ -257,18 +366,13 @@ bool StateEncoder::encode_fabric(
             if (!a) {
                 continue;
             }
-            if (a->perception_fn() && a->perception_fn_name().empty()) {
-                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Agent {} has a perception function but no perception_fn_name", id);
-            }
-            if (a->influence_fn() && a->influence_fn_name().empty()) {
-                MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                    "StateEncoder: Agent {} has an influence function but no influence_fn_name", id);
-            }
             ent.controls = controls_of(a->store());
-            ent.influence_fn_name = a->influence_fn_name();
-            ent.perception_fn_name = a->perception_fn_name();
-            fill_sinks(ent, a->audio_sinks(), a->render_sinks());
+            ent.influence = named_call(a->influence_fn_call(), static_cast<bool>(a->influence_fn()),
+                "the influence function of Agent", id);
+            ent.perception = named_call(a->perception_fn_call(), static_cast<bool>(a->perception_fn()),
+                "the perception function of Agent", id);
+            fill_sinks(ent, a->audio_sinks(), a->render_sinks(), windows);
+            fill_attachment(ent, *a);
 
             if (auto locus = std::dynamic_pointer_cast<Locus>(a)) {
                 ent.subkind = "locus";
@@ -283,9 +387,27 @@ bool StateEncoder::encode_fabric(
                     .mouse_sensitivity = nav.mouse_sensitivity,
                     .scroll_speed = nav.scroll_speed,
                 };
+                for (const auto& proc : locus->view_targets()) {
+                    std::string name;
+                    if (m_bindings) {
+                        for (const auto& [bound, buffer] : m_bindings->buffers) {
+                            if (buffer && buffer->get_render_processor() == proc) {
+                                name = bound;
+                                break;
+                            }
+                        }
+                    }
+                    if (name.empty()) {
+                        MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
+                            "StateEncoder: Locus {} views a renderer of no bound buffer", id);
+                    } else {
+                        ent.view_targets.push_back(std::move(name));
+                    }
+                }
             } else if (auto presence = std::dynamic_pointer_cast<Presence>(a)) {
                 ent.subkind = "presence";
-                ent.radiate_fn_name = presence->radiate_fn_name();
+                ent.radiate = named_call(presence->radiate_fn_call(), static_cast<bool>(presence->radiate_fn()),
+                    "the radiate function of Presence", id);
                 if (!presence->falloff_curve()) {
                     MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
                         "StateEncoder: Presence {} has a custom falloff, which is not encoded", id);
@@ -426,9 +548,9 @@ bool StateEncoder::encode_fabric(
             continue;
         State::ExpanseRecord record { .id = xid };
         fill_expanse(record, *x);
-        if (record.subkind.empty() && record.fn_name.empty() && !record.bounds_min) {
+        if (record.subkind.empty() && record.contains.name.empty() && !record.bounds_min) {
             MF_WARN(Journal::Component::Nexus, Journal::Context::FileIO,
-                "StateEncoder: Expanse {} has neither fn_name nor bounds, skipping", xid);
+                "StateEncoder: Expanse {} has neither a named predicate nor bounds, skipping", xid);
             continue;
         }
         schema.expanses.push_back(std::move(record));

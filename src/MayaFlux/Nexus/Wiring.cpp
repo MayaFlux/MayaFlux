@@ -87,6 +87,22 @@ Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button
     return *this;
 }
 
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key, bool held,
+    Reflect::FunctionCall release_call, std::function<void()> on_release)
+{
+    on(std::move(window), key, held, std::move(on_release));
+    std::get<KeyTrigger>(m_triggers.back()).release_call = std::move(release_call);
+    return *this;
+}
+
+Wiring& Wiring::on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held,
+    Reflect::FunctionCall release_call, std::function<void(double, double)> on_release)
+{
+    on(std::move(window), button, held, std::move(on_release));
+    std::get<MouseTrigger>(m_triggers.back()).release_call = std::move(release_call);
+    return *this;
+}
+
 Wiring& Wiring::on(std::shared_ptr<Vruta::NetworkSource> source)
 {
     m_triggers.emplace_back(NetworkTrigger { .source = std::move(source) });
@@ -103,6 +119,13 @@ Wiring& Wiring::on_scroll(std::shared_ptr<Core::Window> window,
     std::function<void(double, double)> fn)
 {
     m_triggers.emplace_back(ScrollTrigger { .window = std::move(window), .fn = std::move(fn) });
+    return *this;
+}
+
+Wiring& Wiring::on_scroll(std::shared_ptr<Core::Window> window,
+    Reflect::FunctionCall call, std::function<void(double, double)> fn)
+{
+    m_triggers.emplace_back(ScrollTrigger { .window = std::move(window), .fn = std::move(fn), .call = std::move(call) });
     return *this;
 }
 
@@ -266,6 +289,7 @@ Wiring& Wiring::use(Reflect::FunctionCall call, EventFactory factory)
 
 Wiring& Wiring::bind()
 {
+    m_bind_self = true;
     m_bind_attach = [this]() { m_fabric.fire(m_entity_id); };
     return *this;
 }

@@ -19,6 +19,9 @@ class BufferManager;
 
 namespace MayaFlux::Nexus {
 
+class StateEncoder;
+class StateDecoder;
+
 /**
  * @class Fabric
  * @brief Orchestrates spatial indexing and scheduling for Nexus objects.
@@ -405,6 +408,7 @@ public:
 private:
     friend class Wiring;
     friend class StateEncoder;
+    friend class StateDecoder;
 
     std::string m_name;
 

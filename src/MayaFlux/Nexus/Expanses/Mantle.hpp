@@ -7,6 +7,7 @@
 
 namespace MayaFlux::Nexus {
 
+class StateDecoder;
 class StateEncoder;
 
 /**
@@ -68,6 +69,7 @@ protected:
     void begin_evaluate() override;
 
 private:
+    friend class StateDecoder;
     friend class StateEncoder;
 
     void refresh();

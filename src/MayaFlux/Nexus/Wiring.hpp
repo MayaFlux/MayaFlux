@@ -155,6 +155,14 @@ public:
     Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held,
         std::function<void(double, double)> on_release = nullptr);
 
+    /** @brief A key trigger whose release callback can be made again from its call. */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::ModifiedKey key, bool held,
+        Reflect::FunctionCall release_call, std::function<void()> on_release);
+
+    /** @brief A mouse trigger whose release callback can be made again from its call. */
+    Wiring& on(std::shared_ptr<Core::Window> window, IO::MouseButtons button, bool held,
+        Reflect::FunctionCall release_call, std::function<void(double, double)> on_release);
+
     /**
      * @brief Fire the entity on mouse button press and invoke a release callback on release.
      * @param window      Source window.
@@ -216,6 +224,10 @@ public:
      */
     Wiring& on_scroll(std::shared_ptr<Core::Window> window,
         std::function<void(double, double)> fn);
+
+    /** @brief on_scroll with the call that made the function, so it can be made again. */
+    Wiring& on_scroll(std::shared_ptr<Core::Window> window,
+        Reflect::FunctionCall call, std::function<void(double, double)> fn);
 
     /**
      * @brief Choreograph a position move as an EventChain step.
@@ -404,6 +416,7 @@ private:
         IO::ModifiedKey key;
         std::optional<std::function<void()>> on_release;
         bool held {};
+        Reflect::FunctionCall release_call;
     };
 
     struct MouseTrigger {
@@ -411,11 +424,13 @@ private:
         IO::MouseButtons button;
         std::optional<std::function<void(double, double)>> on_release;
         bool held {};
+        Reflect::FunctionCall release_call;
     };
 
     struct ScrollTrigger {
         std::shared_ptr<Core::Window> window;
         std::function<void(double, double)> fn;
+        Reflect::FunctionCall call;
     };
 
     struct NetworkTrigger {
@@ -466,6 +481,7 @@ private:
     Reflect::FunctionCall m_factory_call;
 
     std::optional<std::function<void()>> m_bind_attach;
+    bool m_bind_self {};
     std::optional<std::function<void()>> m_bind_detach;
     Reflect::FunctionCall m_bind_attach_call;
     Reflect::FunctionCall m_bind_detach_call;

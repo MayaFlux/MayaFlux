@@ -14,6 +14,8 @@ class VKBuffer;
 
 namespace MayaFlux::Nexus {
 
+class StateEncoder;
+
 /**
  * @class Agent
  * @brief Object that both perceives nearby entities and acts on MayaFlux objects.
@@ -293,8 +295,7 @@ public:
      * object is moved from outside, config.on_move decides whether the move
      * becomes the new offset or carries the buffer. If the object already has
      * a position, that position is kept and becomes the offset. Replaces any
-     * previous attachment. The buffer is a live object, so an attachment is not
-     * part of encoded state and must be made again after decoding.
+     * previous attachment. StateEncoder saves it when the buffer has a bound name.
      *
      * @param buf    Buffer to attach. Ignored if null.
      * @param config Anchor vertex, offset and move behaviour.
@@ -548,6 +549,7 @@ private:
     void follow_attachment();
 
     friend class Fabric;
+    friend class StateEncoder;
 };
 
 } // namespace MayaFlux::Nexus

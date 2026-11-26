@@ -8,6 +8,7 @@ class VKBuffer;
 
 namespace MayaFlux::Nexus {
 
+class StateDecoder;
 class StateEncoder;
 
 /**
@@ -62,6 +63,7 @@ public:
     [[nodiscard]] std::pair<glm::vec3, float> reach() const override;
 
 private:
+    friend class StateDecoder;
     friend class StateEncoder;
 
     std::shared_ptr<Buffers::VKBuffer> m_buf;

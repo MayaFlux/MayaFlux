@@ -7,6 +7,21 @@
 namespace MayaFlux::Reflect::Generated {
 
 template <>
+struct Description<::MayaFlux::Nexus::State::AttachRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::AttachRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::AttachRecord::buffer> { "buffer" },
+            Member<&::MayaFlux::Nexus::State::AttachRecord::index> { "index" },
+            Member<&::MayaFlux::Nexus::State::AttachRecord::offset> { "offset" },
+            Member<&::MayaFlux::Nexus::State::AttachRecord::on_move> { "on_move" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::State::AudioSinkRecord> {
     static constexpr std::string_view name = "MayaFlux::Nexus::State::AudioSinkRecord";
 
@@ -15,6 +30,19 @@ struct Description<::MayaFlux::Nexus::State::AudioSinkRecord> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::AudioSinkRecord::channel> { "channel" },
             Member<&::MayaFlux::Nexus::State::AudioSinkRecord::fn_name> { "fn_name" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::State::CallRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::CallRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::CallRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::CallRecord::arguments> { "arguments" },
         };
     }
 };
@@ -44,10 +72,12 @@ struct Description<::MayaFlux::Nexus::State::EntityRecord> {
             Member<&::MayaFlux::Nexus::State::EntityRecord::kind> { "kind" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::subkind> { "subkind" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::controls> { "controls" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::influence_fn_name> { "influence_fn_name" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::perception_fn_name> { "perception_fn_name" },
-            Member<&::MayaFlux::Nexus::State::EntityRecord::radiate_fn_name> { "radiate_fn_name" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::influence> { "influence" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::perception> { "perception" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::radiate> { "radiate" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::wiring> { "wiring" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::attach> { "attach" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::view_targets> { "view_targets" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::audio_sinks> { "audio_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::render_sinks> { "render_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::locus_nav> { "locus_nav" },
@@ -64,9 +94,10 @@ struct Description<::MayaFlux::Nexus::State::ExpanseRecord> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::id> { "id" },
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::subkind> { "subkind" },
-            Member<&::MayaFlux::Nexus::State::ExpanseRecord::fn_name> { "fn_name" },
-            Member<&::MayaFlux::Nexus::State::ExpanseRecord::on_enter_fn_name> { "on_enter_fn_name" },
-            Member<&::MayaFlux::Nexus::State::ExpanseRecord::on_exit_fn_name> { "on_exit_fn_name" },
+            Member<&::MayaFlux::Nexus::State::ExpanseRecord::contains> { "contains" },
+            Member<&::MayaFlux::Nexus::State::ExpanseRecord::on_enter> { "on_enter" },
+            Member<&::MayaFlux::Nexus::State::ExpanseRecord::on_exit> { "on_exit" },
+            Member<&::MayaFlux::Nexus::State::ExpanseRecord::buffer> { "buffer" },
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::bounds_min> { "bounds_min" },
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::bounds_max> { "bounds_max" },
             Member<&::MayaFlux::Nexus::State::ExpanseRecord::collection> { "collection" },
@@ -145,6 +176,7 @@ struct Description<::MayaFlux::Nexus::State::RenderSinkRecord> {
     {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::fn_name> { "fn_name" },
+            Member<&::MayaFlux::Nexus::State::RenderSinkRecord::window> { "window" },
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::vertex_shader> { "vertex_shader" },
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::fragment_shader> { "fragment_shader" },
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::geometry_shader> { "geometry_shader" },
@@ -168,9 +200,10 @@ struct Description<::MayaFlux::Nexus::State::TapestryExpanseRecord> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::name> { "name" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::subkind> { "subkind" },
-            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::fn_name> { "fn_name" },
-            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::on_enter_fn_name> { "on_enter_fn_name" },
-            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::on_exit_fn_name> { "on_exit_fn_name" },
+            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::contains> { "contains" },
+            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::on_enter> { "on_enter" },
+            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::on_exit> { "on_exit" },
+            Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::buffer> { "buffer" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::bounds_min> { "bounds_min" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::bounds_max> { "bounds_max" },
             Member<&::MayaFlux::Nexus::State::TapestryExpanseRecord::collection> { "collection" },
@@ -196,27 +229,48 @@ struct Description<::MayaFlux::Nexus::State::TapestrySchema> {
 };
 
 template <>
+struct Description<::MayaFlux::Nexus::State::TriggerRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::TriggerRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::kind> { "kind" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::source> { "source" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::key> { "key" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::modifiers> { "modifiers" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::button> { "button" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::event_type> { "event_type" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::held> { "held" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::callback> { "callback" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::State::WiringRecord> {
     static constexpr std::string_view name = "MayaFlux::Nexus::State::WiringRecord";
 
     static constexpr auto members()
     {
         return std::tuple {
-            Member<&::MayaFlux::Nexus::State::WiringRecord::kind> { "kind" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::interval> { "interval" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::duration> { "duration" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::times> { "times" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::steps> { "steps" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::interval_token> { "interval_token" },
             Member<&::MayaFlux::Nexus::State::WiringRecord::duration_token> { "duration_token" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::key> { "key" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::key_modifiers> { "key_modifiers" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::button> { "button" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::held> { "held" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::position_fn_name> { "position_fn_name" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::factory_name> { "factory_name" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::attach_fn_name> { "attach_fn_name" },
-            Member<&::MayaFlux::Nexus::State::WiringRecord::detach_fn_name> { "detach_fn_name" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::triggers> { "triggers" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::factory_kind> { "factory_kind" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::factory> { "factory" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::place> { "place" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::bound> { "bound" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::bound_to_entity> { "bound_to_entity" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::bind_attach> { "bind_attach" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::bind_detach> { "bind_detach" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::on_complete> { "on_complete" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::on_detach> { "on_detach" },
+            Member<&::MayaFlux::Nexus::State::WiringRecord::lost> { "lost" },
         };
     }
 };
