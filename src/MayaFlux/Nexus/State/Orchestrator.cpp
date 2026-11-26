@@ -17,6 +17,8 @@
 
 #include <glm/gtc/quaternion.hpp>
 
+#include <glm/gtc/constants.hpp>
+
 namespace MayaFlux::Nexus {
 
 namespace Detail {
@@ -119,6 +121,22 @@ namespace {
         }
     }
 
+    EmitterControls controls_of(const Kakshya::MeshAssemblyLight& light)
+    {
+        EmitterControls controls { .color = light.color };
+        const bool spot = light.kind == Kakshya::MeshAssemblyLightKind::Spot;
+        if (spot && light.outer_cone > 0.0F && light.outer_cone < glm::pi<float>()) {
+            controls.cone = glm::vec2(light.inner_cone, light.outer_cone);
+        }
+
+        const bool placed = spot || light.kind == Kakshya::MeshAssemblyLightKind::Point;
+        const glm::vec3& terms = light.attenuation;
+        if (placed && terms != glm::vec3(1.0F, 0.0F, 0.0F) && terms.x + terms.y + terms.z > 0.0F) {
+            controls.attenuation = terms;
+        }
+        return controls;
+    }
+
     void take_color(
         const std::shared_ptr<Emitter>& emitter,
         const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
@@ -129,7 +147,7 @@ namespace {
             return;
         }
         if (const auto* light = assembly->light(*placed->source)) {
-            emitter->set(EmitterControls { .color = light->color });
+            emitter->set(controls_of(*light));
         }
     }
 
@@ -169,7 +187,7 @@ std::shared_ptr<Emitter> StateOrchestrator::emitter_from(
     const Kakshya::MeshAssemblyLight& light, const glm::mat4& placement)
 {
     auto emitter = std::make_shared<Emitter>();
-    emitter->set(EmitterControls { .color = light.color });
+    emitter->set(controls_of(light));
     emitter->set(placement_of(placement));
     admit(Fabric::Member { emitter });
     return emitter;

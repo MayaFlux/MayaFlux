@@ -36,13 +36,19 @@ MF_DESCRIBE(PlacementControls)
 
 /**
  * @struct EmitterControls
- * @brief What an Emitter puts out. `color` is a glm::vec3, the rest are numbers.
+ * @brief What an Emitter puts out. `color` is a glm::vec3, the rest are numbers but for two.
+ *
+ * `cone` is a glm::vec2 of inner and outer angles about forward, radians from the axis, and
+ * `attenuation` a glm::vec3 of constant, linear and quadratic terms. Empty, the Emitter
+ * lights all ways and falls to its radius alone.
  */
 struct EmitterControls {
     Quantity intensity;
     Quantity radius;
     Quantity color;
     Quantity size;
+    Quantity cone;
+    Quantity attenuation;
 };
 
 MF_DESCRIBE(EmitterControls)
@@ -59,7 +65,7 @@ MF_DESCRIBE(SensorControls)
 
 /**
  * @struct AgentControls
- * @brief What an Agent puts out and the radius it queries.
+ * @brief What an Agent puts out and the radius it queries. `cone` and `attenuation` as EmitterControls.
  */
 struct AgentControls {
     Quantity intensity;
@@ -67,6 +73,8 @@ struct AgentControls {
     Quantity color;
     Quantity size;
     Quantity query_radius;
+    Quantity cone;
+    Quantity attenuation;
 };
 
 MF_DESCRIBE(AgentControls)

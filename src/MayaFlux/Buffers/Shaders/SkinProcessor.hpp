@@ -96,6 +96,13 @@ public:
     bool set_morph_weights(std::vector<float> weights);
 
     /**
+     * @brief A copy of the newest morph weights, empty when there are no targets.
+     *
+     * Safe from any thread.
+     */
+    [[nodiscard]] std::vector<float> get_morph_weights() const;
+
+    /**
      * @brief Compute the palette each cycle instead of waiting for set_palette.
      * @param source Called on the graphics thread before each dispatch. A result of the wrong
      *        size keeps the last palette. Null returns to set_palette.

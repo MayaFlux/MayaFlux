@@ -347,7 +347,15 @@ namespace {
         return lens;
     }
 
-    Kakshya::MeshAssemblyLight light_of(const aiLight& light)
+    /** Assimp passes FBX and Collada cone angles through as full angles; the assembly holds them from the axis. */
+    float cone_scale(const std::filesystem::path& file)
+    {
+        auto ext = file.extension().string();
+        std::ranges::transform(ext, ext.begin(), ::tolower);
+        return ext == ".fbx" || ext == ".dae" ? 0.5F : 1.0F;
+    }
+
+    Kakshya::MeshAssemblyLight light_of(const aiLight& light, float angle_scale)
     {
         const auto color = [](const aiColor3D& c) { return glm::vec3(c.r, c.g, c.b); };
         const auto kind = [&light] {
@@ -372,8 +380,8 @@ namespace {
             .specular = color(light.mColorSpecular),
             .ambient = color(light.mColorAmbient),
             .attenuation = { light.mAttenuationConstant, light.mAttenuationLinear, light.mAttenuationQuadratic },
-            .inner_cone = light.mAngleInnerCone,
-            .outer_cone = light.mAngleOuterCone,
+            .inner_cone = light.mAngleInnerCone * angle_scale,
+            .outer_cone = light.mAngleOuterCone * angle_scale,
             .size = { light.mSize.x, light.mSize.y } };
     }
 
@@ -897,14 +905,10 @@ ModelReader::create_mesh_buffers(const TextureResolver& resolver) const
             morphs = std::make_shared<Kakshya::MeshMorphTargets>(*held);
         }
         if (morphs && palette.empty() && !is_identity(world[row])) {
-            const glm::mat3 linear(world[row]);
-            const glm::mat3 normals = glm::transpose(glm::inverse(linear));
             for (auto& [name, shape] : *morphs) {
-                for (auto& vertex : shape) {
-                    vertex.position = glm::vec3(world[row] * glm::vec4(vertex.position, 1.0F));
-                    vertex.normal = glm::normalize(normals * vertex.normal);
-                    vertex.tangent = glm::vec4(glm::normalize(linear * glm::vec3(vertex.tangent)), vertex.tangent.w);
-                }
+                std::ignore = Kakshya::place_vertices(
+                    { reinterpret_cast<uint8_t*>(shape.data()), shape.size() * sizeof(Kakshya::MeshVertex) },
+                    mesh_data.layout, world[row]);
             }
         }
 
@@ -1177,7 +1181,7 @@ ModelReader::assemble(bool beside_the_tree) const
     for (unsigned int i = 0; i < s->mNumLights; ++i) {
         const aiLight& light = *s->mLights[i];
         const std::string name = light.mName.C_Str();
-        attachments[name].push_back({ .source = assembly->add_source({ .geometry = light_of(light), .name = name }),
+        attachments[name].push_back({ .source = assembly->add_source({ .geometry = light_of(light, cone_scale(m_impl->path)), .name = name }),
             .local = facing(light.mPosition, light.mDirection, light.mUp),
             .name = name });
     }

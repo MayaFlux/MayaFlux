@@ -460,22 +460,49 @@ namespace {
     /**
      * Skinning is linear in the vertex, so the mean of the deformed vertices is the
      * rest share plus each joint's weighted sum carried by that joint's matrix.
+     * Points carry w one, or zero for the offsets of a morph target.
      */
     struct SkinSums {
         std::vector<glm::vec4> joints;
         glm::vec4 rest { 0.0F };
         float count {};
 
-        [[nodiscard]] glm::vec3 under(std::span<const glm::mat4> palette) const
+        [[nodiscard]] glm::vec4 total(std::span<const glm::mat4> palette) const
         {
             const bool posed = palette.size() == joints.size();
-            glm::vec4 total = rest;
+            glm::vec4 sum = rest;
             for (size_t j = 0; j < joints.size(); ++j) {
-                total += posed ? palette[j] * joints[j] : joints[j];
+                sum += posed ? palette[j] * joints[j] : joints[j];
             }
-            return glm::vec3(total) / count;
+            return sum;
+        }
+
+        [[nodiscard]] glm::vec3 under(std::span<const glm::mat4> palette) const
+        {
+            return glm::vec3(total(palette)) / count;
         }
     };
+
+    /** @p skin may be null, and otherwise must be valid for as many vertices as there are points. */
+    SkinSums sum_points(std::span<const glm::vec4> points, const Kakshya::MeshSkin* skin)
+    {
+        SkinSums sums { .joints = std::vector<glm::vec4>(skin ? skin->joint_count() : 0, glm::vec4(0.0F)),
+            .count = static_cast<float>(points.size()) };
+        for (size_t v = 0; v < points.size(); ++v) {
+            if (!skin) {
+                sums.rest += points[v];
+                continue;
+            }
+            const glm::vec4& weights = skin->influence_weights[v];
+            sums.rest += (1.0F - glm::dot(weights, glm::vec4(1.0F))) * points[v];
+            for (glm::length_t c = 0; c < 4; ++c) {
+                if (weights[c] != 0.0F) {
+                    sums.joints[skin->influence_joints[v][c]] += weights[c] * points[v];
+                }
+            }
+        }
+        return sums;
+    }
 
     std::optional<SkinSums> sum_skin(
         const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
@@ -491,19 +518,64 @@ namespace {
             return std::nullopt;
         }
 
-        SkinSums sums { .joints = std::vector<glm::vec4>(skin->joint_count(), glm::vec4(0.0F)),
-            .count = static_cast<float>(vertices.size()) };
-        for (size_t v = 0; v < vertices.size(); ++v) {
-            const glm::vec4 position(vertices[v].position, 1.0F);
-            const glm::vec4& weights = skin->influence_weights[v];
-            sums.rest += (1.0F - glm::dot(weights, glm::vec4(1.0F))) * position;
-            for (glm::length_t c = 0; c < 4; ++c) {
-                if (weights[c] != 0.0F) {
-                    sums.joints[skin->influence_joints[v][c]] += weights[c] * position;
+        std::vector<glm::vec4> points;
+        points.reserve(vertices.size());
+        for (const auto& vertex : vertices) {
+            points.emplace_back(vertex.position, 1.0F);
+        }
+        return sum_points(points, skin.get());
+    }
+
+    /** The anchor of a MeshBuffer its own skin pass morphs or skins, or empty for any other. */
+    std::function<std::optional<glm::vec3>()> deformed_anchor(const std::shared_ptr<Buffers::MeshBuffer>& buffer)
+    {
+        const auto& skin = buffer->get_skin();
+        const auto& morphs = buffer->get_morphs();
+        if (!skin && !morphs) {
+            return {};
+        }
+
+        const auto& mesh = buffer->get_mesh_data();
+        const auto* bytes = std::get_if<std::vector<uint8_t>>(&mesh.vertex_variant);
+        const auto positions = bytes ? decode_positions(*bytes, mesh.layout) : std::nullopt;
+        if (!positions || positions->empty() || (skin && !skin->valid(positions->size()))) {
+            return {};
+        }
+
+        std::vector<glm::vec4> points;
+        points.reserve(positions->size());
+        for (const auto& position : *positions) {
+            points.emplace_back(position, 1.0F);
+        }
+        SkinSums base = sum_points(points, skin.get());
+
+        std::vector<SkinSums> offsets;
+        if (morphs) {
+            for (const auto& [name, shape] : *morphs) {
+                if (shape.size() != positions->size()) {
+                    return {};
                 }
+                for (size_t v = 0; v < shape.size(); ++v) {
+                    points[v] = glm::vec4(shape[v].position - (*positions)[v], 0.0F);
+                }
+                offsets.push_back(sum_points(points, skin.get()));
             }
         }
-        return sums;
+
+        return [held = std::weak_ptr<Buffers::MeshBuffer>(buffer), base = std::move(base),
+                   offsets = std::move(offsets)]() -> std::optional<glm::vec3> {
+            const auto live = held.lock();
+            if (!live) {
+                return std::nullopt;
+            }
+            const auto palette = live->get_palette();
+            const auto weights = live->get_morph_weights();
+            glm::vec4 total = base.total(palette);
+            for (size_t t = 0; t < std::min(offsets.size(), weights.size()); ++t) {
+                total += weights[t] * offsets[t].total(palette);
+            }
+            return glm::vec3(total) / base.count;
+        };
     }
 
 }
@@ -513,6 +585,12 @@ std::function<std::optional<glm::vec3>()> track_anchor(
     const std::optional<uint32_t>& slot)
 {
     const std::weak_ptr<Buffers::VKBuffer> held = buf;
+
+    if (const auto mesh = std::dynamic_pointer_cast<Buffers::MeshBuffer>(buf)) {
+        if (auto tracked = deformed_anchor(mesh)) {
+            return tracked;
+        }
+    }
 
     if (const auto meshes = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buf); meshes && slot) {
         const auto network = meshes->get_network();

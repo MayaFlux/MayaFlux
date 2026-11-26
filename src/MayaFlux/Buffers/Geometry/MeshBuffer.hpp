@@ -245,6 +245,18 @@ public:
      */
     bool set_morph_weights(std::vector<float> weights);
 
+    /** @brief The skin set on this buffer, or null. */
+    [[nodiscard]] const std::shared_ptr<const Kakshya::MeshSkin>& get_skin() const noexcept { return m_skin; }
+
+    /** @brief The morph targets set on this buffer, or null. */
+    [[nodiscard]] const std::shared_ptr<const Kakshya::MeshMorphTargets>& get_morphs() const noexcept { return m_morphs; }
+
+    /** @brief The newest palette, or the starting one before rendering is set up. */
+    [[nodiscard]] std::vector<glm::mat4> get_palette() const;
+
+    /** @brief The newest morph weights, or the targets' own before rendering is set up. */
+    [[nodiscard]] std::vector<float> get_morph_weights() const;
+
     /** @brief Whether a wired field pass displaces the vertices in place every cycle. */
     [[nodiscard]] bool restores_vertices() const;
 

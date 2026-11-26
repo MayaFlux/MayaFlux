@@ -445,6 +445,7 @@ void StateEncoder::fill_attachment(State::EntityRecord& record, const Entity& en
     record.attach = State::AttachRecord {
         .buffer = name,
         .index = config.index,
+        .slot = config.slot,
         .offset = config.offset,
         .on_move = config.on_move,
     };

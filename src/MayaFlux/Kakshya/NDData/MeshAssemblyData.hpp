@@ -91,9 +91,9 @@ enum class MeshAssemblyLightKind : uint8_t {
  * @brief A light source as a file describes it. Its placement row gives position and direction:
  *        the light faces -Z with +Y up.
  *
- * attenuation holds the constant, linear and quadratic terms. The cone angles are radians as the
- * importer gives them (glTF's are measured from the axis) and apply to spot lights, size to area
- * lights. color already includes the file's intensity.
+ * attenuation holds the constant, linear and quadratic terms. The cone angles are radians from
+ * the axis (glTF, FBX and Collada files; other formats as the importer gives them) and apply to
+ * spot lights, size to area lights. color already includes the file's intensity.
  */
 struct MeshAssemblyLight {
     MeshAssemblyLightKind kind { MeshAssemblyLightKind::Point };

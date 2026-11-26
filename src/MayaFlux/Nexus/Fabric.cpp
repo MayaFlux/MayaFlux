@@ -440,6 +440,8 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             ctx.radius = ptr->radius();
             ctx.color = ptr->color();
             ctx.size = ptr->size();
+            ctx.cone = ptr->cone();
+            ctx.attenuation = ptr->attenuation();
             ctx.cursor_pos = cursor;
             ctx.input = input;
             ptr->invoke(ctx);
@@ -479,6 +481,8 @@ void Fabric::fire(const Registration& reg, std::optional<glm::vec2> cursor, cons
             ictx.radius = ptr->radius();
             ictx.color = ptr->color();
             ictx.size = ptr->size();
+            ictx.cone = ptr->cone();
+            ictx.attenuation = ptr->attenuation();
             if (const auto position = ptr->position()) {
                 ictx.position = *position;
                 ictx.cursor_pos = cursor;

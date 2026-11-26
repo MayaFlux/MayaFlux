@@ -518,6 +518,18 @@ public:
         return quantity_value<float>(m_controls.size);
     }
 
+    /** @brief The cone, if set: inner and outer angles, radians from the axis. */
+    [[nodiscard]] std::optional<glm::vec2> cone() const
+    {
+        return quantity_value<glm::vec2>(m_controls.cone);
+    }
+
+    /** @brief The attenuation, if set: constant, linear and quadratic terms. */
+    [[nodiscard]] std::optional<glm::vec3> attenuation() const
+    {
+        return quantity_value<glm::vec3>(m_controls.attenuation);
+    }
+
     /**
      * @brief Invoke the perception function with the supplied context.
      * @param ctx Populated context for this commit.

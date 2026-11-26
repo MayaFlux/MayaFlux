@@ -32,6 +32,7 @@ struct Description<::MayaFlux::Nexus::State::AttachRecord> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::AttachRecord::buffer> { "buffer" },
             Member<&::MayaFlux::Nexus::State::AttachRecord::index> { "index" },
+            Member<&::MayaFlux::Nexus::State::AttachRecord::slot> { "slot" },
             Member<&::MayaFlux::Nexus::State::AttachRecord::offset> { "offset" },
             Member<&::MayaFlux::Nexus::State::AttachRecord::on_move> { "on_move" },
         };

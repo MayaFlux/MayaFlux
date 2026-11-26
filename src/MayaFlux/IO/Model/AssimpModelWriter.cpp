@@ -499,7 +499,7 @@ namespace {
         return camera;
     }
 
-    aiLight* light_of(const Kakshya::MeshAssemblyLight& light, const std::string& name)
+    aiLight* light_of(const Kakshya::MeshAssemblyLight& light, const std::string& name, float angle_scale)
     {
         auto* out = new aiLight();
         out->mName = aiString(name);
@@ -531,8 +531,8 @@ namespace {
         out->mAttenuationConstant = light.attenuation.x;
         out->mAttenuationLinear = light.attenuation.y;
         out->mAttenuationQuadratic = light.attenuation.z;
-        out->mAngleInnerCone = light.inner_cone;
-        out->mAngleOuterCone = light.outer_cone;
+        out->mAngleInnerCone = light.inner_cone * angle_scale;
+        out->mAngleOuterCone = light.outer_cone * angle_scale;
         out->mSize = aiVector2D(light.size.x, light.size.y);
         return out;
     }
@@ -690,7 +690,7 @@ namespace {
     }
 
     void fill_scene(aiScene& scene, const Kakshya::MeshAssemblyContainer& assembly,
-        Textures& textures, const std::string& material_override)
+        Textures& textures, const std::string& material_override, float angle_scale)
     {
         const auto& data = assembly.get_data();
         const size_t rows = assembly.get_total_elements();
@@ -768,7 +768,7 @@ namespace {
                 if (const auto* lens = assembly.lens(*placement->source)) {
                     cameras.push_back(camera_of(*lens, names[row]));
                 } else if (const auto* light = assembly.light(*placement->source)) {
-                    lights.push_back(light_of(*light, names[row]));
+                    lights.push_back(light_of(*light, names[row], angle_scale));
                 } else if (const auto index = mesh_index(*placement->source, placement->material, placement->skeleton)) {
                     node->mNumMeshes = 1;
                     node->mMeshes = new unsigned int[1] { *index };
@@ -952,7 +952,8 @@ bool AssimpModelWriter::write(
     // by aiScene's own destructor. A smart pointer cannot be substituted at
     // this boundary.
     aiScene scene;
-    fill_scene(scene, *assembly, textures, options.material_name_override);
+    const bool full_angles = format_id.starts_with("fbx") || format_id == "collada";
+    fill_scene(scene, *assembly, textures, options.material_name_override, full_angles ? 2.0F : 1.0F);
     // NOLINTEND(cppcoreguidelines-owning-memory)
 
     Assimp::Exporter exporter;

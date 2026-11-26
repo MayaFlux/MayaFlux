@@ -591,7 +591,7 @@ namespace {
             load.warnings.push_back(who_is(entry) + ": attached buffer '" + entry.attach->buffer + "' is not bound");
             return;
         }
-        entity.attach(buffer, { .index = entry.attach->index, .offset = entry.attach->offset, .on_move = entry.attach->on_move });
+        entity.attach(buffer, { .index = entry.attach->index, .slot = entry.attach->slot, .offset = entry.attach->offset, .on_move = entry.attach->on_move });
     }
 
     template <typename Entity>

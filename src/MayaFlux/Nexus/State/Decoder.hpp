@@ -8,7 +8,7 @@ namespace MayaFlux::Nexus {
 
 /**
  * @class StateDecoder
- * @brief Patches or rebuilds Fabric state from a previously encoded EXR + JSON schema pair.
+ * @brief Patches or rebuilds Fabric state from a previously encoded JSON schema.
  *
  * Does what the classes allow and reports the rest. Emitters, Sensors, Agents
  * (including Locus and Presence) are patched by id or constructed; their
@@ -77,7 +77,7 @@ public:
      * attachment and view targets, and wired as they were.
      * Entity ids are assigned by the Fabric, so a reconstructed entity may get a
      * different id, which is warned.
-     * Hard failure (bad schema, unreadable EXR, dimension mismatch) sets
+     * Hard failure (a missing or bad schema) sets
      * last_error() and returns a zeroed result.
      *
      * @param fabric    Target fabric. May be empty, partial, or full.

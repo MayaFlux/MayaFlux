@@ -189,6 +189,12 @@ bool SkinProcessor::set_morph_weights(std::vector<float> weights)
     return true;
 }
 
+std::vector<float> SkinProcessor::get_morph_weights() const
+{
+    const auto held = m_morph_weights.read();
+    return held ? *held : std::vector<float> {};
+}
+
 void SkinProcessor::set_palette_source(std::function<std::vector<glm::mat4>()> source)
 {
     m_palette_source = std::move(source);

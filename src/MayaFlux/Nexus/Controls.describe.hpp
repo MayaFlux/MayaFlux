@@ -18,6 +18,8 @@ struct Description<::MayaFlux::Nexus::AgentControls> {
             Member<&::MayaFlux::Nexus::AgentControls::color> { "color" },
             Member<&::MayaFlux::Nexus::AgentControls::size> { "size" },
             Member<&::MayaFlux::Nexus::AgentControls::query_radius> { "query_radius" },
+            Member<&::MayaFlux::Nexus::AgentControls::cone> { "cone" },
+            Member<&::MayaFlux::Nexus::AgentControls::attenuation> { "attenuation" },
         };
     }
 };
@@ -33,6 +35,8 @@ struct Description<::MayaFlux::Nexus::EmitterControls> {
             Member<&::MayaFlux::Nexus::EmitterControls::radius> { "radius" },
             Member<&::MayaFlux::Nexus::EmitterControls::color> { "color" },
             Member<&::MayaFlux::Nexus::EmitterControls::size> { "size" },
+            Member<&::MayaFlux::Nexus::EmitterControls::cone> { "cone" },
+            Member<&::MayaFlux::Nexus::EmitterControls::attenuation> { "attenuation" },
         };
     }
 };

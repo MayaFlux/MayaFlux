@@ -261,7 +261,11 @@ bool Course::scrub(std::function<double()> playhead)
 
 void Course::unfollow()
 {
+    if (!mapped(m_controls.time_map)) {
+        return;
+    }
     clear_time_map();
+    push(Kind::CarryOn);
 }
 
 std::optional<uint64_t> Course::add_marker(std::string name, double source_time)
@@ -342,7 +346,8 @@ void Course::apply(const Detail::CourseCommand& command, const CourseSetting& se
 {
     bool applied = true;
     m_jumped = m_jumped
-        || (command.kind != Kind::Start && command.kind != Kind::Pause && command.kind != Kind::FadeWeight);
+        || (command.kind != Kind::Start && command.kind != Kind::Pause && command.kind != Kind::FadeWeight
+            && command.kind != Kind::CarryOn);
     switch (command.kind) {
     case Kind::Start:
         m_paused = false;
@@ -373,6 +378,11 @@ void Course::apply(const Detail::CourseCommand& command, const CourseSetting& se
         m_fade_to = command.value;
         m_fade_steps = std::max<uint64_t>(1, static_cast<uint64_t>(std::llround(command.seconds * m_step_rate)));
         m_fade_done = 0;
+        break;
+    case Kind::CarryOn:
+        if (m_advanced) {
+            m_clock.carry_on(m_time_cell.load(std::memory_order_relaxed), setting);
+        }
         break;
     case Kind::Nudge: {
         const auto here = m_clock.resolve(setting);

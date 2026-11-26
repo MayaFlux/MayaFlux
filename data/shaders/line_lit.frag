@@ -6,13 +6,7 @@ layout(location = 0) in vec3 in_color;
 layout(location = 2) in vec2 in_uv;
 layout(location = 3) in vec3 in_world_pos;
 
-layout(push_constant) uniform Influence {
-    vec3 position;
-    float intensity;
-    vec3 color;
-    float radius;
-    float size;
-};
+#include "include/influence_light.glsl"
 
 layout(location = 0) out vec4 outColor;
 
@@ -27,11 +21,9 @@ void main()
     float dist_from_center = abs(in_uv.y - 0.5) * 2.0;
     float alpha = 1.0 - smoothstep(1.0 - edge_softness, 1.0, dist_from_center);
 
-    float dist = length(position - in_world_pos);
-    float attenuation = clamp(1.0 - (dist / radius), 0.0, 1.0);
-    attenuation *= attenuation;
+    float reach = influence_reach(in_world_pos);
 
-    vec3 lit = in_color + (color * intensity * attenuation);
+    vec3 lit = in_color + (color * intensity * reach);
     if (mill_is_wire(in_uv) || mill_is_point(in_uv)) {
         alpha = coverage;
     }

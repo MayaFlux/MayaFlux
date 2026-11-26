@@ -130,6 +130,15 @@ public:
      */
     bool seek_clock(double clock_seconds);
 
+    /**
+     * @brief Make source time that runs with the clock continue from a source time.
+     *
+     * For a course whose time map is being removed. The clock, the repeat, the crossing
+     * count and finished are untouched. A seek, a restart or the next repeat ends it.
+     * @return false when the setting is unusable or the time is not finite.
+     */
+    bool carry_on(double source_time, const CourseSetting& setting);
+
     /** @brief Back to the start: clock zero, no anchor, no repeat, no crossings, not finished. */
     void restart();
 
@@ -173,6 +182,7 @@ private:
     double m_speed { 1.0 };
 
     std::optional<double> m_anchor;
+    double m_shift {};
 
     double m_repeat_origin {};
     std::optional<double> m_repeat_length;

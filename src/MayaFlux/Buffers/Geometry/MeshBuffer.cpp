@@ -347,6 +347,27 @@ bool MeshBuffer::set_palette(std::vector<glm::mat4> palette)
     return processor && processor->set_palette(std::move(palette));
 }
 
+std::vector<glm::mat4> MeshBuffer::get_palette() const
+{
+    return m_skin_processor ? m_skin_processor->get_palette() : m_initial_palette;
+}
+
+std::vector<float> MeshBuffer::get_morph_weights() const
+{
+    if (m_skin_processor) {
+        return m_skin_processor->get_morph_weights();
+    }
+
+    std::vector<float> weights;
+    if (m_morphs) {
+        weights.reserve(m_morphs->size());
+        for (const auto& [name, shape] : *m_morphs) {
+            weights.push_back(shape.empty() ? 0.0F : shape.front().weight);
+        }
+    }
+    return weights;
+}
+
 void MeshBuffer::wire_skin_pass()
 {
     if (!m_skin && !m_morphs) {

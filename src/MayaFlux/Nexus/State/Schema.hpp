@@ -238,6 +238,7 @@ MF_DESCRIBE(LocusNavRecord)
 struct AttachRecord {
     std::string buffer;
     std::optional<uint32_t> index;
+    std::optional<uint32_t> slot;
     glm::vec3 offset {};
     AttachConfig::OnMove on_move { AttachConfig::OnMove::Offset };
 

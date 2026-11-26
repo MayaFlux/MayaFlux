@@ -24,8 +24,10 @@ struct Triangulation {
  *
  * A triangle is kept as it is. A convex quadrilateral splits along one diagonal. Any other
  * convex face is a fan from its first corner. A concave face is projected onto the plane
- * of its Newell normal and clipped by Kinesis::triangulate_polygon, so it must be a
- * simple outline. Faces are independent and run in parallel.
+ * of its Newell normal and clipped by Kinesis::triangulate_polygon. A quadrilateral that
+ * cannot be clipped, such as one whose outline crosses itself, splits along a diagonal as
+ * a convex one does, so one of its triangles may face the other way. Larger faces must be
+ * a simple outline, and a face with no area fails. Faces are independent and run in parallel.
  *
  * @param shorter_quad_diagonal Split a convex quadrilateral along its shorter diagonal, the
  * first on a tie. False always splits from the first corner to the third.

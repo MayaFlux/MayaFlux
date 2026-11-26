@@ -99,7 +99,8 @@ namespace Detail {
             SeekClock,
             SeekNormalized,
             Nudge,
-            FadeWeight
+            FadeWeight,
+            CarryOn
         };
 
         Kind kind {};
