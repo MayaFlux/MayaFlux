@@ -117,7 +117,8 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: ${{ runner.os }}-build
+          key: ${{ runner.os }}-${{ inputs.preset }}
+          save: ${{ !endsWith(inputs.preset, '-ship') }}
           max-size: "2G"
 
       - name: Configure ccache

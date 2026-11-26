@@ -380,7 +380,8 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           install: "no"
-          key: windows-msvc-${{ env.BUILD_TYPE }}-ccache-${{ env.CCACHE_VERSION }}-v2
+          key: windows-msvc-${{ inputs.preset }}-ccache-${{ env.CCACHE_VERSION }}-v2
+          save: ${{ !endsWith(inputs.preset, '-ship') }}
           max-size: "2G"
 
       - name: Verify and configure ccache
@@ -432,6 +433,13 @@ jobs:
         run: |
           Join-Path $env:GITHUB_WORKSPACE 'build\src\MayaFlux' >> $env:GITHUB_PATH
           Join-Path $env:GITHUB_WORKSPACE 'build\bin' >> $env:GITHUB_PATH
+          'C:\Program Files\FFmpeg\bin' >> $env:GITHUB_PATH
+          Join-Path $env:VULKAN_SDK 'Bin' >> $env:GITHUB_PATH
+          $loader = Get-ChildItem (Join-Path $env:VULKAN_SDK 'runtime') -Recurse -Filter vulkan-1.dll |
+              Where-Object { $_.DirectoryName -match 'x64' } |
+              Select-Object -First 1
+          if (-not $loader) { throw "vulkan-1.dll not found under the Vulkan SDK runtime folder." }
+          $loader.DirectoryName >> $env:GITHUB_PATH
 
       - name: Configure CMake
         shell: pwsh

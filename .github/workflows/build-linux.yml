@@ -80,7 +80,7 @@ jobs:
             alembic-devel \
             stb-devel \
             tbb-devel \
-            gtest \
+            gtest-devel \
             glslc \
             libshaderc-devel \
             hidapi-devel \
@@ -109,7 +109,8 @@ jobs:
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: fedora43-build
+          key: fedora-${{ inputs.preset }}
+          save: ${{ !endsWith(inputs.preset, '-ship') }}
           max-size: "2G"
 
       - name: Configure ccache
