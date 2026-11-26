@@ -9,8 +9,12 @@ on:
       clean_version:
         required: true
         type: string
+      preset:
+        required: false
+        type: string
+        default: linux-ship
       is_dev:
-        required: true
+        required: false
         type: string
       run_tests:
         required: false
@@ -29,9 +33,6 @@ on:
       os_display_name:
         required: true
         type: string
-
-env:
-  BUILD_TYPE: RelWithDebInfo
 
 jobs:
   build:
@@ -117,18 +118,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          if [ "${{ env.BUILD_TYPE }}" = "Release" ]; then
-            PRESET="linux-ship-rel"
-          else
-            PRESET="linux-ship-dev"
-          fi
-
-          echo "PRESET=$PRESET" >> $GITHUB_ENV
-          cmake --preset "$PRESET"
+          cmake --preset "${{ inputs.preset }}"
 
       - name: Build
         shell: bash
-        run: cmake --build --preset "${{ env.PRESET }}"
+        run: cmake --build --preset "${{ inputs.preset }}"
 
       - name: ccache stats
         if: always()

@@ -8,6 +8,8 @@
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "MAYAFLUX_BUILD_TESTS": "OFF",
+        "MAYAFLUX_BUILD_PROJECT": "OFF",
         "MAYAFLUX_ENABLE_LTO": "OFF"
       }
     },
@@ -20,16 +22,16 @@
       }
     },
     {
-      "name": "base-rel",
+      "name": "base-ship",
       "hidden": true,
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "MAYAFLUX_ENABLE_LTO": "ON"
       }
     },
     {
-      "name": "windows-base",
+      "name": "windows-vs-base",
       "hidden": true,
       "toolchainFile": "$env{MAYAFLUX_TOOLCHAIN_FILE}",
       "binaryDir": "${sourceDir}/build-vs",
@@ -44,12 +46,14 @@
       "cacheVariables": {
         "CMAKE_VS_GLOBALS": "UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "MAYAFLUX_BUILD_TESTS": "OFF",
+        "MAYAFLUX_BUILD_PROJECT": "OFF",
         "MAYAFLUX_ENABLE_LTO": "OFF"
       }
     },
     {
       "name": "unix-dev",
-      "inherits": "base",
+      "inherits": "base-dev",
       "displayName": "Unix : Development",
       "condition": {
         "type": "notEquals",
@@ -57,10 +61,8 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "MAYAFLUX_DEV": "ON",
         "MAYAFLUX_BUILD_PROJECT": "ON",
-        "MAYAFLUX_BUILD_TESTS": "OFF",
         "MAYAFLUX_PORTABLE": "ON",
         "EXAMPLE_SHADER_DIR": "${sourceDir}/src/examples/shaders"
       }
@@ -68,30 +70,36 @@
     {
       "name": "unix-test",
       "inherits": "unix-dev",
-      "displayName": "Unix : Debug builds and testing",
+      "displayName": "Unix : Development with tests",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "MAYAFLUX_BUILD_TESTS": "ON"
       }
     },
     {
-      "name": "linux-ship-dev",
+      "name": "linux-check",
       "inherits": "base-dev",
-      "displayName": "Linux : Shipping with Debug Info",
+      "displayName": "Linux : CI build check",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       },
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "/usr",
-        "MAYAFLUX_ENABLE_LTO": "ON"
+        "MAYAFLUX_PORTABLE": "ON"
       }
     },
     {
-      "name": "linux-ship-rel",
-      "inherits": "base-rel",
-      "displayName": "Linux : Shipping Release",
+      "name": "linux-test",
+      "inherits": "linux-check",
+      "displayName": "Linux : CI build with tests",
+      "cacheVariables": {
+        "MAYAFLUX_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "linux-ship",
+      "inherits": "base-ship",
+      "displayName": "Linux : Shipping build",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -102,23 +110,9 @@
       }
     },
     {
-      "name": "launchpad-dev",
-      "inherits": "base-dev",
-      "displayName": "MayaFlux Edge: Launchpad/PPA",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "cacheVariables": {
-        "CMAKE_INSTALL_LIBDIR": "lib",
-        "MAYAFLUX_ENABLE_LTO": "ON"
-      }
-    },
-    {
-      "name": "launchpad-rel",
-      "inherits": "base-rel",
-      "displayName": "MayaFlux Release: Launchpad/PPA",
+      "name": "launchpad-ship",
+      "inherits": "base-ship",
+      "displayName": "MayaFlux: Launchpad/PPA",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -129,24 +123,9 @@
       }
     },
     {
-      "name": "macos-ship-dev",
+      "name": "macos-check",
       "inherits": "base-dev",
-      "displayName": "macOS - Shipping Development",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "cacheVariables": {
-        "CMAKE_VERBOSE_MAKEFILE": "ON",
-        "MAYAFLUX_PORTABLE": "ON",
-        "MAYAFLUX_ENABLE_LTO": "ON"
-      }
-    },
-    {
-      "name": "macos-ship-rel",
-      "inherits": "base-rel",
-      "displayName": "macOS - Shipping Release",
+      "displayName": "macOS : CI build check",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -158,7 +137,29 @@
       }
     },
     {
-      "name": "msvc-ninja-base",
+      "name": "macos-test",
+      "inherits": "macos-check",
+      "displayName": "macOS : CI build with tests",
+      "cacheVariables": {
+        "MAYAFLUX_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "macos-ship",
+      "inherits": "base-ship",
+      "displayName": "macOS : Shipping build",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_VERBOSE_MAKEFILE": "ON",
+        "MAYAFLUX_PORTABLE": "ON"
+      }
+    },
+    {
+      "name": "windows-base",
       "hidden": true,
       "inherits": "base",
       "toolchainFile": "$env{MAYAFLUX_TOOLCHAIN_FILE}",
@@ -168,9 +169,9 @@
       }
     },
     {
-      "name": "msvc-ninja-dev",
-      "inherits": [ "base-dev", "msvc-ninja-base" ],
-      "displayName": "Windows : Ninja + MSVC Development",
+      "name": "windows-dev",
+      "inherits": [ "base-dev", "windows-base" ],
+      "displayName": "Windows : MSVC Development",
       "description": "Uses the x64 MSVC and Windows SDK environment configured by scripts/win64/setup_windows.ps1.",
       "condition": {
         "type": "equals",
@@ -186,9 +187,38 @@
       }
     },
     {
-      "name": "windows-ship-dev",
-      "inherits": [ "base-dev", "msvc-ninja-base" ],
-      "displayName": "Windows : Shipping with Debug Info",
+      "name": "windows-test",
+      "inherits": "windows-dev",
+      "displayName": "Windows : MSVC Development with tests",
+      "cacheVariables": {
+        "MAYAFLUX_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-check",
+      "inherits": [ "base-dev", "windows-base" ],
+      "displayName": "Windows : CI build check",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+      }
+    },
+    {
+      "name": "windows-check-test",
+      "inherits": "windows-check",
+      "displayName": "Windows : CI build with tests",
+      "cacheVariables": {
+        "MAYAFLUX_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-ship",
+      "inherits": [ "base-ship", "windows-base" ],
+      "displayName": "Windows : Shipping build",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -200,21 +230,8 @@
       }
     },
     {
-      "name": "windows-ship-rel",
-      "inherits": [ "base-rel", "msvc-ninja-base" ],
-      "displayName": "Windows : Shipping Release",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      },
-      "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
-      }
-    },
-    {
       "name": "windows-vs2026-dev",
-      "inherits": "windows-base",
+      "inherits": "windows-vs-base",
       "displayName": "Windows (VS 2026) - Development",
       "generator": "Visual Studio 18 2026",
       "condition": {
@@ -223,7 +240,6 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
         "CMAKE_PREFIX_PATH": "",
         "MAYAFLUX_DEV": "ON",
@@ -233,7 +249,7 @@
     },
     {
       "name": "windows-vs2022-dev",
-      "inherits": "windows-base",
+      "inherits": "windows-vs-base",
       "displayName": "Windows (VS 2022) - Development",
       "generator": "Visual Studio 17 2022",
       "condition": {
@@ -242,7 +258,6 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
         "CMAKE_PREFIX_PATH": "",
         "MAYAFLUX_DEV": "ON",
@@ -251,10 +266,10 @@
       }
     },
     {
-      "name": "windows-vs-ship-rel",
-      "inherits": [ "base-rel", "windows-base" ],
+      "name": "windows-vs-ship",
+      "inherits": [ "base-ship", "windows-vs-base" ],
       "binaryDir": "${sourceDir}/build-vs",
-      "displayName": "Windows - Shipping Release",
+      "displayName": "Windows : Visual Studio Shipping build",
       "generator": "Visual Studio 18 2026",
       "condition": {
         "type": "equals",
@@ -281,10 +296,10 @@
       }
     },
     {
-      "name": "windows-ninja-coverage",
-      "inherits": [ "base-dev", "msvc-ninja-base" ],
-      "displayName": "Windows : Ninja + Clang test coverage",
-      "description": "gcov coverage needs Clang or GCC, so this overrides the MSVC compilers from msvc-ninja-base. clang and clang++ must be on PATH, with llvm-cov and gcovr.",
+      "name": "windows-coverage",
+      "inherits": [ "base-dev", "windows-base" ],
+      "displayName": "Windows : Clang test coverage",
+      "description": "gcov coverage needs Clang or GCC, so this overrides the MSVC compilers from windows-base. clang and clang++ must be on PATH, with llvm-cov and gcovr.",
       "binaryDir": "${sourceDir}/build-coverage",
       "condition": {
         "type": "equals",
@@ -294,7 +309,6 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_BUILD_TYPE": "Debug",
         "MAYAFLUX_BUILD_TESTS": "ON",
         "MAYAFLUX_COVERAGE": "ON"
       }
@@ -312,9 +326,9 @@
       }
     },
     {
-      "name": "windows-ninja-asan",
-      "inherits": "msvc-ninja-dev",
-      "displayName": "Windows : Ninja + MSVC AddressSanitizer tests",
+      "name": "windows-asan",
+      "inherits": "windows-test",
+      "displayName": "Windows : MSVC AddressSanitizer tests",
       "description": "Neither MSVC nor Clang on Windows ships ThreadSanitizer, so AddressSanitizer is the sanitizer available here. Needs its own build directory.",
       "binaryDir": "${sourceDir}/build-asan",
       "environment": {
@@ -328,24 +342,27 @@
     }
   ],
   "buildPresets": [
-    { "name": "unix-dev",         "configurePreset": "unix-dev", "jobs": 0 },
-    { "name": "unix-test",         "configurePreset": "unix-test", "jobs": 0 },
-    { "name": "linux-ship-dev",    "configurePreset": "linux-ship-dev", "jobs": 0 },
-    { "name": "linux-ship-rel",    "configurePreset": "linux-ship-rel", "jobs": 0 },
-    { "name": "macos-ship-dev",    "configurePreset": "macos-ship-dev", "jobs": 0 },
-    { "name": "launchpad-dev",    "configurePreset": "launchpad-dev", "jobs": 0 },
-    { "name": "launchpad-rel",    "configurePreset": "launchpad-rel", "jobs": 0 },
-    { "name": "macos-ship-rel",    "configurePreset": "macos-ship-rel", "jobs": 0 },
-    { "name": "msvc-ninja-dev", "configurePreset": "msvc-ninja-dev", "jobs": 0 },
-    { "name": "windows-ship-dev", "configurePreset": "windows-ship-dev", "jobs": 0 },
-    { "name": "windows-ship-rel", "configurePreset": "windows-ship-rel", "jobs": 0 },
-    { "name": "win26-dev",       "configurePreset": "windows-vs2026-dev" },
-    { "name": "win22-dev",       "configurePreset": "windows-vs2022-dev" },
-    { "name": "windows-vs-ship-rel", "configurePreset": "windows-vs-ship-rel"},
+    { "name": "unix-dev",           "configurePreset": "unix-dev", "jobs": 0 },
+    { "name": "unix-test",          "configurePreset": "unix-test", "jobs": 0 },
+    { "name": "linux-check",        "configurePreset": "linux-check", "jobs": 0 },
+    { "name": "linux-test",         "configurePreset": "linux-test", "jobs": 0 },
+    { "name": "linux-ship",         "configurePreset": "linux-ship", "jobs": 0 },
+    { "name": "launchpad-ship",     "configurePreset": "launchpad-ship", "jobs": 0 },
+    { "name": "macos-check",        "configurePreset": "macos-check", "jobs": 0 },
+    { "name": "macos-test",         "configurePreset": "macos-test", "jobs": 0 },
+    { "name": "macos-ship",         "configurePreset": "macos-ship", "jobs": 0 },
+    { "name": "windows-dev",        "configurePreset": "windows-dev", "jobs": 0 },
+    { "name": "windows-test",       "configurePreset": "windows-test", "jobs": 0 },
+    { "name": "windows-check",      "configurePreset": "windows-check", "jobs": 0 },
+    { "name": "windows-check-test", "configurePreset": "windows-check-test", "jobs": 0 },
+    { "name": "windows-ship",       "configurePreset": "windows-ship", "jobs": 0 },
+    { "name": "windows-vs2026-dev", "configurePreset": "windows-vs2026-dev", "configuration": "RelWithDebInfo" },
+    { "name": "windows-vs2022-dev", "configurePreset": "windows-vs2022-dev", "configuration": "RelWithDebInfo" },
+    { "name": "windows-vs-ship",   "configurePreset": "windows-vs-ship", "configuration": "RelWithDebInfo" },
     { "name": "unix-tsan", "configurePreset": "unix-tsan", "jobs": 0 },
-    { "name": "windows-ninja-asan", "configurePreset": "windows-ninja-asan", "jobs": 0 },
+    { "name": "windows-asan", "configurePreset": "windows-asan", "jobs": 0 },
     { "name": "unix-coverage", "configurePreset": "unix-coverage", "targets": [ "coverage" ], "jobs": 0 },
-    { "name": "windows-ninja-coverage", "configurePreset": "windows-ninja-coverage", "targets": [ "coverage" ], "jobs": 0 }
+    { "name": "windows-coverage", "configurePreset": "windows-coverage", "targets": [ "coverage" ], "jobs": 0 }
   ],
   "testPresets": [
     {
@@ -354,8 +371,33 @@
       "output": { "outputOnFailure": true }
     },
     {
+      "name": "linux-test",
+      "configurePreset": "linux-test",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "macos-test",
+      "configurePreset": "macos-test",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "windows-test",
+      "configurePreset": "windows-test",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "windows-check-test",
+      "configurePreset": "windows-check-test",
+      "output": { "outputOnFailure": true }
+    },
+    {
       "name": "unix-tsan",
       "configurePreset": "unix-tsan",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "windows-asan",
+      "configurePreset": "windows-asan",
       "output": { "outputOnFailure": true }
     }
   ]

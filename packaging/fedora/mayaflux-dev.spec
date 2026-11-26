@@ -130,7 +130,7 @@ and live coding features. This is intentional.
 
 %build
 export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
-%cmake --preset linux-ship-dev
+%cmake --preset linux-ship
 
 %cmake_build
 

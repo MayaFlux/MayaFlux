@@ -12,9 +12,6 @@ on:
 permissions:
   contents: write
 
-env:
-  BUILD_TYPE: RelWithDebInfo
-
 jobs:
   should_run:
     runs-on: ubuntu-latest
@@ -58,7 +55,7 @@ jobs:
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
       clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
-      is_dev: "1"
+      preset: macos-ship
       run_tests: false
       create_distribution: true
 
@@ -70,7 +67,7 @@ jobs:
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
       clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
-      is_dev: "1"
+      preset: linux-ship
       run_tests: false
       create_distribution: true
       artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-linux-arch
@@ -85,7 +82,7 @@ jobs:
     with:
       version: ${{ needs.determine_version.outputs.VERSION }}
       clean_version: ${{ needs.determine_version.outputs.CLEAN_VERSION }}
-      is_dev: "1"
+      preset: windows-ship
       run_tests: false
       create_distribution: true
       artifact_name: MayaFlux-${{ needs.determine_version.outputs.VERSION }}-windows-x64

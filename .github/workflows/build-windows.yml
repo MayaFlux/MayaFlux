@@ -9,8 +9,12 @@ on:
       clean_version:
         required: true
         type: string
+      preset:
+        required: false
+        type: string
+        default: windows-ship
       is_dev:
-        required: true
+        required: false
         type: string
       run_tests:
         required: false
@@ -35,7 +39,7 @@ on:
         type: string
 
 env:
-  BUILD_TYPE: ${{ inputs.is_dev == '0' && 'Release' || 'RelWithDebInfo' }}
+  BUILD_TYPE: RelWithDebInfo
   VCVARS_PATH: 'C:\Program Files\Microsoft Visual
     Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
@@ -410,15 +414,8 @@ jobs:
 
           $cores = [System.Environment]::ProcessorCount
 
-          $preset = if ($env:BUILD_TYPE -eq "Release") {
-            "windows-ship-rel"
-          } else {
-            "windows-ship-dev"
-          }
-          "PRESET=$preset" >> $env:GITHUB_ENV
-
           $cmakeArgs = @(
-            "--preset", $preset,
+            "--preset", "${{ inputs.preset }}",
             "-DCMAKE_C_COMPILER_LAUNCHER=$env:CCACHE_EXE",
             "-DCMAKE_CXX_COMPILER_LAUNCHER=$env:CCACHE_EXE",
             "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded",
@@ -439,7 +436,7 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
-          cmake --build --preset "${{ env.PRESET }}"
+          cmake --build --preset "${{ inputs.preset }}"
 
       - name: ccache stats
         if: ${{ always() && env.CCACHE_EXE != '' }}

@@ -10,11 +10,11 @@ export CXX=g++-15
 
 override_dh_auto_configure:
 	export CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime && \
- 	PATH=/usr/lib/llvm-22/bin:$$PATH cmake --preset launchpad-dev
+	PATH=/usr/lib/llvm-22/bin:$$PATH cmake --preset launchpad-ship
 
 override_dh_auto_build-arch:
 	CPLUS_INCLUDE_PATH=/usr/include/c++/15:/usr/include/$(DEB_HOST_MULTIARCH)/c++/15:/usr/include/c++/15/backward \
-	    cmake --build --preset launchpad-dev
+	    cmake --build --preset launchpad-ship
 
 override_dh_auto_test:
 	:

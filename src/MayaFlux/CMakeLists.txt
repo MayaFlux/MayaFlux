@@ -34,9 +34,8 @@ if(WIN32)
     if(MSVC)
         target_compile_options(MayaFluxLib PRIVATE /MD)
 
-        if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            target_link_options(MayaFluxLib PRIVATE "/IGNORE:4099")
-        endif()
+        target_link_options(MayaFluxLib PRIVATE
+            "$<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:/IGNORE:4099>")
     endif()
 endif()
 

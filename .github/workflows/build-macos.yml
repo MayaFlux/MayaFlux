@@ -9,8 +9,12 @@ on:
       clean_version:
         required: true
         type: string
+      preset:
+        required: false
+        type: string
+        default: macos-ship
       is_dev:
-        required: true
+        required: false
         type: string
       run_tests:
         required: false
@@ -24,9 +28,6 @@ on:
         required: false
         type: boolean
         default: false
-
-env:
-  BUILD_TYPE: RelWithDebInfo
 
 jobs:
   build:
@@ -251,24 +252,17 @@ jobs:
           export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
           export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
 
-          if [ "${{ env.BUILD_TYPE }}" = "Release" ]; then
-            PRESET="macos-ship-rel"
-          else
-            PRESET="macos-ship-dev"
-          fi
-
           echo "=== Final CMake environment ==="
           echo "CMAKE version: $(cmake --version | head -1)"
           echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
           echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-          echo "Using Preset: $PRESET"
+          echo "Using Preset: ${{ inputs.preset }}"
 
-          echo "PRESET=$PRESET" >> $GITHUB_ENV
-          cmake --preset "$PRESET"
+          cmake --preset "${{ inputs.preset }}"
 
       - name: Build
         shell: bash
-        run: cmake --build --preset "${{ env.PRESET }}"
+        run: cmake --build --preset "${{ inputs.preset }}"
 
       - name: ccache stats
         if: always()

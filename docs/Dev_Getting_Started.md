@@ -12,11 +12,15 @@ cd MayaFlux
 
 ./scripts/setup_linux.sh    # or setup_macos.sh / win64/setup_windows.ps1
 
-cmake --preset unix-dev     # or windows-vs2026-dev / windows-vs2022-dev
-cmake --build --preset unix-dev     # or win26-dev / win22-dev
+cmake --preset unix-dev
+cmake --build --preset unix-dev
 
 ./build/project_launcher
 ```
+
+On Windows, use `windows-dev` and run `build\project_launcher.exe`.
+
+If `CMakeUserPresets.json` is present, use `unix-dev-local` for both configure and build to limit the build to 16 parallel jobs.
 
 Write your code in `src/user_project.hpp`. It is created for you from a template on first configure if it does not already exist, and it is never overwritten afterward. This is your scratch space for exercising `MayaFluxLib` before writing a real test, not an official example, see the section below.
 
@@ -73,14 +77,17 @@ macOS note: Homebrew LLVM is not your compiler. MayaFlux compiles with Apple Cla
 | Preset | MAYAFLUX_BUILD_PROJECT | MAYAFLUX_DEV | MAYAFLUX_BUILD_TESTS | Purpose |
 |---|---|---|---|---|
 | `unix-dev` | ON | ON | off | Linux/macOS contributor build (RelWithDebInfo) |
-| `unix-test` | ON | ON | ON | Linux/macOS test build (Debug), inherits `unix-dev`, pairs with the `unix-test` build and test presets |
-| `windows-vs2026-dev` | ON | ON | off | Windows contributor build, VS 2026 (Debug) |
-| `windows-vs2022-dev` | ON | ON | off | Windows contributor build, VS 2022 (Debug) |
-| `linux-ship-dev`, `macos-ship-dev` | off | off | off | Shipping build with debug info, no `project_launcher` |
-| `linux-ship-rel`, `macos-ship-rel`, `windows-ship-rel` | off | off | off | Release packaging, no `project_launcher` |
-| `launchpad-dev`, `launchpad-rel` | off | off | off | PPA packaging, no `project_launcher` |
+| `unix-test` | ON | ON | ON | Linux/macOS contributor tests in the same `RelWithDebInfo` build tree |
+| `windows-dev`, `windows-test` | ON | ON | off / ON | Windows contributor builds with MSVC |
+| `windows-vs2026-dev`, `windows-vs2022-dev` | ON | ON | off | Optional Visual Studio contributor builds |
+| `linux-check`, `macos-check`, `windows-check` | off | off | off | CI build checks without LTO |
+| `linux-test`, `macos-test`, `windows-check-test` | off | off | ON | CI tests using the matching check build tree |
+| `linux-ship`, `macos-ship`, `windows-ship` | off | off | off | Shipping builds with LTO |
+| `launchpad-ship` | off | off | off | PPA packaging with LTO |
 
-LTO is controlled by `MAYAFLUX_ENABLE_LTO`. It is on for every ship and launchpad preset and off for `unix-dev`, `unix-test` and the Windows dev presets.
+LTO is controlled by `MAYAFLUX_ENABLE_LTO`. It is on for shipping presets and off for contributor, test and CI check presets. All normal presets use `RelWithDebInfo`. `unix-tsan`, `windows-asan`, `unix-coverage` and `windows-coverage` keep their own build directories for instrumented builds.
+
+`CMakeUserPresets.json` defines local configure and build aliases: `unix-dev-local`, `unix-test-local`, `unix-tsan-local` and `unix-coverage-local`. Each configure alias inherits its matching shared preset without changing its settings. Each build alias limits parallel jobs to 16.
 
 A bare `cmake -B build` with no preset also leaves `MAYAFLUX_BUILD_PROJECT` OFF. If you want `project_launcher` without a preset:
 
@@ -132,7 +139,7 @@ This is also why it is never overwritten: several people's in-progress scratch w
 
 `src/examples/` exists so `user_project.hpp` does not become a dumping ground. Any `.hpp` / `.cpp` under this directory is picked up automatically (`file(GLOB_RECURSE EXAMPLES ...)`) and compiled into `project_launcher` alongside `user_project.hpp`. Put a trial, a prototype, a demo you are handing to someone else, or a reproduction case here as its own file instead of overwriting or piling onto `user_project.hpp`. Several people's throwaway work can coexist this way without collisions.
 
-`src/examples/shaders/` is the same idea applied to shaders. Anything compiled from here is example-only, scoped to `MAYAFLUX_DEV` builds via `compile_example_shaders`, and never promoted into `data/shaders/` unless it has actually earned general-purpose, official status. `data/shaders/` is the engine's own shader set, compiled unconditionally by `compile_shaders` into `${CMAKE_BINARY_DIR}/shaders`; treat that boundary as real. A shader under `src/examples/shaders/` staying there indefinitely is the expected outcome, not a sign it needs to be moved.
+`src/examples/shaders/` is the same idea applied to shaders. Anything compiled from here is example-only, enabled by `EXAMPLE_SHADER_DIR` via `compile_example_shaders`, and never promoted into `data/shaders/` unless it has actually earned general-purpose, official status. `data/shaders/` is the engine's own shader set, compiled unconditionally by `compile_shaders` into `${CMAKE_BINARY_DIR}/shaders`; treat that boundary as real. A shader under `src/examples/shaders/` staying there indefinitely is the expected outcome, not a sign it needs to be moved.
 
 If `EXAMPLE_SHADER_DIR` is set (the dev presets set it to `${sourceDir}/src/examples/shaders`), any `.vert` / `.frag` / `.comp` / `.geom` / `.tesc` / `.tese` / `.mesh` / `.task` / `.rgen` / `.rchit` / `.rmiss` files under that directory are compiled to `.spv` via `glslc` by `compile_example_shaders`. `project_launcher` depends on this target when it exists and gets `MAYAFLUX_EXAMPLE_SHADER_DIR` defined to point at the source directory.
 
@@ -148,13 +155,17 @@ On Windows, `regenerate_solution` reruns `scripts/win64/setup_visual_studio.ps1`
 
 ## Tests
 
-`MAYAFLUX_BUILD_TESTS` is ON under the `unix-test` preset and off elsewhere by default. Configure, build and run with the matching presets:
+`MAYAFLUX_BUILD_TESTS` is ON under the test and instrumentation presets and off elsewhere by default. The ordinary test presets retain `RelWithDebInfo` and the same build directory as their non-test counterpart. Configure, build and run with the matching presets:
 
 ```sh
 cmake --preset unix-test
 cmake --build --preset unix-test
 ctest --preset unix-test
 ```
+
+On Windows, use `windows-test` for all three commands.
+
+On Unix, use `unix-test-local` for both configure and build to apply the local 16-job limit. Keep `ctest --preset unix-test` for the test run.
 
 ---
 
