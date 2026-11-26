@@ -168,6 +168,8 @@ public:
     [[nodiscard]] double step_rate() const noexcept { return 1.0 / m_period; }
 
 private:
+    friend class Course;
+
     explicit CourseTime(double period)
         : m_period(period)
     {

@@ -1,6 +1,7 @@
 #include "Decoder.hpp"
 
 #include "AssemblySource.hpp"
+#include "Encoder.hpp"
 #include "Orchestrator.hpp"
 
 #include "MayaFlux/Nexus/Expanses/Hull.hpp"
@@ -9,15 +10,26 @@
 
 #include "MayaFlux/Buffers/BufferManager.hpp"
 #include "MayaFlux/Buffers/Geometry/MeshBuffer.hpp"
+#include "MayaFlux/Buffers/Network/InstanceNetworkBuffer.hpp"
+#include "MayaFlux/Buffers/Network/RecordedGeometryBuffer.hpp"
+#include "MayaFlux/Buffers/State/VolumeGridBuffer.hpp"
+#include "MayaFlux/Buffers/Textures/TextureBuffer.hpp"
 #include "MayaFlux/Buffers/Network/MeshNetworkBuffer.hpp"
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 
 #include "MayaFlux/IO/Detail/IOTransitions.hpp"
 #include "MayaFlux/IO/FileReader.hpp"
+#include "MayaFlux/IO/Image/ImageReader.hpp"
+#include "MayaFlux/IO/Spatial/SpatialReader.hpp"
+#include "MayaFlux/IO/Spatial/SpatialSequence.hpp"
+#include "MayaFlux/IO/Volume/VolumeReader.hpp"
 #include "MayaFlux/IO/Model/ModelReader.hpp"
 #include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Kinesis/Morphology.hpp"
 #include "MayaFlux/Kriya/Course.hpp"
+#include "MayaFlux/Nodes/Graphics/MeshWriterNode.hpp"
+#include "MayaFlux/Nodes/Network/InstanceNetwork.hpp"
 
 #include "MayaFlux/Transitive/Facet/ControlValueText.hpp"
 #include "MayaFlux/Transitive/IO/JSONSerializer.hpp"
@@ -51,7 +63,25 @@ namespace {
         std::shared_ptr<Buffers::BufferManager> buffer_manager;
         std::vector<std::string>& warnings;
         State::BufferNames buffers; ///< Bound buffers and those loaded from assets.
+        const State::CourseNames* courses {}; ///< Made for the saved courses nothing binds.
+        std::map<std::pair<uint32_t, uint32_t>, std::shared_ptr<Buffers::RenderProcessor>>* sinks {}; ///< Restored, by saved entity id and place.
     };
+
+    std::shared_ptr<Kriya::Course> course_named(
+        const State::Bindings* bindings, const State::CourseNames* made, const std::string& name)
+    {
+        if (bindings) {
+            if (const auto found = bindings->courses.find(name); found != bindings->courses.end() && found->second) {
+                return found->second;
+            }
+        }
+        if (made) {
+            if (const auto found = made->find(name); found != made->end()) {
+                return found->second;
+            }
+        }
+        return nullptr;
+    }
 
     State::BufferNames buffers_with(const State::Bindings* bindings, const State::BufferNames& loaded)
     {
@@ -136,7 +166,11 @@ namespace {
     void apply_configurations(Host& host, const std::vector<State::CallRecord>& calls,
         const Loading& load, const std::string& label)
     {
+        const auto had = host.configurations();
         for (const auto& call : calls) {
+            if (std::ranges::find(had, call_of(call)) != had.end()) {
+                continue;
+            }
             if (auto apply = made<std::function<void(Host&)>>(load, call, label + " configure")) {
                 host.configure(call_of(call), *apply);
             }
@@ -171,6 +205,16 @@ namespace {
                 return false;
             }
             wiring.on(source);
+            return true;
+        }
+
+        if (rec.kind == State::TriggerKind::Course) {
+            const auto course = course_named(load.bindings, load.courses, rec.source);
+            if (!course || !rec.course_event) {
+                load.warnings.push_back(label + ": course '" + rec.source + "' is not there");
+                return false;
+            }
+            wiring.on(course->subscribe(*rec.course_event));
             return true;
         }
 
@@ -228,6 +272,7 @@ namespace {
             return true;
         }
         case State::TriggerKind::Network:
+        case State::TriggerKind::Course:
             break;
         }
         return false;
@@ -607,23 +652,34 @@ namespace {
         }
 
         for (const auto& sink : entry.audio_sinks) {
-            const State::CallRecord call { .name = sink.fn_name, .arguments = {} };
+            const State::CallRecord call { .name = sink.fn_name, .arguments = sink.arguments };
             using Producer = std::function<Kakshya::DataVariant(const InfluenceContext&)>;
             if (auto fn = made<Producer>(load, call, who + " audio sink")) {
-                entity.sink_audio(*load.buffer_manager, sink.channel, std::move(*fn), sink.fn_name);
+                entity.sink_audio(*load.buffer_manager, sink.channel, call_of(call), std::move(*fn));
             } else {
                 entity.sink_audio(*load.buffer_manager, sink.channel);
             }
         }
 
+        uint32_t place = 0;
         for (const auto& sink : entry.render_sinks) {
-            const auto window = bound_window(load, sink.window);
-            if (!window) {
-                load.warnings.push_back(who + ": render sink window '" + sink.window + "' is not bound, sink skipped");
+            const uint32_t saved = place++;
+            Portal::Graphics::RenderConfig config;
+            config.target_window = bound_window(load, sink.window);
+            for (const auto& name : sink.targets) {
+                if (auto target = bound_object(load.bindings ? &load.bindings->targets : nullptr, name)) {
+                    config.target_images.push_back(std::move(target));
+                } else {
+                    load.warnings.push_back(who + ": image target '" + name + "' is not bound");
+                }
+            }
+            if (!sink.window.empty() && !config.target_window) {
+                load.warnings.push_back(who + ": render sink window '" + sink.window + "' is not bound");
+            }
+            if (!config.target_window && config.target_images.empty()) {
+                load.warnings.push_back(who + ": render sink has nothing to draw into, skipped");
                 continue;
             }
-            Portal::Graphics::RenderConfig config;
-            config.target_window = window;
             config.vertex_shader = sink.vertex_shader;
             config.fragment_shader = sink.fragment_shader;
             config.geometry_shader = sink.geometry_shader;
@@ -635,11 +691,34 @@ namespace {
             config.draw_priority = sink.draw_priority;
             config.extra_string_params = sink.extra_string_params;
 
-            const State::CallRecord call { .name = sink.fn_name, .arguments = {} };
+            const State::CallRecord call { .name = sink.fn_name, .arguments = sink.arguments };
             if (auto fn = made<RenderFn>(load, call, who + " render sink")) {
-                entity.render(*load.buffer_manager, config, sink.fn_name, std::move(*fn));
+                entity.render(*load.buffer_manager, config, call_of(call), std::move(*fn));
             } else {
                 entity.render(*load.buffer_manager, config);
+            }
+            if (load.sinks) {
+                load.sinks->insert_or_assign({ entry.id, saved }, entity.render_sinks().back().renderer);
+            }
+        }
+    }
+
+    /** Point the restored Locus of a record at the entity sinks it viewed. */
+    void restore_view_sinks(Fabric& fabric, const State::EntityRecord& entry, uint32_t runtime_id, const Loading& load)
+    {
+        if (entry.view_sinks.empty()) {
+            return;
+        }
+        const auto locus = std::dynamic_pointer_cast<Locus>(fabric.get_agent(runtime_id));
+        for (const auto& view : entry.view_sinks) {
+            const auto found = load.sinks ? load.sinks->find({ view.entity, view.sink }) : decltype(load.sinks->end()) {};
+            if (locus && load.sinks && found != load.sinks->end()) {
+                if (std::ranges::find(locus->view_targets(), found->second) == locus->view_targets().end()) {
+                    locus->add_view_target(found->second);
+                }
+            } else {
+                load.warnings.push_back(who_is(entry) + ": the sink it viewed on entity "
+                    + std::to_string(view.entity) + " was not restored");
             }
         }
     }
@@ -664,7 +743,8 @@ namespace {
     std::shared_ptr<Agent> construct_entity(
         Fabric& fabric,
         const State::EntityRecord& entry,
-        const Loading& load)
+        const Loading& load,
+        uint32_t& runtime_id)
     {
         const std::string who = who_is(entry);
 
@@ -684,6 +764,7 @@ namespace {
             restore_attachment(*emitter, entry, load);
             apply_configurations(*emitter, entry.configurations, load, who);
             auto wiring = fabric.wire(emitter);
+            runtime_id = emitter->id();
             note_runtime_id(entry, emitter->id(), load.warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, load);
             restore_sinks(*emitter, entry, load);
@@ -703,6 +784,7 @@ namespace {
             apply_controls(sensor->store(), entry, load.warnings);
             apply_configurations(*sensor, entry.configurations, load, who);
             auto wiring = fabric.wire(sensor);
+            runtime_id = sensor->id();
             note_runtime_id(entry, sensor->id(), load.warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, load);
             break;
@@ -715,6 +797,7 @@ namespace {
             apply_configurations(*agent, entry.configurations, load, who);
             restore_view_targets(*agent, entry, load);
             auto wiring = fabric.wire(agent);
+            runtime_id = agent->id();
             note_runtime_id(entry, agent->id(), load.warnings);
             apply_wiring(std::move(wiring), entry.wiring, who, load);
             restore_sinks(*agent, entry, load);
@@ -722,6 +805,50 @@ namespace {
         }
         }
         return nullptr;
+    }
+
+    /** What patch_entity() leaves but the sinks: attachment, setups and views of a live entity. */
+    void patch_references(Fabric& fabric, const State::EntityRecord& entry, const Loading& load)
+    {
+        const std::string who = who_is(entry);
+        const auto placed = [&](const auto& entity) {
+            if (entry.attach) {
+                restore_attachment(*entity, entry, load);
+            } else {
+                entity->detach();
+            }
+            apply_configurations(*entity, entry.configurations, load, who);
+        };
+
+        switch (State::parse_kind(entry.kind)) {
+        case Fabric::Kind::Emitter:
+            if (const auto emitter = fabric.get_emitter(entry.id)) {
+                placed(emitter);
+            }
+            break;
+        case Fabric::Kind::Sensor:
+            if (const auto sensor = fabric.get_sensor(entry.id)) {
+                apply_configurations(*sensor, entry.configurations, load, who);
+            }
+            break;
+        case Fabric::Kind::Agent:
+            if (const auto agent = fabric.get_agent(entry.id)) {
+                placed(agent);
+                if (const auto locus = std::dynamic_pointer_cast<Locus>(agent)) {
+                    for (const auto& name : entry.view_targets) {
+                        const auto buffer = bound_buffer(load, name);
+                        const auto processor = buffer ? buffer->get_render_processor() : nullptr;
+                        if (!processor) {
+                            load.warnings.push_back(who + ": view target '" + name
+                                + "' is not a bound buffer with a render processor");
+                        } else if (std::ranges::find(locus->view_targets(), processor) == locus->view_targets().end()) {
+                            locus->add_view_target(processor);
+                        }
+                    }
+                }
+            }
+            break;
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -859,6 +986,14 @@ namespace {
     }
 
     template <typename Record>
+    void keep_calls(Expanse& expanse, const Record& rec)
+    {
+        expanse.set_fn_call(call_of(rec.contains));
+        expanse.set_on_enter_fn_call(call_of(rec.on_enter));
+        expanse.set_on_exit_fn_call(call_of(rec.on_exit));
+    }
+
+    template <typename Record>
     void finish_expanse(Expanse& expanse, const Record& rec, const Loading& load, const std::string& label)
     {
         extend_controls(&expanse, rec.controls, load);
@@ -872,14 +1007,6 @@ namespace {
             }
         }
         apply_configurations(expanse, rec.configurations, load, label);
-    }
-
-    template <typename Record>
-    void keep_calls(Expanse& expanse, const Record& rec)
-    {
-        expanse.set_fn_call(call_of(rec.contains));
-        expanse.set_on_enter_fn_call(call_of(rec.on_enter));
-        expanse.set_on_exit_fn_call(call_of(rec.on_exit));
     }
 
     /**
@@ -929,6 +1056,7 @@ namespace {
             if (subkind != "hull") {
                 apply_bounds(*existing, rec);
             }
+            finish_expanse(*existing, rec, load, label);
             return Restored::Patched;
         }
 
@@ -961,15 +1089,109 @@ namespace {
     // Assets
     // -------------------------------------------------------------------------
 
+    /** A buffer for each stream of a snapshot archive, the later ones named name.stream. */
+    bool load_spatial(const State::AssetRecord& record, const std::string& path, State::BufferNames& loaded)
+    {
+        std::vector<std::string> streams;
+        {
+            IO::SpatialReader reader;
+            if (!reader.open(path)) {
+                return false;
+            }
+            streams = reader.get_stream_names();
+            reader.close();
+        }
+
+        bool any = false;
+        for (const auto& stream : streams) {
+            const auto frames = IO::SpatialFileFrames::create(path, stream);
+            const auto frame = frames && frames->count() > 0 ? frames->read(0) : nullptr;
+            if (!frame || frame->positions.empty()) {
+                continue;
+            }
+            const auto box = Kinesis::aabb(frame->positions);
+            auto buffer = std::make_shared<Buffers::RecordedGeometryBuffer>(
+                static_cast<uint32_t>(frame->positions.size()), frame->topology,
+                Kinesis::SamplerBounds { .min = box.min, .max = box.max });
+            buffer->write_frame(frame);
+            loaded.emplace(any ? record.name + "." + stream : record.name, std::move(buffer));
+            any = true;
+        }
+        return any;
+    }
+
+    std::shared_ptr<Buffers::VKBuffer> load_instances(const State::AssetRecord& record, const std::string& path)
+    {
+        IO::ModelReader reader;
+        if (!reader.can_read(path) || !reader.open(path)) {
+            return nullptr;
+        }
+        const auto meshes = reader.create_mesh_buffers();
+        reader.close();
+        if (meshes.empty()) {
+            return nullptr;
+        }
+
+        const auto& data = meshes.front()->get_mesh_data();
+        auto node = std::make_shared<Nodes::GpuSync::MeshWriterNode>();
+        node->set_mesh(data);
+        node->compute_frame();
+
+        auto network = std::make_shared<Nodes::Network::InstanceNetwork>();
+        for (const auto& instance : record.instances) {
+            const uint32_t index = network->add_slot(instance.name, node);
+            auto& slot = network->get_slot(index);
+            if (instance.transform.size() == 16) {
+                for (glm::length_t column = 0; column < 4; ++column) {
+                    for (glm::length_t row = 0; row < 4; ++row) {
+                        slot.transform[column][row] = instance.transform[static_cast<size_t>(column * 4 + row)];
+                    }
+                }
+            }
+            slot.tint = instance.tint;
+            slot.scalar = instance.scalar;
+            slot.texture = instance.texture;
+            slot.morph_weights = instance.morph_weights;
+        }
+        return std::make_shared<Buffers::InstanceNetworkBuffer>(network);
+    }
+
+    std::shared_ptr<Buffers::VKBuffer> load_texture(const std::string& path)
+    {
+        const auto image = IO::ImageReader::load(path, 0);
+        if (!image) {
+            return nullptr;
+        }
+        return std::make_shared<Buffers::TextureBuffer>(image->width, image->height, image->format, image->data());
+    }
+
+    /** A volume has to be registered before it can be filled, so this one is, and is not drawn. */
+    std::shared_ptr<Buffers::VKBuffer> load_volume_asset(const State::AssetRecord& record,
+        const std::string& path, const std::shared_ptr<Buffers::BufferManager>& manager)
+    {
+        IO::VolumeReader reader;
+        if (!manager || !reader.can_read(path) || record.resolution.size() != 3
+            || !record.bounds_min || !record.bounds_max) {
+            return nullptr;
+        }
+        const Kinesis::Lattice3D lattice {
+            .resolution = { record.resolution[0], record.resolution[1], record.resolution[2] },
+            .bounds = { .min = *record.bounds_min, .max = *record.bounds_max },
+        };
+        const auto data = reader.load(path, lattice);
+        return data ? IO::Detail::create_volume_grid_buffer(manager, *data) : nullptr;
+    }
+
     /** The buffers of the records whose names are not bound, made from their files. */
     State::BufferNames load_assets(
         const std::vector<State::AssetRecord>& records,
         const std::string& schema_path,
         const State::Bindings* bindings,
+        const std::shared_ptr<Buffers::BufferManager>& manager,
+        std::map<std::string, std::shared_ptr<Kriya::MeshAssemblyRealization>>& realized,
         std::vector<std::string>& warnings)
     {
         State::BufferNames loaded;
-        std::map<std::string, std::shared_ptr<Kriya::MeshAssemblyRealization>> realized;
         const auto directory = std::filesystem::path(IO::FileReader::resolve_path(schema_path)).parent_path();
 
         for (const auto& record : records) {
@@ -979,7 +1201,19 @@ namespace {
             const std::string path = record.snapshot ? (directory / record.file).string() : record.file;
             std::shared_ptr<Buffers::VKBuffer> buffer;
 
-            if (record.form == State::AssetForm::Part) {
+            if (record.form == State::AssetForm::Spatial) {
+                if (!load_spatial(record, path, loaded)) {
+                    warnings.push_back("asset '" + record.name + "' could not be loaded from " + path);
+                }
+                continue;
+            }
+            if (record.form == State::AssetForm::Instances) {
+                buffer = load_instances(record, path);
+            } else if (record.form == State::AssetForm::Texture) {
+                buffer = load_texture(path);
+            } else if (record.form == State::AssetForm::Volume) {
+                buffer = load_volume_asset(record, path, manager);
+            } else if (record.form == State::AssetForm::Part) {
                 auto& realization = realized[path];
                 if (!realization) {
                     if (const auto assembly = Detail::read_assembly(path)) {
@@ -1030,19 +1264,41 @@ namespace {
     // Courses
     // -------------------------------------------------------------------------
 
+    /** Courses for the saved ones nothing binds, before anything that listens to them is restored. */
+    void make_courses(
+        const std::vector<State::CourseRecord>& records,
+        const State::Bindings* bindings,
+        State::CourseNames& made)
+    {
+        for (const auto& record : records) {
+            if (course_named(bindings, &made, record.name) || !record.range_in || !record.range_out) {
+                continue;
+            }
+            if (auto course = Kriya::Course::create(record.step_rate,
+                    { .in = *record.range_in, .out = *record.range_out }, record.paused)) {
+                made.insert_or_assign(record.name, std::move(course));
+            }
+        }
+    }
+
+    /** Restore every saved course onto the bound one of its name, or the one made for it. */
     void apply_courses(
         const std::vector<State::CourseRecord>& records,
         const State::Bindings* bindings,
-        std::vector<std::string>& warnings)
+        std::vector<std::string>& warnings,
+        const State::CourseNames* made_courses)
     {
+        const auto named = [bindings, made_courses](const std::string& name) {
+            return course_named(bindings, made_courses, name);
+        };
+
         for (const auto& record : records) {
             const std::string label = "course '" + record.name + "'";
-            const auto found = bindings ? bindings->courses.find(record.name) : decltype(bindings->courses.end()) {};
-            if (!bindings || found == bindings->courses.end() || !found->second) {
-                warnings.push_back(label + " is not bound, its playback is not restored");
+            const auto course = named(record.name);
+            if (!course) {
+                warnings.push_back(label + " is not bound and could not be made, its playback is not restored");
                 continue;
             }
-            Kriya::Course& course = *found->second;
 
             for (const auto& what : record.lost) {
                 warnings.push_back(label + ": " + what + " was not saved");
@@ -1053,11 +1309,11 @@ namespace {
                 .warnings = warnings,
                 .buffers = buffers_with(bindings, {}),
             };
-            extend_controls(&course, record.controls, load);
-            apply_configurations(course, record.configurations, load, label);
+            extend_controls(course.get(), record.controls, load);
+            apply_configurations(*course, record.configurations, load, label);
 
             for (const auto& [control, text] : record.controls) {
-                ControlValue* slot = course.store().find(control);
+                ControlValue* slot = course->store().find(control);
                 ControlValue decoded;
                 Reflect::TextError reason = Reflect::TextError::Invalid;
                 if (slot && Reflect::TextCodec<ControlValue>::decode(text, decoded, reason)) {
@@ -1066,23 +1322,44 @@ namespace {
                     warnings.push_back(label + ": control '" + control + "' could not be applied");
                 }
             }
-            if (record.range_in && record.range_out && !course.range(*record.range_in, *record.range_out)) {
+            if (record.range_in && record.range_out && !course->range(*record.range_in, *record.range_out)) {
                 warnings.push_back(label + ": its range was refused");
             }
 
-            const auto held = course.markers();
+            const auto held = course->markers();
             for (const auto& marker : record.markers) {
                 const bool present = std::ranges::any_of(held, [&marker](const Kriya::CourseMarker& live) {
                     return live.name == marker.name && live.time == marker.time;
                 });
                 if (!present) {
-                    course.add_marker(marker.name, marker.time);
+                    course->add_marker(marker.name, marker.time);
+                }
+            }
+        }
+
+        for (const auto& record : records) {
+            const auto course = named(record.name);
+            if (!course) {
+                continue;
+            }
+            const std::string label = "course '" + record.name + "'";
+            if (!record.follows.empty()) {
+                if (!course->follow(named(record.follows), record.follow_offset)) {
+                    warnings.push_back(label + ": the course '" + record.follows + "' it follows is not there");
                 }
             }
 
-            const bool queued = (record.paused ? course.pause() : course.start()) && course.seek(record.time);
+            bool queued = record.paused ? course->pause() : course->start();
+            if (record.playback) {
+                queued = queued && course->resume(*record.playback);
+                if (record.playback->fade_seconds > 0.0) {
+                    queued = queued && course->fade_weight(record.playback->fade_to, record.playback->fade_seconds);
+                }
+            } else if (record.follows.empty()) {
+                queued = queued && course->seek(record.time);
+            }
             if (!queued) {
-                warnings.push_back(label + ": its time could not be queued");
+                warnings.push_back(label + ": its playback could not be queued");
             }
         }
     }
@@ -1120,6 +1397,165 @@ bool StateDecoder::wraps(const Expanse& live, const std::string& subkind,
         return mantle && mantle->m_look.buf == buffer;
     }
     return typeid(live) == typeid(Expanse);
+}
+
+StateDecoder::Moving StateDecoder::start_motions(const std::vector<State::MotionRecord>& records,
+    const std::string& schema_path, const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+    Realizations& realized, State::CourseNames& courses, ReconstructionResult& result) const
+{
+    Moving moving;
+    const auto directory = std::filesystem::path(IO::FileReader::resolve_path(schema_path)).parent_path();
+    const StateOrchestrator orchestrator { scheduler };
+
+    for (const auto& record : records) {
+        if (m_bindings && m_bindings->motions.contains(record.name)) {
+            continue;
+        }
+        const std::string path = record.snapshot ? (directory / record.file).string() : record.file;
+        auto& realization = realized[path];
+        if (!realization) {
+            if (const auto assembly = Detail::read_assembly(path)) {
+                realization = Kriya::MeshAssemblyRealization::create(assembly, {});
+                if (realization) {
+                    realization->bind_materials(IO::Detail::make_material_resolver(path));
+                }
+            }
+        }
+
+        const auto cell = std::make_shared<Memory::SnapshotCell<State::Carried>>();
+        auto reflows = orchestrator.start_motion(realization, record.motion, record.edge, true, cell);
+        const auto& [placing, deforming, streaming] = reflows;
+
+        std::vector<std::shared_ptr<Kriya::Course>> made;
+        const auto keep = [&made](const auto& reflow) {
+            if (reflow) {
+                for (auto& course : reflow->courses()) {
+                    made.push_back(std::move(course));
+                }
+            }
+        };
+        keep(placing);
+        std::ranges::for_each(deforming, keep);
+        std::ranges::for_each(streaming, keep);
+
+        if (made.empty()) {
+            result.warnings.push_back("motion '" + record.name + "' could not be started again from " + path);
+            continue;
+        }
+        for (size_t i = 0; i < std::min(made.size(), record.courses.size()); ++i) {
+            courses.insert_or_assign(record.courses[i], made[i]);
+        }
+        for (size_t i = 0; i < std::min(record.buffers.size(), record.rows.size()); ++i) {
+            if (m_bindings && m_bindings->buffers.contains(record.buffers[i])) {
+                continue;
+            }
+            if (auto shown = StateOrchestrator::buffer_of(realization, record.rows[i]).first) {
+                result.buffers.insert_or_assign(record.buffers[i], std::move(shown));
+            }
+        }
+        result.motions.insert_or_assign(record.name, std::pair { realization, std::move(reflows) });
+        moving.emplace(record.name, cell);
+    }
+    return moving;
+}
+
+void StateDecoder::carry(const std::vector<State::MotionRecord>& records, const Moving& moving,
+    const std::map<std::pair<std::string, uint32_t>, uint32_t>& ids,
+    const std::function<Fabric*(const std::string&)>& fabric_named)
+{
+    for (const auto& record : records) {
+        const auto cell = moving.find(record.name);
+        if (cell == moving.end()) {
+            continue;
+        }
+        State::Carried carried;
+        for (const auto& held : record.carried) {
+            const auto id = ids.find({ held.fabric, held.entity });
+            Fabric* fabric = id == ids.end() ? nullptr : fabric_named(held.fabric);
+            if (!fabric) {
+                continue;
+            }
+            if (const auto emitter = fabric->get_emitter(id->second)) {
+                carried.emplace_back(held.row, std::weak_ptr<Emitter>(emitter));
+            } else if (const auto sensor = fabric->get_sensor(id->second)) {
+                carried.emplace_back(held.row, std::weak_ptr<Sensor>(sensor));
+            } else if (const auto agent = fabric->get_agent(id->second)) {
+                carried.emplace_back(held.row, std::weak_ptr<Agent>(agent));
+            }
+        }
+        cell->second->publish(std::move(carried));
+    }
+}
+
+void StateDecoder::patch_sinks(Fabric& fabric, const State::EntityRecord& entry,
+    std::vector<std::string>& warnings, const State::BufferNames& buffers,
+    std::map<std::pair<uint32_t, uint32_t>, std::shared_ptr<Buffers::RenderProcessor>>& sinks)
+{
+    const StateEncoder live(m_bindings);
+    const Loading load {
+        .bindings = m_bindings.get(),
+        .buffer_manager = fabric.m_buffers,
+        .warnings = warnings,
+        .buffers = buffers,
+        .sinks = &sinks,
+    };
+
+    const auto patch = [&](const auto& entity) {
+        const auto held = live.sink_records(fabric, entry.id);
+        if (held.audio_sinks != entry.audio_sinks || held.render_sinks != entry.render_sinks) {
+            if (!load.buffer_manager) {
+                warnings.push_back(who_is(entry) + ": sinks need the Fabric's BufferManager");
+                return;
+            }
+            auto& manager = *load.buffer_manager;
+            std::erase_if(entity->m_audio_sinks, [&](const AudioSink& sink) {
+                if (entity->made_by_configure(sink.buf.get())) {
+                    return false;
+                }
+                manager.remove_buffer(sink.buf, Buffers::ProcessingToken::AUDIO_BACKEND, sink.channel);
+                return true;
+            });
+            std::erase_if(entity->m_render_sinks, [&](const RenderSink& sink) {
+                if (entity->made_by_configure(sink.buf.get())) {
+                    return false;
+                }
+                manager.remove_buffer(sink.buf, Buffers::ProcessingToken::GRAPHICS_BACKEND);
+                return true;
+            });
+            restore_sinks(*entity, entry, load);
+            return;
+        }
+
+        uint32_t place = 0;
+        for (const auto& sink : entity->render_sinks()) {
+            if (!entity->made_by_configure(sink.buf.get())) {
+                sinks.insert_or_assign({ entry.id, place++ }, sink.renderer);
+            }
+        }
+    };
+
+    if (const auto emitter = fabric.get_emitter(entry.id)) {
+        patch(emitter);
+    } else if (const auto agent = fabric.get_agent(entry.id)) {
+        patch(agent);
+    }
+}
+
+void StateDecoder::rewire(Fabric& fabric, const State::EntityRecord& entry,
+    std::vector<std::string>& warnings, const State::BufferNames& buffers, const State::CourseNames& courses)
+{
+    const StateEncoder live(m_bindings);
+    if (live.build_wiring(fabric, entry.id) == entry.wiring) {
+        return;
+    }
+    const Loading load {
+        .bindings = m_bindings.get(),
+        .buffer_manager = fabric.m_buffers,
+        .warnings = warnings,
+        .buffers = buffers,
+        .courses = &courses,
+    };
+    apply_wiring(fabric.rewire(entry.id), entry.wiring, who_is(entry), load);
 }
 
 // -------------------------------------------------------------------------
@@ -1166,6 +1602,10 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
         }
 
         if (patch_entity(fabric, entry, warnings)) {
+            std::map<std::pair<uint32_t, uint32_t>, std::shared_ptr<Buffers::RenderProcessor>> sinks;
+            patch_references(fabric, entry, load);
+            patch_sinks(fabric, entry, warnings, load.buffers, sinks);
+            rewire(fabric, entry, warnings, load.buffers, {});
             ++m_patched_count;
         } else {
             warnings.push_back("id " + std::to_string(entry.id) + " not found as "
@@ -1181,7 +1621,7 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
             });
     }
 
-    apply_courses(schema.courses, m_bindings.get(), warnings);
+    apply_courses(schema.courses, m_bindings.get(), warnings, nullptr);
 
     log_warnings(warnings);
 
@@ -1198,11 +1638,14 @@ bool StateDecoder::decode(Fabric& fabric, const std::string& base_path)
 
 StateDecoder::ReconstructionResult StateDecoder::reconstruct(Fabric& fabric, const std::string& base_path)
 {
-    return reconstruct_fabric(fabric, base_path, {});
+    State::CourseNames courses;
+    std::map<std::pair<std::string, uint32_t>, uint32_t> ids;
+    return reconstruct_fabric(fabric, base_path, {}, courses, ids, {});
 }
 
 StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
-    Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded)
+    Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded, State::CourseNames& courses,
+    std::map<std::pair<std::string, uint32_t>, uint32_t>& ids, const std::string& label)
 {
     ReconstructionResult result;
     m_last_error.clear();
@@ -1224,20 +1667,33 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
         return result;
     }
 
-    result.buffers = load_assets(schema.assets, json_path, m_bindings.get(), result.warnings);
+    Realizations realized;
+    result.buffers = load_assets(schema.assets, json_path, m_bindings.get(), fabric.m_buffers, realized, result.warnings);
     State::BufferNames given = loaded;
     given.insert(result.buffers.begin(), result.buffers.end());
-    const Loading load {
+    Loading load {
         .bindings = m_bindings.get(),
         .buffer_manager = fabric.m_buffers,
         .warnings = result.warnings,
         .buffers = buffers_with(m_bindings.get(), given),
     };
 
+    const auto moving = start_motions(schema.motions, json_path, fabric.m_scheduler, realized, courses, result);
+    for (const auto& [name, buffer] : result.buffers) {
+        if (!m_bindings || !m_bindings->buffers.contains(name)) {
+            load.buffers.insert_or_assign(name, buffer);
+        }
+    }
+    make_courses(schema.courses, m_bindings.get(), courses);
+    std::map<std::pair<uint32_t, uint32_t>, std::shared_ptr<Buffers::RenderProcessor>> sinks;
+    load.courses = &courses;
+    load.sinks = &sinks;
+
     const auto existing_ids = fabric.all_ids();
     const std::unordered_set<uint32_t> existing(existing_ids.begin(), existing_ids.end());
 
     std::map<uint32_t, std::shared_ptr<Agent>> restored;
+    std::vector<std::pair<const State::EntityRecord*, uint32_t>> constructed_ids;
 
     for (const auto& entry : schema.entities) {
         if (!State::kind_known(entry.kind)) {
@@ -1249,16 +1705,26 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
 
         if (existing.contains(entry.id)) {
             if (patch_entity(fabric, entry, result.warnings)) {
+                patch_references(fabric, entry, load);
+                patch_sinks(fabric, entry, result.warnings, load.buffers, sinks);
+                rewire(fabric, entry, result.warnings, load.buffers, courses);
+                constructed_ids.emplace_back(&entry, entry.id);
                 ++result.patched;
             } else {
                 ++result.skipped;
             }
         } else {
-            if (auto agent = construct_entity(fabric, entry, load)) {
+            uint32_t runtime_id = 0;
+            if (auto agent = construct_entity(fabric, entry, load, runtime_id)) {
                 restored.emplace(entry.id, std::move(agent));
             }
+            constructed_ids.emplace_back(&entry, runtime_id);
             ++result.constructed;
         }
+    }
+
+    for (const auto& [entry, runtime_id] : constructed_ids) {
+        restore_view_sinks(fabric, *entry, runtime_id, load);
     }
 
     for (const auto& entry : schema.entities) {
@@ -1293,7 +1759,13 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct_fabric(
         }
     }
 
-    apply_courses(schema.courses, m_bindings.get(), result.warnings);
+    for (const auto& [entry, runtime_id] : constructed_ids) {
+        ids.insert_or_assign({ label, entry->id }, runtime_id);
+    }
+    carry(schema.motions, moving, ids, [&fabric](const std::string&) { return &fabric; });
+
+    apply_courses(schema.courses, m_bindings.get(), result.warnings, &courses);
+    result.courses = courses;
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,
         "StateDecoder::reconstruct: constructed={} patched={} skipped={} warnings={}",
@@ -1324,7 +1796,14 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         return total;
     }
 
-    total.buffers = load_assets(schema.assets, tapestry_path, m_bindings.get(), total.warnings);
+    Realizations realized;
+    total.buffers = load_assets(schema.assets, tapestry_path, m_bindings.get(), tapestry.m_buffers, realized, total.warnings);
+
+    State::CourseNames courses;
+    std::map<std::pair<std::string, uint32_t>, uint32_t> ids;
+    const auto moving = start_motions(
+        schema.motions, tapestry_path, tapestry.m_scheduler, realized, courses, total);
+    make_courses(schema.courses, m_bindings.get(), courses);
 
     for (const auto& ref : schema.fabrics) {
         auto fabric = tapestry.get_fabric(ref.name);
@@ -1332,7 +1811,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
             fabric = tapestry.create_fabric(ref.name,
                 read_cell_size(ref.base_path + ".json").value_or(1.0F));
         }
-        auto result = reconstruct_fabric(*fabric, ref.base_path, total.buffers);
+        auto result = reconstruct_fabric(*fabric, ref.base_path, total.buffers, courses, ids, ref.name);
         total.constructed += result.constructed;
         total.patched += result.patched;
         total.skipped += result.skipped;
@@ -1369,6 +1848,7 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
 
         if (existed) {
             apply_bounds(*expanse, xrec);
+            finish_expanse(*expanse, xrec, load, label);
         } else {
             ExpanseParts parts;
             if (!resolve_expanse_parts(xrec, fabrics, label, parts, load)) {
@@ -1413,7 +1893,12 @@ StateDecoder::ReconstructionResult StateDecoder::reconstruct(
         }
     }
 
-    apply_courses(schema.courses, m_bindings.get(), total.warnings);
+    carry(schema.motions, moving, ids, [&tapestry](const std::string& name) {
+        return tapestry.get_fabric(name).get();
+    });
+
+    apply_courses(schema.courses, m_bindings.get(), total.warnings, &courses);
+    total.courses = courses;
     total.user_state = schema.user_state;
 
     MF_INFO(Journal::Component::Nexus, Journal::Context::FileIO,

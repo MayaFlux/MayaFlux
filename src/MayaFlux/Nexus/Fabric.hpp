@@ -410,6 +410,9 @@ private:
     friend class StateEncoder;
     friend class StateDecoder;
 
+    /** Drop the wiring of a registered entity and answer a new one to finalise under the same id. */
+    [[nodiscard]] Wiring rewire(uint32_t id);
+
     std::string m_name;
 
     struct Registration {

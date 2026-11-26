@@ -145,6 +145,15 @@ void Fabric::remove(uint32_t id)
     m_registrations.erase(it);
 }
 
+Wiring Fabric::rewire(uint32_t id)
+{
+    cancel_wiring(id);
+    if (const auto it = m_registrations.find(id); it != m_registrations.end()) {
+        it->second.wiring.reset();
+    }
+    return Wiring(*this, id);
+}
+
 void Fabric::cancel_wiring(uint32_t id)
 {
     const auto it = m_registrations.find(id);

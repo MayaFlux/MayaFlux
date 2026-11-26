@@ -256,11 +256,100 @@ StateOrchestrator::BufferSlot StateOrchestrator::buffer_of(
     return {};
 }
 
+State::Carried StateOrchestrator::carried_of(
+    const std::shared_ptr<const Kriya::MeshAssemblyRealization>& realization, const Rows& rows)
+{
+    State::Carried carried;
+    for (const auto& [row, member] : rows) {
+        if (as_locus(member) || buffer_of(realization, row).first) {
+            continue;
+        }
+        std::visit([&carried, row](const auto& ptr) {
+            if (ptr) {
+                carried.emplace_back(row, std::weak_ptr(ptr));
+            }
+        },
+            member);
+    }
+    return carried;
+}
+
 StateOrchestrator::Reflows StateOrchestrator::motion_from(
     const std::shared_ptr<const Kriya::MeshAssemblyRealization>& realization,
     size_t motion,
     Kriya::CourseEdge edge,
-    bool paused) const
+    bool paused,
+    const Rows& followers) const
+{
+    if (!realization) {
+        return {};
+    }
+
+    auto carried = carried_of(realization, followers);
+    const auto cell = std::make_shared<CarriedCell>();
+    cell->publish(carried);
+    auto reflows = start_motion(realization, motion, edge, paused, cell);
+
+    const auto& [placing, deforming, streaming] = reflows;
+    std::vector<std::shared_ptr<Kriya::Course>> courses;
+    const auto keep = [&courses](const auto& reflow) {
+        if (reflow) {
+            for (auto& course : reflow->courses()) {
+                courses.push_back(std::move(course));
+            }
+        }
+    };
+    keep(placing);
+    std::ranges::for_each(deforming, keep);
+    std::ranges::for_each(streaming, keep);
+
+    if (m_bindings && !courses.empty()) {
+        State::MotionSource source {
+            .file = {},
+            .assembly = realization->assembly(),
+            .motion = motion,
+            .edge = edge,
+            .courses = {},
+            .carried = std::move(carried),
+        };
+        for (const auto& [held, file] : m_files) {
+            if (held.lock() == source.assembly) {
+                source.file = file;
+            }
+        }
+
+        uint64_t number = 0;
+        std::string name = "motion_" + std::to_string(number);
+        while (m_bindings->motions.contains(name)) {
+            name = "motion_" + std::to_string(++number);
+        }
+        for (uint64_t row = 0; row < source.assembly->get_total_elements(); ++row) {
+            const auto shown = buffer_of(realization, row).first;
+            if (!shown) {
+                continue;
+            }
+            for (const auto& [held, buffer] : m_bindings->buffers) {
+                if (buffer == shown && std::ranges::find(source.buffers, held) == source.buffers.end()) {
+                    source.buffers.push_back(held);
+                    source.rows.push_back(row);
+                }
+            }
+        }
+        for (size_t i = 0; i < courses.size(); ++i) {
+            source.courses.push_back(name + "_" + std::to_string(i));
+            m_bindings->courses.insert_or_assign(source.courses.back(), courses[i]);
+        }
+        m_bindings->motions.emplace(std::move(name), std::move(source));
+    }
+    return reflows;
+}
+
+StateOrchestrator::Reflows StateOrchestrator::start_motion(
+    const std::shared_ptr<const Kriya::MeshAssemblyRealization>& realization,
+    size_t motion,
+    Kriya::CourseEdge edge,
+    bool paused,
+    const std::shared_ptr<CarriedCell>& carried) const
 {
     Reflows reflows;
     if (!realization || !m_scheduler) {
@@ -276,7 +365,28 @@ StateOrchestrator::Reflows StateOrchestrator::motion_from(
             setting.in = frames->extent().first;
             setting.out = frames->extent().second;
             setting.edge = edge;
-            placing = Kriya::MotionReflowBuilder::sampling(frames, realization->placement_sink(), 0.0, m_scheduler)
+            Kriya::MotionReflow::Sink carry = [carried](
+                                                  const std::shared_ptr<const Kakshya::MeshAssemblyLocals>& frame,
+                                                  const Kriya::FrameContext&) {
+                const auto held = carried->read();
+                if (!frame || !held) {
+                    return;
+                }
+                for (const auto& [row, member] : *held) {
+                    if (row >= frame->world.size()) {
+                        continue;
+                    }
+                    std::visit([&frame, row](const auto& weak) {
+                        if (const auto live = weak.lock()) {
+                            live->set(placement_of(frame->world[row]));
+                        }
+                    },
+                        member);
+                }
+            };
+            auto placed = Kriya::fan_out<Kakshya::MeshAssemblyLocals>(
+                std::vector<Kriya::MotionReflow::Sink> { realization->placement_sink(), std::move(carry) });
+            placing = Kriya::MotionReflowBuilder::sampling(frames, std::move(placed), 0.0, m_scheduler)
                           .course(setting, paused)
                           .start();
         }
@@ -397,6 +507,7 @@ StateOrchestrator::orchestrate(const std::string& filepath)
 
     auto [realization, rows] = orchestrate_rows(assembly,
         m_material_resolver ? m_material_resolver : IO::Detail::make_material_resolver(filepath), filepath);
+    m_files.emplace_back(assembly, filepath);
     return { std::move(assembly), std::move(realization), std::move(rows) };
 }
 

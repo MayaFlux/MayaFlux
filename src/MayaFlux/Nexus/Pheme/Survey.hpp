@@ -36,12 +36,11 @@ MAYAFLUX_API std::optional<glm::vec3> read_anchor(
 /**
  * @brief The anchor of a buffer or one slot of it, as it stands at each call.
  *
- * A skinned slot of a mesh or instance network answers the mean of its vertices
- * under the palette it is drawn with, summed once from the rest vertices so that a
- * call costs the joints and never reads the device. Morph targets are not applied,
- * and before a palette exists the slot answers as bound. A MeshBuffer with a skin
- * or morph targets of its own answers likewise under its palette and morph weights.
- * Anything else answers read_anchor, read at the first call that can read it and
+ * A skinned or morphed slot of a mesh or instance network, and a MeshBuffer with a
+ * skin or morph targets of its own, answers the mean of its vertices under the
+ * palette and morph weights it is drawn with, summed once from the rest vertices so
+ * that a call costs the joints and targets and never reads the device. Before a
+ * palette exists the vertices answer as bound. Anything else answers read_anchor, read at the first call that can read it and
  * held from then on.
  *
  * @param buf  Buffer to follow. Not retained.

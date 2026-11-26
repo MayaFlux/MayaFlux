@@ -10,8 +10,16 @@ namespace MayaFlux::Buffers {
 class VKBuffer;
 }
 
+namespace MayaFlux::Kakshya {
+class MeshAssemblyContainer;
+}
+
 namespace MayaFlux::Core {
 class Window;
+}
+
+namespace MayaFlux::Portal::Graphics {
+class ImageTarget;
 }
 
 namespace MayaFlux::Vruta {
@@ -23,6 +31,7 @@ namespace MayaFlux::Nexus::State {
 using BufferNames = std::map<std::string, std::shared_ptr<Buffers::VKBuffer>, std::less<>>;
 using WindowNames = std::map<std::string, std::shared_ptr<Core::Window>, std::less<>>;
 using SourceNames = std::map<std::string, std::shared_ptr<Vruta::NetworkSource>, std::less<>>;
+using CourseNames = std::map<std::string, std::shared_ptr<Kriya::Course>, std::less<>>;
 
 /** @brief Described functions whose arguments may name a buffer, window or network source. */
 using Functions = Reflect::FunctionTable<BufferNames, WindowNames, SourceNames>;
@@ -39,6 +48,25 @@ struct AssetSource {
     std::optional<uint64_t> row; ///< A row of the file's assembly, as StateOrchestrator realizes it.
     uint32_t mesh {}; ///< Without a row, the index among ModelReader::create_mesh_buffers().
     Reflect::FunctionCall make {}; ///< With a name, the buffer is made by this call instead of read from a file.
+};
+
+/** @brief Rows and the principals a motion carries because nothing draws them. None are retained. */
+using Carried = std::vector<std::pair<uint64_t,
+    std::variant<std::weak_ptr<Emitter>, std::weak_ptr<Sensor>, std::weak_ptr<Agent>>>>;
+
+/**
+ * @struct MotionSource
+ * @brief A motion a StateOrchestrator started, so a saved state can start it again.
+ */
+struct MotionSource {
+    std::string file; ///< The assembly's file, empty for one made in code, which is written beside the state.
+    std::shared_ptr<const Kakshya::MeshAssemblyContainer> assembly;
+    uint64_t motion {};
+    Kriya::CourseEdge edge { Kriya::CourseEdge::Loop };
+    std::vector<std::string> courses; ///< Names in courses, in the order the reflows hold them.
+    Carried carried;
+    std::vector<std::string> buffers {}; ///< Names in buffers this motion moves.
+    std::vector<uint64_t> rows {}; ///< The row each of those shows.
 };
 
 /** @brief Anything a struct of the user's own controls can be added to. */
@@ -66,16 +94,27 @@ struct ExpanseClass {
  * advance.
  *
  * Every bound buffer is part of the saved state. One with an entry in assets is
- * saved as that file reference; otherwise a MeshBuffer or MeshNetworkBuffer is
- * written as a snapshot beside the state. A loading program that binds the name
+ * saved as that file reference; otherwise it is written as a snapshot beside the
+ * state, replacing the one an earlier save to the same place wrote: meshes and mesh
+ * networks as models, instances as their template and slot values, volumes as VDB,
+ * textures as images, and point and curve buffers as Alembic, which load as
+ * RecordedGeometryBuffers holding the saved moment. A loading program that binds the name
  * keeps its own buffer, and one that does not gets the buffer loaded for it in
  * StateDecoder::ReconstructionResult::buffers, neither registered nor drawn.
  *
- * A bound course has its playback saved: its numeric controls, range, time,
- * whether it is paused and its markers. Loading applies that to the course bound
- * under the same name and never makes one; the commands take effect on its next
- * advance. A time map or repeat, and so following another course, is a closure
- * and is not saved.
+ * A bound course has its playback saved: its numeric controls, range, markers,
+ * where its clock is, its direction, counts and fade, and the bound course it
+ * follows. Loading applies that to the course bound under the same name, or makes
+ * one and answers it in ReconstructionResult::courses; the commands take effect on
+ * its next advance. A time map or repeat given as a closure is saved only through
+ * configure().
+ *
+ * A motion a StateOrchestrator given these bindings started is saved with its
+ * courses, and loading starts it again and answers it in
+ * ReconstructionResult::motions. A motion whose name is bound already is left to
+ * the loading program.
+ *
+ * A render sink's image targets are saved by the names in targets.
  *
  * A struct added with extend() is only restored when registered with
  * register_controls(), and a subclass of Agent or Expanse only when registered
@@ -101,7 +140,9 @@ struct Bindings {
     SourceNames sources;
     Functions functions;
     std::map<std::string, AssetSource, std::less<>> assets;
-    std::map<std::string, std::shared_ptr<Kriya::Course>, std::less<>> courses;
+    CourseNames courses;
+    std::map<std::string, MotionSource, std::less<>> motions;
+    std::map<std::string, std::shared_ptr<Portal::Graphics::ImageTarget>, std::less<>> targets;
 
     std::map<std::string, std::function<void(const Extendable&)>, std::less<>> controls;
     std::map<std::string, AgentClass, std::less<>> agents;

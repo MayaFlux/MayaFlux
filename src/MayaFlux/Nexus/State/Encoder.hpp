@@ -5,6 +5,10 @@
 #include "Bindings.hpp"
 #include "Schema.hpp"
 
+namespace MayaFlux::Buffers {
+class RenderProcessor;
+}
+
 namespace MayaFlux::IO {
 class StagedFileSet;
 }
@@ -78,11 +82,20 @@ public:
     [[nodiscard]] const std::string& last_error() const { return m_last_error; }
 
 private:
+    friend class StateDecoder;
+
     [[nodiscard]] bool encode_fabric(
         const Fabric& fabric,
         const std::string& base_path,
         const std::unordered_set<const Expanse*>& tapestry_owned,
         IO::StagedFileSet* staged = nullptr);
+
+    /**
+     * Record every bound motion, writing assemblies with no file into a new directory under
+     * @p directory. Each fabric comes with the name its entities are saved under.
+     */
+    [[nodiscard]] std::vector<State::MotionRecord> save_motions(const std::string& directory,
+        const std::vector<std::pair<std::string, const Fabric*>>& fabrics) const;
 
     /** Record the playback of every bound course. */
     [[nodiscard]] std::vector<State::CourseRecord> save_courses() const;
@@ -90,7 +103,14 @@ private:
     /** Record every bound buffer, writing snapshots into a new directory under @p directory. */
     [[nodiscard]] std::vector<State::AssetRecord> save_assets(const std::string& directory) const;
 
+    /** The sinks a live entity would be saved with, in a record holding nothing else. */
+    [[nodiscard]] State::EntityRecord sink_records(const Fabric& fabric, uint32_t id) const;
+
     [[nodiscard]] State::WiringRecord build_wiring(const Fabric& fabric, uint32_t id) const;
+
+    /** The entity render sink that owns a renderer, when one does. */
+    [[nodiscard]] std::optional<State::ViewSinkRecord> sink_of(
+        const Fabric& fabric, const std::shared_ptr<Buffers::RenderProcessor>& renderer) const;
 
     /** The registered name of a live object's exact type, empty when it has none. */
     [[nodiscard]] std::string class_name(const Agent& agent) const;

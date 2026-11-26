@@ -192,9 +192,10 @@ public:
     Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source)
     {
         m_triggers.emplace_back(BroadcastTrigger {
-            .listen = [source = std::move(source)](std::function<void()> fire) {
+            .listen = [source](std::function<void()> fire) {
                 return Kriya::on_signal(source, [fire = std::move(fire)](const T&) { fire(); });
-            } });
+            },
+            .source = source });
         return *this;
     }
 
@@ -221,15 +222,18 @@ public:
     Wiring& on(std::shared_ptr<Vruta::BroadcastSource<T>> source,
         std::type_identity_t<std::function<void(const T&)>> receive)
     {
+        const bool receives = static_cast<bool>(receive);
         m_triggers.emplace_back(BroadcastTrigger {
-            .listen = [source = std::move(source), receive = std::move(receive)](std::function<void()> fire) {
+            .listen = [source, receive = std::move(receive)](std::function<void()> fire) {
                 return Kriya::on_signal(source, [fire = std::move(fire), receive](const T& value) {
                     if (receive) {
                         receive(value);
                     }
                     fire();
                 });
-            } });
+            },
+            .source = source,
+            .receives = receives });
         return *this;
     }
 
@@ -489,6 +493,8 @@ private:
 
     struct BroadcastTrigger {
         std::function<Vruta::Event(std::function<void()>)> listen;
+        std::shared_ptr<const void> source {}; ///< Identifies what is listened to, for saving.
+        bool receives {}; ///< A receive function was given, which cannot be saved.
     };
 
     using Trigger = std::variant<

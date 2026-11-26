@@ -177,6 +177,8 @@ public:
     void commit_all();
 
 private:
+    friend class StateDecoder;
+
     std::shared_ptr<Expanse> claim(std::string name, std::shared_ptr<Expanse> expanse);
 
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;

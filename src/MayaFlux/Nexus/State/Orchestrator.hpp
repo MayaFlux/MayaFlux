@@ -5,6 +5,7 @@
 #include "MayaFlux/Nexus/Tapestry.hpp"
 
 #include "MayaFlux/Kriya/Realization/MeshAssemblyRealization.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Buffers {
@@ -245,13 +246,18 @@ public:
      * @param motion      Motion of the assembly. Out of range plays only the frames.
      * @param edge        What every course does at its ends.
      * @param paused      Whether the courses start paused.
+     * @param followers   Principals the motion carries where nothing draws their row,
+     *                    such as joints and lights, usually what orchestrate() answered.
+     *                    The motion places them while it plays; they are not retained.
+     *                    A Locus and a principal of a drawn row are left alone.
      * @return The reflows, empty without a scheduler.
      */
     [[nodiscard]] Reflows motion_from(
         const std::shared_ptr<const Kriya::MeshAssemblyRealization>& realization,
         size_t motion = 0,
         Kriya::CourseEdge edge = Kriya::CourseEdge::Loop,
-        bool paused = false) const;
+        bool paused = false,
+        const Rows& followers = {}) const;
 
     // =========================================================================
     // Whole assembly
@@ -295,6 +301,20 @@ public:
     orchestrate(const std::string& filepath);
 
 private:
+    friend class StateDecoder;
+
+    using CarriedCell = Memory::SnapshotCell<State::Carried>;
+
+    /** The members of @p rows a motion has to place itself. */
+    [[nodiscard]] static State::Carried carried_of(
+        const std::shared_ptr<const Kriya::MeshAssemblyRealization>& realization, const Rows& rows);
+
+    /** motion_from() without recording it, carrying whatever @p carried holds at each frame. */
+    [[nodiscard]] Reflows start_motion(
+        const std::shared_ptr<const Kriya::MeshAssemblyRealization>& realization,
+        size_t motion, Kriya::CourseEdge edge, bool paused,
+        const std::shared_ptr<CarriedCell>& carried) const;
+
     /** Realize, bind materials with @p materials and make the rows. */
     [[nodiscard]] std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, Rows> orchestrate_rows(
         const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly,
@@ -321,6 +341,7 @@ private:
     Kriya::MeshAssemblyRealizeOptions m_realize_options;
     Kriya::MeshAssemblyMaterialResolver m_material_resolver;
     std::shared_ptr<State::Bindings> m_bindings;
+    mutable std::vector<std::pair<std::weak_ptr<const Kakshya::MeshAssemblyContainer>, std::string>> m_files;
 };
 
 /**

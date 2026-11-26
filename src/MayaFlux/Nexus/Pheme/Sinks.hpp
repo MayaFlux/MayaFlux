@@ -46,6 +46,7 @@ struct AudioSink {
     std::function<Kakshya::DataVariant(const InfluenceContext&)> fn;
     std::string fn_name;
     uint32_t channel {};
+    std::map<std::string, std::string, std::less<>> arguments {}; ///< Of the call that made fn.
 };
 
 /**
@@ -74,6 +75,7 @@ struct RenderSink {
     std::string fn_name;
     std::shared_ptr<Core::Window> window;
     std::vector<std::shared_ptr<Portal::Graphics::ImageTarget>> images;
+    std::map<std::string, std::string, std::less<>> arguments {}; ///< Of the call that made fn.
 };
 
 // =============================================================================

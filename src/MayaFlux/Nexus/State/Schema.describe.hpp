@@ -19,6 +19,10 @@ struct Description<::MayaFlux::Nexus::State::AssetRecord> {
             Member<&::MayaFlux::Nexus::State::AssetRecord::index> { "index" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::snapshot> { "snapshot" },
             Member<&::MayaFlux::Nexus::State::AssetRecord::make> { "make" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::instances> { "instances" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::resolution> { "resolution" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::bounds_min> { "bounds_min" },
+            Member<&::MayaFlux::Nexus::State::AssetRecord::bounds_max> { "bounds_max" },
         };
     }
 };
@@ -48,6 +52,7 @@ struct Description<::MayaFlux::Nexus::State::AudioSinkRecord> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::AudioSinkRecord::channel> { "channel" },
             Member<&::MayaFlux::Nexus::State::AudioSinkRecord::fn_name> { "fn_name" },
+            Member<&::MayaFlux::Nexus::State::AudioSinkRecord::arguments> { "arguments" },
         };
     }
 };
@@ -61,6 +66,20 @@ struct Description<::MayaFlux::Nexus::State::CallRecord> {
         return std::tuple {
             Member<&::MayaFlux::Nexus::State::CallRecord::name> { "name" },
             Member<&::MayaFlux::Nexus::State::CallRecord::arguments> { "arguments" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::State::CarriedRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::CarriedRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::CarriedRecord::row> { "row" },
+            Member<&::MayaFlux::Nexus::State::CarriedRecord::fabric> { "fabric" },
+            Member<&::MayaFlux::Nexus::State::CarriedRecord::entity> { "entity" },
         };
     }
 };
@@ -95,6 +114,10 @@ struct Description<::MayaFlux::Nexus::State::CourseRecord> {
             Member<&::MayaFlux::Nexus::State::CourseRecord::markers> { "markers" },
             Member<&::MayaFlux::Nexus::State::CourseRecord::configurations> { "configurations" },
             Member<&::MayaFlux::Nexus::State::CourseRecord::lost> { "lost" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::step_rate> { "step_rate" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::playback> { "playback" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::follows> { "follows" },
+            Member<&::MayaFlux::Nexus::State::CourseRecord::follow_offset> { "follow_offset" },
         };
     }
 };
@@ -116,6 +139,7 @@ struct Description<::MayaFlux::Nexus::State::EntityRecord> {
             Member<&::MayaFlux::Nexus::State::EntityRecord::wiring> { "wiring" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::attach> { "attach" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::view_targets> { "view_targets" },
+            Member<&::MayaFlux::Nexus::State::EntityRecord::view_sinks> { "view_sinks" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::view_of> { "view_of" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::configurations> { "configurations" },
             Member<&::MayaFlux::Nexus::State::EntityRecord::audio_sinks> { "audio_sinks" },
@@ -176,6 +200,24 @@ struct Description<::MayaFlux::Nexus::State::FabricSchema> {
             Member<&::MayaFlux::Nexus::State::FabricSchema::cell_size> { "cell_size" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::assets> { "assets" },
             Member<&::MayaFlux::Nexus::State::FabricSchema::courses> { "courses" },
+            Member<&::MayaFlux::Nexus::State::FabricSchema::motions> { "motions" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::State::InstanceRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::InstanceRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::transform> { "transform" },
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::tint> { "tint" },
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::scalar> { "scalar" },
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::texture> { "texture" },
+            Member<&::MayaFlux::Nexus::State::InstanceRecord::morph_weights> { "morph_weights" },
         };
     }
 };
@@ -213,6 +255,26 @@ struct Description<::MayaFlux::Nexus::State::MarkerRecord> {
 };
 
 template <>
+struct Description<::MayaFlux::Nexus::State::MotionRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::MotionRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::MotionRecord::name> { "name" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::file> { "file" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::snapshot> { "snapshot" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::motion> { "motion" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::edge> { "edge" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::courses> { "courses" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::carried> { "carried" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::buffers> { "buffers" },
+            Member<&::MayaFlux::Nexus::State::MotionRecord::rows> { "rows" },
+        };
+    }
+};
+
+template <>
 struct Description<::MayaFlux::Nexus::State::Range> {
     static constexpr std::string_view name = "MayaFlux::Nexus::State::Range";
 
@@ -244,6 +306,8 @@ struct Description<::MayaFlux::Nexus::State::RenderSinkRecord> {
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::triangulate> { "triangulate" },
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::draw_priority> { "draw_priority" },
             Member<&::MayaFlux::Nexus::State::RenderSinkRecord::extra_string_params> { "extra_string_params" },
+            Member<&::MayaFlux::Nexus::State::RenderSinkRecord::arguments> { "arguments" },
+            Member<&::MayaFlux::Nexus::State::RenderSinkRecord::targets> { "targets" },
         };
     }
 };
@@ -285,6 +349,7 @@ struct Description<::MayaFlux::Nexus::State::TapestrySchema> {
             Member<&::MayaFlux::Nexus::State::TapestrySchema::user_state> { "user_state" },
             Member<&::MayaFlux::Nexus::State::TapestrySchema::assets> { "assets" },
             Member<&::MayaFlux::Nexus::State::TapestrySchema::courses> { "courses" },
+            Member<&::MayaFlux::Nexus::State::TapestrySchema::motions> { "motions" },
         };
     }
 };
@@ -304,6 +369,20 @@ struct Description<::MayaFlux::Nexus::State::TriggerRecord> {
             Member<&::MayaFlux::Nexus::State::TriggerRecord::event_type> { "event_type" },
             Member<&::MayaFlux::Nexus::State::TriggerRecord::held> { "held" },
             Member<&::MayaFlux::Nexus::State::TriggerRecord::callback> { "callback" },
+            Member<&::MayaFlux::Nexus::State::TriggerRecord::course_event> { "course_event" },
+        };
+    }
+};
+
+template <>
+struct Description<::MayaFlux::Nexus::State::ViewSinkRecord> {
+    static constexpr std::string_view name = "MayaFlux::Nexus::State::ViewSinkRecord";
+
+    static constexpr auto members()
+    {
+        return std::tuple {
+            Member<&::MayaFlux::Nexus::State::ViewSinkRecord::entity> { "entity" },
+            Member<&::MayaFlux::Nexus::State::ViewSinkRecord::sink> { "sink" },
         };
     }
 };

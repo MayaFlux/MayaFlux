@@ -45,6 +45,29 @@ struct CourseMarker {
     double time {}; ///< Source seconds.
 };
 
+/**
+ * @struct CoursePlayback
+ * @brief Where a course is, as of its last advance: enough for another course with the
+ *        same controls to carry on from the same place.
+ */
+struct CoursePlayback {
+    double clock {}; ///< Clock seconds.
+    std::optional<double> anchor; ///< Source seconds the clock started from.
+    double shift {}; ///< Added to source time since a time map was removed.
+    double repeat_origin {}; ///< Clock seconds the current repeat began at.
+    std::optional<double> repeat_length; ///< Clock seconds the current repeat lasts.
+    uint64_t crossings {};
+    uint64_t passes {};
+    bool finished {};
+    bool reversed {}; ///< A ping-pong pass is running backwards.
+    double time {}; ///< Source seconds.
+    bool paused {};
+    double fade_to {}; ///< Weight a fade in progress ends at.
+    double fade_seconds {}; ///< Clock seconds the fade has left, zero for no fade.
+};
+
+MF_DESCRIBE(CoursePlayback)
+
 /** @brief A stream of a course's events, awaited by one coroutine. */
 using CourseEvents = Vruta::BroadcastSource<CourseEvent>;
 
@@ -100,7 +123,8 @@ namespace Detail {
             SeekNormalized,
             Nudge,
             FadeWeight,
-            CarryOn
+            CarryOn,
+            Resume
         };
 
         Kind kind {};
@@ -241,6 +265,23 @@ public:
      * @return false when not queued.
      */
     bool fade_weight(double target, double seconds);
+
+    /** @brief Where the course is, as of its last advance. Each member is read on its own. */
+    [[nodiscard]] CoursePlayback playback() const noexcept;
+
+    /**
+     * @brief Put the course where another was, with its pause, direction and counts, at the next advance.
+     *
+     * A fade is not resumed: ask fade_weight() with the playback's members.
+     * @return false when not queued or the numbers are not finite.
+     */
+    bool resume(const CoursePlayback& from);
+
+    /** @brief The course this one follows and its offset, while that follow() still steers it. */
+    [[nodiscard]] std::optional<std::pair<std::shared_ptr<const Course>, double>> following() const;
+
+    /** @brief Advances per second the course was made with. */
+    [[nodiscard]] double step_rate() const noexcept { return m_step_rate; }
 
     /** @brief The setting the next advance will step with, built from the controls now. */
     [[nodiscard]] CourseSetting setting() const;
@@ -392,6 +433,9 @@ public:
      */
     [[nodiscard]] std::shared_ptr<CourseEvents> subscribe(CourseEventKind kind);
 
+    /** @brief The kind a subscribe() answered @p source for, or nothing when it is not one of this course's. */
+    [[nodiscard]] std::optional<CourseEventKind> subscription(const void* source) const;
+
     // Driving thread
 
     /**
@@ -459,6 +503,26 @@ private:
     bool m_last_reversed {};
     uint64_t m_passes_seen {};
     std::optional<uint64_t> m_last_frame;
+
+    struct Followed {
+        std::weak_ptr<const Course> leader;
+        std::shared_ptr<const Kinesis::TimeMap> map;
+        double offset {};
+    };
+
+    Memory::SnapshotCell<Followed> m_followed;
+    Memory::SnapshotCell<CoursePlayback> m_resume;
+    std::atomic<double> m_clock_cell { 0.0 };
+    std::atomic<double> m_anchor_cell { 0.0 };
+    std::atomic<double> m_shift_cell { 0.0 };
+    std::atomic<double> m_repeat_origin_cell { 0.0 };
+    std::atomic<double> m_repeat_length_cell { 0.0 };
+    std::atomic<double> m_fade_to_cell { 0.0 };
+    std::atomic<double> m_fade_left_cell { 0.0 };
+    std::atomic<uint64_t> m_passes_cell { 0 };
+    std::atomic<bool> m_has_anchor_cell { false };
+    std::atomic<bool> m_has_repeat_cell { false };
+    std::atomic<bool> m_reversed_cell { false };
 
     std::atomic<double> m_time_cell { 0.0 };
     std::atomic<double> m_progress_cell { 0.0 };

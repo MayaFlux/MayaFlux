@@ -2,6 +2,7 @@
 
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
 #include "MayaFlux/Core/GlobalGraphicsInfo.hpp"
+#include "MayaFlux/Kriya/Course.hpp"
 #include "MayaFlux/Nexus/Fabric.hpp"
 #include "MayaFlux/Nexus/Pheme/Attachment.hpp"
 #include "MayaFlux/Portal/Graphics/GraphicsUtils.hpp"
@@ -90,6 +91,7 @@ struct CallRecord {
     std::string name;
     std::map<std::string, std::string> arguments;
 
+    bool operator==(const CallRecord&) const = default;
 };
 
 MF_DESCRIBE(CallRecord)
@@ -100,6 +102,7 @@ enum class TriggerKind : uint8_t {
     Scroll,
     Network,
     WindowEvent,
+    Course,
 };
 
 /**
@@ -116,7 +119,9 @@ struct TriggerRecord {
     std::optional<Core::WindowEventType> event_type;
     bool held {};
     CallRecord callback;
+    std::optional<Kriya::CourseEventKind> course_event; ///< Of the course @p source names.
 
+    bool operator==(const TriggerRecord&) const = default;
 };
 
 MF_DESCRIBE(TriggerRecord)
@@ -134,6 +139,7 @@ struct WiringStep {
     glm::vec3 position {};
     double delay_seconds { 0.0 };
 
+    bool operator==(const WiringStep&) const = default;
 };
 
 MF_DESCRIBE(WiringStep)
@@ -164,6 +170,7 @@ struct WiringRecord {
     std::vector<CallRecord> configurations;
     std::vector<std::string> lost;
 
+    bool operator==(const WiringRecord&) const = default;
 };
 
 MF_DESCRIBE(WiringRecord)
@@ -175,7 +182,9 @@ MF_DESCRIBE(WiringRecord)
 struct AudioSinkRecord {
     uint32_t channel {};
     std::string fn_name;
+    std::map<std::string, std::string> arguments;
 
+    bool operator==(const AudioSinkRecord&) const = default;
 };
 
 MF_DESCRIBE(AudioSinkRecord)
@@ -197,10 +206,22 @@ struct RenderSinkRecord {
     bool triangulate { false };
     int64_t draw_priority {};
     std::unordered_map<std::string, std::string> extra_string_params;
+    std::map<std::string, std::string> arguments;
+    std::vector<std::string> targets; ///< Bound names of the image targets drawn into.
 
+    bool operator==(const RenderSinkRecord&) const = default;
 };
 
 MF_DESCRIBE(RenderSinkRecord)
+
+/** @brief A view target that is another entity's render sink, by that entity's id and the sink's place. */
+struct ViewSinkRecord {
+    uint32_t entity {};
+    uint32_t sink {};
+
+};
+
+MF_DESCRIBE(ViewSinkRecord)
 
 // =============================================================================
 // Locus navigation fields
@@ -211,8 +232,6 @@ MF_DESCRIBE(RenderSinkRecord)
  *        a Locus on reconstruct. Dynamic nav state (velocity, yaw accumulation)
  *        is transient and is not encoded. The aspect is a control of the Locus.
  *
- * @note view_targets are live RenderProcessor pointers and cannot be serialized.
- *       StateDecoder warns on reconstruct; the caller must reconnect them.
  */
 struct LocusNavRecord {
     glm::vec3 eye {};
@@ -268,6 +287,7 @@ struct EntityRecord {
     WiringRecord wiring;
     std::optional<AttachRecord> attach;
     std::vector<std::string> view_targets;
+    std::vector<ViewSinkRecord> view_sinks;
     std::optional<uint32_t> view_of;
     std::vector<CallRecord> configurations;
     std::vector<AudioSinkRecord> audio_sinks;
@@ -322,7 +342,24 @@ enum class AssetForm : uint8_t {
     Network, ///< A MeshNetworkBuffer over ModelReader::create_mesh_network().
     Part, ///< The buffer that shows a row of a realized assembly.
     Call, ///< Made by a bound function.
+    Spatial, ///< A RecordedGeometryBuffer over the streams of an Alembic snapshot.
+    Instances, ///< An InstanceNetworkBuffer over a template mesh and the record's instances.
+    Volume, ///< A VolumeGridBuffer over a volume file.
+    Texture, ///< A TextureBuffer over an image file.
 };
+
+/** @brief One slot of an instance network. @p transform is its sixteen values, column by column. */
+struct InstanceRecord {
+    std::string name;
+    std::vector<float> transform;
+    glm::vec3 tint { 1.0F };
+    float scalar { 1.0F };
+    uint32_t texture {};
+    std::vector<float> morph_weights;
+
+};
+
+MF_DESCRIBE(InstanceRecord)
 
 /**
  * @brief A buffer by its bound name and the file that holds it. A snapshot's path
@@ -335,6 +372,10 @@ struct AssetRecord {
     uint64_t index {};
     bool snapshot {};
     CallRecord make;
+    std::vector<InstanceRecord> instances;
+    std::vector<uint32_t> resolution; ///< Cells of a volume per axis, over bounds_min to bounds_max.
+    std::optional<glm::vec3> bounds_min;
+    std::optional<glm::vec3> bounds_max;
 
 };
 
@@ -366,10 +407,40 @@ struct CourseRecord {
     std::vector<MarkerRecord> markers;
     std::vector<CallRecord> configurations;
     std::vector<std::string> lost;
+    double step_rate {};
+    std::optional<Kriya::CoursePlayback> playback;
+    std::string follows; ///< Bound name of the course this one follows.
+    double follow_offset {};
 
 };
 
 MF_DESCRIBE(CourseRecord)
+
+/** @brief A principal a motion carries, by its row and the saved id in a fabric. */
+struct CarriedRecord {
+    uint64_t row {};
+    std::string fabric;
+    uint32_t entity {};
+
+};
+
+MF_DESCRIBE(CarriedRecord)
+
+/** @brief A motion to start again. A snapshot's file is relative to the schema's directory. */
+struct MotionRecord {
+    std::string name;
+    std::string file;
+    bool snapshot {};
+    uint64_t motion {};
+    Kriya::CourseEdge edge { Kriya::CourseEdge::Loop };
+    std::vector<std::string> courses;
+    std::vector<CarriedRecord> carried;
+    std::vector<std::string> buffers;
+    std::vector<uint64_t> rows;
+
+};
+
+MF_DESCRIBE(MotionRecord)
 
 // =============================================================================
 // Fabric schema
@@ -384,6 +455,7 @@ struct FabricSchema {
     std::optional<float> cell_size;
     std::vector<AssetRecord> assets;
     std::vector<CourseRecord> courses;
+    std::vector<MotionRecord> motions;
 
 };
 
@@ -440,6 +512,7 @@ struct TapestrySchema {
     nlohmann::json user_state;
     std::vector<AssetRecord> assets;
     std::vector<CourseRecord> courses;
+    std::vector<MotionRecord> motions;
 
 };
 

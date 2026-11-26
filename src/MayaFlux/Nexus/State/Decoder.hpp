@@ -2,7 +2,12 @@
 
 #include "MayaFlux/Nexus/Tapestry.hpp"
 #include "Bindings.hpp"
+#include "Orchestrator.hpp"
 #include "Schema.hpp"
+
+namespace MayaFlux::Buffers {
+class RenderProcessor;
+}
 
 namespace MayaFlux::Nexus {
 
@@ -12,7 +17,9 @@ namespace MayaFlux::Nexus {
  *
  * Does what the classes allow and reports the rest. Emitters, Sensors, Agents
  * (including Locus and Presence) are patched by id or constructed; their
- * Expanses are restored. Each control of the entity takes the value the schema
+ * Expanses are restored. A patched entity takes the saved controls, attachment,
+ * view targets and setups it has not had, has its sinks replaced when they differ,
+ * and is wired again when its wiring differs from the saved one. Each control of the entity takes the value the schema
  * saved for it, and one the schema does not list is emptied, so an absent
  * position clears the entity's position. A control the schema lists and the
  * entity does not hold is warned and skipped. Callable name mismatches between
@@ -54,6 +61,11 @@ public:
         std::vector<std::string> warnings;
         nlohmann::json user_state;
         State::BufferNames buffers; ///< Loaded from the state's assets, for names the Bindings do not hold.
+        State::CourseNames courses; ///< Made for saved courses the Bindings do not hold, or by a restarted motion.
+
+        /** @brief Motions started again by name: what moves and the reflows moving it, to be kept. */
+        std::map<std::string, std::pair<std::shared_ptr<Kriya::MeshAssemblyRealization>, StateOrchestrator::Reflows>>
+            motions;
     };
 
     /**
@@ -118,7 +130,30 @@ public:
 private:
     /** reconstruct() with buffers already loaded for names the Bindings do not hold. */
     [[nodiscard]] ReconstructionResult reconstruct_fabric(
-        Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded);
+        Fabric& fabric, const std::string& base_path, const State::BufferNames& loaded, State::CourseNames& courses,
+        std::map<std::pair<std::string, uint32_t>, uint32_t>& ids, const std::string& label);
+
+    using Moving = std::map<std::string, std::shared_ptr<Memory::SnapshotCell<State::Carried>>>;
+    using Realizations = std::map<std::string, std::shared_ptr<Kriya::MeshAssemblyRealization>>;
+
+    /** Start the saved motions, naming their courses in @p courses, carrying nothing yet. */
+    [[nodiscard]] Moving start_motions(const std::vector<State::MotionRecord>& records,
+        const std::string& schema_path, const std::shared_ptr<Vruta::TaskScheduler>& scheduler,
+        Realizations& realized, State::CourseNames& courses, ReconstructionResult& result) const;
+
+    /** Hand each restarted motion the principals it carries, found by their saved ids. */
+    static void carry(const std::vector<State::MotionRecord>& records, const Moving& moving,
+        const std::map<std::pair<std::string, uint32_t>, uint32_t>& ids,
+        const std::function<Fabric*(const std::string&)>& fabric_named);
+
+    /** Replace the sinks of a live entity when they differ from the saved ones. */
+    void patch_sinks(Fabric& fabric, const State::EntityRecord& entry, std::vector<std::string>& warnings,
+        const State::BufferNames& buffers,
+        std::map<std::pair<uint32_t, uint32_t>, std::shared_ptr<Buffers::RenderProcessor>>& sinks);
+
+    /** Wire a live entity again when what it was told differs from what was saved. */
+    void rewire(Fabric& fabric, const State::EntityRecord& entry, std::vector<std::string>& warnings,
+        const State::BufferNames& buffers, const State::CourseNames& courses);
 
     /** Whether a live Expanse is of a record's kind and, for a Hull or Mantle, wraps its buffer. */
     [[nodiscard]] bool wraps(const Expanse& live, const std::string& subkind,

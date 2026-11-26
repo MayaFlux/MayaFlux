@@ -441,6 +441,8 @@ private:
     [[nodiscard]] static ExpanseControls& open(QuantityStore& store);
 
     using Action = std::function<void(const CrossingContext&)>;
+    friend class StateEncoder;
+
     using Actions = std::vector<std::pair<std::shared_ptr<void>, Action>>;
     using PerceptionFn = std::function<void(const PerceptionContext&)>;
 

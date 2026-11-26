@@ -251,6 +251,14 @@ public:
         add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), std::move(fn_name));
     }
 
+    /** @brief sink_audio() with the call that made @p fn, which a saved state makes it from again. */
+    void sink_audio(Buffers::BufferManager& mgr, uint32_t channel, const Reflect::FunctionCall& call,
+        std::function<Kakshya::DataVariant(const InfluenceContext&)> fn)
+    {
+        add_audio_sink(m_audio_sinks, mgr, channel, std::move(fn), call.first);
+        m_audio_sinks.back().arguments = call.second;
+    }
+
     /** @brief Unregister the audio sink on @p channel. */
     void remove_audio_sink(Buffers::BufferManager& mgr, uint32_t channel)
     {
@@ -273,6 +281,14 @@ public:
         std::string fn_name, RenderFn fn)
     {
         add_render_sink(m_render_sinks, mgr, config, std::move(fn), std::move(fn_name), position());
+    }
+
+    /** @brief render() with the call that made @p fn, which a saved state makes it from again. */
+    void render(Buffers::BufferManager& mgr, const Portal::Graphics::RenderConfig& config,
+        const Reflect::FunctionCall& call, RenderFn fn)
+    {
+        add_render_sink(m_render_sinks, mgr, config, std::move(fn), call.first, position());
+        m_render_sinks.back().arguments = call.second;
     }
 
     /** @brief Unregister every audio and render sink. */
@@ -603,6 +619,7 @@ private:
 
     friend class Fabric;
     friend class StateEncoder;
+    friend class StateDecoder;
 };
 
 } // namespace MayaFlux::Nexus
