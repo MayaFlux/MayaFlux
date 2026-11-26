@@ -138,9 +138,10 @@ public:
     /**
      * @brief Stop a finalised wiring without removing the entity.
      *
-     * Cancels the wiring's task, event or chain and runs its detach callbacks
-     * once. The entity stays registered and can still be fired by id. Does nothing
-     * if @p id is not registered or has no finalised wiring.
+     * Cancels the wiring's task, event or chain, stops commit from firing the
+     * entity and runs its detach callbacks once. The entity stays registered and
+     * can still be fired by id. Does nothing if @p id is not registered or has no
+     * finalised wiring.
      *
      * @param id Stable id assigned at registration.
      */

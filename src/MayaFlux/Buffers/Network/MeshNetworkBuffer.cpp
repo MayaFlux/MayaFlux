@@ -206,6 +206,12 @@ bool MeshNetworkBuffer::set_slot_palette(uint32_t slot, std::vector<glm::mat4> p
     return entry != m_skins.end() && entry->processor && entry->processor->set_palette(std::move(palette));
 }
 
+std::vector<glm::mat4> MeshNetworkBuffer::get_slot_palette(uint32_t slot) const
+{
+    const auto entry = std::ranges::find(m_skins, slot, &SkinEntry::slot);
+    return entry != m_skins.end() && entry->processor ? entry->processor->get_palette() : std::vector<glm::mat4> {};
+}
+
 void MeshNetworkBuffer::wire_skin_passes(size_t record_bytes)
 {
     if (record_bytes < sizeof(Kakshya::MeshVertex)) {

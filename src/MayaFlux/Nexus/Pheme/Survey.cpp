@@ -457,6 +457,105 @@ namespace {
         return glm::mat4(1.0F);
     }
 
+    /**
+     * Skinning is linear in the vertex, so the mean of the deformed vertices is the
+     * rest share plus each joint's weighted sum carried by that joint's matrix.
+     */
+    struct SkinSums {
+        std::vector<glm::vec4> joints;
+        glm::vec4 rest { 0.0F };
+        float count {};
+
+        [[nodiscard]] glm::vec3 under(std::span<const glm::mat4> palette) const
+        {
+            const bool posed = palette.size() == joints.size();
+            glm::vec4 total = rest;
+            for (size_t j = 0; j < joints.size(); ++j) {
+                total += posed ? palette[j] * joints[j] : joints[j];
+            }
+            return glm::vec3(total) / count;
+        }
+    };
+
+    std::optional<SkinSums> sum_skin(
+        const std::shared_ptr<Nodes::GpuSync::GeometryWriterNode>& node,
+        const std::shared_ptr<const Kakshya::MeshSkin>& skin)
+    {
+        const auto mesh = std::dynamic_pointer_cast<Nodes::GpuSync::MeshWriterNode>(node);
+        if (!mesh || !skin) {
+            return std::nullopt;
+        }
+
+        const auto& vertices = mesh->get_mesh_vertices();
+        if (vertices.empty() || !skin->valid(vertices.size())) {
+            return std::nullopt;
+        }
+
+        SkinSums sums { .joints = std::vector<glm::vec4>(skin->joint_count(), glm::vec4(0.0F)),
+            .count = static_cast<float>(vertices.size()) };
+        for (size_t v = 0; v < vertices.size(); ++v) {
+            const glm::vec4 position(vertices[v].position, 1.0F);
+            const glm::vec4& weights = skin->influence_weights[v];
+            sums.rest += (1.0F - glm::dot(weights, glm::vec4(1.0F))) * position;
+            for (glm::length_t c = 0; c < 4; ++c) {
+                if (weights[c] != 0.0F) {
+                    sums.joints[skin->influence_joints[v][c]] += weights[c] * position;
+                }
+            }
+        }
+        return sums;
+    }
+
+}
+
+std::function<std::optional<glm::vec3>()> track_anchor(
+    const std::shared_ptr<Buffers::VKBuffer>& buf,
+    const std::optional<uint32_t>& slot)
+{
+    const std::weak_ptr<Buffers::VKBuffer> held = buf;
+
+    if (const auto meshes = std::dynamic_pointer_cast<Buffers::MeshNetworkBuffer>(buf); meshes && slot) {
+        const auto network = meshes->get_network();
+        if (network && *slot < network->slots().size()) {
+            const auto& shown = network->slots()[*slot];
+            if (auto sums = sum_skin(shown.node, shown.skin)) {
+                return [target = std::weak_ptr<Buffers::MeshNetworkBuffer>(meshes), index = *slot,
+                           sums = std::move(*sums)]() -> std::optional<glm::vec3> {
+                    const auto live = target.lock();
+                    return live ? std::optional<glm::vec3> { sums.under(live->get_slot_palette(index)) } : std::nullopt;
+                };
+            }
+        }
+    }
+
+    if (const auto instances = std::dynamic_pointer_cast<Buffers::InstanceNetworkBuffer>(buf); instances && slot) {
+        const auto network = instances->get_network();
+        if (network && *slot < network->slot_count()) {
+            const auto& first = network->get_slot(0);
+            if (auto sums = sum_skin(first.node, first.skin)) {
+                return [target = std::weak_ptr<Buffers::InstanceNetworkBuffer>(instances), index = *slot,
+                           sums = std::move(*sums)]() -> std::optional<glm::vec3> {
+                    const auto live = target.lock();
+                    const auto shown = live ? live->get_network() : nullptr;
+                    if (!shown || index >= shown->slot_count()) {
+                        return std::nullopt;
+                    }
+                    return sums.under(shown->get_slot(index).palette);
+                };
+            }
+        }
+    }
+
+    return [held, slot, anchor = std::make_shared<std::optional<glm::vec3>>()]() -> std::optional<glm::vec3> {
+        const auto live = held.lock();
+        if (!live) {
+            return std::nullopt;
+        }
+        if (!*anchor) {
+            *anchor = read_anchor(live, std::nullopt, slot);
+        }
+        return *anchor;
+    };
 }
 
 std::optional<glm::vec3> read_anchor(

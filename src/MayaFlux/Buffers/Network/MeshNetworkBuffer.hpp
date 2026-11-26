@@ -133,6 +133,12 @@ public:
      */
     bool set_slot_palette(uint32_t slot, std::vector<glm::mat4> palette);
 
+    /**
+     * @brief A copy of the palette a skinned slot is deformed with now.
+     * @return Empty when the slot has no skin pass wired yet.
+     */
+    [[nodiscard]] std::vector<glm::mat4> get_slot_palette(uint32_t slot) const;
+
     // -------------------------------------------------------------------------
     // Accessors
     // -------------------------------------------------------------------------

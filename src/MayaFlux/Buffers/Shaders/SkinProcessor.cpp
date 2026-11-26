@@ -173,6 +173,12 @@ bool SkinProcessor::set_palette(std::vector<glm::mat4> palette)
     return true;
 }
 
+std::vector<glm::mat4> SkinProcessor::get_palette() const
+{
+    const auto held = m_palette.read();
+    return held ? *held : std::vector<glm::mat4> {};
+}
+
 bool SkinProcessor::set_morph_weights(std::vector<float> weights)
 {
     if (target_count() == 0 || weights.size() != target_count()) {

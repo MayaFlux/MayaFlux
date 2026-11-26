@@ -34,6 +34,24 @@ MAYAFLUX_API std::optional<glm::vec3> read_anchor(
     const std::optional<uint32_t>& slot = std::nullopt);
 
 /**
+ * @brief The anchor of a buffer or one slot of it, as it stands at each call.
+ *
+ * A skinned slot of a mesh or instance network answers the mean of its vertices
+ * under the palette it is drawn with, summed once from the rest vertices so that a
+ * call costs the joints and never reads the device. Morph targets are not applied,
+ * and before a palette exists the slot answers as bound. Anything else answers
+ * read_anchor, read at the first call that can read it and held from then on.
+ *
+ * @param buf  Buffer to follow. Not retained.
+ * @param slot Slot of a mesh or instance network, if not all of it.
+ * @return A callable answering the anchor in the coordinates read_anchor uses, or
+ *         nullopt while nothing can be read.
+ */
+MAYAFLUX_API std::function<std::optional<glm::vec3>()> track_anchor(
+    const std::shared_ptr<Buffers::VKBuffer>& buf,
+    const std::optional<uint32_t>& slot = std::nullopt);
+
+/**
  * @brief Bounds of a buffer's geometry in its own stored coordinates.
  *
  * A VolumeGridBuffer reports its lattice bounds. A NetworkGeometryBuffer reports

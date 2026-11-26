@@ -650,6 +650,7 @@ void Wiring::cancel()
         ending->closed = true;
     }
     reg.placement = nullptr;
+    reg.commit_driven = false;
 
     if (!reg.task_name.empty()) {
         m_fabric.m_scheduler->cancel_task(reg.task_name);

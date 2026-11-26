@@ -81,6 +81,13 @@ public:
     bool set_palette(std::vector<glm::mat4> palette);
 
     /**
+     * @brief A copy of the newest palette, empty when there is no skin.
+     *
+     * Safe from any thread.
+     */
+    [[nodiscard]] std::vector<glm::mat4> get_palette() const;
+
+    /**
      * @brief Publish the morph weights, one for each target in order.
      * @return False, leaving the last weights in place, when the count is not the target count.
      *
