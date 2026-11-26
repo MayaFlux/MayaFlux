@@ -40,6 +40,7 @@ env:
     Studio\18\Enterprise\VC\Auxiliary\Build\vcvarsall.bat'
   VCPKG_ROOT: ${{ github.workspace }}/vcpkg
   LLVM_ROOT: "C:/LLVM_CI"
+  CCACHE_VERSION: "4.14.3"
 
 jobs:
   build:
@@ -335,6 +336,48 @@ jobs:
           cache: true
           install_runtime: true
 
+      - name: Install pinned ccache
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "ccache-$env:CCACHE_VERSION.zip"
+          $installDir = Join-Path $env:RUNNER_TEMP "ccache-$env:CCACHE_VERSION"
+          $url = "https://github.com/ccache/ccache/releases/download/v$env:CCACHE_VERSION/ccache-$env:CCACHE_VERSION-windows-x86_64.zip"
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          Expand-Archive -LiteralPath $archive -DestinationPath $installDir -Force
+
+          $executables = @(Get-ChildItem -LiteralPath $installDir -Filter ccache.exe -Recurse)
+          if ($executables.Count -ne 1) {
+            throw "Expected exactly one ccache.exe in $installDir."
+          }
+          $ccacheExe = $executables[0].FullName
+          Split-Path $ccacheExe -Parent >> $env:GITHUB_PATH
+          "CCACHE_EXE=$($ccacheExe.Replace('\', '/'))" >> $env:GITHUB_ENV
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          install: "no"
+          key: windows-msvc-${{ env.BUILD_TYPE }}-ccache-${{ env.CCACHE_VERSION }}-v2
+          max-size: "2G"
+
+      - name: Verify and configure ccache
+        shell: pwsh
+        run: |
+          $resolved = (Get-Command ccache -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+          Write-Host "Using ccache: $resolved"
+          if ($resolved.Replace('\', '/') -ne $env:CCACHE_EXE) {
+            throw "PATH resolved an unexpected ccache executable."
+          }
+          $version = & $env:CCACHE_EXE --version
+          if ($LASTEXITCODE -ne 0 -or $version[0] -ne "ccache version $env:CCACHE_VERSION") {
+            throw "Expected ccache $env:CCACHE_VERSION."
+          }
+          $version | Write-Host
+          & $env:CCACHE_EXE --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $env:CCACHE_EXE --set-config=compiler_check=content
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       # ============================================
       # PHASE 3: Build Configuration
       # ============================================
@@ -376,6 +419,8 @@ jobs:
 
           $cmakeArgs = @(
             "--preset", $preset,
+            "-DCMAKE_C_COMPILER_LAUNCHER=$env:CCACHE_EXE",
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=$env:CCACHE_EXE",
             "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=Embedded",
             "-DCMAKE_CXX_FLAGS_RELEASE=/O2 /DNDEBUG /Z7",
             "-DCMAKE_EXE_LINKER_FLAGS=/DEBUG:FASTLINK /CGTHREADS:$cores"
@@ -395,6 +440,11 @@ jobs:
         run: |
           Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
           cmake --build --preset "${{ env.PRESET }}"
+
+      - name: ccache stats
+        if: ${{ always() && env.CCACHE_EXE != '' }}
+        shell: pwsh
+        run: '& $env:CCACHE_EXE -s -v'
 
       - name: Check reflection sidecars
         if: ${{ inputs.run_reflect_check }}

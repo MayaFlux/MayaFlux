@@ -20,6 +20,9 @@
 #ifdef ERROR
 #undef ERROR
 #endif
+#ifdef PASSTHROUGH
+#undef PASSTHROUGH
+#endif
 #ifdef near
 #undef near
 #endif
