@@ -47,6 +47,12 @@ public:
         Agent,
     };
 
+    /** @brief Any one of the principals a Fabric holds. */
+    using Member = std::variant<
+        std::shared_ptr<Emitter>,
+        std::shared_ptr<Sensor>,
+        std::shared_ptr<Agent>>;
+
     /**
      * @brief Construct with scheduler and event manager from the engine.
      * @param scheduler     Used to register coroutines created by Wiring.
@@ -401,11 +407,6 @@ private:
     friend class StateEncoder;
 
     std::string m_name;
-
-    using Member = std::variant<
-        std::shared_ptr<Emitter>,
-        std::shared_ptr<Sensor>,
-        std::shared_ptr<Agent>>;
 
     struct Registration {
         Member member;

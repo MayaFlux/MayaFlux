@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MayaFlux/API/Graph.hpp"
+#include "MayaFlux/Nexus/State/Orchestrator.hpp"
 
 /**
  * @file API/Stagecraft.hpp
@@ -53,6 +54,33 @@ MAYAFLUX_API std::shared_ptr<Nexus::Fabric> create_fabric(const std::string& nam
  * @endcode
  */
 MAYAFLUX_API std::shared_ptr<Nexus::Tapestry> create_tapestry();
+
+/**
+ * @brief Construct a StateOrchestrator over the default engine's scheduler.
+ * @param tapestry Where its principals are wired. Null returns them unwired.
+ *
+ * @code
+ * auto orchestrator = MayaFlux::create_orchestrator(MayaFlux::create_tapestry());
+ * auto [realization, rows] = orchestrator->orchestrate(assembly);
+ * @endcode
+ */
+MAYAFLUX_API std::shared_ptr<Nexus::StateOrchestrator> create_orchestrator(
+    const std::shared_ptr<Nexus::Tapestry>& tapestry = nullptr);
+
+/**
+ * @brief Let the user pick a 3D model or Alembic file and orchestrate it.
+ *
+ * Blocks until the user confirms or cancels, as choose_model_path() does.
+ *
+ * @param orchestrator Orchestrates the chosen file.
+ * @return The assembly, its realization and the principals, all empty on
+ *         cancellation, a null orchestrator or an unreadable file.
+ */
+MAYAFLUX_API std::tuple<
+    std::shared_ptr<Kakshya::MeshAssemblyContainer>,
+    std::shared_ptr<Kriya::MeshAssemblyRealization>,
+    Nexus::StateOrchestrator::Rows>
+orchestrate_chosen_model(const std::shared_ptr<Nexus::StateOrchestrator>& orchestrator);
 
 /**
  * @brief Register an audio output for an Agent or Emitter on @p channel.

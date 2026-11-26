@@ -66,6 +66,11 @@ namespace {
         { .name = "All Files", .extensions = { "*" } }
     };
 
+    const std::vector<Portal::System::Dialog::ChooserFilter> k_scene_filters {
+        { .name = "3D Scene", .extensions = { "glb", "gltf", "fbx", "obj", "ply", "stl", "dae", "abc" } },
+        { .name = "All Files", .extensions = { "*" } }
+    };
+
     const std::vector<Portal::System::Dialog::ChooserFilter> k_mesh_filters {
         { .name = "3D Model", .extensions = { "glb", "gltf", "fbx", "obj", "ply", "stl", "dae" } },
         { .name = "All Files", .extensions = { "*" } }
@@ -286,6 +291,17 @@ std::shared_ptr<Nodes::Network::MeshNetwork> choose_mesh_network(IO::TextureReso
         },
         [](Core::SystemDialogError) { },
         k_mesh_filters);
+}
+
+std::string choose_model_path()
+{
+    if (!require_portal("choose_model_path"))
+        return {};
+
+    return Portal::System::Dialog::open_file<std::string>(
+        [](const fs::path& p) { return p.string(); },
+        [](Core::SystemDialogError) { },
+        k_scene_filters);
 }
 
 std::shared_ptr<Buffers::VolumeGridBuffer> choose_volume()

@@ -251,6 +251,15 @@ choose_mesh_network(IO::TextureResolver resolver = nullptr);
  */
 MAYAFLUX_API std::shared_ptr<Buffers::VolumeGridBuffer> choose_volume();
 
+/**
+ * @brief Present a native open-file dialog filtered to 3D model formats and
+ *        Alembic, and answer the chosen path without loading it.
+ *
+ * Blocks until the user confirms or cancels. Returns an empty string on
+ * cancellation, backend error, or if Portal::System is not initialized.
+ */
+MAYAFLUX_API std::string choose_model_path();
+
 // ─────────────────────────────────────────────────────────────────────────
 // Dialog-backed save
 // ─────────────────────────────────────────────────────────────────────────
