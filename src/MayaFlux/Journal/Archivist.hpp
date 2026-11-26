@@ -6,10 +6,17 @@
 
 namespace MayaFlux::Journal {
 
+/**
+ * @brief Format a message from type-erased arguments.
+ * @param fmt_str The format string.
+ * @param args    Arguments packed with std::make_format_args.
+ */
+MAYAFLUX_API std::string vformat_message(std::string_view fmt_str, std::format_args args);
+
 template <typename... Args>
 inline std::string format_runtime(std::string_view fmt_str, Args&&... args)
 {
-    return std::vformat(fmt_str, std::make_format_args(args...));
+    return vformat_message(fmt_str, std::make_format_args(args...));
 }
 
 class Sink;
@@ -281,7 +288,7 @@ inline void format_print(std::string_view message)
 template <typename... Args>
 inline void format_print(std::format_string<std::remove_cvref_t<Args>...> fmt_str, Args&&... args)
 {
-    std::cout << "[MayaFlux] " << format(fmt_str, std::forward<Args>(args)...) << '\n';
+    std::cout << "[MayaFlux] " << format_runtime(fmt_str.get(), std::forward<Args>(args)...) << '\n';
 }
 
 /**
@@ -327,7 +334,7 @@ template <typename... Args>
 [[noreturn]] void fatal(Component component, Context context,
     std::source_location location, std::format_string<Args...> fmt_str, Args&&... args)
 {
-    auto msg = format(fmt_str, std::forward<Args>(args)...);
+    auto msg = format_runtime(fmt_str.get(), std::forward<Args>(args)...);
     Archivist::instance().scribe(Severity::FATAL, component, context, msg, location);
     Archivist::instance().flush();
     std::abort();

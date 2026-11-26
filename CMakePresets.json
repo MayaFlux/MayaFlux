@@ -93,7 +93,8 @@
       "inherits": "linux-check",
       "displayName": "Linux : CI build with tests",
       "cacheVariables": {
-        "MAYAFLUX_BUILD_TESTS": "ON"
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "MAYAFLUX_TEST_UNITY": "ON"
       }
     },
     {
@@ -141,7 +142,8 @@
       "inherits": "macos-check",
       "displayName": "macOS : CI build with tests",
       "cacheVariables": {
-        "MAYAFLUX_BUILD_TESTS": "ON"
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "MAYAFLUX_TEST_UNITY": "ON"
       }
     },
     {
@@ -212,7 +214,8 @@
       "inherits": "windows-check",
       "displayName": "Windows : CI build with tests",
       "cacheVariables": {
-        "MAYAFLUX_BUILD_TESTS": "ON"
+        "MAYAFLUX_BUILD_TESTS": "ON",
+        "MAYAFLUX_TEST_UNITY": "ON"
       }
     },
     {

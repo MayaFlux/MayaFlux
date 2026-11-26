@@ -12,6 +12,11 @@ namespace {
     const bool colors_enabled = AnsiColors::initialize_console_colors();
 } // namespace
 
+std::string vformat_message(std::string_view fmt_str, std::format_args args)
+{
+    return std::vformat(fmt_str, args);
+}
+
 class Archivist::Impl {
 public:
     static constexpr size_t RING_BUFFER_SIZE = 8192;
