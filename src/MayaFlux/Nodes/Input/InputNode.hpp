@@ -5,7 +5,7 @@
 
 #include "MayaFlux/Transitive/Facet/ControlValue.hpp"
 #include "MayaFlux/Transitive/Facet/ControlValueStore.hpp"
-#include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
 #include "MayaFlux/Transitive/Reflect/Describe.hpp"
 
 namespace MayaFlux::Nodes::Input {
@@ -72,7 +72,7 @@ struct InputConfig {
     double smoothing_factor { 0.1 }; ///< 0-1, higher = faster response
     double slew_rate { 1.0 }; ///< Max change per sample (SLEW mode)
     double default_value { 0.0 }; ///< Initial output value
-    size_t history_size { 8 }; ///< Input history buffer size
+    size_t history_size { 8 }; ///< Inputs kept for get_input_history(), at least 1
 };
 
 /**
@@ -185,7 +185,7 @@ public:
     /** @brief Get the most recent raw InputValue */
     [[nodiscard]] std::optional<Core::InputValue> get_last_input() const;
 
-    /** @brief Get input history (thread-safe copy) */
+    /** @brief The newest history_size inputs, oldest first (thread-safe copy) */
     [[nodiscard]] std::vector<Core::InputValue> get_input_history() const;
 
     // ─────────────────────────────────────────────────────────────────────
@@ -358,7 +358,7 @@ private:
     Core::InputType m_last_source_type { Core::InputType::HID };
     HookList m_input_callbacks { *this };
 
-    Memory::LockFreeQueue<Core::InputValue, 64> m_input_history;
+    Memory::SnapshotCell<std::vector<std::shared_ptr<const Core::InputValue>>> m_input_history;
 
     [[nodiscard]] double apply_smoothing(double target, double current) const;
 
