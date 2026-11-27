@@ -148,11 +148,8 @@ void InputSubsystem::pause()
     if (!m_running.load())
         return;
 
-    {
-        std::shared_lock lock(m_backends_mutex);
-        for (auto& [type, backend] : m_backends) {
-            backend->stop();
-        }
+    for (auto* backend : get_backends()) {
+        backend->stop();
     }
 
     m_running.store(false);
@@ -178,11 +175,8 @@ void InputSubsystem::stop()
     if (!m_running.load())
         return;
 
-    {
-        std::shared_lock lock(m_backends_mutex);
-        for (auto& [type, backend] : m_backends) {
-            backend->stop();
-        }
+    for (auto* backend : get_backends()) {
+        backend->stop();
     }
 
     m_handle->inputs.stop();

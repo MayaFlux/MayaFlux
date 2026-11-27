@@ -61,6 +61,12 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="0b57", TAG+="uaccess"
 # in a file of your own, for example /etc/udev/rules.d/70-mayaflux-local.rules:
 #
 # KERNEL=="hidraw*", ATTRS{idVendor}=="xxxx", ATTRS{idProduct}=="yyyy", TAG+="uaccess"
+#
+# A Bluetooth device has no USB attributes, so its rule matches the HID parent:
+# bus 0005, then vendor and product in uppercase hex. Some devices report both
+# as 0000, which would match every device that does so.
+#
+# KERNEL=="hidraw*", KERNELS=="0005:XXXX:YYYY.*", TAG+="uaccess"
 
 # Optional: silence the mouse-emulation interface.
 #
