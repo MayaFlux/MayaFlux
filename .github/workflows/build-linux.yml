@@ -106,50 +106,18 @@ jobs:
         with:
           submodules: ${{ inputs.run_tests && inputs.test_preset != '' }}
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Compiler cache
+        uses: ./.github/actions/ccache
         with:
           key: fedora-${{ inputs.preset }}
-          save: ${{ !endsWith(inputs.preset, '-ship') }}
-          max-size: "2G"
+          preset: ${{ inputs.preset }}
 
-      - name: Configure ccache
-        shell: bash
-        run: |
-          ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
-          ccache --set-config=compiler_check=content
-          ccache --set-config=base_dir="$GITHUB_WORKSPACE"
-          ccache --set-config=hash_dir=false
-
-      - name: ccache zero stats
-        run: ccache -z
-
-      - name: Configure CMake
-        run: |
-          cmake --preset "${{ inputs.preset }}"
-
-      - name: Build
-        shell: bash
-        run: cmake --build --preset "${{ inputs.preset }}"
-
-      - name: Configure tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        run: cmake --preset "${{ inputs.test_preset }}"
-
-      - name: Build tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        run: cmake --build --preset "${{ inputs.test_preset }}"
-
-      - name: Run portable tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        uses: lukka/run-cmake@v10.9
+      - name: Build and test
+        uses: ./.github/actions/build-and-test
         with:
-          testPreset: ${{ inputs.test_preset }}
-          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
-
-      - name: ccache stats
-        if: always()
-        run: ccache -s
+          preset: ${{ inputs.preset }}
+          run_tests: ${{ inputs.run_tests }}
+          test_preset: ${{ inputs.test_preset }}
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
@@ -244,13 +212,8 @@ jobs:
           echo "Distribution Packages:"
           echo "  ✓ ${{ env.PACKAGE_NAME }}.tar.gz (with SHA256/MD5)"
 
-      - name: Upload build artifacts (on failure)
+      - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/upload-build-logs
         with:
           name: build-logs-linux
-          path: |
-            build/CMakeFiles/CMakeOutput.log
-            build/CMakeFiles/CMakeError.log
-            build/Testing/Temporary/LastTest.log
-            build/compile_commands.json

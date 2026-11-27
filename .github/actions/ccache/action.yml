@@ -1,0 +1,36 @@
+name: "Compiler cache"
+description: "Restore the compiler cache, configure it for the project's precompiled headers and zero its statistics"
+
+inputs:
+  key:
+    description: "Cache key, distinct per platform and preset"
+    required: true
+  preset:
+    description: "Configure preset. Shipping presets restore the cache and do not save it"
+    required: true
+  install:
+    description: "'no' when the job provides ccache itself"
+    required: false
+    default: "detect"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        install: ${{ inputs.install }}
+        key: ${{ inputs.key }}
+        save: ${{ !endsWith(inputs.preset, '-ship') }}
+        max-size: "2G"
+
+    - name: Configure ccache
+      shell: bash
+      run: |
+        ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+        ccache --set-config=compiler_check=content
+        if [ "$RUNNER_OS" != "Windows" ]; then
+          ccache --set-config=base_dir="$GITHUB_WORKSPACE"
+          ccache --set-config=hash_dir=false
+        fi
+        ccache -z

@@ -375,15 +375,14 @@ jobs:
           Split-Path $ccacheExe -Parent >> $env:GITHUB_PATH
           "CCACHE_EXE=$($ccacheExe.Replace('\', '/'))" >> $env:GITHUB_ENV
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Compiler cache
+        uses: ./.github/actions/ccache
         with:
-          install: "no"
           key: windows-msvc-${{ inputs.preset }}-ccache-${{ env.CCACHE_VERSION }}-v2
-          save: ${{ !endsWith(inputs.preset, '-ship') }}
-          max-size: "2G"
+          preset: ${{ inputs.preset }}
+          install: "no"
 
-      - name: Verify and configure ccache
+      - name: Verify ccache
         shell: pwsh
         run: |
           $resolved = (Get-Command ccache -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
@@ -396,14 +395,6 @@ jobs:
             throw "Expected ccache $env:CCACHE_VERSION."
           }
           $version | Write-Host
-          & $env:CCACHE_EXE --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $env:CCACHE_EXE --set-config=compiler_check=content
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      # ============================================
-      # PHASE 3: Build Configuration
-      # ============================================
 
       - name: Set environment variables
         shell: pwsh
@@ -465,38 +456,15 @@ jobs:
       # PHASE 4: Build & Distribution
       # ============================================
 
-      - name: Build
-        shell: pwsh
-        run: |
-          Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
-          cmake --build --preset "${{ inputs.preset }}"
-
-      - name: Configure tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        shell: pwsh
-        run: cmake --preset "${{ inputs.test_preset }}"
-
-      - name: Build tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        shell: pwsh
-        run: cmake --build --preset "${{ inputs.test_preset }}"
-
-      - name: Run portable tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        uses: lukka/run-cmake@v10.9
+      - name: Build and test
+        uses: ./.github/actions/build-and-test
         with:
-          testPreset: ${{ inputs.test_preset }}
-          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
-
-      - name: ccache stats
-        if: ${{ always() && env.CCACHE_EXE != '' }}
-        shell: pwsh
-        run: '& $env:CCACHE_EXE -s -v'
-
-      - name: Check reflection sidecars
-        if: ${{ inputs.run_reflect_check }}
-        shell: pwsh
-        run: ./build/mayaflux_reflect.exe --check
+          preset: ${{ inputs.preset }}
+          run_tests: ${{ inputs.run_tests }}
+          test_preset: ${{ inputs.test_preset }}
+          configure: "false"
+          shell: pwsh
+          check_reflection: ${{ inputs.run_reflect_check }}
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
@@ -661,13 +629,8 @@ jobs:
           Write-Host "  4. Run bin\lila_server.exe or link against MayaFluxLib"
           Write-Host ""
 
-      - name: Upload build artifacts (on failure)
+      - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/upload-build-logs
         with:
           name: windows-build-logs
-          path: |
-            build/CMakeFiles/CMakeOutput.log
-            build/CMakeFiles/CMakeError.log
-            build/compile_commands.json
-          retention-days: 7

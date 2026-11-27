@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       fedora:
-        description: "Test Fedora"
+        description: "Test Fedora (fallback, opt in)"
         type: boolean
-        default: true
+        default: false
       arch:
         description: "Test Arch Linux"
         type: boolean
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   test_fedora:
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.fedora }}
+    if: ${{ inputs.fedora }}
     uses: ./.github/workflows/build-linux.yml
     with:
       version: "ci-${{ github.run_number }}"

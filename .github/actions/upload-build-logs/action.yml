@@ -1,0 +1,20 @@
+name: "Upload build logs"
+description: "Upload the configure log, the last test log and the compile commands"
+
+inputs:
+  name:
+    description: "Artifact name"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Upload build logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.name }}
+        path: |
+          build/CMakeFiles/CMakeConfigureLog.yaml
+          build/Testing/Temporary/LastTest.log
+          build/compile_commands.json
+        retention-days: 7
