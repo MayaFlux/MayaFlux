@@ -8,15 +8,48 @@ namespace MayaFlux::Core {
 
 namespace {
 
+    HIDBus hid_bus(hid_bus_type bus)
+    {
+        switch (bus) {
+        case HID_API_BUS_USB:
+            return HIDBus::USB;
+        case HID_API_BUS_BLUETOOTH:
+            return HIDBus::BLUETOOTH;
+        case HID_API_BUS_I2C:
+            return HIDBus::I2C;
+        case HID_API_BUS_SPI:
+            return HIDBus::SPI;
+        default:
+            return HIDBus::UNKNOWN;
+        }
+    }
+
+    int usage_priority(const HIDDeviceInfoExt& info)
+    {
+        if (info.usage_page == 0x01 && info.usage == 0x05) {
+            return 0;
+        }
+        if (info.usage_page == 0x01 && info.usage == 0x04) {
+            return 1;
+        }
+        return info.usage_page != 0 || info.usage != 0 ? 2 : 3;
+    }
+
+    bool preferred_usage(const HIDDeviceInfoExt& candidate, const HIDDeviceInfoExt& selected)
+    {
+        return std::tuple(usage_priority(candidate), candidate.usage_page, candidate.usage)
+            < std::tuple(usage_priority(selected), selected.usage_page, selected.usage);
+    }
+
     std::string identity_key(const HIDDeviceInfoExt& info)
     {
         if (info.serial_number.empty()) {
             return "p:" + info.path;
         }
 
-        return "s:" + std::to_string(info.vendor_id) + ":" + std::to_string(info.product_id)
-            + ":" + info.serial_number + ":" + std::to_string(info.interface_number)
-            + ":" + std::to_string(info.usage_page) + ":" + std::to_string(info.usage);
+        return "s:" + std::to_string(static_cast<int>(info.bus))
+            + ":" + std::to_string(info.vendor_id) + ":" + std::to_string(info.product_id)
+            + ":" + info.serial_number + ":" + std::to_string(info.interface_number);
     }
 
 }
@@ -79,6 +112,7 @@ void HIDBackend::start()
     m_running.store(true);
 
     m_poll_thread = std::thread(&HIDBackend::poll_thread_func, this);
+    m_scan_thread = std::thread(&HIDBackend::scan_thread_func, this);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
         "HIDBackend started polling {} open device(s)", get_open_devices().size());
@@ -91,9 +125,13 @@ void HIDBackend::stop()
     }
 
     m_stop_requested.store(true);
+    m_scan_wake.notify();
 
     if (m_poll_thread.joinable()) {
         m_poll_thread.join();
+    }
+    if (m_scan_thread.joinable()) {
+        m_scan_thread.join();
     }
 
     m_running.store(false);
@@ -112,13 +150,8 @@ void HIDBackend::shutdown()
 
     {
         std::lock_guard lock(m_devices_mutex);
-        for (auto& [id, state] : m_open_devices) {
-            if (state->handle) {
-                hid_close(state->handle);
-                state->handle = nullptr;
-            }
-        }
         m_open_devices.clear();
+        m_read_set.reset();
         m_enumerated_devices.clear();
         m_reopen.clear();
     }
@@ -166,40 +199,46 @@ size_t HIDBackend::refresh_devices()
 
 size_t HIDBackend::refresh_locked(std::vector<DeviceEvent>& events)
 {
-    std::unordered_set<std::string> previous_paths;
+    std::unordered_map<std::string, uint32_t> previous_paths;
     for (const auto& [id, info] : m_enumerated_devices) {
-        previous_paths.insert(info.path);
+        previous_paths.emplace(info.path, id);
     }
 
-    std::unordered_set<std::string> current_paths;
+    std::unordered_map<std::string, HIDDeviceInfoExt> candidates;
     std::unordered_map<uint32_t, std::string> assigned_paths;
 
-    hid_device_info* devs = hid_enumerate(0x0, 0x0);
+    hid_device_info* devs = nullptr;
+    {
+        std::lock_guard hidapi(m_hidapi_mutex);
+        devs = hid_enumerate(0x0, 0x0);
+    }
     hid_device_info* cur = devs;
 
     while (cur) {
+        if (!cur->path) {
+            cur = cur->next;
+            continue;
+        }
+
+        const HIDBus bus = hid_bus(cur->bus_type);
         if (!m_config.filters.empty()) {
             if (!matches_any_filter(cur->vendor_id, cur->product_id,
-                    cur->usage_page, cur->usage)) {
+                    cur->usage_page, cur->usage, bus)) {
                 cur = cur->next;
                 continue;
             }
         }
 
-        std::string path(cur->path);
-        const bool first_in_pass = current_paths.insert(path).second;
-
-        bool is_new = first_in_pass && (previous_paths.find(path) == previous_paths.end());
-
         HIDDeviceInfoExt info;
         info.backend_type = InputType::HID;
+        info.bus = bus;
         info.vendor_id = cur->vendor_id;
         info.product_id = cur->product_id;
         info.usage_page = cur->usage_page;
         info.usage = cur->usage;
         info.release_number = cur->release_number;
         info.interface_number = cur->interface_number;
-        info.path = path;
+        info.path = cur->path;
         info.is_connected = true;
 
         info.manufacturer = wide_to_utf8(cur->manufacturer_string);
@@ -211,52 +250,91 @@ size_t HIDBackend::refresh_locked(std::vector<DeviceEvent>& events)
         }
         info.serial_number = wide_to_utf8(cur->serial_number);
 
-        uint32_t dev_id = find_or_assign_device_id(identity_key(info));
-        if (const auto taken = assigned_paths.find(dev_id);
-            taken != assigned_paths.end() && taken->second != path) {
-            dev_id = find_or_assign_device_id("p:" + path);
+        auto [selected, inserted] = candidates.try_emplace(info.path, info);
+        if (!inserted && preferred_usage(info, selected->second)) {
+            selected->second = std::move(info);
         }
-        assigned_paths[dev_id] = path;
-        info.id = dev_id;
-
-        m_enumerated_devices[dev_id] = info;
-
-        if (is_new) {
-            MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-                "HID device found: {} (VID:{:04X} PID:{:04X})",
-                info.name, info.vendor_id, info.product_id);
-            events.emplace_back(info, true);
-        }
-
         cur = cur->next;
     }
 
     hid_free_enumeration(devs);
 
-    for (auto it = m_enumerated_devices.begin(); it != m_enumerated_devices.end();) {
-        if (current_paths.find(it->second.path) == current_paths.end()) {
+    std::vector<std::string> paths;
+    paths.reserve(candidates.size());
+    for (const auto& [path, info] : candidates) {
+        paths.push_back(path);
+    }
+    std::ranges::sort(paths, [&](const std::string& first, const std::string& second) {
+        const bool first_known = previous_paths.contains(first);
+        const bool second_known = previous_paths.contains(second);
+        return first_known == second_known ? first < second : first_known;
+    });
+
+    std::unordered_map<uint32_t, HIDDeviceInfoExt> next_devices;
+    for (const auto& path : paths) {
+        HIDDeviceInfoExt info = std::move(candidates.at(path));
+        const std::string identity = identity_key(info);
+        uint32_t dev_id = 0;
+        if (const auto previous = previous_paths.find(path);
+            previous != previous_paths.end()
+            && identity_key(m_enumerated_devices.at(previous->second)) == identity) {
+            dev_id = previous->second;
+            m_identity_ids.try_emplace(identity, dev_id);
+        } else {
+            dev_id = find_or_assign_device_id(identity);
+        }
+        if (assigned_paths.contains(dev_id)) {
+            const std::string path_key = "p:" + path;
+            dev_id = find_or_assign_device_id(path_key);
+            if (assigned_paths.contains(dev_id)) {
+                dev_id = m_next_device_id++;
+                m_identity_ids.insert_or_assign(path_key, dev_id);
+            }
+        }
+        assigned_paths.emplace(dev_id, path);
+        info.id = dev_id;
+        next_devices.emplace(dev_id, std::move(info));
+    }
+
+    for (const auto& [id, info] : m_enumerated_devices) {
+        const auto current = next_devices.find(id);
+        if (current == next_devices.end() || current->second.path != info.path) {
             MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
-                "HID device disconnected: {}", it->second.name);
+                "HID device disconnected: {}", info.name);
 
-            const bool reported = m_reopen.contains(it->first) && !m_open_devices.contains(it->first);
+            const bool reported = m_reopen.contains(id) && !m_open_devices.contains(id);
 
-            auto open_it = m_open_devices.find(it->first);
+            auto open_it = m_open_devices.find(id);
             if (open_it != m_open_devices.end()) {
-                if (open_it->second->handle) {
-                    hid_close(open_it->second->handle);
-                }
                 if (m_config.auto_reconnect) {
-                    m_reopen.insert(it->first);
+                    m_reopen.insert(id);
                 }
+                open_it->second->active.store(false);
                 m_open_devices.erase(open_it);
+                publish_read_set();
             }
 
             if (!reported) {
-                events.emplace_back(it->second, false);
+                events.emplace_back(info, false);
             }
-            it = m_enumerated_devices.erase(it);
-        } else {
-            ++it;
+        }
+    }
+
+    for (const auto& [id, info] : next_devices) {
+        const auto previous = m_enumerated_devices.find(id);
+        if (previous == m_enumerated_devices.end() || previous->second.path != info.path) {
+            MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
+                "HID device found: {} (VID:{:04X} PID:{:04X})",
+                info.name, info.vendor_id, info.product_id);
+            events.emplace_back(info, true);
+        }
+    }
+
+    m_enumerated_devices = std::move(next_devices);
+    for (auto& [id, state] : m_open_devices) {
+        if (const auto current = m_enumerated_devices.find(id);
+            current != m_enumerated_devices.end()) {
+            state->info = current->second;
         }
     }
 
@@ -301,9 +379,17 @@ bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
         return false;
     }
 
-    hid_device* handle = hid_open_path(it->second.path.c_str());
+    hid_device* handle = nullptr;
+    std::string reason;
+    {
+        std::lock_guard hidapi(m_hidapi_mutex);
+        handle = hid_open_path(it->second.path.c_str());
+        if (!handle) {
+            reason = wide_to_utf8(hid_error(nullptr));
+        }
+    }
+
     if (!handle) {
-        const std::string reason = wide_to_utf8(hid_error(nullptr));
         if (quiet) {
             MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
                 "Could not reopen HID device {}: {} ({})", device_id, it->second.name,
@@ -315,7 +401,7 @@ bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
             "Failed to open HID device {}: {} ({})", device_id, it->second.name,
             reason.empty() ? "no detail from HIDAPI" : reason);
 
-        if (const auto hint = hid_open_failure_hint(it->second.vendor_id, it->second.product_id, reason);
+        if (const auto hint = hid_open_failure_hint(it->second.vendor_id, it->second.product_id, reason, it->second.bus);
             !hint.empty()) {
             MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend, "{}", hint);
         }
@@ -324,14 +410,11 @@ bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
 
     hid_set_nonblocking(handle, 1);
 
-    HIDDeviceState state;
-    state.handle = handle;
-    state.info = it->second;
-    state.read_buffer.resize(m_config.read_buffer_size);
-    state.active.store(true);
-
     auto state_ptr = std::make_shared<HIDDeviceState>();
-    state_ptr->handle = handle;
+    state_ptr->handle = HIDHandle(handle, [this](hid_device* device) {
+        std::lock_guard hidapi(m_hidapi_mutex);
+        hid_close(device);
+    });
     state_ptr->info = it->second;
     state_ptr->read_buffer.resize(m_config.read_buffer_size);
     state_ptr->active.store(true);
@@ -355,6 +438,7 @@ bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
 
     m_open_devices.insert_or_assign(device_id, state_ptr);
     m_reopen.erase(device_id);
+    publish_read_set();
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
         "Opened HID device {}: {}", device_id, it->second.name);
@@ -374,14 +458,12 @@ void HIDBackend::close_device(uint32_t device_id)
     }
 
     it->second->active.store(false);
-    if (it->second->handle) {
-        hid_close(it->second->handle);
-    }
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
         "Closed HID device {}: {}", device_id, it->second->info.name);
 
     m_open_devices.erase(it);
+    publish_read_set();
 }
 
 std::shared_ptr<const HIDReportLayout> HIDBackend::get_layout(uint32_t device_id) const
@@ -414,14 +496,12 @@ std::vector<uint32_t> HIDBackend::get_open_devices() const
 
 void HIDBackend::set_input_callback(InputCallback callback)
 {
-    std::lock_guard lock(m_callback_mutex);
-    m_input_callback = std::move(callback);
+    m_input_callback.publish(std::move(callback));
 }
 
 void HIDBackend::set_device_callback(DeviceCallback callback)
 {
-    std::lock_guard lock(m_callback_mutex);
-    m_device_callback = std::move(callback);
+    m_device_callback.publish(std::move(callback));
 }
 
 std::string HIDBackend::get_version() const
@@ -457,31 +537,31 @@ int HIDBackend::send_feature_report(uint32_t device_id, std::span<const uint8_t>
 {
     std::lock_guard lock(m_devices_mutex);
     auto it = m_open_devices.find(device_id);
-    if (it == m_open_devices.end() || !it->second->handle) {
+    if (it == m_open_devices.end()) {
         return -1;
     }
-    return hid_send_feature_report(it->second->handle, data.data(), data.size());
+    return hid_send_feature_report(it->second->handle.get(), data.data(), data.size());
 }
 
 int HIDBackend::get_feature_report(uint32_t device_id, uint8_t report_id, std::span<uint8_t> buffer)
 {
     std::lock_guard lock(m_devices_mutex);
     auto it = m_open_devices.find(device_id);
-    if (it == m_open_devices.end() || !it->second->handle) {
+    if (it == m_open_devices.end()) {
         return -1;
     }
     buffer[0] = report_id;
-    return hid_get_feature_report(it->second->handle, buffer.data(), buffer.size());
+    return hid_get_feature_report(it->second->handle.get(), buffer.data(), buffer.size());
 }
 
 int HIDBackend::write(uint32_t device_id, std::span<const uint8_t> data)
 {
     std::lock_guard lock(m_devices_mutex);
     auto it = m_open_devices.find(device_id);
-    if (it == m_open_devices.end() || !it->second->handle) {
+    if (it == m_open_devices.end()) {
         return -1;
     }
-    return hid_write(it->second->handle, data.data(), data.size());
+    return hid_write(it->second->handle.get(), data.data(), data.size());
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -490,48 +570,71 @@ int HIDBackend::write(uint32_t device_id, std::span<const uint8_t> data)
 
 void HIDBackend::poll_thread_func()
 {
-    auto last_refresh = std::chrono::steady_clock::now();
+    std::vector<std::pair<uint32_t, std::shared_ptr<HIDDeviceState>>> devices;
 
     while (!m_stop_requested.load()) {
+        if (const auto targets = m_read_set.read()) {
+            for (const auto& [id, target] : *targets) {
+                if (auto state = target.lock()) {
+                    devices.emplace_back(id, std::move(state));
+                }
+            }
+        }
+
+        bool received = false;
+        for (const auto& [id, state] : devices) {
+            received |= drain_device(id, *state);
+        }
+        devices.clear();
+
+        if (!received) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+}
+
+void HIDBackend::scan_thread_func()
+{
+    const std::chrono::milliseconds interval(m_config.reconnect_interval_ms);
+    auto next_rescan = std::chrono::steady_clock::now() + interval;
+
+    while (true) {
+        if (m_config.auto_reconnect) {
+            (void)m_scan_wake.wait_until(next_rescan);
+        } else {
+            m_scan_wake.wait();
+        }
+        if (m_stop_requested.load()) {
+            break;
+        }
+
         std::vector<DeviceEvent> events;
         {
             std::lock_guard lock(m_devices_mutex);
-            for (auto& [id, state] : m_open_devices) {
-                if (state->active.load() && state->handle) {
-                    poll_device(id, *state);
-                }
-            }
             release_lost(events);
         }
-
         for (const auto& [info, connected] : events) {
             notify_device_change(info, connected);
         }
 
-        if (m_config.auto_reconnect) {
-            const auto now = std::chrono::steady_clock::now();
-            if (now - last_refresh >= std::chrono::milliseconds(m_config.reconnect_interval_ms)) {
-                last_refresh = now;
-                refresh_devices();
-            }
+        const auto now = std::chrono::steady_clock::now();
+        if (m_config.auto_reconnect && now >= next_rescan) {
+            next_rescan = now + interval;
+            refresh_devices();
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
 void HIDBackend::release_lost(std::vector<DeviceEvent>& events)
 {
+    bool released = false;
+
     for (auto it = m_open_devices.begin(); it != m_open_devices.end();) {
         if (it->second->active.load()) {
             ++it;
             continue;
         }
 
-        if (it->second->handle) {
-            hid_close(it->second->handle);
-            it->second->handle = nullptr;
-        }
         if (m_config.auto_reconnect) {
             m_reopen.insert(it->first);
         }
@@ -541,32 +644,63 @@ void HIDBackend::release_lost(std::vector<DeviceEvent>& events)
 
         events.emplace_back(it->second->info, false);
         it = m_open_devices.erase(it);
+        released = true;
+    }
+
+    if (released) {
+        publish_read_set();
     }
 }
 
-void HIDBackend::poll_device(uint32_t device_id, HIDDeviceState& state)
+bool HIDBackend::drain_device(uint32_t device_id, HIDDeviceState& state)
 {
-    int bytes_read = hid_read_timeout(
-        state.handle, state.read_buffer.data(),
-        state.read_buffer.size(), m_config.poll_timeout_ms);
+    constexpr size_t k_max_reports = 64;
 
-    if (bytes_read > 0) {
-        std::span<const uint8_t> report(state.read_buffer.data(), bytes_read);
-        notify_input(decode_hid_report(device_id, state, report));
-    } else if (bytes_read < 0) {
-        MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
-            "HID read error on device {}", device_id);
-        state.active.store(false);
+    int wait_ms = m_config.poll_timeout_ms;
+    size_t reports = 0;
+
+    while (reports < k_max_reports && state.active.load()) {
+        const int bytes_read = hid_read_timeout(
+            state.handle.get(), state.read_buffer.data(),
+            state.read_buffer.size(), wait_ms);
+
+        if (bytes_read == 0) {
+            break;
+        }
+        if (bytes_read < 0) {
+            if (state.active.exchange(false)) {
+                MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
+                    "HID read error on device {}", device_id);
+                m_scan_wake.notify();
+            }
+            break;
+        }
+
+        notify_input(decode_hid_report(device_id, state,
+            std::span<const uint8_t>(state.read_buffer.data(), bytes_read)));
+        wait_ms = 0;
+        ++reports;
     }
-    // bytes_read == 0 means timeout (no data), which is normal
+
+    return reports > 0;
+}
+
+void HIDBackend::publish_read_set()
+{
+    ReadSet devices;
+    devices.reserve(m_open_devices.size());
+    for (const auto& [id, state] : m_open_devices) {
+        devices.emplace_back(id, state);
+    }
+    m_read_set.publish(std::move(devices));
 }
 
 bool HIDBackend::matches_any_filter(uint16_t vid, uint16_t pid,
-    uint16_t usage_page, uint16_t usage) const
+    uint16_t usage_page, uint16_t usage, HIDBus bus) const
 {
     return std::ranges::any_of(m_config.filters,
         [=](const HIDDeviceFilter& f) {
-            return f.matches(vid, pid, usage_page, usage);
+            return f.matches(vid, pid, usage_page, usage, bus);
         });
 }
 
@@ -581,17 +715,15 @@ uint32_t HIDBackend::find_or_assign_device_id(const std::string& identity)
 
 void HIDBackend::notify_input(const InputValue& value)
 {
-    std::lock_guard lock(m_callback_mutex);
-    if (m_input_callback) {
-        m_input_callback(value);
+    if (const auto callback = m_input_callback.read(); callback && *callback) {
+        (*callback)(value);
     }
 }
 
 void HIDBackend::notify_device_change(const InputDeviceInfo& info, bool connected)
 {
-    std::lock_guard lock(m_callback_mutex);
-    if (m_device_callback) {
-        m_device_callback(info, connected);
+    if (const auto callback = m_device_callback.read(); callback && *callback) {
+        (*callback)(info, connected);
     }
 }
 

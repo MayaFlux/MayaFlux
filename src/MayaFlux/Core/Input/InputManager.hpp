@@ -93,7 +93,9 @@ public:
      * @param node The InputNode to register
      * @param binding Specifies what input the node wants
      *
-     * Thread-safe. Can be called while processing is active.
+     * A binding by vendor and product with no matching device is kept, and
+     * takes effect when one appears. Thread-safe. Can be called while
+     * processing is active.
      */
     void register_node(
         const std::shared_ptr<Nodes::Input::InputNode>& node,

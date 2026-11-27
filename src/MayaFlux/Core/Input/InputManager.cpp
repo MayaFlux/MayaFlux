@@ -135,17 +135,17 @@ void InputManager::register_node(
 
         auto devices = m_input_service->get_all_devices();
         auto resolved = resolve_vid_pid(binding, devices);
+        pattern = binding;
         if (resolved) {
-            pattern = binding;
             binding = *resolved;
         } else {
-            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
-                "No device found for VID/PID");
-            return;
+            MF_INFO(Journal::Component::Core, Journal::Context::InputManagement,
+                "No device found for VID/PID yet, binding when one appears");
+            binding.device_id = k_unbound_device;
         }
     }
 
-    if (binding.device_id != 0) {
+    if (binding.device_id != 0 && binding.device_id != k_unbound_device) {
         if (!m_input_service) {
             MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
                 "Device ID binding requires InputService but service not registered");

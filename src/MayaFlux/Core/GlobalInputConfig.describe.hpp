@@ -51,6 +51,7 @@ struct Description<::MayaFlux::Core::HIDDeviceFilter> {
             Member<&::MayaFlux::Core::HIDDeviceFilter::product_id> { "product_id" },
             Member<&::MayaFlux::Core::HIDDeviceFilter::usage_page> { "usage_page" },
             Member<&::MayaFlux::Core::HIDDeviceFilter::usage> { "usage" },
+            Member<&::MayaFlux::Core::HIDDeviceFilter::bus> { "bus" },
         };
     }
 };

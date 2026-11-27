@@ -206,6 +206,7 @@ void InputSubsystem::shutdown()
             backend->shutdown();
         }
         m_backends.clear();
+        m_hid_auto_open_suppressed.clear();
     }
 
     m_handle->inputs.unregister();
@@ -296,6 +297,21 @@ std::vector<InputDeviceInfo> InputSubsystem::get_all_devices() const
 
 bool InputSubsystem::open_device(InputType backend_type, uint32_t device_id)
 {
+    if (backend_type == InputType::HID) {
+        std::unique_lock lock(m_backends_mutex);
+        const auto it = m_backends.find(backend_type);
+        if (it == m_backends.end()) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::InputSubsystem,
+                "Backend not found for device open request");
+            return false;
+        }
+        const bool opened = it->second->open_device(device_id);
+        if (opened) {
+            m_hid_auto_open_suppressed.erase(device_id);
+        }
+        return opened;
+    }
+
     std::shared_lock lock(m_backends_mutex);
     auto it = m_backends.find(backend_type);
     if (it == m_backends.end()) {
@@ -308,6 +324,16 @@ bool InputSubsystem::open_device(InputType backend_type, uint32_t device_id)
 
 void InputSubsystem::close_device(InputType backend_type, uint32_t device_id)
 {
+    if (backend_type == InputType::HID) {
+        std::unique_lock lock(m_backends_mutex);
+        const auto it = m_backends.find(backend_type);
+        if (it != m_backends.end()) {
+            m_hid_auto_open_suppressed.insert(device_id);
+            it->second->close_device(device_id);
+        }
+        return;
+    }
+
     std::shared_lock lock(m_backends_mutex);
     auto it = m_backends.find(backend_type);
     if (it != m_backends.end()) {
@@ -339,11 +365,18 @@ void InputSubsystem::wire_backend_to_manager(IInputBackend* backend)
         m_handle->inputs.enqueue_input(value);
     });
 
-    backend->set_device_callback([this](const InputDeviceInfo& info, bool connected) {
+    backend->set_device_callback([this, backend](const InputDeviceInfo& info, bool connected) {
         MF_INFO(Journal::Component::Core, Journal::Context::InputSubsystem,
             "Device {}: {} ({})",
             connected ? "connected" : "disconnected",
             info.name, static_cast<int>(info.backend_type));
+
+        if (connected && backend->get_type() == InputType::HID && m_config.hid.auto_open) {
+            std::shared_lock lock(m_backends_mutex);
+            if (!m_hid_auto_open_suppressed.contains(info.id)) {
+                backend->open_device(info.id);
+            }
+        }
 
         m_handle->inputs.on_device_change(info, connected);
     });
