@@ -3,6 +3,7 @@
 #include "Sidecar.hpp"
 
 #include <cctype>
+#include <chrono>
 #include <cstdint>
 
 namespace MayaFlux::Reflect::Tool {
@@ -113,7 +114,7 @@ std::optional<std::string> fingerprint_value(const Fingerprint& fingerprint)
         return std::nullopt;
     }
     hash.add(std::to_string(size));
-    hash.add(std::to_string(written.time_since_epoch().count()));
+    hash.add(std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(written.time_since_epoch()).count()));
 
     for (const auto& setting : fingerprint.settings) {
         hash.add(setting);
