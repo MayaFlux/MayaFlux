@@ -97,26 +97,28 @@ endfunction()
 add_executable(mayaflux_reflect
     MayaFluxReflect.cpp
     Build.cpp
+    Fingerprint.cpp
     Check.cpp
     Collector.cpp
     Discovery.cpp
-    ReflectBuild.cpp
     Scan.cpp
     Sidecar.cpp
+    SidecarBuild.cpp
 )
 mayaflux_clang_tool(mayaflux_reflect)
 
 add_executable(mayaflux_signatures
     MayaFluxSignatures.cpp
     Build.cpp
+    Fingerprint.cpp
     Collector.cpp
     CreatorBuild.cpp
     Discovery.cpp
-    FunctionBuild.cpp
     FunctionCollector.cpp
     FunctionSidecar.cpp
     Scan.cpp
     Sidecar.cpp
+    SidecarBuild.cpp
     SignatureCollector.cpp
     SignatureEntries.cpp
     SignatureOutput.cpp

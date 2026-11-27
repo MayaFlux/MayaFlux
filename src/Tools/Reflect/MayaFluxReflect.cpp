@@ -1,8 +1,8 @@
 #include "Check.hpp"
 #include "Discovery.hpp"
-#include "ReflectBuild.hpp"
 #include "Scan.hpp"
 #include "Sidecar.hpp"
+#include "SidecarBuild.hpp"
 
 #ifndef MAYAFLUX_REFLECT_RESOURCE_DIR
 #define MAYAFLUX_REFLECT_RESOURCE_DIR ""
@@ -21,6 +21,7 @@ struct Config {
     std::vector<std::string> extra_args;
     bool insert_includes { true };
     bool check { false };
+    std::filesystem::path prefix_header;
 };
 
 int fail(const std::string& message)
@@ -65,6 +66,7 @@ int generate(const Config& config)
     input.headers = headers;
     input.resource_dir = config.resource_dir;
     input.extra_args = config.extra_args;
+    input.prefix_header = config.prefix_header;
 
     RequestCollector collector;
     if (!scan(input, collector, error)) {
@@ -161,8 +163,8 @@ int main(int argc, const char** argv)
         llvm::cl::cat(category));
 
     llvm::cl::opt<bool> build("build",
-        llvm::cl::desc("Build step: describe the one header given, inserting its sidecar include when missing, "
-                       "and write nothing else in the source tree. Needs --translation-unit or --compile-arg"),
+        llvm::cl::desc("Build step: describe every header given, as files or directories, in one scan, inserting a missing "
+                       "sidecar include. Needs --translation-unit with a compile database, or --compile-arg"),
         llvm::cl::cat(category));
     llvm::cl::list<std::string> compile_args("compile-arg",
         llvm::cl::desc("With --build: one argument of the whole compile command, used instead of the database"),
@@ -173,6 +175,10 @@ int main(int argc, const char** argv)
     llvm::cl::opt<std::string> depfile_target("depfile-target",
         llvm::cl::desc("With --build: the target named in the depfile (default: the sidecar path)"),
         llvm::cl::value_desc("path"), llvm::cl::cat(category));
+
+    llvm::cl::opt<std::string> prefix_header("prefix-header",
+        llvm::cl::desc("Header the scan force-includes in place of the generated cmake_pch.hxx of the borrowed command"),
+        llvm::cl::value_desc("file"), llvm::cl::cat(category));
 
     llvm::cl::HideUnrelatedOptions(category);
     llvm::cl::ParseCommandLineOptions(argc, argv,
@@ -187,22 +193,49 @@ int main(int argc, const char** argv)
     config.extra_args.assign(extra_args.begin(), extra_args.end());
     config.insert_includes = !no_insert_include;
     config.check = check;
+    config.prefix_header = prefix_header.getValue();
 
     if (build) {
-        if (config.headers.size() != 1 || !config.roots.empty() || config.check) {
-            return fail("--build takes exactly one header, and neither --root nor --check");
+        if (config.check) {
+            return fail("--build takes no --check");
         }
-        ReflectBuildOptions options;
-        options.header = config.headers.front();
+        SidecarBuildOptions options;
+        options.paths = config.headers;
+        options.paths.insert(options.paths.end(), config.roots.begin(), config.roots.end());
+        if (options.paths.empty()) {
+            return fail("--build needs headers, directories or --root");
+        }
         options.build_path = config.build_path;
         options.translation_unit = config.translation_unit;
+        options.prefix_header = config.prefix_header;
         options.resource_dir = config.resource_dir;
         options.extra_args = config.extra_args;
         options.compile_args.assign(compile_args.begin(), compile_args.end());
         options.depfile = depfile.getValue();
         options.depfile_target = depfile_target.getValue();
+        options.executable = llvm::sys::fs::getMainExecutable(argv[0], reinterpret_cast<void*>(&fail));
         options.insert_includes = config.insert_includes;
-        return run_reflect_build(options);
+
+        RequestCollector collector;
+        SidecarKind kind;
+        kind.marker = "MF_DESCRIBE";
+        kind.suffix = ".describe.hpp";
+        kind.noun = "described";
+        kind.attach = [&collector](clang::ast_matchers::MatchFinder& finder) { collector.attach(finder); };
+        kind.errors = [&collector]() -> const std::vector<std::string>& { return collector.errors(); };
+        kind.rendered = [&collector](const std::filesystem::path& header)
+            -> std::optional<std::pair<std::string, unsigned>> {
+            const auto found = collector.requests().find(header);
+            if (found == collector.requests().end()) {
+                return std::nullopt;
+            }
+            unsigned last = 0;
+            for (const auto& record : found->second.records) {
+                last = std::max(last, record.line);
+            }
+            return std::pair { render_sidecar(found->second), last };
+        };
+        return run_sidecar_build(options, kind);
     }
 
     if (config.roots.empty() && config.headers.empty()) {

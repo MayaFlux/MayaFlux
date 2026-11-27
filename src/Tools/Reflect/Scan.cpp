@@ -58,9 +58,23 @@ namespace {
         return source;
     }
 
+    std::string with_prefix_header(const std::string& argument, const std::filesystem::path& prefix)
+    {
+        constexpr std::string_view generated = "cmake_pch.hxx";
+        if (prefix.empty() || !argument.ends_with(generated)) {
+            return argument;
+        }
+        const bool joined = argument.starts_with("/FI") || argument.starts_with("-FI");
+        return (joined ? argument.substr(0, 3) : std::string {}) + prefix.generic_string();
+    }
+
     clang::tooling::ArgumentsAdjuster make_adjuster(const ScanInput& input)
     {
-        return [resource = input.resource_dir, extra = input.extra_args](
+        std::error_code code;
+        const std::filesystem::path prefix_header = input.prefix_header.empty()
+            ? std::filesystem::path {}
+            : std::filesystem::absolute(input.prefix_header, code);
+        return [resource = input.resource_dir, extra = input.extra_args, prefix = prefix_header](
                    const clang::tooling::CommandLineArguments& arguments, llvm::StringRef) {
             clang::tooling::CommandLineArguments adjusted;
             adjusted.reserve(arguments.size() + extra.size() + 2);
@@ -90,7 +104,7 @@ namespace {
                 }
 #endif
                 has_resource = has_resource || argument == "-resource-dir";
-                adjusted.push_back(argument);
+                adjusted.push_back(with_prefix_header(argument, prefix));
             }
             const auto insert_at = adjusted.begin() + (adjusted.empty() ? 0 : 1);
             std::vector<std::string> added;
@@ -256,9 +270,11 @@ namespace {
 
     class RecordingAction : public clang::ASTFrontendAction {
     public:
-        RecordingAction(clang::ast_matchers::MatchFinder& finder, clang::DependencyCollector& collector)
+        RecordingAction(clang::ast_matchers::MatchFinder& finder, clang::DependencyCollector& collector,
+            bool skip_function_bodies)
             : m_finder(finder)
             , m_collector(collector)
+            , m_skip_function_bodies(skip_function_bodies)
         {
         }
 
@@ -266,6 +282,9 @@ namespace {
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
             clang::CompilerInstance& instance, llvm::StringRef) override
         {
+            if (m_skip_function_bodies) {
+                instance.getFrontendOpts().SkipFunctionBodies = true;
+            }
             m_collector.attachToPreprocessor(instance.getPreprocessor());
             return m_finder.newASTConsumer();
         }
@@ -273,24 +292,28 @@ namespace {
     private:
         clang::ast_matchers::MatchFinder& m_finder;
         clang::DependencyCollector& m_collector;
+        bool m_skip_function_bodies;
     };
 
     class RecordingFactory : public clang::tooling::FrontendActionFactory {
     public:
-        RecordingFactory(clang::ast_matchers::MatchFinder& finder, clang::DependencyCollector& collector)
+        RecordingFactory(clang::ast_matchers::MatchFinder& finder, clang::DependencyCollector& collector,
+            bool skip_function_bodies)
             : m_finder(finder)
             , m_collector(collector)
+            , m_skip_function_bodies(skip_function_bodies)
         {
         }
 
         std::unique_ptr<clang::FrontendAction> create() override
         {
-            return std::make_unique<RecordingAction>(m_finder, m_collector);
+            return std::make_unique<RecordingAction>(m_finder, m_collector, m_skip_function_bodies);
         }
 
     private:
         clang::ast_matchers::MatchFinder& m_finder;
         clang::DependencyCollector& m_collector;
+        bool m_skip_function_bodies;
     };
 
     bool borrowed_command(const ScanInput& input, const std::filesystem::path& scan_file,
@@ -325,6 +348,29 @@ namespace {
         return true;
     }
 
+}
+
+bool scan_arguments(const BuildScanInput& input, std::vector<std::string>& arguments, std::string& error)
+{
+    if (!input.compile_args.empty()) {
+        arguments = input.compile_args;
+        return true;
+    }
+    std::string load_error;
+    const auto database = clang::tooling::CompilationDatabase::loadFromDirectory(input.scan.build_path.string(), load_error);
+    if (!database) {
+        error = "cannot load compile_commands.json from " + input.scan.build_path.string() + ": " + load_error;
+        return false;
+    }
+    const std::filesystem::path unit = select_translation_unit(*database, input.scan);
+    const auto commands = unit.empty() ? std::vector<clang::tooling::CompileCommand> {}
+                                       : database->getCompileCommands(unit.string());
+    if (commands.empty()) {
+        error = "no compile command found for translation unit " + unit.string();
+        return false;
+    }
+    arguments = commands.front().CommandLine;
+    return true;
 }
 
 bool scan_for_build(const BuildScanInput& input, const AttachMatchers& attach,
@@ -384,7 +430,7 @@ bool scan_for_build(const BuildScanInput& input, const AttachMatchers& attach,
     attach(finder);
 
     clang::DependencyCollector collector;
-    RecordingFactory factory(finder, collector);
+    RecordingFactory factory(finder, collector, input.scan.skip_function_bodies);
     if (tool.run(&factory) != 0) {
         error = "Clang could not scan the selected headers";
         return false;

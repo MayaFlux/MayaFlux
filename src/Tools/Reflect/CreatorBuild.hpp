@@ -21,6 +21,7 @@ struct CreatorBuildOptions {
     std::vector<std::string> compile_args;
     std::filesystem::path depfile;
     std::string depfile_target;
+    std::filesystem::path prefix_header;
 };
 
 /**

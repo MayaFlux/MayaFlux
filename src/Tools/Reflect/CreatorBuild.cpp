@@ -46,6 +46,7 @@ int run_creator_build(const CreatorBuildOptions& options)
     input.scan.roots = { source_root };
     input.scan.resource_dir = resource_dir;
     input.scan.extra_args = options.extra_args;
+    input.scan.prefix_header = options.prefix_header;
     input.compile_args = options.compile_args;
     for (const SignatureEntry& entry : *entries) {
         const auto canonical = std::filesystem::canonical(entry.header, code);
