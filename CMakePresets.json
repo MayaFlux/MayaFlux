@@ -206,7 +206,8 @@
         "rhs": "Windows"
       },
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux"
+        "CMAKE_INSTALL_PREFIX": "C:/MayaFlux",
+        "MAYAFLUX_ENABLE_LTO": "ON"
       }
     },
     {
