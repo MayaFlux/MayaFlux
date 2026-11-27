@@ -5,6 +5,7 @@
 #include "MayaFlux/Registry/Service/NetworkService.hpp"
 
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
+#include "MayaFlux/Core/Backends/Input/HIDSession.hpp"
 #include "MayaFlux/Core/Backends/Input/MIDIBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/SerialInputBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/TabletBackend.hpp"
@@ -40,6 +41,10 @@ void InputSubsystem::initialize(SubsystemProcessingHandle& handle)
         "Initializing Input Subsystem...");
 
     m_handle = &handle;
+
+    if (m_config.hid.enabled || m_config.tablet.enabled) {
+        m_hid_session = std::make_shared<HIDSession>();
+    }
 
     if (m_config.hid.enabled) {
         initialize_hid_backend();
@@ -202,6 +207,7 @@ void InputSubsystem::shutdown()
         m_backends.clear();
         m_hid_auto_open_suppressed.clear();
     }
+    m_hid_session.reset();
 
     m_handle->inputs.unregister();
 
@@ -384,6 +390,7 @@ void InputSubsystem::initialize_hid_backend()
     hid_config.poll_timeout_ms = m_config.hid.poll_timeout_ms;
     hid_config.auto_reconnect = m_config.hid.auto_reconnect;
     hid_config.reconnect_interval_ms = m_config.hid.reconnect_interval_ms;
+    hid_config.session = m_hid_session;
 
     auto hid = std::make_unique<HIDBackend>(hid_config);
 
@@ -462,6 +469,7 @@ void InputSubsystem::initialize_tablet_backend()
     tablet_config.read_buffer_size = m_config.tablet.read_buffer_size;
     tablet_config.poll_timeout_ms = m_config.tablet.poll_timeout_ms;
     tablet_config.split_eraser = m_config.tablet.split_eraser;
+    tablet_config.session = m_hid_session;
 
     add_backend(std::make_unique<TabletBackend>(tablet_config));
 }

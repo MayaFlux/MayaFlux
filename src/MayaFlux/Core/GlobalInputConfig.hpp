@@ -145,7 +145,7 @@ MF_DESCRIBE(HIDBackendInfo)
 struct MAYAFLUX_API TabletBackendInfo {
     bool enabled { false }; ///< Enable tablet backend
     size_t read_buffer_size { 256 }; ///< Per-device read buffer size
-    int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
+    int poll_timeout_ms { 0 }; ///< Per-device HID read wait in milliseconds
     bool split_eraser { true }; ///< Report the eraser end as its own tool
 
 };

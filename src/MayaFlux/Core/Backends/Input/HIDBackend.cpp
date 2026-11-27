@@ -8,22 +8,6 @@ namespace MayaFlux::Core {
 
 namespace {
 
-    HIDBus hid_bus(hid_bus_type bus)
-    {
-        switch (bus) {
-        case HID_API_BUS_USB:
-            return HIDBus::USB;
-        case HID_API_BUS_BLUETOOTH:
-            return HIDBus::BLUETOOTH;
-        case HID_API_BUS_I2C:
-            return HIDBus::I2C;
-        case HID_API_BUS_SPI:
-            return HIDBus::SPI;
-        default:
-            return HIDBus::UNKNOWN;
-        }
-    }
-
     int usage_priority(const HIDDeviceInfoExt& info)
     {
         if (info.usage_page == 0x01 && info.usage == 0x05) {
@@ -79,9 +63,11 @@ bool HIDBackend::initialize()
         return true;
     }
 
-    if (hid_init() != 0) {
+    m_session = m_config.session ? m_config.session : std::make_shared<HIDSession>();
+    if (!m_session->valid()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
             "Failed to initialize HIDAPI");
+        m_session.reset();
         return false;
     }
 
@@ -156,7 +142,7 @@ void HIDBackend::shutdown()
         m_reopen.clear();
     }
 
-    hid_exit();
+    m_session.reset();
     m_initialized.store(false);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
@@ -209,7 +195,7 @@ size_t HIDBackend::refresh_locked(std::vector<DeviceEvent>& events)
 
     hid_device_info* devs = nullptr;
     {
-        std::lock_guard hidapi(m_hidapi_mutex);
+        std::lock_guard hidapi(m_session->mutex());
         devs = hid_enumerate(0x0, 0x0);
     }
     hid_device_info* cur = devs;
@@ -220,7 +206,7 @@ size_t HIDBackend::refresh_locked(std::vector<DeviceEvent>& events)
             continue;
         }
 
-        const HIDBus bus = hid_bus(cur->bus_type);
+        const HIDBus bus = HIDSession::bus_of(cur->bus_type);
         if (!m_config.filters.empty()) {
             if (!matches_any_filter(cur->vendor_id, cur->product_id,
                     cur->usage_page, cur->usage, bus)) {
@@ -382,7 +368,7 @@ bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
     hid_device* handle = nullptr;
     std::string reason;
     {
-        std::lock_guard hidapi(m_hidapi_mutex);
+        std::lock_guard hidapi(m_session->mutex());
         handle = hid_open_path(it->second.path.c_str());
         if (!handle) {
             reason = wide_to_utf8(hid_error(nullptr));
@@ -411,8 +397,8 @@ bool HIDBackend::open_locked(uint32_t device_id, bool quiet)
     hid_set_nonblocking(handle, 1);
 
     auto state_ptr = std::make_shared<HIDDeviceState>();
-    state_ptr->handle = HIDHandle(handle, [this](hid_device* device) {
-        std::lock_guard hidapi(m_hidapi_mutex);
+    state_ptr->handle = HIDHandle(handle, [session = m_session](hid_device* device) {
+        std::lock_guard hidapi(session->mutex());
         hid_close(device);
     });
     state_ptr->info = it->second;

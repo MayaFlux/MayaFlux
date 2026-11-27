@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Core/Backends/Input/HIDSession.hpp"
 #include "MayaFlux/Core/Backends/Input/InputBackend.hpp"
 #include "MayaFlux/Core/Input/HIDDescriptor.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
@@ -96,6 +97,7 @@ public:
         int poll_timeout_ms { 0 }; ///< Wait for each device's first report per pass, delays the other devices
         bool auto_reconnect { true }; ///< Rescan every interval and reopen devices that were open when they dropped
         uint32_t reconnect_interval_ms { 1000 }; ///< Rescan and reopen interval
+        std::shared_ptr<HIDSession> session; ///< Shared HIDAPI session, or null for one of its own
     };
 
     HIDBackend();
@@ -204,8 +206,7 @@ private:
 
     /** Registry only, never taken by the poll thread. */
     mutable std::mutex m_devices_mutex;
-    /** Serialises HIDAPI open, close and enumerate, innermost. */
-    std::mutex m_hidapi_mutex;
+    std::shared_ptr<HIDSession> m_session;
     std::unordered_map<uint32_t, HIDDeviceInfoExt> m_enumerated_devices;
     std::unordered_map<uint32_t, std::shared_ptr<HIDDeviceState>> m_open_devices;
     std::unordered_map<std::string, uint32_t> m_identity_ids;

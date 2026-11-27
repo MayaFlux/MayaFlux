@@ -13,6 +13,7 @@ struct InputService;
 
 namespace MayaFlux::Core {
 
+class HIDSession;
 class InputManager;
 struct InputBinding;
 
@@ -163,6 +164,7 @@ private:
     std::unordered_map<InputType, std::unique_ptr<IInputBackend>> m_backends;
     std::shared_ptr<Registry::Service::InputService> m_input_service;
     std::unordered_set<uint32_t> m_hid_auto_open_suppressed;
+    std::shared_ptr<HIDSession> m_hid_session;
 
     void initialize_hid_backend();
     void initialize_midi_backend();
