@@ -45,6 +45,14 @@ void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& co
     m_width = static_cast<uint32_t>(structure.get_width());
     m_height = static_cast<uint32_t>(structure.get_height());
 
+    if (auto video = std::dynamic_pointer_cast<VideoStreamContainer>(container)) {
+        m_frame_format = video->get_format();
+    } else if (auto texture = std::dynamic_pointer_cast<TextureContainer>(container)) {
+        m_frame_format = texture->get_format();
+    } else {
+        m_frame_format = ImageFormat::RGBA8;
+    }
+
     if (m_sequence.backend == Kinesis::Vision::VisionBackend::CPU) {
         m_cpu_executor.reset();
     } else if (m_width > 0 && m_height > 0) {
@@ -53,7 +61,7 @@ void VisionProcessor::on_attach(const std::shared_ptr<SignalSourceContainer>& co
 
         auto& loom = Portal::Graphics::TextureLoom::instance();
         loom.release_image(m_gpu_frame);
-        m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
+        m_gpu_frame = loom.create_2d(m_width, m_height, m_frame_format, nullptr);
     }
 
     if (m_width == 0 || m_height == 0) {
@@ -136,7 +144,7 @@ void VisionProcessor::set_sequence(Kinesis::Vision::VisionSequence sequence)
         m_executor = std::make_unique<Yantra::VisionGpuExecutor>();
         if (m_width > 0 && m_height > 0 && !m_gpu_frame) {
             auto& loom = Portal::Graphics::TextureLoom::instance();
-            m_gpu_frame = loom.create_2d(m_width, m_height, ImageFormat::RGBA8, nullptr);
+            m_gpu_frame = loom.create_2d(m_width, m_height, m_frame_format, nullptr);
         }
     } else {
         Portal::Graphics::get_texture_manager().release_image(m_gpu_frame);
