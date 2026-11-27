@@ -114,66 +114,46 @@ jobs:
       - name: Install build tools on macOS
         run: brew install md5sha1sum
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ runner.os }}-${{ inputs.preset }}
-          save: ${{ !endsWith(inputs.preset, '-ship') }}
-          max-size: "2G"
-
-      - name: Configure ccache
-        shell: bash
-        run: |
-          ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
-          ccache --set-config=compiler_check=content
-          ccache --set-config=base_dir="$GITHUB_WORKSPACE"
-          ccache --set-config=hash_dir=false
-
       - name: Restore Homebrew cache
         uses: actions/cache/restore@v4
-        id: homebrew-cache
         with:
           path: /opt/homebrew
-          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/workflows/build-macos.yml') }}
+          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: homebrew-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Install Homebrew tools
-        id: install-homebrew
-        if: steps.homebrew-cache.outputs.cache-hit != 'true'
-        uses: tecolicom/actions-use-homebrew-tools@v1
-        with:
-          cache: "no"
-          tools: >
-            ffmpeg
-            assimp
-            alembic
-            pugixml
-            shaderc
-            googletest
-            pkg-config
-            cmake
-            eigen
-            glm
-            llvm
-            vulkan-headers
-            vulkan-loader
-            vulkan-tools
-            vulkan-validationlayers
-            vulkan-utility-libraries
-            spirv-tools
-            spirv-cross
-            shaderc
-            glslang
-            mesa
-            hidapi
-            utf8proc
-            freetype
+      - name: Install missing Homebrew tools
+        id: homebrew
+        shell: bash
+        run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          missing=()
+          for tool in ccache ffmpeg assimp alembic pugixml shaderc googletest pkg-config cmake eigen glm llvm vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers vulkan-utility-libraries spirv-tools spirv-cross glslang mesa hidapi utf8proc freetype; do
+            brew list --versions "$tool" >/dev/null 2>&1 || missing+=("$tool")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Installing: ${missing[*]}"
+            brew install "${missing[@]}"
+            echo "installed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Save Homebrew cache
-        if: ${{ always() && steps.install-homebrew.outcome == 'success' && steps.homebrew-cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() && steps.homebrew.outputs.installed == 'true' && github.event_name != 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           path: /opt/homebrew
-          key: ${{ steps.homebrew-cache.outputs.cache-primary-key }}
+          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Drop superseded Homebrew caches
+        if: ${{ always() && steps.homebrew.outputs.installed == 'true' && github.event_name != 'pull_request' }}
+        uses: ./.github/actions/prune-cache
+        with:
+          prefix: homebrew-${{ runner.os }}-${{ runner.arch }}-
+          keep: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Compiler cache
+        uses: ./.github/actions/ccache
+        with:
+          platform: macos
 
       - name: Install ASIO and JSON (header-only, always ensure)
         run: |
@@ -248,61 +228,23 @@ jobs:
           STB_INCLUDE_DIR="$(brew --prefix stb)/include/stb"
           echo "STB_ROOT=$STB_INCLUDE_DIR" >> $GITHUB_ENV
 
-      - name: ccache zero stats
-        run: ccache -z
-
-      - name: Configure CMake
-        shell: bash
-        run: |
-          eval "$(/opt/homebrew/bin/brew shellenv)"
-
-          export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
-          export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"
-
-          echo "=== Final CMake environment ==="
-          echo "CMAKE version: $(cmake --version | head -1)"
-          echo "CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH"
-          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH"
-          echo "Using Preset: ${{ inputs.preset }}"
-
-          cmake --preset "${{ inputs.preset }}"
-
-      - name: Build
-        shell: bash
-        run: cmake --build --preset "${{ inputs.preset }}"
-
-      - name: Configure tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        shell: bash
-        run: |
-          eval "$(/opt/homebrew/bin/brew shellenv)"
-          export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
-          cmake --preset "${{ inputs.test_preset }}"
-
-      - name: Build tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        shell: bash
-        env:
-          DYLD_LIBRARY_PATH: ${{ github.workspace }}/build/src/MayaFlux:${{ github.workspace }}/build/src/Lila
-        run: cmake --build --preset "${{ inputs.test_preset }}"
-
-      - name: Run portable tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        env:
-          DYLD_LIBRARY_PATH: ${{ github.workspace }}/build/src/MayaFlux:${{ github.workspace }}/build/src/Lila
-        uses: lukka/run-cmake@v10.9
+      - name: Build and test
+        uses: ./.github/actions/build-and-test
         with:
-          testPreset: ${{ inputs.test_preset }}
-          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
+          preset: ${{ inputs.preset }}
+          run_tests: ${{ inputs.run_tests }}
+          test_preset: ${{ inputs.test_preset }}
+          check_reflection: ${{ inputs.run_reflect_check }}
+          environment: |
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+            export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
+          test_library_path: ${{ github.workspace }}/build/src/MayaFlux:${{ github.workspace }}/build/src/Lila
 
-      - name: ccache stats
-        if: always()
-        run: ccache -s
-
-      - name: Check reflection sidecars
-        if: ${{ inputs.run_reflect_check }}
-        shell: bash
-        run: ./build/mayaflux_reflect --check
+      - name: Save compiler cache
+        if: ${{ always() && github.event_name != 'pull_request' && !endsWith(inputs.preset, '-ship') }}
+        uses: ./.github/actions/ccache-save
+        with:
+          platform: macos
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
@@ -401,13 +343,8 @@ jobs:
           echo "  ✓ macOS ARM64 binaries (Apple Silicon)"
           echo "  ✓ Ready for standalone deployment"
 
-      - name: Upload build artifacts (on failure)
+      - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/upload-build-logs
         with:
           name: build-logs-macos
-          path: |
-            build/CMakeFiles/CMakeOutput.log
-            build/CMakeFiles/CMakeError.log
-            build/Testing/Temporary/LastTest.log
-            build/compile_commands.json

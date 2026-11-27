@@ -20,8 +20,6 @@ cmake --build --preset unix-dev
 
 On Windows, use `windows-dev` and run `build\project_launcher.exe`.
 
-If `CMakeUserPresets.json` is present, use `unix-dev-local` for both configure and build to limit the build to 16 parallel jobs.
-
 Write your code in `src/user_project.hpp`. It is created for you from a template on first configure if it does not already exist, and it is never overwritten afterward. This is your scratch space for exercising `MayaFluxLib` before writing a real test, not an official example, see the section below.
 
 If you configure without a dev preset, `project_launcher` will not exist as a target. `MAYAFLUX_BUILD_PROJECT` defaults OFF; the dev presets are the ones that turn it ON.
@@ -43,7 +41,7 @@ Minimum OS for building from source:
 
 The Windows floor is set by MSVC 2022's own minimum supported OS, not by anything in `scripts/win64/setup_windows.ps1` or `packages.psd1`, neither contains an OS version check. Win32 windowing, WinMM, and WASAPI all predate Windows 10 by a wide margin and impose no additional constraint.
 
-**All platforms:** C++20 compiler (GCC 12+, Clang 16+, MSVC 2022+), CMake 3.28+, Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, Alembic, FreeType, utf8proc, nlohmann_json, TBB, STB, shaderc, LLVM 21+.
+**All platforms:** C++23 compiler (GCC, Clang or MSVC 2022+), CMake 4.0+, Vulkan SDK, FFmpeg (avcodec, avformat, avutil, swresample, swscale, avdevice), GLM, Eigen, HIDAPI, Asio, Assimp, Alembic, FreeType, utf8proc, nlohmann_json, TBB, STB, shaderc, LLVM 21+.
 
 tinyvdb, tinyexr and magic_enum are vendored under `third_party/` and need no installation.
 
@@ -80,14 +78,12 @@ macOS note: Homebrew LLVM is not your compiler. MayaFlux compiles with Apple Cla
 | `unix-test` | ON | ON | ON | Linux/macOS contributor tests in the same `RelWithDebInfo` build tree |
 | `windows-dev`, `windows-test` | ON | ON | off / ON | Windows contributor builds with MSVC |
 | `windows-vs2026-dev`, `windows-vs2022-dev` | ON | ON | off | Optional Visual Studio contributor builds |
-| `linux-check`, `macos-check`, `windows-check` | off | off | off | CI build checks without LTO |
+| `linux-check`, `macos-check`, `windows-check` | off | off | off | CI build checks |
 | `linux-test`, `macos-test`, `windows-check-test` | off | off | ON | CI tests using the matching check build tree |
 | `linux-ship`, `macos-ship`, `windows-ship` | off | off | off | Shipping builds with LTO |
 | `launchpad-ship` | off | off | off | PPA packaging with LTO |
 
-LTO is controlled by `MAYAFLUX_ENABLE_LTO`. It is on for shipping presets and off for contributor, test and CI check presets. All normal presets use `RelWithDebInfo`. `unix-tsan`, `windows-asan`, `unix-coverage` and `windows-coverage` keep their own build directories for instrumented builds.
-
-`CMakeUserPresets.json` defines local configure and build aliases: `unix-dev-local`, `unix-test-local`, `unix-tsan-local` and `unix-coverage-local`. Each configure alias inherits its matching shared preset without changing its settings. Each build alias limits parallel jobs to 16.
+LTO is controlled by `MAYAFLUX_ENABLE_LTO`. It is on for the shipping presets and for `windows-check` and `windows-check-test`, and off elsewhere. All normal presets use `RelWithDebInfo`. `unix-tsan`, `windows-asan`, `unix-coverage` and `windows-coverage` keep their own build directories for instrumented builds.
 
 A bare `cmake -B build` with no preset also leaves `MAYAFLUX_BUILD_PROJECT` OFF. If you want `project_launcher` without a preset:
 
@@ -103,13 +99,13 @@ cmake --build build
 **project_launcher**
 The executable that runs your code. Built from `main.cpp` plus `${USER_SOURCES}` (which includes `src/user_project.hpp`) plus anything under `src/examples/`. Gated behind `MAYAFLUX_BUILD_PROJECT`; the CMakeLists returns before defining this target if that option is off. This is the pre-install, pre-package way to exercise `MayaFluxLib` directly, not an official demo app; see below.
 
-`main.cpp` includes `user_project.hpp` via `__has_include`, falling back to `MayaFlux.hpp` with its default convenience includes if the file is not found. It runs, in order: parse `--config` / `--config-override` args, load JSON config if present, call your `settings()`, `MayaFlux::Init()`, `MayaFlux::Start()`, call your `compose()`, block on Enter, `MayaFlux::End()`.
+`main.cpp` includes `user_project.hpp` via `__has_include`, falling back to `MayaFlux.hpp` with its default convenience includes if the file is not found. It runs, in order: parse `--config` / `--config-override` args, load JSON config if present, call your `settings()`, `MayaFlux::Init()`, `MayaFlux::Start()`, call your `compose()`, block until Ctrl-C (`MayaFlux::Await()`), `MayaFlux::End()`. Without `--config`, `mayaflux.json` at the repository root is loaded if it exists.
 
 **MayaFluxLib**
-Core shared library and the actual deliverable. Built from `add_subdirectory(MayaFlux)`. Everything under `src/MayaFlux/` (Nexus, Yantra, Kakshya, Kinesis, Vruta, Kriya, Portal, and the rest) compiles into this target. No entry point. `project_launcher` links against this.
+Core shared library and the actual deliverable. Built from `add_subdirectory(MayaFlux)`. Everything under `src/MayaFlux/` (Nexus, Yantra, Kakshya, Kinesis, Vruta, Kriya, Portal, and the rest) compiles into this target. Part of it is compiled first as the `MayaFluxHeavy` object library, which has its own larger precompiled header; it is not a separate binary. No entry point. `project_launcher` links against this.
 
 **MayaFluxHost**
-Built from `src/Host/CMakeLists.txt`. Embeds Lila directly into a host process instead of running it as a separate server. `Host::attach_lila` is the in-process attachment point. `project_launcher` links `MayaFluxLib MayaFluxHost`.
+Built from `src/Host/CMakeLists.txt`. Embeds Lila directly into a host process instead of running it as a separate server. `MayaFlux::Host::start_session` starts the interpreter and its server inside the host process. `project_launcher` links `MayaFluxLib MayaFluxHost`.
 
 **Lila**
 The JIT library, built from `add_subdirectory(Lila)`. Provides LLVM ORC JIT evaluation of arbitrary C++20/23 via an embedded Clang interpreter. `MayaFluxHost` embeds this.
@@ -165,10 +161,14 @@ ctest --preset unix-test
 
 On Windows, use `windows-test` for all three commands.
 
-On Unix, use `unix-test-local` for both configure and build to apply the local 16-job limit. Keep `ctest --preset unix-test` for the test run.
+The tests are a submodule. Check it out before configuring a test preset:
+
+```sh
+git submodule update --init tests
+```
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for contribution workflow, current priorities, and PR conventions.
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for the contribution workflow and PR conventions.

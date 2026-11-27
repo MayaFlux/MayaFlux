@@ -6,6 +6,8 @@
 
 #if defined(MAYAFLUX_PLATFORM_LINUX)
 #include <fontconfig/fontconfig.h>
+#elif defined(MAYAFLUX_PLATFORM_WINDOWS)
+#include <windows.h>
 #endif
 
 namespace MayaFlux::Portal::Text {
@@ -108,8 +110,6 @@ std::optional<std::string> find_font(std::string_view family, std::string_view s
 }
 
 #elif defined(MAYAFLUX_PLATFORM_WINDOWS)
-
-#include <windows.h>
 
 namespace fs = std::filesystem;
 

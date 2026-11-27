@@ -109,12 +109,14 @@ public:
     /**
      * @brief Drain all pending ring buffer entries to sinks or console.
      *
-     * Lock-free. Safe to call from any thread. The worker calls this on its
-     * normal cadence; error() and fatal() call it synchronously before
-     * propagating exceptions or aborting to guarantee visibility.
+     * One thread drains at a time, so on return every entry pushed before the
+     * call has been written, including any another thread had already taken.
+     * Not for real-time threads, and not re-entrant from a sink.
      */
     void drain_ring_buffer()
     {
+        const DrainGuard guard(m_drain_lock);
+
         while (auto entry = m_rt_ring_buffer.pop()) {
             if (m_sinks.empty()) {
                 write_to_console(*entry);
@@ -140,11 +142,13 @@ public:
 
     void add_sink(std::unique_ptr<Sink> sink)
     {
+        const DrainGuard guard(m_drain_lock);
         m_sinks.push_back(std::move(sink));
     }
 
     void clear_sinks()
     {
+        const DrainGuard guard(m_drain_lock);
         m_sinks.clear();
     }
 
@@ -196,6 +200,30 @@ public:
     }
 
 private:
+    class DrainGuard {
+    public:
+        explicit DrainGuard(std::atomic_flag& flag)
+            : m_flag(flag)
+        {
+            while (m_flag.test_and_set(std::memory_order_acquire))
+                m_flag.wait(true, std::memory_order_relaxed);
+        }
+
+        ~DrainGuard()
+        {
+            m_flag.clear(std::memory_order_release);
+            m_flag.notify_one();
+        }
+
+        DrainGuard(const DrainGuard&) = delete;
+        DrainGuard& operator=(const DrainGuard&) = delete;
+        DrainGuard(DrainGuard&&) = delete;
+        DrainGuard& operator=(DrainGuard&&) = delete;
+
+    private:
+        std::atomic_flag& m_flag;
+    };
+
     [[nodiscard]] bool should_log(Severity severity, Component component, Context context) const
     {
         if (severity != Severity::NONE && severity < m_min_severity.load(std::memory_order_relaxed))
@@ -309,6 +337,7 @@ private:
     std::atomic<uint64_t> m_dropped_messages { 0 };
 
     alignas(64) std::atomic_flag m_push_lock = ATOMIC_FLAG_INIT;
+    alignas(64) std::atomic_flag m_drain_lock = ATOMIC_FLAG_INIT;
     Memory::MPSCQueue<RealtimeEntry, RT_RING_BUFFER_SIZE> m_rt_ring_buffer;
     Memory::LockFreeQueue<RealtimeEntry, RING_BUFFER_SIZE> m_ring_buffer;
     std::thread m_worker_thread;

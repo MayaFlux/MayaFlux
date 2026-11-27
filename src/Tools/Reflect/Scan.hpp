@@ -16,6 +16,10 @@ struct ScanInput {
     std::string resource_dir;
     std::vector<std::string> extra_args;
     std::vector<std::string> stubs;
+    /** @brief When set, replaces the generated cmake_pch.hxx the borrowed command force-includes. */
+    std::filesystem::path prefix_header;
+    /** @brief Parse without the function bodies Clang can skip. */
+    bool skip_function_bodies {};
 };
 
 /** @brief Registers the matchers of one tool on the MatchFinder a scan runs. */
@@ -53,6 +57,13 @@ struct BuildScanInput {
  */
 [[nodiscard]] bool scan_for_build(const BuildScanInput& input, const AttachMatchers& attach,
     std::vector<std::filesystem::path>& dependencies, std::string& error);
+
+/**
+ * @brief The command line a build scan of @p input would parse with, without running it.
+ *
+ * @return false with @p error set when the database or the command cannot be read.
+ */
+[[nodiscard]] bool scan_arguments(const BuildScanInput& input, std::vector<std::string>& arguments, std::string& error);
 
 /**
  * @brief Parses every header of @p input in one translation unit and fills @p collector.

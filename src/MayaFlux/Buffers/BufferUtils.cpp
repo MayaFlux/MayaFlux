@@ -111,35 +111,17 @@ double extract_single_sample(const std::shared_ptr<Nodes::Node>& node)
         return value;
     }
 
-    bool claimed = node->try_claim_snapshot_context(my_context_id);
-
-    if (claimed) {
-        try {
-            node->save_state();
-            double value = node->process_sample(0.F);
-            node->restore_state();
-            node->clear_modulator_processed_state();
-
-            if (node->is_buffer_processed()) {
-                node->request_buffer_reset();
-            }
-
-            node->release_snapshot_context(my_context_id);
-            return value;
-
-        } catch (const std::exception& e) {
-            node->release_snapshot_context(my_context_id);
-            MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
-                "Error processing node: {}", e.what());
+    if (!node->try_claim_snapshot_context(my_context_id)) {
+        const uint64_t active_context = node->get_active_snapshot_context();
+        if (active_context != 0 && !wait_for_snapshot_completion(node, active_context)) {
             return 0.0;
         }
-    } else {
-        uint64_t active_context = node->get_active_snapshot_context();
-
-        if (!wait_for_snapshot_completion(node, active_context)) {
+        if (!node->try_claim_snapshot_context(my_context_id)) {
             return 0.0;
         }
+    }
 
+    try {
         node->save_state();
         double value = node->process_sample(0.F);
         node->restore_state();
@@ -149,7 +131,13 @@ double extract_single_sample(const std::shared_ptr<Nodes::Node>& node)
             node->request_buffer_reset();
         }
 
+        node->release_snapshot_context(my_context_id);
         return value;
+    } catch (const std::exception& e) {
+        node->release_snapshot_context(my_context_id);
+        MF_RT_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "Error processing node: {}", e.what());
+        return 0.0;
     }
 }
 

@@ -1,0 +1,32 @@
+name: "Compiler cache"
+description: "Restore the one compiler cache of a platform, whatever workflow, branch or preset wrote it"
+
+inputs:
+  platform:
+    description: "windows, macos, arch or fedora"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Restore compiler cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .ccache
+        key: mf-ccache-${{ inputs.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: mf-ccache-${{ inputs.platform }}-
+
+    - name: Configure ccache
+      shell: bash
+      run: |
+        mkdir -p "$GITHUB_WORKSPACE/.ccache"
+        echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+        export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
+        ccache --set-config=max_size=1.5G
+        ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
+        ccache --set-config=compiler_check=content
+        if [ "$RUNNER_OS" != "Windows" ]; then
+          ccache --set-config=base_dir="$GITHUB_WORKSPACE"
+          ccache --set-config=hash_dir=false
+        fi
+        ccache -z

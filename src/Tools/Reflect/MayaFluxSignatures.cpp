@@ -1,10 +1,10 @@
 #include "CreatorBuild.hpp"
 #include "Discovery.hpp"
-#include "FunctionBuild.hpp"
 #include "FunctionCollector.hpp"
 #include "FunctionSidecar.hpp"
 #include "Scan.hpp"
 #include "Sidecar.hpp"
+#include "SidecarBuild.hpp"
 #include "SignatureOutput.hpp"
 
 #ifndef MAYAFLUX_REFLECT_RESOURCE_DIR
@@ -27,6 +27,7 @@ struct Config {
     bool functions { false };
     bool insert_includes { true };
     std::vector<std::filesystem::path> paths;
+    std::filesystem::path prefix_header;
 };
 
 int fail(const std::string& message)
@@ -73,6 +74,7 @@ int generate_functions(const Config& config)
     input.headers = headers;
     input.resource_dir = config.resource_dir;
     input.extra_args = config.extra_args;
+    input.prefix_header = config.prefix_header;
 
     FunctionCollector collector;
     if (!scan(input, [&collector](clang::ast_matchers::MatchFinder& finder) { collector.attach(finder); }, error)) {
@@ -164,6 +166,7 @@ int generate(const Config& config)
     input.roots = { source_root };
     input.resource_dir = config.resource_dir;
     input.extra_args = config.extra_args;
+    input.prefix_header = config.prefix_header;
     for (const SignatureEntry& entry : *entries) {
         const auto canonical = std::filesystem::canonical(entry.header, code);
         if (code) {
@@ -267,7 +270,7 @@ int main(int argc, const char** argv)
         llvm::cl::cat(category));
     llvm::cl::opt<bool> build("build",
         llvm::cl::desc("Build step: write the Creator files and mark them modified, or with --functions the "
-                       "sidecar of the one header given, inserting its include when missing. Needs "
+                       "sidecars of every header given, as files or directories, in one scan. Needs "
                        "--translation-unit (defaulted) with a compile database, or --compile-arg"),
         llvm::cl::cat(category));
     llvm::cl::list<std::string> compile_args("compile-arg",
@@ -279,6 +282,9 @@ int main(int argc, const char** argv)
     llvm::cl::opt<std::string> depfile_target("depfile-target",
         llvm::cl::desc("With --build: the target named in the depfile (default: CreatorIncludes.hpp in the output)"),
         llvm::cl::value_desc("path"), llvm::cl::cat(category));
+    llvm::cl::opt<std::string> prefix_header("prefix-header",
+        llvm::cl::desc("Header the scan force-includes in place of the generated cmake_pch.hxx of the borrowed command"),
+        llvm::cl::value_desc("file"), llvm::cl::cat(category));
     llvm::cl::list<std::string> paths(llvm::cl::Positional,
         llvm::cl::desc("<path>... (with --functions: headers or directories searched, default src/MayaFlux)"),
         llvm::cl::cat(category));
@@ -301,23 +307,43 @@ int main(int argc, const char** argv)
     config.functions = functions;
     config.insert_includes = !no_insert_include;
     config.paths.assign(paths.begin(), paths.end());
+    config.prefix_header = prefix_header.getValue();
 
     if (build && config.functions) {
-        if (config.check || config.paths.size() != 1) {
-            return fail("--functions --build takes exactly one header, and no --check");
+        if (config.check || config.paths.empty()) {
+            return fail("--functions --build needs headers or directories, and no --check");
         }
-        FunctionBuildOptions options;
-        options.header = config.paths.front();
+        SidecarBuildOptions options;
+        options.paths = config.paths;
         options.build_path = config.build_path;
         options.translation_unit = config.translation_unit;
+        options.prefix_header = config.prefix_header;
         options.resource_dir = config.resource_dir;
         options.extra_args = config.extra_args;
         options.compile_args.assign(compile_args.begin(), compile_args.end());
         options.depfile = depfile.getValue();
         options.depfile_target = depfile_target.getValue();
+        options.executable = llvm::sys::fs::getMainExecutable(argv[0], reinterpret_cast<void*>(&fail));
         options.insert_includes = config.insert_includes;
-        return run_function_build(options);
+
+        FunctionCollector collector;
+        SidecarKind kind;
+        kind.marker = "MF_DESCRIBE_FUNCTION";
+        kind.suffix = function_sidecar_suffix;
+        kind.noun = "function";
+        kind.attach = [&collector](clang::ast_matchers::MatchFinder& finder) { collector.attach(finder); };
+        kind.errors = [&collector]() -> const std::vector<std::string>& { return collector.errors(); };
+        kind.rendered = [&collector](const std::filesystem::path& header)
+            -> std::optional<std::pair<std::string, unsigned>> {
+            const auto found = collector.requests().find(header);
+            if (found == collector.requests().end()) {
+                return std::nullopt;
+            }
+            return std::pair { render_function_sidecar(found->second), last_function_line(found->second) };
+        };
+        return run_sidecar_build(options, kind);
     }
+
 
     if (build) {
         if (config.check || !config.paths.empty()) {
@@ -334,6 +360,7 @@ int main(int argc, const char** argv)
         options.compile_args.assign(compile_args.begin(), compile_args.end());
         options.depfile = depfile.getValue();
         options.depfile_target = depfile_target.getValue();
+        options.prefix_header = config.prefix_header;
         return run_creator_build(options);
     }
 

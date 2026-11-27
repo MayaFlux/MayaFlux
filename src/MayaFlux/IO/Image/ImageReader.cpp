@@ -226,20 +226,6 @@ namespace {
 
 } // namespace
 
-[[maybe_unused]] static bool g_stb_simd_logged = []() {
-#ifdef STBI_SSE2
-    MF_INFO(Journal::Component::IO, Journal::Context::Init,
-        "STB Image: SSE2 SIMD optimizations enabled (x64)");
-#elif defined(STBI_NEON)
-    MF_INFO(Journal::Component::IO, Journal::Context::Init,
-        "STB Image: NEON SIMD optimizations enabled (ARM64)");
-#else
-    MF_INFO(Journal::Component::IO, Journal::Context::Init,
-        "STB Image: No SIMD optimizations (scalar fallback)");
-#endif
-    return true;
-}();
-
 ImageReader::ImageReader(int desired_channels,
     std::optional<Kakshya::Region> region)
     : m_desired_channels(desired_channels)

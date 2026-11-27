@@ -13,7 +13,7 @@ By participating, you agree to abide by the **GPLv3 license** and the guidelines
    No proprietary or NDA-bound work can be merged.
 
 2. **Shared Credit**
-   All contributors are acknowledged in release notes, `CONTRIBUTORS.md`, and Git history.
+   All contributors are acknowledged in release notes and Git history.
    Attribution and citation are integral to how MayaFlux recognizes effort.
 
 3. **Public Benefit**
@@ -48,7 +48,7 @@ If you just want to use MayaFlux, use [Weave](https://github.com/MayaFlux/Weave)
 Before opening a PR:
 
 * Exercise your change in `src/user_project.hpp` or, for anything you want to keep around without cluttering that file, as its own file under `src/examples/`. This is the sandbox, not the review surface.
-* If the change is warranted for regression coverage, add a real test under `tests/` (GoogleTest, gated by `MAYAFLUX_BUILD_TESTS`). Manual exercise in `user_project.hpp` is not a substitute for a test when one is warranted.
+* If the change is warranted for regression coverage, add a real test under `tests/` (a submodule, [mayaflux-tests](https://github.com/MayaFlux/mayaflux-tests); GoogleTest, gated by `MAYAFLUX_BUILD_TESTS`). Manual exercise in `user_project.hpp` is not a substitute for a test when one is warranted.
 * State in the PR description what you tested and how, per the workflow above.
 
 ---
@@ -65,7 +65,7 @@ MayaFlux welcomes contributions across several domains:
 
 ---
 
-**New to MayaFlux?** Start with [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) to get building, then read this document for current contribution priorities and workflow.
+**New to MayaFlux?** Start with [`docs/Dev_Getting_Started.md`](docs/Dev_Getting_Started.md) to get building, then read this document for the contribution workflow.
 
 ---
 
@@ -137,4 +137,4 @@ If you're new, begin with:
 
 ---
 
-*(For questions or coordination, open an issue with the appropriate label, e.g. `platform-macos`, `doc`, `feature`, or `discussion`.)*
+*(For questions or coordination, open an issue with the appropriate label, e.g. `bug`, `documentation`, `enhancement` or `question`, or start a [discussion](https://github.com/MayaFlux/MayaFlux/discussions).)*

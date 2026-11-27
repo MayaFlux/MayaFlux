@@ -20,7 +20,7 @@ namespace {
         co_await Traits::delay(units);
 
         if (pending->active) {
-            const auto callback = std::move(pending->callback);
+            const auto callback = std::exchange(pending->callback, nullptr);
             callback();
             pending->active = false;
         }

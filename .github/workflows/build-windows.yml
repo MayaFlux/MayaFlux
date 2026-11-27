@@ -180,7 +180,7 @@ jobs:
         id: vcpkg-cache
         with:
           path: ${{ env.VCPKG_ROOT }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('.github/workflows/vcpkg.json') }}-${{ inputs.run_tests && inputs.test_preset != '' && 'tests' || 'base' }}
+          key: vcpkg-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -207,46 +207,54 @@ jobs:
 
       - name: Install vcpkg and dependencies
         id: install-vcpkg
-        if: steps.vcpkg-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Write-Host "=== Installing vcpkg and dependencies ===" -ForegroundColor Magenta
+          $stamp = "${{ env.VCPKG_ROOT }}\mayaflux-manifest.stamp"
+          $manifest = "${{ hashFiles('.github/workflows/vcpkg.json') }}"
+          if ((Test-Path $stamp) -and ((Get-Content $stamp -Raw).Trim() -eq $manifest)) {
+            Write-Host "✓ Cached vcpkg tree matches the manifest" -ForegroundColor Green
+            exit 0
+          }
+          "changed=true" >> $env:GITHUB_OUTPUT
 
           if (-not (Test-Path "${{ env.VCPKG_ROOT }}\.git")) {
             git clone https://github.com/Microsoft/vcpkg.git ${{ env.VCPKG_ROOT }}
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          & "${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path "${{ env.VCPKG_ROOT }}\vcpkg.exe")) {
+            & "${{ env.VCPKG_ROOT }}\bootstrap-vcpkg.bat"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
-          cd ${{ github.workspace }}/.github/workflows
-          & "${{ env.VCPKG_ROOT }}\vcpkg.exe" install `
-            --triplet x64-windows `
-            --x-install-root=${{ env.VCPKG_ROOT }}/installed `
-            --clean-buildtrees-after-build
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:VCPKG_DEFAULT_BINARY_CACHE = "$("${{ env.VCPKG_ROOT }}".Replace('/', '\'))\archives"
+          New-Item -ItemType Directory -Path $env:VCPKG_DEFAULT_BINARY_CACHE -Force | Out-Null
 
-          Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
-
-      - name: Install test dependencies
-        id: install-test-dependencies
-        if: ${{ inputs.run_tests && inputs.test_preset != '' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
-        shell: pwsh
-        run: |
           cd ${{ github.workspace }}/.github/workflows
           & "${{ env.VCPKG_ROOT }}\vcpkg.exe" install `
             --triplet x64-windows `
             --x-install-root=${{ env.VCPKG_ROOT }}/installed `
             --x-feature=tests `
-            --clean-buildtrees-after-build
+            --clean-buildtrees-after-build `
+            --clean-packages-after-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+          Set-Content -Path $stamp -Value $manifest
+          Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
+
       - name: Save vcpkg cache
-        if: ${{ always() && steps.install-vcpkg.outcome == 'success' && steps.install-test-dependencies.outcome != 'failure' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
+        id: save-vcpkg
+        if: ${{ always() && steps.install-vcpkg.outputs.changed == 'true' }}
         uses: actions/cache/save@v4
         with:
           path: ${{ env.VCPKG_ROOT }}
           key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
+
+      - name: Remove superseded vcpkg caches
+        if: ${{ always() && steps.save-vcpkg.outcome == 'success' }}
+        uses: ./.github/actions/prune-cache
+        with:
+          prefix: vcpkg-${{ runner.os }}-
+          keep: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
       - name: Install LLVM 22 (Lila JIT)
         id: install-llvm
@@ -356,6 +364,7 @@ jobs:
       - name: Install Vulkan SDK
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
+          vulkan_version: 1.4.363.1
           cache: true
           install_runtime: true
 
@@ -376,15 +385,12 @@ jobs:
           Split-Path $ccacheExe -Parent >> $env:GITHUB_PATH
           "CCACHE_EXE=$($ccacheExe.Replace('\', '/'))" >> $env:GITHUB_ENV
 
-      - name: Setup ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - name: Compiler cache
+        uses: ./.github/actions/ccache
         with:
-          install: "no"
-          key: windows-msvc-${{ inputs.preset }}-ccache-${{ env.CCACHE_VERSION }}-v2
-          save: ${{ !endsWith(inputs.preset, '-ship') }}
-          max-size: "2G"
+          platform: windows
 
-      - name: Verify and configure ccache
+      - name: Verify ccache
         shell: pwsh
         run: |
           $resolved = (Get-Command ccache -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
@@ -397,14 +403,6 @@ jobs:
             throw "Expected ccache $env:CCACHE_VERSION."
           }
           $version | Write-Host
-          & $env:CCACHE_EXE --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $env:CCACHE_EXE --set-config=compiler_check=content
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      # ============================================
-      # PHASE 3: Build Configuration
-      # ============================================
 
       - name: Set environment variables
         shell: pwsh
@@ -466,38 +464,21 @@ jobs:
       # PHASE 4: Build & Distribution
       # ============================================
 
-      - name: Build
-        shell: pwsh
-        run: |
-          Write-Host "=== Building MayaFlux ===" -ForegroundColor Cyan
-          cmake --build --preset "${{ inputs.preset }}"
-
-      - name: Configure tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        shell: pwsh
-        run: cmake --preset "${{ inputs.test_preset }}"
-
-      - name: Build tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        shell: pwsh
-        run: cmake --build --preset "${{ inputs.test_preset }}"
-
-      - name: Run portable tests
-        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
-        uses: lukka/run-cmake@v10.9
+      - name: Build and test
+        uses: ./.github/actions/build-and-test
         with:
-          testPreset: ${{ inputs.test_preset }}
-          testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
+          preset: ${{ inputs.preset }}
+          run_tests: ${{ inputs.run_tests }}
+          test_preset: ${{ inputs.test_preset }}
+          configure: "false"
+          shell: pwsh
+          check_reflection: ${{ inputs.run_reflect_check }}
 
-      - name: ccache stats
-        if: ${{ always() && env.CCACHE_EXE != '' }}
-        shell: pwsh
-        run: '& $env:CCACHE_EXE -s -v'
-
-      - name: Check reflection sidecars
-        if: ${{ inputs.run_reflect_check }}
-        shell: pwsh
-        run: ./build/mayaflux_reflect.exe --check
+      - name: Save compiler cache
+        if: ${{ always() && github.event_name != 'pull_request' && !endsWith(inputs.preset, '-ship') }}
+        uses: ./.github/actions/ccache-save
+        with:
+          platform: windows
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
@@ -528,6 +509,20 @@ jobs:
               New-Item -ItemType Directory -Path $dstSub -Force | Out-Null
               Copy-Item -Path "$srcSub\*" -Destination $dstSub -Recurse -Force
             }
+          }
+
+          $lists = @(Get-ChildItem "$env:VCPKG_INSTALLED_DIR\vcpkg\info" -Filter "gtest_*_x64-windows.list")
+          if ($lists.Count -ne 1) {
+            Write-Host "✗ Expected one gtest file list, found $($lists.Count)" -ForegroundColor Red
+            exit 1
+          }
+          Get-Content $lists[0].FullName |
+            Where-Object { -not $_.EndsWith('/') } |
+            ForEach-Object { Join-Path "dist_staging" $_.Substring("x64-windows/".Length) } |
+            Where-Object { Test-Path -LiteralPath $_ } |
+            ForEach-Object { Remove-Item -LiteralPath $_ -Force }
+          foreach ($dir in @("include\gtest", "include\gmock", "share\gtest")) {
+            Remove-Item -LiteralPath "dist_staging\$dir" -Recurse -Force -ErrorAction SilentlyContinue
           }
 
           $dllCount = @(Get-ChildItem "dist_staging\bin" -Filter *.dll).Count
@@ -662,13 +657,8 @@ jobs:
           Write-Host "  4. Run bin\lila_server.exe or link against MayaFluxLib"
           Write-Host ""
 
-      - name: Upload build artifacts (on failure)
+      - name: Upload build logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/upload-build-logs
         with:
           name: windows-build-logs
-          path: |
-            build/CMakeFiles/CMakeOutput.log
-            build/CMakeFiles/CMakeError.log
-            build/compile_commands.json
-          retention-days: 7

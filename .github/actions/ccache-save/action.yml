@@ -1,0 +1,22 @@
+name: "Save compiler cache"
+description: "Save the platform's compiler cache and drop the copies it supersedes"
+
+inputs:
+  platform:
+    description: "The platform given to the ccache action"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Save compiler cache
+      uses: actions/cache/save@v4
+      with:
+        path: .ccache
+        key: mf-ccache-${{ inputs.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+    - name: Drop superseded compiler caches
+      uses: ./.github/actions/prune-cache
+      with:
+        prefix: mf-ccache-${{ inputs.platform }}-
+        keep: mf-ccache-${{ inputs.platform }}-${{ github.run_id }}-${{ github.run_attempt }}

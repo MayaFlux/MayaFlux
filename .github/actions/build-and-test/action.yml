@@ -1,0 +1,82 @@
+name: "Build and test"
+description: "Configure and build a preset, then optionally build and run its portable tests"
+
+inputs:
+  preset:
+    description: "Configure and build preset"
+    required: true
+  configure:
+    description: "'false' when the job configured the preset itself"
+    required: false
+    default: "true"
+  run_tests:
+    description: "'true' to build and run tests, with test_preset"
+    required: false
+    default: "false"
+  test_preset:
+    description: "Preset that turns tests on over the same build directory"
+    required: false
+    default: ""
+  check_reflection:
+    description: "'true' to fail when a generated reflection file is out of date"
+    required: false
+    default: "false"
+  shell:
+    description: "Shell for the cmake commands"
+    required: false
+    default: "bash"
+  environment:
+    description: "Shell lines run before each configure"
+    required: false
+    default: ""
+  test_library_path:
+    description: "DYLD_LIBRARY_PATH while building and running tests"
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Configure CMake
+      if: ${{ inputs.configure == 'true' }}
+      shell: ${{ inputs.shell }}
+      run: |
+        ${{ inputs.environment }}
+        cmake --preset "${{ inputs.preset }}"
+
+    - name: Build
+      shell: ${{ inputs.shell }}
+      run: cmake --build --preset "${{ inputs.preset }}"
+
+    - name: Configure tests
+      if: ${{ inputs.run_tests == 'true' && inputs.test_preset != '' }}
+      shell: ${{ inputs.shell }}
+      run: |
+        ${{ inputs.environment }}
+        cmake --preset "${{ inputs.test_preset }}"
+
+    - name: Build tests
+      if: ${{ inputs.run_tests == 'true' && inputs.test_preset != '' }}
+      shell: ${{ inputs.shell }}
+      env:
+        DYLD_LIBRARY_PATH: ${{ inputs.test_library_path }}
+      run: cmake --build --preset "${{ inputs.test_preset }}"
+
+    - name: Run portable tests
+      if: ${{ inputs.run_tests == 'true' && inputs.test_preset != '' }}
+      env:
+        DYLD_LIBRARY_PATH: ${{ inputs.test_library_path }}
+      uses: lukka/run-cmake@v10.9
+      with:
+        testPreset: ${{ inputs.test_preset }}
+        testPresetAdditionalArgs: "['-L', 'ci_portable', '--parallel', '4', '--output-on-failure', '--no-tests=error']"
+
+    - name: ccache statistics
+      if: ${{ always() }}
+      shell: bash
+      run: ccache -s -v
+
+    - name: Check reflection sidecars
+      if: ${{ inputs.check_reflection == 'true' }}
+      shell: ${{ inputs.shell }}
+      run: ./build/mayaflux_reflect --check
