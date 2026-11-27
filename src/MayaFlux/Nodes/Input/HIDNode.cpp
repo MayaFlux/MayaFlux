@@ -503,7 +503,7 @@ void HIDNode::fire_events()
             continue;
         }
 
-        if (!m_have_previous) {
+        if (!m_have_previous && kind != EventKind::PRESS) {
             continue;
         }
 
@@ -527,7 +527,7 @@ void HIDNode::fire_events()
             }
 
             const double current = values[it->second];
-            const double previous = m_previous[it->second];
+            const double previous = m_have_previous ? m_previous[it->second] : 0.0;
 
             switch (kind) {
             case EventKind::PRESS:

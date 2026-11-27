@@ -177,18 +177,6 @@ namespace {
         slots[TabletFrame::BUTTONS] = static_cast<double>(mask);
     }
 
-    /**
-     * @brief Last HIDAPI error for @p device as UTF-8, or the global error when null.
-     *
-     * The underlying buffer is only valid until the next call on the device,
-     * so the text is copied immediately.
-     */
-    std::string hid_failure_reason(hid_device* device)
-    {
-        auto text = wide_to_utf8(hid_error(device));
-        return text.empty() ? std::string("no detail from HIDAPI") : text;
-    }
-
     bool is_keyboard_or_pointer(uint16_t usage_page, uint16_t usage)
     {
         return usage_page == k_page_generic
@@ -260,10 +248,11 @@ bool TabletBackend::initialize()
         return true;
     }
 
-    if (hid_init() != 0) {
+    m_session = m_config.session ? m_config.session : std::make_shared<HIDSession>();
+    if (!m_session->valid()) {
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
-            "Failed to initialize HIDAPI for tablet backend: {}",
-            hid_failure_reason(nullptr));
+            "Failed to initialize HIDAPI for tablet backend");
+        m_session.reset();
         return false;
     }
 
@@ -296,6 +285,7 @@ void TabletBackend::start()
     m_stop_requested.store(false);
     m_running.store(true);
     m_poll_thread = std::thread(&TabletBackend::poll_thread_func, this);
+    m_scan_thread = std::thread(&TabletBackend::scan_thread_func, this);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
         "TabletBackend started");
@@ -308,9 +298,13 @@ void TabletBackend::stop()
     }
 
     m_stop_requested.store(true);
+    m_scan_wake.notify();
 
     if (m_poll_thread.joinable()) {
         m_poll_thread.join();
+    }
+    if (m_scan_thread.joinable()) {
+        m_scan_thread.join();
     }
 
     m_running.store(false);
@@ -326,18 +320,12 @@ void TabletBackend::shutdown()
 
     {
         std::lock_guard lock(m_devices_mutex);
-        for (auto& [path, device] : m_devices) {
-            if (device->handle) {
-                hid_close(device->handle);
-                device->handle = nullptr;
-            }
-        }
-        m_devices.clear();
-        m_tools.clear();
-        m_tool_paths.clear();
+        m_tablets.clear();
+        m_rejected.clear();
+        m_read_set.reset();
     }
 
-    hid_exit();
+    m_session.reset();
     m_initialized.store(false);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
@@ -354,10 +342,63 @@ size_t TabletBackend::refresh_devices()
         return 0;
     }
 
-    hid_device_info* devs = hid_enumerate(0x0, 0x0);
+    std::vector<DeviceEvent> events;
+    size_t count = 0;
+    {
+        std::lock_guard lock(m_devices_mutex);
+        m_rejected.clear();
+        refresh_locked(events);
+        for (const auto& [path, tablet] : m_tablets) {
+            count += tablet.tools.size();
+        }
+    }
+
+    for (const auto& [info, connected] : events) {
+        notify_device_change(info, connected);
+    }
+
+    return count;
+}
+
+void TabletBackend::refresh_locked(std::vector<DeviceEvent>& events)
+{
+    hid_device_info* devs = nullptr;
+    {
+        std::lock_guard hidapi(m_session->mutex());
+        devs = hid_enumerate(0x0, 0x0);
+    }
+
+    std::unordered_set<std::string> present;
+    for (hid_device_info* cur = devs; cur != nullptr; cur = cur->next) {
+        if (cur->path) {
+            present.insert(cur->path);
+        }
+    }
+
+    bool removed = false;
+    for (auto it = m_tablets.begin(); it != m_tablets.end();) {
+        if (present.contains(it->first)) {
+            ++it;
+            continue;
+        }
+        if (it->second.device) {
+            it->second.device->active.store(false);
+        }
+        for (const auto& tool : it->second.tools) {
+            MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
+                "Tablet tool disconnected: {}", tool.name);
+            events.emplace_back(tool, false);
+        }
+        it = m_tablets.erase(it);
+        removed = true;
+    }
+    std::erase_if(m_rejected, [&](const std::string& path) { return !present.contains(path); });
+    if (removed) {
+        publish_read_set();
+    }
 
     for (hid_device_info* cur = devs; cur != nullptr; cur = cur->next) {
-        if (is_keyboard_or_pointer(cur->usage_page, cur->usage))
+        if (!cur->path || is_keyboard_or_pointer(cur->usage_page, cur->usage))
             continue;
 
         if (!m_config.probe_all_devices
@@ -365,128 +406,214 @@ size_t TabletBackend::refresh_devices()
             && cur->usage_page != 0)
             continue;
 
-        std::string path(cur->path);
-
-        {
-            std::lock_guard lock(m_devices_mutex);
-            if (m_devices.find(path) != m_devices.end())
-                continue;
+        const std::string path(cur->path);
+        if (!m_tablets.contains(path) && !m_rejected.contains(path)) {
+            adopt_locked(path, *cur, events);
         }
-
-        std::string name = wide_to_utf8(cur->product_string);
-        if (name.empty())
-            name = "Tablet";
-
-        adopt_device(path, cur->vendor_id, cur->product_id, std::move(name),
-            cur->usage_page == k_page_digitizer);
     }
 
     hid_free_enumeration(devs);
 
-    std::lock_guard lock(m_devices_mutex);
-    return m_tools.size();
+    if (m_config.auto_reconnect) {
+        for (auto& [path, tablet] : m_tablets) {
+            if (tablet.wanted && !tablet.device && open_tablet_locked(path, tablet)) {
+                for (const auto& tool : tablet.tools) {
+                    events.emplace_back(tool, true);
+                }
+            }
+        }
+    }
 }
 
-bool TabletBackend::adopt_device(const std::string& path, uint16_t vid,
-    uint16_t pid, std::string name, bool announced_digitizer)
+std::shared_ptr<TabletBackend::TabletDevice> TabletBackend::open_path(
+    const std::string& path, std::string& reason)
 {
-    hid_device* handle = hid_open_path(path.c_str());
+    hid_device* handle = nullptr;
+    {
+        std::lock_guard hidapi(m_session->mutex());
+        handle = hid_open_path(path.c_str());
+        if (!handle) {
+            reason = wide_to_utf8(hid_error(nullptr));
+        }
+    }
     if (!handle) {
-        const std::string reason = hid_failure_reason(nullptr);
-        if (!announced_digitizer) {
+        if (reason.empty()) {
+            reason = "no detail from HIDAPI";
+        }
+        return nullptr;
+    }
+
+    hid_set_nonblocking(handle, 1);
+
+    auto device = std::make_shared<TabletDevice>();
+    device->handle = Handle(handle, [session = m_session](hid_device* open) {
+        std::lock_guard hidapi(session->mutex());
+        hid_close(open);
+    });
+    device->read_buffer.resize(m_config.read_buffer_size);
+    device->active.store(true);
+    return device;
+}
+
+void TabletBackend::adopt_locked(const std::string& path,
+    const hid_device_info& info, std::vector<DeviceEvent>& events)
+{
+    std::string name = wide_to_utf8(info.product_string);
+    if (name.empty())
+        name = "Tablet";
+
+    std::string reason;
+    auto device = open_path(path, reason);
+    if (!device) {
+        m_rejected.insert(path);
+        if (info.usage_page != k_page_digitizer) {
             MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
                 "Could not open HID device {} ({}): {}", name, path, reason);
-            return false;
+            return;
         }
 
         MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend,
             "Failed to open tablet {} ({}): {}", name, path, reason);
 
-        if (const auto hint = hid_open_failure_hint(vid, pid, reason); !hint.empty()) {
+        if (const auto hint = hid_open_failure_hint(info.vendor_id, info.product_id,
+                reason, HIDSession::bus_of(info.bus_type));
+            !hint.empty()) {
             MF_ERROR(Journal::Component::Core, Journal::Context::InputBackend, "{}", hint);
         }
-        return false;
+        return;
     }
 
     std::vector<uint8_t> descriptor(4096);
-    const int written = hid_get_report_descriptor(handle,
+    const int written = hid_get_report_descriptor(device->handle.get(),
         descriptor.data(), descriptor.size());
 
     if (written <= 0) {
         MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
-            "Could not read report descriptor of {} ({}): {}",
-            name, path, hid_failure_reason(handle));
-        hid_close(handle);
-        return false;
+            "Could not read report descriptor of {} ({})", name, path);
+        m_rejected.insert(path);
+        return;
     }
     descriptor.resize(static_cast<size_t>(written));
 
     TabletLayout layout = parse_descriptor(descriptor);
     if (layout.fields.empty()) {
-        hid_close(handle);
-        return false;
+        m_rejected.insert(path);
+        return;
     }
 
-    hid_set_nonblocking(handle, 0);
+    const std::string serial = wide_to_utf8(info.serial_number);
+    const std::string identity = serial.empty()
+        ? "p:" + path
+        : "s:" + std::to_string(static_cast<int>(info.bus_type))
+            + ":" + std::to_string(info.vendor_id) + ":" + std::to_string(info.product_id)
+            + ":" + serial + ":" + std::to_string(info.interface_number);
 
-    auto device = std::make_shared<TabletDevice>();
-    device->handle = handle;
-    device->path = path;
-    device->name = std::move(name);
-    device->vendor_id = vid;
-    device->product_id = pid;
-    device->layout = std::move(layout);
-    device->read_buffer.resize(m_config.read_buffer_size);
-    device->active.store(true);
-
-    std::vector<TabletToolInfo> announced;
-
-    {
-        std::lock_guard lock(m_devices_mutex);
-
-        TabletToolInfo pen;
-        pen.id = m_next_device_id++;
-        pen.backend_type = InputType::TABLET;
-        pen.is_connected = true;
-        pen.is_input = true;
-        pen.vendor_id = vid;
-        pen.product_id = pid;
-        pen.tablet_name = device->name;
-        pen.name = device->name + " Pen";
-        pen.tool_type = TabletToolType::PEN;
-        pen.axes = device->layout.axes;
-
-        device->pen_id = pen.id;
-        m_tools[pen.id] = pen;
-        m_tool_paths[pen.id] = path;
-        announced.push_back(pen);
-
-        if (m_config.split_eraser && device->layout.has_invert) {
-            TabletToolInfo eraser = pen;
-            eraser.id = m_next_device_id++;
-            eraser.name = device->name + " Eraser";
-            eraser.tool_type = TabletToolType::ERASER;
-
-            device->eraser_id = eraser.id;
-            m_tools[eraser.id] = eraser;
-            m_tool_paths[eraser.id] = path;
-            announced.push_back(eraser);
-        } else {
-            device->eraser_id = device->pen_id;
-        }
-
-        m_devices[path] = device;
+    const bool split = m_config.split_eraser && layout.has_invert;
+    auto [ids, inserted] = m_identity_ids.try_emplace(identity);
+    if (inserted) {
+        ids->second.first = m_next_device_id++;
+        ids->second.second = split ? m_next_device_id++ : ids->second.first;
     }
+
+    Tablet tablet;
+    tablet.layout = std::move(layout);
+    tablet.serial = std::make_shared<std::atomic<uint64_t>>(0);
+
+    TabletToolInfo pen;
+    pen.id = ids->second.first;
+    pen.backend_type = InputType::TABLET;
+    pen.is_connected = true;
+    pen.is_input = true;
+    pen.vendor_id = info.vendor_id;
+    pen.product_id = info.product_id;
+    pen.serial_number = serial;
+    pen.tablet_name = name;
+    pen.name = name + " Pen";
+    pen.tool_type = TabletToolType::PEN;
+    pen.axes = tablet.layout.axes;
+    tablet.tools.push_back(pen);
+
+    if (split) {
+        TabletToolInfo eraser = pen;
+        eraser.id = ids->second.second;
+        eraser.name = name + " Eraser";
+        eraser.tool_type = TabletToolType::ERASER;
+        tablet.tools.push_back(eraser);
+    }
+
+    device->name = name;
+    device->layout = tablet.layout;
+    device->serial = tablet.serial;
+    device->pen_id = tablet.tools.front().id;
+    device->eraser_id = tablet.tools.back().id;
+    tablet.device = std::move(device);
 
     MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
         "Tablet adopted: {} (VID:{:04X} PID:{:04X}, {} field(s))",
-        device->name, vid, pid, device->layout.fields.size());
+        name, info.vendor_id, info.product_id, tablet.layout.fields.size());
 
-    for (const auto& info : announced) {
-        notify_device_change(info, true);
+    for (const auto& tool : tablet.tools) {
+        events.emplace_back(tool, true);
     }
 
+    m_tablets.emplace(path, std::move(tablet));
+    publish_read_set();
+}
+
+bool TabletBackend::open_tablet_locked(const std::string& path, Tablet& tablet)
+{
+    std::string reason;
+    auto device = open_path(path, reason);
+    if (!device) {
+        MF_DEBUG(Journal::Component::Core, Journal::Context::InputBackend,
+            "Could not open tablet {} ({}): {}", tablet.tools.front().tablet_name, path, reason);
+        return false;
+    }
+
+    device->name = tablet.tools.front().tablet_name;
+    device->layout = tablet.layout;
+    device->serial = tablet.serial;
+    device->pen_id = tablet.tools.front().id;
+    device->eraser_id = tablet.tools.back().id;
+    tablet.device = std::move(device);
+    publish_read_set();
     return true;
+}
+
+void TabletBackend::release_lost_locked(std::vector<DeviceEvent>& events)
+{
+    bool released = false;
+
+    for (auto& [path, tablet] : m_tablets) {
+        if (!tablet.device || tablet.device->active.load()) {
+            continue;
+        }
+
+        MF_INFO(Journal::Component::Core, Journal::Context::InputBackend,
+            "Tablet lost: {}", tablet.device->name);
+
+        tablet.device.reset();
+        released = true;
+        for (const auto& tool : tablet.tools) {
+            events.emplace_back(tool, false);
+        }
+    }
+
+    if (released) {
+        publish_read_set();
+    }
+}
+
+void TabletBackend::publish_read_set()
+{
+    ReadSet devices;
+    devices.reserve(m_tablets.size());
+    for (const auto& [path, tablet] : m_tablets) {
+        if (tablet.device) {
+            devices.emplace_back(tablet.device);
+        }
+    }
+    m_read_set.publish(std::move(devices));
 }
 
 // =============================================================================
@@ -495,48 +622,91 @@ bool TabletBackend::adopt_device(const std::string& path, uint16_t vid,
 
 void TabletBackend::poll_thread_func()
 {
-    while (!m_stop_requested.load()) {
-        std::vector<std::shared_ptr<TabletDevice>> snapshot;
+    std::vector<std::shared_ptr<TabletDevice>> devices;
 
-        {
-            std::lock_guard lock(m_devices_mutex);
-            snapshot.reserve(m_devices.size());
-            for (auto& [path, device] : m_devices) {
-                if (device->active.load() && device->handle)
-                    snapshot.push_back(device);
+    while (!m_stop_requested.load()) {
+        if (const auto targets = m_read_set.read()) {
+            for (const auto& target : *targets) {
+                if (auto device = target.lock()) {
+                    devices.push_back(std::move(device));
+                }
             }
         }
 
-        if (snapshot.empty()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            continue;
+        bool received = false;
+        for (const auto& device : devices) {
+            received |= drain_device(*device);
         }
+        devices.clear();
 
-        for (auto& device : snapshot) {
-            poll_device(*device);
+        if (!received) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 }
 
-void TabletBackend::poll_device(TabletDevice& device)
+void TabletBackend::scan_thread_func()
 {
-    const int bytes = hid_read_timeout(device.handle,
-        device.read_buffer.data(), device.read_buffer.size(),
-        m_config.poll_timeout_ms);
+    const std::chrono::milliseconds interval(m_config.reconnect_interval_ms);
+    auto next_rescan = std::chrono::steady_clock::now() + interval;
 
-    if (bytes > 0) {
+    while (true) {
+        if (m_config.auto_reconnect) {
+            (void)m_scan_wake.wait_until(next_rescan);
+        } else {
+            m_scan_wake.wait();
+        }
+        if (m_stop_requested.load()) {
+            break;
+        }
+
+        std::vector<DeviceEvent> events;
+        {
+            std::lock_guard lock(m_devices_mutex);
+            release_lost_locked(events);
+
+            const auto now = std::chrono::steady_clock::now();
+            if (m_config.auto_reconnect && now >= next_rescan) {
+                next_rescan = now + interval;
+                refresh_locked(events);
+            }
+        }
+        for (const auto& [info, connected] : events) {
+            notify_device_change(info, connected);
+        }
+    }
+}
+
+bool TabletBackend::drain_device(TabletDevice& device)
+{
+    constexpr size_t k_max_reports = 64;
+
+    int wait_ms = m_config.poll_timeout_ms;
+    size_t reports = 0;
+
+    while (reports < k_max_reports && device.active.load()) {
+        const int bytes = hid_read_timeout(device.handle.get(),
+            device.read_buffer.data(), device.read_buffer.size(), wait_ms);
+
+        if (bytes == 0) {
+            break;
+        }
+        if (bytes < 0) {
+            if (device.active.exchange(false)) {
+                MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
+                    "Tablet read error on {}", device.name);
+                m_scan_wake.notify();
+            }
+            break;
+        }
+
         unpack_report(device,
-            std::span<const uint8_t>(device.read_buffer.data(),
-                static_cast<size_t>(bytes)));
-        return;
+            std::span<const uint8_t>(device.read_buffer.data(), static_cast<size_t>(bytes)));
+        wait_ms = 0;
+        ++reports;
     }
 
-    if (bytes < 0) {
-        MF_WARN(Journal::Component::Core, Journal::Context::InputBackend,
-            "Tablet read error on {}: {}", device.name,
-            hid_failure_reason(device.handle));
-        device.active.store(false);
-    }
+    return reports > 0;
 }
 
 // =============================================================================
@@ -619,15 +789,9 @@ void TabletBackend::unpack_report(TabletDevice& device, std::span<const uint8_t>
             set_button_bit(device.slots, 1, raw != 0);
             break;
 
-        case k_pseudo_serial: {
-            std::lock_guard lock(m_devices_mutex);
-            auto it = m_tools.find(device.pen_id);
-            if (it != m_tools.end()) {
-                it->second.hardware_serial = static_cast<uint64_t>(
-                    static_cast<uint32_t>(raw));
-            }
+        case k_pseudo_serial:
+            device.serial->store(static_cast<uint32_t>(raw));
             break;
-        }
 
         default:
             break;
@@ -666,14 +830,24 @@ void TabletBackend::emit_frame(TabletDevice& device)
 // Queries
 // =============================================================================
 
+const TabletBackend::Tablet* TabletBackend::find_tool(uint32_t device_id) const
+{
+    for (const auto& [path, tablet] : m_tablets) {
+        if (std::ranges::any_of(tablet.tools,
+                [device_id](const TabletToolInfo& tool) { return tool.id == device_id; })) {
+            return &tablet;
+        }
+    }
+    return nullptr;
+}
+
 std::vector<InputDeviceInfo> TabletBackend::get_devices() const
 {
     std::lock_guard lock(m_devices_mutex);
 
     std::vector<InputDeviceInfo> result;
-    result.reserve(m_tools.size());
-    for (const auto& [id, info] : m_tools) {
-        result.push_back(info);
+    for (const auto& [path, tablet] : m_tablets) {
+        result.insert(result.end(), tablet.tools.begin(), tablet.tools.end());
     }
     return result;
 }
@@ -681,47 +855,42 @@ std::vector<InputDeviceInfo> TabletBackend::get_devices() const
 bool TabletBackend::open_device(uint32_t device_id)
 {
     std::lock_guard lock(m_devices_mutex);
-    if (m_tools.find(device_id) == m_tools.end())
-        return false;
 
-    auto path_it = m_tool_paths.find(device_id);
-    if (path_it != m_tool_paths.end()) {
-        auto dev_it = m_devices.find(path_it->second);
-        if (dev_it != m_devices.end())
-            dev_it->second->active.store(true);
+    for (auto& [path, tablet] : m_tablets) {
+        if (!std::ranges::any_of(tablet.tools,
+                [device_id](const TabletToolInfo& tool) { return tool.id == device_id; })) {
+            continue;
+        }
+        tablet.wanted = true;
+        return (tablet.device && tablet.device->active.load()) || open_tablet_locked(path, tablet);
     }
-    return true;
+    return false;
 }
 
 void TabletBackend::close_device(uint32_t device_id)
 {
-    std::shared_ptr<TabletDevice> device;
-    std::string path;
+    std::lock_guard lock(m_devices_mutex);
 
-    {
-        std::lock_guard lock(m_devices_mutex);
-        auto path_it = m_tool_paths.find(device_id);
-        if (path_it == m_tool_paths.end())
-            return;
-        path = path_it->second;
-
-        auto dev_it = m_devices.find(path);
-        if (dev_it == m_devices.end())
-            return;
-        device = dev_it->second;
+    for (auto& [path, tablet] : m_tablets) {
+        if (!std::ranges::any_of(tablet.tools,
+                [device_id](const TabletToolInfo& tool) { return tool.id == device_id; })) {
+            continue;
+        }
+        tablet.wanted = false;
+        if (tablet.device) {
+            tablet.device->active.store(false);
+            tablet.device.reset();
+            publish_read_set();
+        }
+        return;
     }
-
-    device->active.store(false);
 }
 
 bool TabletBackend::is_device_open(uint32_t device_id) const
 {
     std::lock_guard lock(m_devices_mutex);
-    auto it = m_tool_paths.find(device_id);
-    if (it == m_tool_paths.end())
-        return false;
-    auto dev = m_devices.find(it->second);
-    return dev != m_devices.end() && dev->second->active.load();
+    const Tablet* tablet = find_tool(device_id);
+    return tablet && tablet->device && tablet->device->active.load();
 }
 
 std::vector<uint32_t> TabletBackend::get_open_devices() const
@@ -729,9 +898,13 @@ std::vector<uint32_t> TabletBackend::get_open_devices() const
     std::lock_guard lock(m_devices_mutex);
 
     std::vector<uint32_t> result;
-    result.reserve(m_tools.size());
-    for (const auto& [id, info] : m_tools) {
-        result.push_back(id);
+    for (const auto& [path, tablet] : m_tablets) {
+        if (!tablet.device) {
+            continue;
+        }
+        for (const auto& tool : tablet.tools) {
+            result.push_back(tool.id);
+        }
     }
     return result;
 }
@@ -739,25 +912,22 @@ std::vector<uint32_t> TabletBackend::get_open_devices() const
 std::optional<TabletToolInfo> TabletBackend::get_tool_info(uint32_t device_id) const
 {
     std::lock_guard lock(m_devices_mutex);
-    auto it = m_tools.find(device_id);
-    if (it == m_tools.end())
+    const Tablet* tablet = find_tool(device_id);
+    if (!tablet)
         return std::nullopt;
-    return it->second;
+
+    auto info = *std::ranges::find(tablet->tools, device_id, &TabletToolInfo::id);
+    info.hardware_serial = tablet->serial->load();
+    return info;
 }
 
 std::optional<TabletLayout> TabletBackend::get_layout(uint32_t device_id) const
 {
     std::lock_guard lock(m_devices_mutex);
-
-    auto path_it = m_tool_paths.find(device_id);
-    if (path_it == m_tool_paths.end())
+    const Tablet* tablet = find_tool(device_id);
+    if (!tablet)
         return std::nullopt;
-
-    auto dev_it = m_devices.find(path_it->second);
-    if (dev_it == m_devices.end())
-        return std::nullopt;
-
-    return dev_it->second->layout;
+    return tablet->layout;
 }
 
 std::string TabletBackend::get_version() const
@@ -775,29 +945,25 @@ std::string TabletBackend::get_version() const
 
 void TabletBackend::set_input_callback(InputCallback callback)
 {
-    std::lock_guard lock(m_callback_mutex);
-    m_input_callback = std::move(callback);
+    m_input_callback.publish(std::move(callback));
 }
 
 void TabletBackend::set_device_callback(DeviceCallback callback)
 {
-    std::lock_guard lock(m_callback_mutex);
-    m_device_callback = std::move(callback);
+    m_device_callback.publish(std::move(callback));
 }
 
 void TabletBackend::notify_input(const InputValue& value)
 {
-    std::lock_guard lock(m_callback_mutex);
-    if (m_input_callback) {
-        m_input_callback(value);
+    if (const auto callback = m_input_callback.read(); callback && *callback) {
+        (*callback)(value);
     }
 }
 
 void TabletBackend::notify_device_change(const InputDeviceInfo& info, bool connected)
 {
-    std::lock_guard lock(m_callback_mutex);
-    if (m_device_callback) {
-        m_device_callback(info, connected);
+    if (const auto callback = m_device_callback.read(); callback && *callback) {
+        (*callback)(info, connected);
     }
 }
 

@@ -399,6 +399,9 @@ public:
     /**
      * @brief Create and register generic input node.
      *
+     * Takes only the settings every input shares. For backend specific ones use
+     * read_hid, read_midi, read_osc, read_tablet or read_serial.
+     *
      * For a serial binding the node follows the first number of each message, which is
      * what an Arduino prints with Serial.println(value).
      *

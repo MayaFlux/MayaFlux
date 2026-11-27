@@ -10,29 +10,41 @@ namespace MayaFlux::Core {
 // HID Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** @brief HID transport reported by the platform. */
+enum class HIDBus : uint8_t {
+    UNKNOWN,
+    USB,
+    BLUETOOTH,
+    I2C,
+    SPI
+};
+
 /**
  * @brief Filter for HID device enumeration
  *
- * Used to selectively enumerate HID devices by VID/PID or usage page/usage.
- * All fields are optional - nullopt means "match any".
+ * All fields are optional; nullopt matches any value.
  */
 struct MAYAFLUX_API HIDDeviceFilter {
     std::optional<uint16_t> vendor_id; ///< USB Vendor ID (nullopt = any)
     std::optional<uint16_t> product_id; ///< USB Product ID (nullopt = any)
     std::optional<uint16_t> usage_page; ///< HID usage page (nullopt = any)
     std::optional<uint16_t> usage; ///< HID usage (nullopt = any)
+    std::optional<HIDBus> bus; ///< HID bus (nullopt = any)
 
     /**
      * @brief Check if a device matches this filter
      */
     [[nodiscard]] bool matches(uint16_t vid, uint16_t pid,
-        uint16_t upage = 0, uint16_t usg = 0) const
+        uint16_t upage = 0, uint16_t usg = 0,
+        HIDBus device_bus = HIDBus::UNKNOWN) const
     {
         if (vendor_id && *vendor_id != vid)
             return false;
         if (product_id && *product_id != pid)
             return false;
         if (usage_page && *usage_page != upage)
+            return false;
+        if (bus && *bus != device_bus)
             return false;
 
         return !usage || *usage == usg;
@@ -44,6 +56,12 @@ struct MAYAFLUX_API HIDDeviceFilter {
 
     /** @brief Match any HID device */
     static HIDDeviceFilter any() { return {}; }
+
+    /** @brief Match Bluetooth HID devices, including Bluetooth LE */
+    static HIDDeviceFilter bluetooth()
+    {
+        return { .bus = HIDBus::BLUETOOTH };
+    }
 
     /** @brief Match gamepads (Usage Page 0x01, Usage 0x05) */
     static HIDDeviceFilter controller()
@@ -110,9 +128,9 @@ MF_DESCRIBE(HIDDeviceFilter)
 struct MAYAFLUX_API HIDBackendInfo {
     bool enabled {}; ///< Enable HID backend
     std::vector<HIDDeviceFilter> filters; ///< Device filters (empty = all devices)
-    bool auto_open {}; ///< Auto-open matching devices on start
+    bool auto_open {}; ///< Auto-open matching devices at startup and on discovery
     size_t read_buffer_size { 64 }; ///< Per-device read buffer size
-    int poll_timeout_ms { 10 }; ///< Polling timeout in milliseconds
+    int poll_timeout_ms { 0 }; ///< Per-device HID read wait in milliseconds
     bool auto_reconnect { true }; ///< Auto-reconnect disconnected devices
     uint32_t reconnect_interval_ms { 1000 }; ///< Reconnection attempt interval
 
@@ -126,9 +144,10 @@ MF_DESCRIBE(HIDBackendInfo)
 struct MAYAFLUX_API TabletBackendInfo {
     bool enabled { false }; ///< Enable tablet backend
     size_t read_buffer_size { 256 }; ///< Per-device read buffer size
-    int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
+    int poll_timeout_ms { 0 }; ///< Per-device HID read wait in milliseconds
     bool split_eraser { true }; ///< Report the eraser end as its own tool
-
+    bool auto_reconnect { true }; ///< Rescan every interval, picking up new and returning tablets
+    uint32_t reconnect_interval_ms { 1000 }; ///< Rescan interval
 };
 
 MF_DESCRIBE(TabletBackendInfo)

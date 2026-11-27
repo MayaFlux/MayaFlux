@@ -61,7 +61,14 @@ void InputNode::process_input(const Core::InputValue& value)
     m_last_device_id.store(value.device_id);
     m_last_source_type = value.source_type;
 
-    (void)m_input_history.push(value);
+    const auto entry = std::make_shared<const Core::InputValue>(value);
+    const size_t keep = std::max<size_t>(m_config.history_size, 1);
+    m_input_history.update([&entry, keep](auto& history) {
+        if (history.size() >= keep) {
+            history.erase(history.begin(), history.end() - static_cast<std::ptrdiff_t>(keep - 1));
+        }
+        history.push_back(entry);
+    });
 
     notify_tick(smoothed);
 }
@@ -73,15 +80,22 @@ bool InputNode::has_new_input()
 
 std::optional<Core::InputValue> InputNode::get_last_input() const
 {
-    auto history = m_input_history.snapshot();
-    if (history.empty())
+    const auto history = m_input_history.read();
+    if (!history || history->empty())
         return std::nullopt;
-    return history.back();
+    return *history->back();
 }
 
 std::vector<Core::InputValue> InputNode::get_input_history() const
 {
-    return m_input_history.snapshot();
+    std::vector<Core::InputValue> values;
+    if (const auto history = m_input_history.read()) {
+        values.reserve(history->size());
+        for (const auto& entry : *history) {
+            values.push_back(*entry);
+        }
+    }
+    return values;
 }
 
 double InputNode::extract_value(const Core::InputValue& value)

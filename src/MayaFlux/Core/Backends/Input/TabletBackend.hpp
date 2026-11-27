@@ -1,10 +1,14 @@
 #pragma once
 
+#include "MayaFlux/Core/Backends/Input/HIDSession.hpp"
 #include "MayaFlux/Core/Backends/Input/InputBackend.hpp"
 #include "MayaFlux/Core/Input/HIDDescriptor.hpp"
 #include "MayaFlux/Core/Input/TabletFrame.hpp"
+#include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+#include "MayaFlux/Transitive/Parallel/Notifier.hpp"
 
 using hid_device = struct hid_device_;
+struct hid_device_info;
 
 namespace MayaFlux::Core {
 
@@ -67,8 +71,18 @@ struct TabletLayout {
  * timestamp_ns is the time the report was read. HIDAPI carries no device
  * timestamp on any platform, so poll jitter is present in the value.
  *
- * Threading follows HIDBackend: a dedicated thread polls open devices and
- * invokes the input callback from that thread.
+ * Threading model:
+ * - Reading: a poll thread that takes no lock and delivers every queued report
+ * - Hotplug, reconnect and lost devices: a scan thread
+ * - Input callbacks run on the poll thread. Device callbacks run on the scan
+ *   thread, or on the caller of refresh_devices()
+ * - Callbacks may call back into the backend, except stop() and shutdown()
+ *
+ * Closing either tool of a tablet closes the device both share, though a
+ * report already being read may still arrive. A tablet that is unplugged or
+ * goes to sleep is announced as disconnected, and with auto_reconnect it is
+ * picked up again, under the same ids when it has a serial number or returns
+ * on the same path.
  *
  * Requires read access to the HID device nodes. On Linux that is a udev
  * rule for /dev/hidraw*, on macOS the Input Monitoring permission.
@@ -80,9 +94,12 @@ public:
      */
     struct Config {
         size_t read_buffer_size { 256 }; ///< Per-device read buffer
-        int poll_timeout_ms { 2 }; ///< Timeout for hid_read_timeout
+        int poll_timeout_ms { 0 }; ///< Wait for each device's first report per pass, delays the other devices
         bool split_eraser { true }; ///< Report the eraser end as its own tool
         bool probe_all_devices { true }; ///< Read every descriptor rather than trusting enumeration; keyboards and pointing devices are never opened
+        bool auto_reconnect { true }; ///< Rescan every interval, picking up new and returning tablets
+        uint32_t reconnect_interval_ms { 1000 }; ///< Rescan interval
+        std::shared_ptr<HIDSession> session; ///< Shared HIDAPI session, or null for one of its own
     };
 
     TabletBackend();
@@ -153,18 +170,18 @@ public:
     [[nodiscard]] static TabletLayout parse_descriptor(std::span<const uint8_t> descriptor);
 
 private:
+    using Handle = std::unique_ptr<hid_device, std::function<void(hid_device*)>>;
+
     /**
-     * @brief One physical HID device and the tools it presents.
+     * @brief Reading state of one open device, touched by the poll thread.
      */
     struct TabletDevice {
-        hid_device* handle { nullptr };
-        std::string path;
+        Handle handle;
         std::string name;
-        uint16_t vendor_id {};
-        uint16_t product_id {};
         TabletLayout layout;
         std::vector<uint8_t> read_buffer;
         std::atomic<bool> active { false };
+        std::shared_ptr<std::atomic<uint64_t>> serial;
 
         uint32_t pen_id {};
         uint32_t eraser_id {};
@@ -172,31 +189,58 @@ private:
         bool inverted { false };
     };
 
+    /**
+     * @brief One present tablet, open or not.
+     */
+    struct Tablet {
+        std::vector<TabletToolInfo> tools;
+        TabletLayout layout;
+        std::shared_ptr<std::atomic<uint64_t>> serial;
+        std::shared_ptr<TabletDevice> device;
+        bool wanted { true };
+    };
+
+    using DeviceEvent = std::pair<InputDeviceInfo, bool>;
+    using ReadSet = std::vector<std::weak_ptr<TabletDevice>>;
+
     Config m_config;
 
     std::atomic<bool> m_initialized { false };
     std::atomic<bool> m_running { false };
     std::atomic<bool> m_stop_requested { false };
 
+    std::shared_ptr<HIDSession> m_session;
+
+    /** Registry only, never taken by the poll thread. */
     mutable std::mutex m_devices_mutex;
-    std::unordered_map<std::string, std::shared_ptr<TabletDevice>> m_devices;
-    std::unordered_map<uint32_t, TabletToolInfo> m_tools;
-    std::unordered_map<uint32_t, std::string> m_tool_paths;
+    std::unordered_map<std::string, Tablet> m_tablets;
+    std::unordered_set<std::string> m_rejected;
+    std::unordered_map<std::string, std::pair<uint32_t, uint32_t>> m_identity_ids;
     uint32_t m_next_device_id { 1 };
 
     std::thread m_poll_thread;
-    InputCallback m_input_callback;
-    DeviceCallback m_device_callback;
-    mutable std::mutex m_callback_mutex;
+    std::thread m_scan_thread;
+    Parallel::Notifier m_scan_wake;
+    Memory::SnapshotCell<ReadSet> m_read_set;
+    Memory::SnapshotCell<InputCallback> m_input_callback;
+    Memory::SnapshotCell<DeviceCallback> m_device_callback;
 
     void poll_thread_func();
-    void poll_device(TabletDevice& device);
+    void scan_thread_func();
+    bool drain_device(TabletDevice& device);
 
     void unpack_report(TabletDevice& device, std::span<const uint8_t> report);
     void emit_frame(TabletDevice& device);
 
-    bool adopt_device(const std::string& path, uint16_t vid, uint16_t pid,
-        std::string name, bool announced_digitizer);
+    void refresh_locked(std::vector<DeviceEvent>& events);
+    void adopt_locked(const std::string& path, const hid_device_info& info,
+        std::vector<DeviceEvent>& events);
+    std::shared_ptr<TabletDevice> open_path(const std::string& path, std::string& reason);
+    bool open_tablet_locked(const std::string& path, Tablet& tablet);
+    void release_lost_locked(std::vector<DeviceEvent>& events);
+    void publish_read_set();
+
+    [[nodiscard]] const Tablet* find_tool(uint32_t device_id) const;
 
     void notify_input(const InputValue& value);
     void notify_device_change(const InputDeviceInfo& info, bool connected);

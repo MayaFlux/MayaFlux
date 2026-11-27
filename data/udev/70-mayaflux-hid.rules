@@ -50,6 +50,17 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="0458", TAG+="uaccess"
 # Hanvon
 KERNEL=="hidraw*", ATTRS{idVendor}=="0b57", TAG+="uaccess"
 
+# The same tablet vendors over Bluetooth, matched on the HID parent. A tablet
+# whose Bluetooth vendor id differs from its USB one needs its own line.
+KERNEL=="hidraw*", KERNELS=="0005:056A:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:28BD:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:256C:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:5543:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:2FEB:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:172F:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:0458:*", TAG+="uaccess"
+KERNEL=="hidraw*", KERNELS=="0005:0B57:*", TAG+="uaccess"
+
 # Other HID devices, such as game controllers
 #
 # No other vendor is listed. A rule for every hidraw node would also expose
@@ -61,6 +72,12 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="0b57", TAG+="uaccess"
 # in a file of your own, for example /etc/udev/rules.d/70-mayaflux-local.rules:
 #
 # KERNEL=="hidraw*", ATTRS{idVendor}=="xxxx", ATTRS{idProduct}=="yyyy", TAG+="uaccess"
+#
+# A Bluetooth device has no USB attributes, so its rule matches the HID parent:
+# bus 0005, then vendor and product in uppercase hex. Some devices report both
+# as 0000, which would match every device that does so.
+#
+# KERNEL=="hidraw*", KERNELS=="0005:XXXX:YYYY.*", TAG+="uaccess"
 
 # Optional: silence the mouse-emulation interface.
 #

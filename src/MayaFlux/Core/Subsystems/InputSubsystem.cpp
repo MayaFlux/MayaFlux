@@ -5,6 +5,7 @@
 #include "MayaFlux/Registry/Service/NetworkService.hpp"
 
 #include "MayaFlux/Core/Backends/Input/HIDBackend.hpp"
+#include "MayaFlux/Core/Backends/Input/HIDSession.hpp"
 #include "MayaFlux/Core/Backends/Input/MIDIBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/SerialInputBackend.hpp"
 #include "MayaFlux/Core/Backends/Input/TabletBackend.hpp"
@@ -40,6 +41,10 @@ void InputSubsystem::initialize(SubsystemProcessingHandle& handle)
         "Initializing Input Subsystem...");
 
     m_handle = &handle;
+
+    if (m_config.hid.enabled || m_config.tablet.enabled) {
+        m_hid_session = std::make_shared<HIDSession>();
+    }
 
     if (m_config.hid.enabled) {
         initialize_hid_backend();
@@ -148,11 +153,8 @@ void InputSubsystem::pause()
     if (!m_running.load())
         return;
 
-    {
-        std::shared_lock lock(m_backends_mutex);
-        for (auto& [type, backend] : m_backends) {
-            backend->stop();
-        }
+    for (auto* backend : get_backends()) {
+        backend->stop();
     }
 
     m_running.store(false);
@@ -178,11 +180,8 @@ void InputSubsystem::stop()
     if (!m_running.load())
         return;
 
-    {
-        std::shared_lock lock(m_backends_mutex);
-        for (auto& [type, backend] : m_backends) {
-            backend->stop();
-        }
+    for (auto* backend : get_backends()) {
+        backend->stop();
     }
 
     m_handle->inputs.stop();
@@ -206,7 +205,9 @@ void InputSubsystem::shutdown()
             backend->shutdown();
         }
         m_backends.clear();
+        m_hid_auto_open_suppressed.clear();
     }
+    m_hid_session.reset();
 
     m_handle->inputs.unregister();
 
@@ -296,6 +297,21 @@ std::vector<InputDeviceInfo> InputSubsystem::get_all_devices() const
 
 bool InputSubsystem::open_device(InputType backend_type, uint32_t device_id)
 {
+    if (backend_type == InputType::HID) {
+        std::unique_lock lock(m_backends_mutex);
+        const auto it = m_backends.find(backend_type);
+        if (it == m_backends.end()) {
+            MF_ERROR(Journal::Component::Core, Journal::Context::InputSubsystem,
+                "Backend not found for device open request");
+            return false;
+        }
+        const bool opened = it->second->open_device(device_id);
+        if (opened) {
+            m_hid_auto_open_suppressed.erase(device_id);
+        }
+        return opened;
+    }
+
     std::shared_lock lock(m_backends_mutex);
     auto it = m_backends.find(backend_type);
     if (it == m_backends.end()) {
@@ -308,6 +324,16 @@ bool InputSubsystem::open_device(InputType backend_type, uint32_t device_id)
 
 void InputSubsystem::close_device(InputType backend_type, uint32_t device_id)
 {
+    if (backend_type == InputType::HID) {
+        std::unique_lock lock(m_backends_mutex);
+        const auto it = m_backends.find(backend_type);
+        if (it != m_backends.end()) {
+            m_hid_auto_open_suppressed.insert(device_id);
+            it->second->close_device(device_id);
+        }
+        return;
+    }
+
     std::shared_lock lock(m_backends_mutex);
     auto it = m_backends.find(backend_type);
     if (it != m_backends.end()) {
@@ -339,11 +365,18 @@ void InputSubsystem::wire_backend_to_manager(IInputBackend* backend)
         m_handle->inputs.enqueue_input(value);
     });
 
-    backend->set_device_callback([this](const InputDeviceInfo& info, bool connected) {
+    backend->set_device_callback([this, backend](const InputDeviceInfo& info, bool connected) {
         MF_INFO(Journal::Component::Core, Journal::Context::InputSubsystem,
             "Device {}: {} ({})",
             connected ? "connected" : "disconnected",
             info.name, static_cast<int>(info.backend_type));
+
+        if (connected && backend->get_type() == InputType::HID && m_config.hid.auto_open) {
+            std::shared_lock lock(m_backends_mutex);
+            if (!m_hid_auto_open_suppressed.contains(info.id)) {
+                backend->open_device(info.id);
+            }
+        }
 
         m_handle->inputs.on_device_change(info, connected);
     });
@@ -357,6 +390,7 @@ void InputSubsystem::initialize_hid_backend()
     hid_config.poll_timeout_ms = m_config.hid.poll_timeout_ms;
     hid_config.auto_reconnect = m_config.hid.auto_reconnect;
     hid_config.reconnect_interval_ms = m_config.hid.reconnect_interval_ms;
+    hid_config.session = m_hid_session;
 
     auto hid = std::make_unique<HIDBackend>(hid_config);
 
@@ -435,6 +469,9 @@ void InputSubsystem::initialize_tablet_backend()
     tablet_config.read_buffer_size = m_config.tablet.read_buffer_size;
     tablet_config.poll_timeout_ms = m_config.tablet.poll_timeout_ms;
     tablet_config.split_eraser = m_config.tablet.split_eraser;
+    tablet_config.auto_reconnect = m_config.tablet.auto_reconnect;
+    tablet_config.reconnect_interval_ms = m_config.tablet.reconnect_interval_ms;
+    tablet_config.session = m_hid_session;
 
     add_backend(std::make_unique<TabletBackend>(tablet_config));
 }

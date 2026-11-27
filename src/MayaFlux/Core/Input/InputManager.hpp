@@ -2,7 +2,9 @@
 
 #include "MayaFlux/Core/GlobalInputConfig.hpp"
 #include "MayaFlux/Transitive/Memory/RingBuffer.hpp"
+#include "MayaFlux/Transitive/Memory/PendingQueue.hpp"
 #include "MayaFlux/Transitive/Memory/SnapshotCell.hpp"
+#include "MayaFlux/Transitive/Parallel/Notifier.hpp"
 
 namespace MayaFlux::Nodes::Input {
 class InputNode;
@@ -93,7 +95,9 @@ public:
      * @param node The InputNode to register
      * @param binding Specifies what input the node wants
      *
-     * Thread-safe. Can be called while processing is active.
+     * A binding by vendor and product with no matching device is kept, and
+     * takes effect when one appears. Thread-safe. Can be called while
+     * processing is active.
      */
     void register_node(
         const std::shared_ptr<Nodes::Input::InputNode>& node,
@@ -173,12 +177,15 @@ private:
     std::atomic<bool> m_stop_requested { false };
 
     // ─────────────────────────────────────────────────────────────────────
-    // Input Queue (lock-free)
+    // Input Queue (lock-free, any number of producers)
     // ─────────────────────────────────────────────────────────────────────
 
-    std::atomic<bool> m_queue_notify { false };
     static constexpr size_t MAX_QUEUE_SIZE = 4096;
-    Memory::LockFreeQueue<InputValue, MAX_QUEUE_SIZE> m_queue;
+    Memory::PendingQueue<InputValue, MAX_QUEUE_SIZE> m_queue;
+    std::atomic<size_t> m_queue_depth { 0 };
+    Parallel::Notifier m_wake;
+
+    bool push_value(InputValue value);
 
     // ─────────────────────────────────────────────────────────────────────
     // Node Registry

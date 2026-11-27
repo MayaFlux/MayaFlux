@@ -308,20 +308,22 @@ std::shared_ptr<Nodes::Input::InputNode> Creator::read_input(
     const Nodes::Input::InputConfig& config,
     const Core::InputBinding& binding)
 {
+    const auto with_common = [&config]<typename Config>(Config typed) {
+        static_cast<Nodes::Input::InputConfig&>(typed) = config;
+        return typed;
+    };
+
     switch (binding.backend) {
     case Core::InputType::HID:
-        return read_hid(static_cast<const Nodes::Input::HIDConfig&>(config), binding);
+        return read_hid(with_common(Nodes::Input::HIDConfig {}), binding);
     case Core::InputType::MIDI:
-        return read_midi(static_cast<const Nodes::Input::MIDIConfig&>(config), binding);
+        return read_midi(with_common(Nodes::Input::MIDIConfig {}), binding);
     case Core::InputType::OSC:
-        return read_osc(static_cast<const Nodes::Input::OSCConfig&>(config), binding);
+        return read_osc(with_common(Nodes::Input::OSCConfig {}), binding);
     case Core::InputType::TABLET:
-        return read_tablet(static_cast<const Nodes::Input::TabletConfig&>(config), binding);
-    case Core::InputType::SERIAL: {
-        Nodes::Input::SerialConfig serial;
-        static_cast<Nodes::Input::InputConfig&>(serial) = config;
-        return read_serial(serial, binding);
-    }
+        return read_tablet(with_common(Nodes::Input::TabletConfig {}), binding);
+    case Core::InputType::SERIAL:
+        return read_serial(with_common(Nodes::Input::SerialConfig {}), binding);
     default:
         MF_ERROR(Journal::Component::API, Journal::Context::Init,
             "Input type {} not yet implemented",

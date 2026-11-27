@@ -62,9 +62,7 @@ void InputManager::stop()
     }
 
     m_stop_requested.store(true);
-
-    m_queue_notify.store(true);
-    m_queue_notify.notify_one();
+    m_wake.notify();
 
     if (m_processing_thread.joinable()) {
         m_processing_thread.join();
@@ -80,16 +78,24 @@ void InputManager::stop()
 // Input Enqueueing
 // ─────────────────────────────────────────────────────────────────────────────
 
+bool InputManager::push_value(InputValue value)
+{
+    m_queue_depth.fetch_add(1);
+    if (m_queue.push(std::move(value))) {
+        return true;
+    }
+    m_queue_depth.fetch_sub(1);
+    return false;
+}
+
 void InputManager::enqueue(const InputValue& value)
 {
-
-    if (!m_queue.push(value)) {
+    if (!push_value(value)) {
         MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
-            "Input queue full, dropping oldest event");
+            "Input queue full, dropping event");
     }
 
-    m_queue_notify.store(true);
-    m_queue_notify.notify_one();
+    m_wake.notify();
 }
 
 void InputManager::enqueue_batch(const std::vector<InputValue>& values)
@@ -99,17 +105,16 @@ void InputManager::enqueue_batch(const std::vector<InputValue>& values)
 
     bool any_pushed = false;
     for (const auto& value : values) {
-        if (m_queue.push(value)) {
+        if (push_value(value)) {
             any_pushed = true;
         } else {
             MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
-                "Input queue full during batch, dropping oldest events");
+                "Input queue full during batch, dropping events");
         }
     }
 
     if (any_pushed) {
-        m_queue_notify.store(true);
-        m_queue_notify.notify_one();
+        m_wake.notify();
     }
 }
 
@@ -135,17 +140,17 @@ void InputManager::register_node(
 
         auto devices = m_input_service->get_all_devices();
         auto resolved = resolve_vid_pid(binding, devices);
+        pattern = binding;
         if (resolved) {
-            pattern = binding;
             binding = *resolved;
         } else {
-            MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
-                "No device found for VID/PID");
-            return;
+            MF_INFO(Journal::Component::Core, Journal::Context::InputManagement,
+                "No device found for VID/PID yet, binding when one appears");
+            binding.device_id = k_unbound_device;
         }
     }
 
-    if (binding.device_id != 0) {
+    if (binding.device_id != 0 && binding.device_id != k_unbound_device) {
         if (!m_input_service) {
             MF_WARN(Journal::Component::Core, Journal::Context::InputManagement,
                 "Device ID binding requires InputService but service not registered");
@@ -288,7 +293,7 @@ std::vector<std::shared_ptr<Nodes::Input::InputNode>> InputManager::get_nodes() 
 
 size_t InputManager::get_queue_depth() const
 {
-    return m_queue.snapshot().size();
+    return m_queue_depth.load();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -301,19 +306,19 @@ void InputManager::processing_loop()
         "Processing thread started");
 
     while (true) {
-        InputValue value;
+        const bool stopping = m_stop_requested.load();
 
-        while (auto value = m_queue.pop()) {
-            dispatch_to_nodes(*value);
+        m_queue.drain([this](InputValue&& value) {
+            m_queue_depth.fetch_sub(1);
+            dispatch_to_nodes(value);
             m_events_processed.fetch_add(1);
-        }
+        });
 
-        if (m_stop_requested.load()) {
+        if (stopping) {
             break;
         }
 
-        m_queue_notify.wait(false);
-        m_queue_notify.store(false);
+        m_wake.wait();
     }
 
     MF_DEBUG(Journal::Component::Core, Journal::Context::AsyncIO,
