@@ -149,6 +149,8 @@ struct Description<::MayaFlux::Core::TabletBackendInfo> {
             Member<&::MayaFlux::Core::TabletBackendInfo::read_buffer_size> { "read_buffer_size" },
             Member<&::MayaFlux::Core::TabletBackendInfo::poll_timeout_ms> { "poll_timeout_ms" },
             Member<&::MayaFlux::Core::TabletBackendInfo::split_eraser> { "split_eraser" },
+            Member<&::MayaFlux::Core::TabletBackendInfo::auto_reconnect> { "auto_reconnect" },
+            Member<&::MayaFlux::Core::TabletBackendInfo::reconnect_interval_ms> { "reconnect_interval_ms" },
         };
     }
 };

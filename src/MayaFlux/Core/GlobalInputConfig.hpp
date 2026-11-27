@@ -16,8 +16,7 @@ enum class HIDBus : uint8_t {
     USB,
     BLUETOOTH,
     I2C,
-    SPI,
-    VIRTUAL
+    SPI
 };
 
 /**
@@ -147,7 +146,8 @@ struct MAYAFLUX_API TabletBackendInfo {
     size_t read_buffer_size { 256 }; ///< Per-device read buffer size
     int poll_timeout_ms { 0 }; ///< Per-device HID read wait in milliseconds
     bool split_eraser { true }; ///< Report the eraser end as its own tool
-
+    bool auto_reconnect { true }; ///< Rescan every interval, picking up new and returning tablets
+    uint32_t reconnect_interval_ms { 1000 }; ///< Rescan interval
 };
 
 MF_DESCRIBE(TabletBackendInfo)

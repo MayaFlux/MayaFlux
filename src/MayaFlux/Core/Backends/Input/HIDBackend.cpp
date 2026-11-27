@@ -501,11 +501,13 @@ std::string HIDBackend::get_version() const
 
 void HIDBackend::add_device_filter(const HIDDeviceFilter& filter)
 {
+    std::lock_guard lock(m_devices_mutex);
     m_config.filters.push_back(filter);
 }
 
 void HIDBackend::clear_device_filters()
 {
+    std::lock_guard lock(m_devices_mutex);
     m_config.filters.clear();
 }
 

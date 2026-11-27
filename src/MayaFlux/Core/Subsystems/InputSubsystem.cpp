@@ -469,6 +469,8 @@ void InputSubsystem::initialize_tablet_backend()
     tablet_config.read_buffer_size = m_config.tablet.read_buffer_size;
     tablet_config.poll_timeout_ms = m_config.tablet.poll_timeout_ms;
     tablet_config.split_eraser = m_config.tablet.split_eraser;
+    tablet_config.auto_reconnect = m_config.tablet.auto_reconnect;
+    tablet_config.reconnect_interval_ms = m_config.tablet.reconnect_interval_ms;
     tablet_config.session = m_hid_session;
 
     add_backend(std::make_unique<TabletBackend>(tablet_config));

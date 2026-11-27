@@ -377,7 +377,12 @@ public:
 
     NodeContext& get_last_context() override { return m_hid_context; }
 
-    /** @brief Fires when a control's output rises through threshold. */
+    /**
+     * @brief Fires when a control's output rises through threshold.
+     *
+     * Outputs count as zero before the first report, so a control already held
+     * in it fires. The other events need an earlier report to compare against.
+     */
     HookId on_press(HIDControl control, EventCallback callback, double threshold = 0.5);
 
     /** @brief Fires when a control's output falls through threshold. */
