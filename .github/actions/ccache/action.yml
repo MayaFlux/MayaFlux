@@ -1,32 +1,28 @@
 name: "Compiler cache"
-description: "Restore the compiler cache, configure it for the project's precompiled headers and zero its statistics"
+description: "Restore the one compiler cache of a platform, whatever workflow, branch or preset wrote it"
 
 inputs:
-  key:
-    description: "Cache key, distinct per platform and preset"
+  platform:
+    description: "windows, macos, arch or fedora"
     required: true
-  preset:
-    description: "Configure preset. Shipping presets restore the cache and do not save it"
-    required: true
-  install:
-    description: "'no' when the job provides ccache itself"
-    required: false
-    default: "detect"
 
 runs:
   using: composite
   steps:
-    - name: Setup ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+    - name: Restore compiler cache
+      uses: actions/cache/restore@v4
       with:
-        install: ${{ inputs.install }}
-        key: ${{ inputs.key }}
-        save: ${{ !endsWith(inputs.preset, '-ship') }}
-        max-size: "2G"
+        path: .ccache
+        key: mf-ccache-${{ inputs.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+        restore-keys: mf-ccache-${{ inputs.platform }}-
 
     - name: Configure ccache
       shell: bash
       run: |
+        mkdir -p "$GITHUB_WORKSPACE/.ccache"
+        echo "CCACHE_DIR=$GITHUB_WORKSPACE/.ccache" >> "$GITHUB_ENV"
+        export CCACHE_DIR="$GITHUB_WORKSPACE/.ccache"
+        ccache --set-config=max_size=1.5G
         ccache --set-config=sloppiness=pch_defines,time_macros,include_file_mtime,include_file_ctime
         ccache --set-config=compiler_check=content
         if [ "$RUNNER_OS" != "Windows" ]; then

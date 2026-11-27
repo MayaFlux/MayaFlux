@@ -114,57 +114,46 @@ jobs:
       - name: Install build tools on macOS
         run: brew install md5sha1sum
 
-      - name: Compiler cache
-        uses: ./.github/actions/ccache
-        with:
-          key: ${{ runner.os }}-${{ inputs.preset }}
-          preset: ${{ inputs.preset }}
-
       - name: Restore Homebrew cache
         uses: actions/cache/restore@v4
-        id: homebrew-cache
         with:
           path: /opt/homebrew
-          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.github/workflows/build-macos.yml') }}
+          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: homebrew-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Install Homebrew tools
-        id: install-homebrew
-        if: steps.homebrew-cache.outputs.cache-hit != 'true'
-        uses: tecolicom/actions-use-homebrew-tools@v1
-        with:
-          cache: "no"
-          tools: >
-            ffmpeg
-            assimp
-            alembic
-            pugixml
-            shaderc
-            googletest
-            pkg-config
-            cmake
-            eigen
-            glm
-            llvm
-            vulkan-headers
-            vulkan-loader
-            vulkan-tools
-            vulkan-validationlayers
-            vulkan-utility-libraries
-            spirv-tools
-            spirv-cross
-            shaderc
-            glslang
-            mesa
-            hidapi
-            utf8proc
-            freetype
+      - name: Install missing Homebrew tools
+        id: homebrew
+        shell: bash
+        run: |
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          missing=()
+          for tool in ccache ffmpeg assimp alembic pugixml shaderc googletest pkg-config cmake eigen glm llvm vulkan-headers vulkan-loader vulkan-tools vulkan-validationlayers vulkan-utility-libraries spirv-tools spirv-cross glslang mesa hidapi utf8proc freetype; do
+            brew list --versions "$tool" >/dev/null 2>&1 || missing+=("$tool")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Installing: ${missing[*]}"
+            brew install "${missing[@]}"
+            echo "installed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Save Homebrew cache
-        if: ${{ always() && steps.install-homebrew.outcome == 'success' && steps.homebrew-cache.outputs.cache-hit != 'true' }}
+        if: ${{ always() && steps.homebrew.outputs.installed == 'true' && github.event_name != 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           path: /opt/homebrew
-          key: ${{ steps.homebrew-cache.outputs.cache-primary-key }}
+          key: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Drop superseded Homebrew caches
+        if: ${{ always() && steps.homebrew.outputs.installed == 'true' && github.event_name != 'pull_request' }}
+        uses: ./.github/actions/prune-cache
+        with:
+          prefix: homebrew-${{ runner.os }}-${{ runner.arch }}-
+          keep: homebrew-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Compiler cache
+        uses: ./.github/actions/ccache
+        with:
+          platform: macos
 
       - name: Install ASIO and JSON (header-only, always ensure)
         run: |
@@ -250,6 +239,12 @@ jobs:
             eval "$(/opt/homebrew/bin/brew shellenv)"
             export CMAKE_PREFIX_PATH="${STB_ROOT}:${CMAKE_PREFIX_PATH}"
           test_library_path: ${{ github.workspace }}/build/src/MayaFlux:${{ github.workspace }}/build/src/Lila
+
+      - name: Save compiler cache
+        if: ${{ always() && github.event_name != 'pull_request' && !endsWith(inputs.preset, '-ship') }}
+        uses: ./.github/actions/ccache-save
+        with:
+          platform: macos
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}

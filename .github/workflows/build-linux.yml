@@ -109,8 +109,7 @@ jobs:
       - name: Compiler cache
         uses: ./.github/actions/ccache
         with:
-          key: fedora-${{ inputs.preset }}
-          preset: ${{ inputs.preset }}
+          platform: fedora
 
       - name: Build and test
         uses: ./.github/actions/build-and-test

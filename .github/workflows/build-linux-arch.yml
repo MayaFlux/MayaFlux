@@ -117,8 +117,7 @@ jobs:
       - name: Compiler cache
         uses: ./.github/actions/ccache
         with:
-          key: arch-${{ inputs.preset }}
-          preset: ${{ inputs.preset }}
+          platform: arch
 
       - name: Build and test
         uses: ./.github/actions/build-and-test
@@ -127,6 +126,12 @@ jobs:
           run_tests: ${{ inputs.run_tests }}
           test_preset: ${{ inputs.test_preset }}
           check_reflection: ${{ inputs.run_reflect_check }}
+
+      - name: Save compiler cache
+        if: ${{ always() && github.event_name != 'pull_request' && !endsWith(inputs.preset, '-ship') }}
+        uses: ./.github/actions/ccache-save
+        with:
+          platform: arch
 
       - name: Install to staging directory
         if: ${{ inputs.create_distribution != false }}
