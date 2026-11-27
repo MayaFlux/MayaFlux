@@ -180,7 +180,7 @@ jobs:
         id: vcpkg-cache
         with:
           path: ${{ env.VCPKG_ROOT }}
-          key: vcpkg-${{ runner.os }}-${{ hashFiles('.github/workflows/vcpkg.json') }}-${{ inputs.run_tests && inputs.test_preset != '' && 'tests' || 'base' }}
+          key: vcpkg-${{ runner.os }}-${{ hashFiles('.github/workflows/vcpkg.json') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-
 
@@ -228,9 +228,15 @@ jobs:
 
           Write-Host "✓ vcpkg setup complete" -ForegroundColor Green
 
+      - name: Save vcpkg cache
+        if: ${{ always() && steps.install-vcpkg.outcome == 'success' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.VCPKG_ROOT }}
+          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
+
       - name: Install test dependencies
-        id: install-test-dependencies
-        if: ${{ inputs.run_tests && inputs.test_preset != '' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
+        if: ${{ inputs.run_tests && inputs.test_preset != '' }}
         shell: pwsh
         run: |
           cd ${{ github.workspace }}/.github/workflows
@@ -240,13 +246,6 @@ jobs:
             --x-feature=tests `
             --clean-buildtrees-after-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Save vcpkg cache
-        if: ${{ always() && steps.install-vcpkg.outcome == 'success' && steps.install-test-dependencies.outcome != 'failure' && steps.vcpkg-cache.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ env.VCPKG_ROOT }}
-          key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
       - name: Install LLVM 22 (Lila JIT)
         id: install-llvm
