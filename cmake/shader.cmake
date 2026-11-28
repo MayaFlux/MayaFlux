@@ -190,8 +190,9 @@ if(SHADER_FILES)
         if(NOT OUTPUT_FILE IN_LIST SHADER_OUTPUTS)
             add_custom_command(
                 OUTPUT  ${OUTPUT_FILE}
-                COMMAND glslc --target-env=vulkan1.4 ${SHADER_FILE} -o ${OUTPUT_FILE}
+                COMMAND glslc --target-env=vulkan1.4 -MD -MF ${OUTPUT_FILE}.d ${SHADER_FILE} -o ${OUTPUT_FILE}
                 DEPENDS ${SHADER_FILE}
+                DEPFILE ${OUTPUT_FILE}.d
                 COMMENT "Compiling shader: ${SHADER_NAME}"
                 VERBATIM
             )
@@ -202,8 +203,9 @@ if(SHADER_FILES)
                 set(LIST_OUTPUT "${SHADER_OUTPUT_DIR}/${LIST_NAME}.spv")
                 add_custom_command(
                     OUTPUT  ${LIST_OUTPUT}
-                    COMMAND glslc --target-env=vulkan1.4 -DMF_INFLUENCE_LIST ${SHADER_FILE} -o ${LIST_OUTPUT}
+                    COMMAND glslc --target-env=vulkan1.4 -DMF_INFLUENCE_LIST -MD -MF ${LIST_OUTPUT}.d ${SHADER_FILE} -o ${LIST_OUTPUT}
                     DEPENDS ${SHADER_FILE}
+                    DEPFILE ${LIST_OUTPUT}.d
                     COMMENT "Compiling shader: ${LIST_NAME}"
                     VERBATIM
                 )

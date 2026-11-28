@@ -24,14 +24,19 @@ if(NOT EXAMPLE_SHADER_FILES)
 endif()
 
 set(EXAMPLE_SHADER_OUTPUTS)
+set(EXAMPLE_SHADER_DEPS_DIR "${CMAKE_BINARY_DIR}/example_shader_deps")
+file(MAKE_DIRECTORY "${EXAMPLE_SHADER_DEPS_DIR}")
 
 foreach(SHADER_FILE ${EXAMPLE_SHADER_FILES})
     set(OUTPUT_FILE "${SHADER_FILE}.spv")
+    string(MD5 SHADER_KEY "${SHADER_FILE}")
+    set(DEPS_FILE "${EXAMPLE_SHADER_DEPS_DIR}/${SHADER_KEY}")
 
     add_custom_command(
         OUTPUT  "${OUTPUT_FILE}"
-        COMMAND glslc --target-env=vulkan1.4 "${SHADER_FILE}" -o "${OUTPUT_FILE}"
+        COMMAND glslc --target-env=vulkan1.4 -MD -MF "${DEPS_FILE}.d" "${SHADER_FILE}" -o "${OUTPUT_FILE}"
         DEPENDS "${SHADER_FILE}"
+        DEPFILE "${DEPS_FILE}.d"
         COMMENT "Compiling example shader: ${SHADER_FILE}"
         VERBATIM
     )
@@ -42,8 +47,9 @@ foreach(SHADER_FILE ${EXAMPLE_SHADER_FILES})
         string(REGEX REPLACE "_lit\\.frag$" "_lit_list.frag.spv" LIST_OUTPUT "${SHADER_FILE}")
         add_custom_command(
             OUTPUT  "${LIST_OUTPUT}"
-            COMMAND glslc --target-env=vulkan1.4 -DMF_INFLUENCE_LIST "${SHADER_FILE}" -o "${LIST_OUTPUT}"
+            COMMAND glslc --target-env=vulkan1.4 -DMF_INFLUENCE_LIST -MD -MF "${DEPS_FILE}_list.d" "${SHADER_FILE}" -o "${LIST_OUTPUT}"
             DEPENDS "${SHADER_FILE}"
+            DEPFILE "${DEPS_FILE}_list.d"
             COMMENT "Compiling example shader: ${LIST_OUTPUT}"
             VERBATIM
         )
