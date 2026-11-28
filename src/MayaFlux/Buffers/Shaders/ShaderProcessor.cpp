@@ -700,7 +700,10 @@ void ShaderProcessor::initialize_shader()
     auto& foundry = Portal::Graphics::get_shader_foundry();
 
     if (m_config.shader_id != Portal::Graphics::INVALID_SHADER) {
-        m_shader_id = m_config.shader_id;
+        if (m_shader_id != m_config.shader_id) {
+            foundry.retain_shader(m_config.shader_id);
+            m_shader_id = m_config.shader_id;
+        }
     } else {
         m_shader_id = foundry.load_shader(m_config.shader_path, m_config.stage, m_config.entry_point);
     }

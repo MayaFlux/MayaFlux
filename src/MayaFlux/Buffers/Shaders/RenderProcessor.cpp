@@ -39,7 +39,10 @@ RenderProcessor::RenderProcessor(const ShaderConfig& config)
 void RenderProcessor::set_fragment_shader(const std::string& fragment_path)
 {
     auto& foundry = Portal::Graphics::get_shader_foundry();
-    m_fragment_shader_id = foundry.load_shader(fragment_path, Portal::Graphics::ShaderStage::FRAGMENT);
+    const auto previous = std::exchange(m_fragment_shader_id,
+        foundry.load_shader(fragment_path, Portal::Graphics::ShaderStage::FRAGMENT));
+    if (previous != Portal::Graphics::INVALID_SHADER)
+        foundry.destroy_shader(previous);
     invalidate_pipelines();
 }
 
@@ -537,8 +540,11 @@ bool RenderProcessor::set_destination_shader(
         return false;
     }
 
-    lane->fragment = Portal::Graphics::get_shader_foundry().load_shader(
-        fragment, Portal::Graphics::ShaderStage::FRAGMENT);
+    auto& foundry = Portal::Graphics::get_shader_foundry();
+    const auto previous = std::exchange(lane->fragment,
+        foundry.load_shader(fragment, Portal::Graphics::ShaderStage::FRAGMENT));
+    if (previous != Portal::Graphics::INVALID_SHADER)
+        foundry.destroy_shader(previous);
     lane->constants = constants;
     invalidate_pipelines();
     return lane->fragment != Portal::Graphics::INVALID_SHADER;
@@ -1917,6 +1923,10 @@ void RenderProcessor::cleanup()
                 flow.destroy_pipeline(*pipeline);
                 *pipeline = Portal::Graphics::INVALID_RENDER_PIPELINE;
             }
+        }
+        if (lane->fragment != Portal::Graphics::INVALID_SHADER) {
+            foundry.destroy_shader(lane->fragment);
+            lane->fragment = Portal::Graphics::INVALID_SHADER;
         }
     }
 

@@ -168,6 +168,7 @@ private:
         std::string filepath;
         ShaderStage stage;
         std::string entry_point;
+        uint32_t holders { 1 };
     };
 
 public:
@@ -283,7 +284,15 @@ public:
     ShaderID reload_shader(const std::string& filepath);
 
     /**
-     * @brief Destroy shader (cleanup internal state)
+     * @brief Take another hold on a shader, for a user given its id rather
+     *        than loading it. Each hold is released by destroy_shader().
+     */
+    void retain_shader(ShaderID shader_id);
+
+    /**
+     * @brief Release one hold on a shader, destroying it with the last.
+     *
+     * Every load_shader() that returns an id, cached or new, is one hold.
      */
     void destroy_shader(ShaderID shader_id);
 
