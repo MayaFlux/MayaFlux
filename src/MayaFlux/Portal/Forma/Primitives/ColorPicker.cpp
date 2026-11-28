@@ -1,5 +1,6 @@
 #include "ColorPicker.hpp"
 #include "Geometry.hpp"
+#include "Scrollable.hpp"
 
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
 #include "MayaFlux/Kinesis/ColorSpace.hpp"
@@ -59,8 +60,15 @@ ColorPicker& ColorPicker::place(
     const Kinesis::AABB2D hue_rect { .min = { x_min + width * 0.66F, y_min }, .max = { x_min + width * 0.78F, y_max } };
     const Kinesis::AABB2D swatch_rect { .min = { x_min + width * 0.82F, y_min }, .max = { x_max, y_max } };
 
-    GeometryFn<glm::vec3> geometry = [square_rect, hue_rect, swatch_rect, window = std::weak_ptr<Core::Window>(surface.window()), image = surface.image(), area = surface.area()](
+    const auto shift = std::make_shared<glm::vec2>(0.F);
+
+    GeometryFn<glm::vec3> geometry = [shift, square_base = square_rect, hue_base = hue_rect, swatch_base = swatch_rect,
+                                         window = std::weak_ptr<Core::Window>(surface.window()), image = surface.image(), area = surface.area()](
                                          glm::vec3 value, std::vector<uint8_t>& out, Element&) {
+        const Kinesis::AABB2D square_rect = square_base.translated(*shift);
+        const Kinesis::AABB2D hue_rect = hue_base.translated(*shift);
+        const Kinesis::AABB2D swatch_rect = swatch_base.translated(*shift);
+
         float aspect = 1.F;
         const auto size = Surface::extent_of(window.lock(), image, area);
         if (size.x > 0)
@@ -129,23 +137,26 @@ ColorPicker& ColorPicker::place(
     layer_ptr->relate(drawn.element.id, square_id);
     layer_ptr->relate(drawn.element.id, hue_id);
 
-    auto commit = [hsv_state = drawn.state, color_state, callback = m_on_change](glm::vec3 next) {
+    const auto seen = std::make_shared<Version>(color_state->version);
+
+    auto commit = [hsv_state = drawn.state, color_state, seen, callback = m_on_change](glm::vec3 next) {
         hsv_state->write(next);
         const glm::vec3 rgb = Kinesis::hsv_to_rgb(next);
         color_state->write(rgb);
+        *seen = color_state->version;
         if (callback)
             callback(rgb);
     };
 
     const auto square_fraction = Kinesis::unit_square(square_rect);
-    auto pick_square = [commit, hsv_state = drawn.state, square_fraction](glm::vec2 ndc) {
-        const glm::vec2 fraction = square_fraction(ndc);
+    auto pick_square = [commit, shift, hsv_state = drawn.state, square_fraction](glm::vec2 ndc) {
+        const glm::vec2 fraction = square_fraction(ndc - *shift);
         commit({ hsv_state->value.x, fraction.x, fraction.y });
     };
-    auto pick_hue = [commit, hsv_state = drawn.state, hue_rect](glm::vec2 ndc) {
+    auto pick_hue = [commit, shift, hsv_state = drawn.state, hue_rect](glm::vec2 ndc) {
         if (hue_rect.height() <= 0.F)
             return;
-        const float hue = std::clamp((ndc.y - hue_rect.min.y) / hue_rect.height(), 0.F, 1.F);
+        const float hue = std::clamp((ndc.y - shift->y - hue_rect.min.y) / hue_rect.height(), 0.F, 1.F);
         commit({ hue, hsv_state->value.y, hsv_state->value.z });
     };
 
@@ -158,6 +169,34 @@ ColorPicker& ColorPicker::place(
 
     internal::atelier().bridge().register_element<glm::vec3>(
         ElementRef { layer_ptr, square_id }, color_state, nullptr);
+
+    internal::atelier().bridge().spawn_sync(surface.layer(), square_id,
+        [hsv_state = drawn.state, color_state, seen] {
+            if (color_state->version == *seen)
+                return;
+            *seen = color_state->version;
+            hsv_state->write(Kinesis::rgb_to_hsv(color_state->value));
+        });
+
+    m_track = [surface, shift, drawn, whole, square_rect, hue_rect, square_id, hue_id](Scrollable& panel, Layer& layer) mutable {
+        layer.set_interactive(drawn.element.id, false);
+        panel.track(
+            layer, drawn.element.id, whole,
+            [shift, whole, buffer = drawn.element.buffer, geometry_fn = drawn.geometry_fn, state = drawn.state](Kinesis::AABB2D moved) {
+                *shift = moved.min - whole.min;
+                std::vector<uint8_t> bytes;
+                Element element;
+                geometry_fn(state->value, bytes, element);
+                buffer.submit(bytes);
+            },
+            drawn.element.buffer);
+        panel.track(layer, square_id, square_rect, [](Kinesis::AABB2D) { }, {});
+        panel.track(layer, hue_id, hue_rect, [](Kinesis::AABB2D) { }, {});
+
+        const auto wheel = panel.wheel_handler(surface);
+        surface.ctx().on_scroll(square_id, wheel);
+        surface.ctx().on_scroll(hue_id, wheel);
+    };
 
     picker_id = drawn.element.id;
     color = std::move(color_state);

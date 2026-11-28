@@ -116,6 +116,25 @@ MAYAFLUX_API bool is_initialized();
         std::string name);
 
 // =============================================================================
+// Readout
+// =============================================================================
+
+/**
+ * @brief Text showing a value, redrawn when the value's version changes.
+ *
+ * @param surface Surface to place on.
+ * @param bounds  NDC rectangle of the text.
+ * @param source  State to read, such as a fader's Mapped::state.
+ * @param format  Text for a value. Two decimals when empty.
+ * @return Id of the element, for destroy(). It takes no input.
+ */
+MAYAFLUX_API uint32_t readout(
+    Surface& surface,
+    Kinesis::AABB2D bounds,
+    std::shared_ptr<MappedState<float>> source,
+    std::function<std::string(float)> format = {});
+
+// =============================================================================
 // Draw target
 // =============================================================================
 

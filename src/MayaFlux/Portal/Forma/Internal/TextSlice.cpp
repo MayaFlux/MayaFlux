@@ -1,6 +1,9 @@
 #include "TextSlice.hpp"
 
 #include "Atelier.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 
 namespace MayaFlux::Portal::Forma::internal {
 
@@ -84,7 +87,28 @@ void TextSlice::set_tail(std::vector<Kakshya::MeshVertex> tail)
 
 Text::GlyphMap TextSlice::map() const noexcept
 {
-    return Text::GlyphMap::fit(m_bounds, m_run.extent());
+    Kinesis::AABB2D bounds = m_bounds;
+
+    const auto& buffer = m_target.buffer();
+    const auto processor = buffer ? buffer->get_render_processor() : nullptr;
+    if (processor
+        && buffer->get_render_config().draw_band != Portal::Graphics::DrawBand::TRANSLUCENT) {
+        glm::vec2 size { 0.0F };
+        if (const auto window = processor->get_target_window()) {
+            const auto& state = window->get_state();
+            size = { static_cast<float>(state.current_width), static_cast<float>(state.current_height) };
+        } else if (const auto image = processor->get_target_image()) {
+            size = { static_cast<float>(image->width()), static_cast<float>(image->height()) };
+        }
+
+        if (size.x > 0.0F && size.y > 0.0F) {
+            const glm::vec2 corner { bounds.min.x, bounds.max.y };
+            const glm::vec2 whole = glm::round((corner + 1.0F) * 0.5F * size) / size * 2.0F - 1.0F;
+            bounds = bounds.translated(whole - corner);
+        }
+    }
+
+    return Text::GlyphMap::fit(bounds, m_run.extent());
 }
 
 bool TextSlice::alive() const

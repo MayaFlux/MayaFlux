@@ -96,6 +96,42 @@ void destroy(Surface& surface, uint32_t id)
     surface.layer().remove(id);
 }
 
+uint32_t readout(
+    Surface& surface,
+    Kinesis::AABB2D bounds,
+    std::shared_ptr<MappedState<float>> source,
+    std::function<std::string(float)> format)
+{
+    if (!source) {
+        MF_ERROR(Journal::Component::Portal, Journal::Context::API, "Forma::readout: no state to read");
+        return 0;
+    }
+    if (!format)
+        format = [](float value) { return std::format("{:.2f}", value); };
+
+    const glm::uvec2 extent = surface.extent();
+    const glm::vec2 size = (bounds.max - bounds.min) * 0.5F * glm::vec2(extent);
+    const Portal::Text::PressParams params {
+        .color = { 1.F, 1.F, 1.F, 1.F },
+        .render_bounds = glm::uvec2(glm::max(size, glm::vec2(1.F))),
+    };
+
+    Element element = Element {}.with_buffer(slice(surface)).non_interactive();
+    element.with_text(format(source->value), params, bounds);
+    const uint32_t id = surface.add(element);
+    const Version drawn = source->version;
+
+    internal::atelier().bridge().spawn_sync(surface.layer(), id,
+        [element, source = std::move(source), format = std::move(format), params, seen = drawn]() mutable {
+            if (seen == source->version)
+                return;
+            seen = source->version;
+            element.set_text(format(source->value), params);
+        });
+
+    return id;
+}
+
 // =============================================================================
 // Draw target
 // =============================================================================

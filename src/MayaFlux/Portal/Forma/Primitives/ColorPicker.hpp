@@ -5,6 +5,8 @@
 namespace MayaFlux::Portal::Forma {
 
 class Surface;
+class Layer;
+struct Scrollable;
 
 /**
  * @struct ColorPicker
@@ -52,6 +54,17 @@ struct ColorPicker {
 
     /// @brief Called with the new red, green and blue on every pick.
     std::function<void(glm::vec3)> m_on_change;
+
+    /// @brief Set by place(); moves the placed parts into a Scrollable.
+    std::function<void(Scrollable&, Layer&)> m_track;
+
+    /** @brief Scroll the placed picker with @p panel, drawing and hit regions together. */
+    ColorPicker& track(Scrollable& panel, Layer& layer)
+    {
+        if (m_track)
+            m_track(panel, layer);
+        return *this;
+    }
 
     ColorPicker& initial(glm::vec3 rgb)
     {

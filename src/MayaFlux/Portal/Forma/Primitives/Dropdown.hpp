@@ -5,6 +5,8 @@
 namespace MayaFlux::Portal::Forma {
 
 class Surface;
+class Layer;
+struct Scrollable;
 
 /**
  * @struct Dropdown
@@ -58,6 +60,22 @@ struct Dropdown {
 
     /// @brief Called with the index each time a row is chosen.
     std::function<void(size_t)> m_on_select;
+
+    /// @brief Set by place(); moves the header and list into a Scrollable.
+    std::function<void(Scrollable&, Layer&)> m_track;
+
+    /**
+     * @brief Scroll the placed dropdown with @p panel.
+     *
+     * A list long enough to scroll on its own cannot be tracked, and is
+     * refused with a warning.
+     */
+    Dropdown& track(Scrollable& panel, Layer& layer)
+    {
+        if (m_track)
+            m_track(panel, layer);
+        return *this;
+    }
 
     Dropdown& options(std::vector<std::string> labels)
     {
