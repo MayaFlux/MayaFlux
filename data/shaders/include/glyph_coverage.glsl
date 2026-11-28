@@ -19,4 +19,11 @@ int glyph_slot(float weight)
     return int(-weight + 0.5) - 1;
 }
 
+/// @brief Opacity a coverage weight carries in its fraction.
+float glyph_alpha(float weight)
+{
+    float held = -weight - float(glyph_slot(weight) + 1);
+    return 1.0 - clamp(held / 0.49, 0.0, 1.0);
+}
+
 #endif

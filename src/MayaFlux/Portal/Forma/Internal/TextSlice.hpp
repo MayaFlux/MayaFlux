@@ -53,6 +53,9 @@ public:
     /// @brief Replace the extra vertices drawn after the glyphs, such as a caret.
     void set_tail(std::vector<Kakshya::MeshVertex> tail);
 
+    /// @brief Whether any slice still on its target draws from @p atlas.
+    [[nodiscard]] static bool drawn_from(const Text::GlyphAtlas* atlas);
+
     [[nodiscard]] Text::TextRun& run() noexcept { return m_run; }
     [[nodiscard]] const Text::TextRun& run() const noexcept { return m_run; }
     [[nodiscard]] Kinesis::AABB2D bounds() const noexcept { return m_bounds; }

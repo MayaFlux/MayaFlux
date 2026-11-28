@@ -116,6 +116,14 @@ Text::GlyphMap TextSlice::map() const noexcept
     return Text::GlyphMap::fit(bounds, m_run.extent());
 }
 
+bool TextSlice::drawn_from(const Text::GlyphAtlas* atlas)
+{
+    return std::ranges::any_of(live_slices(), [atlas](const auto& weak) {
+        const auto slice = weak.lock();
+        return slice && slice->alive() && slice->run().atlas() == atlas;
+    });
+}
+
 bool TextSlice::alive() const
 {
     const auto& buffer = m_target.buffer();

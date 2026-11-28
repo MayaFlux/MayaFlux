@@ -47,7 +47,7 @@ void main()
     }
 
     if (!mill_is_wire(in_uv) && glyph_is_coverage(in_weight)) {
-        float glyph = glyph_texel(glyph_slot(in_weight), mill_surface_uv(in_uv));
+        float glyph = glyph_texel(glyph_slot(in_weight), mill_surface_uv(in_uv)) * glyph_alpha(in_weight);
         if (glyph * coverage < ALPHA_CUTOFF) {
             discard;
         }

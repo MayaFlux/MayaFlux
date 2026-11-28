@@ -107,8 +107,9 @@ namespace internal {
          * @brief Text slot of @p atlas, the same in every batch, so a slice
          *        keeps its slot when it moves to another one.
          *
-         * The default atlas holds slot 0. Others take the next free slot, and
-         * slot 0 once all k_text_slots are held.
+         * The default atlas holds slot 0. Others take the next free slot, then
+         * one whose atlas no text draws from any more, and slot 0 when every
+         * one is in use.
          */
         [[nodiscard]] uint32_t atlas_slot(const Text::GlyphAtlas& atlas);
 

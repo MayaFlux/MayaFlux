@@ -41,15 +41,17 @@ struct MAYAFLUX_API GlyphMap {
  *        as glyph coverage rather than as an image.
  *
  * Positive weights select a slot as an image, zero is a flat colour, and a
- * negative weight selects slot -weight - 1 as coverage: the shader outputs the
- * vertex colour with the slot's red channel as alpha (see
+ * negative weight selects a slot as coverage: the shader outputs the vertex
+ * colour with the slot's red channel, times @p alpha, as alpha. The whole part
+ * of -weight is the slot plus one and the fraction carries the alpha (see
  * data/shaders/include/glyph_coverage.glsl).
  *
  * @param slot Zero based index of the atlas image in the shader's texture array.
+ * @param alpha Opacity of the glyph, clamped to [0, 1].
  */
-[[nodiscard]] constexpr float coverage_weight(uint32_t slot) noexcept
+[[nodiscard]] constexpr float coverage_weight(uint32_t slot, float alpha = 1.0F) noexcept
 {
-    return -static_cast<float>(slot + 1);
+    return -static_cast<float>(slot + 1) - (1.0F - std::clamp(alpha, 0.0F, 1.0F)) * 0.49F;
 }
 
 /**
@@ -57,8 +59,8 @@ struct MAYAFLUX_API GlyphMap {
  *
  * Positions come from @p map, UVs from the quads, and colour from the last
  * entry of @p spans whose byte range holds the quad's byte_offset, else
- * @p color. Vertex colour carries no alpha, so only rgb is used. Every
- * vertex's weight is coverage_weight(@p slot).
+ * @p color. Every vertex's weight is coverage_weight(@p slot) with that
+ * colour's alpha.
  *
  * @param quads Quads from lay_out().
  * @param color Colour of quads no span covers.

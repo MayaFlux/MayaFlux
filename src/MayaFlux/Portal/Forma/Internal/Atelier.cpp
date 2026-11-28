@@ -1,4 +1,5 @@
 #include "Atelier.hpp"
+#include "TextSlice.hpp"
 
 #include "MayaFlux/Portal/Forma/Inspect/Inspector.hpp"
 
@@ -168,8 +169,14 @@ uint32_t Atelier::atlas_slot(const Text::GlyphAtlas& atlas)
     }
 
     if (m_atlas_slots.size() + 1 >= k_text_slots) {
+        for (size_t i = 0; i < m_atlas_slots.size(); ++i) {
+            if (!TextSlice::drawn_from(m_atlas_slots[i])) {
+                m_atlas_slots[i] = &atlas;
+                return static_cast<uint32_t>(i) + 1;
+            }
+        }
         MF_WARN(Journal::Component::Portal, Journal::Context::API,
-            "Portal::Forma: every text slot is held, this atlas shares slot 0");
+            "Portal::Forma: every text slot is in use, this atlas shares slot 0");
         return 0;
     }
 
