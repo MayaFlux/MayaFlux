@@ -77,23 +77,40 @@ namespace detail {
 // Combined response
 // =============================================================================
 
+/** @brief Reflectance at normal incidence of both parts of the surface together. */
+[[nodiscard]] inline glm::vec3 surface_f0(const SurfaceResponse& surface) noexcept
+{
+    return glm::mix(glm::vec3(surface.dielectric_f0), surface.base_color, surface.metallic);
+}
+
+/** @brief The diffuse lobe of surface_reflectance(). */
+[[nodiscard]] inline glm::vec3 surface_diffuse(
+    const SurfaceResponse& surface,
+    const glm::vec3& normal, const glm::vec3& view, const glm::vec3& source) noexcept
+{
+    const float cos_view = glm::dot(normal, view);
+    const float cos_source = glm::dot(normal, source);
+    if (!(cos_view > 0.0F) || !(cos_source > 0.0F)) {
+        return glm::vec3(0.0F);
+    }
+
+    const glm::vec3 boundary(surface.dielectric_f0);
+    const glm::vec3 entering = (glm::vec3(1.0F) - schlick_fresnel(boundary, cos_view))
+        * (glm::vec3(1.0F) - schlick_fresnel(boundary, cos_source))
+        / (glm::vec3(1.0F) - schlick_average(boundary));
+    return entering * (1.0F - surface.metallic)
+        * oren_nayar_energy_preserving(surface.base_color, surface.diffuse_roughness, normal, view, source);
+}
+
 /**
- * @brief Reflectance of a surface for one pair of directions, without the cosine.
- *
- * Multiply by `dot(normal, source)` and the arriving radiance to get what leaves
- * toward @p view.
- *
- * @param surface        The surface.
- * @param normal         Unit surface normal.
- * @param view           Unit direction toward the viewer.
- * @param source         Unit direction toward where the radiance arrives from.
- * @param specular_albedo Directional albedo of the specular lobe at unit Fresnel,
- *                        for multiple scattering compensation. One applies none.
+ * @brief The specular lobe of surface_reflectance().
+ * @param alpha           GGX width to evaluate, which a source with a size widens.
+ * @param specular_albedo As surface_reflectance().
  */
-[[nodiscard]] inline glm::vec3 surface_reflectance(
+[[nodiscard]] inline glm::vec3 surface_specular(
     const SurfaceResponse& surface,
     const glm::vec3& normal, const glm::vec3& view, const glm::vec3& source,
-    float specular_albedo = 1.0F) noexcept
+    float alpha, float specular_albedo = 1.0F) noexcept
 {
     const float cos_view = glm::dot(normal, view);
     const float cos_source = glm::dot(normal, source);
@@ -102,23 +119,33 @@ namespace detail {
     }
 
     const glm::vec3 half = glm::normalize(view + source);
-    const float cos_difference = std::max(glm::dot(view, half), 0.0F);
-    const float alpha = roughness_to_alpha(surface.roughness);
-
-    const glm::vec3 f0 = glm::mix(glm::vec3(surface.dielectric_f0), surface.base_color, surface.metallic);
-    const glm::vec3 specular = schlick_fresnel(f0, cos_difference)
+    const glm::vec3 f0 = surface_f0(surface);
+    return schlick_fresnel(f0, std::max(glm::dot(view, half), 0.0F))
         * ggx_density(glm::dot(normal, half), alpha)
         * ggx_visibility(cos_view, cos_source, alpha)
         * multiple_scattering_compensation(f0, specular_albedo);
+}
 
-    const glm::vec3 boundary(surface.dielectric_f0);
-    const glm::vec3 entering = (glm::vec3(1.0F) - schlick_fresnel(boundary, cos_view))
-        * (glm::vec3(1.0F) - schlick_fresnel(boundary, cos_source))
-        / (glm::vec3(1.0F) - schlick_average(boundary));
-    const glm::vec3 diffuse = entering * (1.0F - surface.metallic)
-        * oren_nayar_energy_preserving(surface.base_color, surface.diffuse_roughness, normal, view, source);
-
-    return diffuse + specular;
+/**
+ * @brief Reflectance of a surface for one pair of directions, without the cosine.
+ *
+ * Multiply by `dot(normal, source)` and the arriving radiance to get what leaves
+ * toward @p view.
+ *
+ * @param surface         The surface.
+ * @param normal          Unit surface normal.
+ * @param view            Unit direction toward the viewer.
+ * @param source          Unit direction toward where the radiance arrives from.
+ * @param specular_albedo Directional albedo of the specular lobe at unit Fresnel,
+ *                        for multiple scattering compensation. One applies none.
+ */
+[[nodiscard]] inline glm::vec3 surface_reflectance(
+    const SurfaceResponse& surface,
+    const glm::vec3& normal, const glm::vec3& view, const glm::vec3& source,
+    float specular_albedo = 1.0F) noexcept
+{
+    return surface_diffuse(surface, normal, view, source)
+        + surface_specular(surface, normal, view, source, roughness_to_alpha(surface.roughness), specular_albedo);
 }
 
 // =============================================================================
