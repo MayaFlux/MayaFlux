@@ -246,19 +246,24 @@ private:
      */
     void sort_renderable_buffers()
     {
-        std::ranges::stable_sort(m_renderable_buffers, {},
-            [](const RenderableBufferInfo& info) {
-                using Portal::Graphics::DrawBand;
-                if (!info.buffer)
-                    return std::tuple { DrawBand::BASE, int64_t {}, int64_t {} };
+        using Portal::Graphics::DrawBand;
+        using Key = std::tuple<DrawBand, int64_t, int64_t>;
 
+        std::vector<std::pair<Key, RenderableBufferInfo>> keyed;
+        keyed.reserve(m_renderable_buffers.size());
+        for (auto& info : m_renderable_buffers) {
+            Key key { DrawBand::BASE, 0, 0 };
+            if (info.buffer) {
                 const auto config = info.buffer->get_render_config();
-                return std::tuple {
-                    config.draw_band.value_or(DrawBand::BASE),
-                    info.buffer->draw_rank(),
-                    config.draw_priority
-                };
-            });
+                key = { config.draw_band.value_or(DrawBand::BASE), info.buffer->draw_rank(), config.draw_priority };
+            }
+            keyed.emplace_back(key, std::move(info));
+        }
+
+        std::ranges::stable_sort(keyed, {}, &std::pair<Key, RenderableBufferInfo>::first);
+
+        for (size_t i = 0; i < keyed.size(); ++i)
+            m_renderable_buffers[i] = std::move(keyed[i].second);
     }
 
     std::vector<RenderableBufferInfo> m_renderable_buffers;

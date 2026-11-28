@@ -633,18 +633,16 @@ public:
     RenderConfig get_render_config() const { return m_render_config; }
 
     /**
-     * @brief Update the render configuration and mark as dirty
-     * @param config New RenderConfig to apply
+     * @brief Update the render configuration and mark it dirty.
      *
-     * This will update the buffer's render configuration and set the dirty flag,
-     * signaling to any RenderProcessor that it needs to reconfigure rendering for this buffer.
-     * NOTE: Child classes override this to call their internal setup_rendering() with the new config, which may have additional side effects.
+     * What changed among view_pinned, depth_test, depth_write, cull_mode and
+     * scissor is passed to every render processor of the buffer. Members that
+     * did not change are left alone, so a view's own settings stand. Shaders,
+     * topology and destinations take effect only through setup_rendering().
+     *
+     * @param config New RenderConfig to apply
      */
-    virtual void set_render_config(const RenderConfig& config)
-    {
-        m_render_config = config;
-        m_render_config_dirty = true;
-    }
+    virtual void set_render_config(const RenderConfig& config);
 
     /**
      * @brief Order computed at run time, between the draw band and
@@ -653,9 +651,19 @@ public:
      * For an order that follows something moving, such as a distance. It is
      * not part of the render configuration.
      */
-    void set_draw_rank(int64_t rank) noexcept { m_draw_rank = rank; }
+    void set_draw_rank(int64_t rank) noexcept
+    {
+        m_draw_rank = rank;
+        m_draw_rank_source = nullptr;
+    }
 
-    [[nodiscard]] int64_t draw_rank() const noexcept { return m_draw_rank; }
+    /**
+     * @brief Compute the draw rank each time draws are ordered, so it is
+     *        current for the draws it orders. Replaces set_draw_rank().
+     */
+    void set_draw_rank_source(std::function<int64_t()> source) { m_draw_rank_source = std::move(source); }
+
+    [[nodiscard]] int64_t draw_rank() const { return m_draw_rank_source ? m_draw_rank_source() : m_draw_rank; }
 
     /**
      * @brief Mark this buffer as requiring depth testing when rendered
@@ -734,6 +742,7 @@ private:
     Usage m_usage {};
     bool m_needs_depth {};
     int64_t m_draw_rank {};
+    std::function<int64_t()> m_draw_rank_source;
 
     // Semantic metadata
     Kakshya::DataModality m_modality;

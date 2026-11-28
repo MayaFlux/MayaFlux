@@ -93,6 +93,9 @@ void TextureBuffer::setup_rendering(const RenderConfig& user_config)
     m_render_config.depth_write = user_config.depth_write;
     m_render_config.view_pinned = user_config.view_pinned;
     m_render_config.draw_band = user_config.draw_band;
+    m_render_config.cull_mode = user_config.cull_mode;
+    m_render_config.scissor = user_config.scissor;
+    m_render_config.draw_priority = user_config.draw_priority;
     m_render_config.default_sampler = user_config.default_sampler;
 
     if (!user_config.additional_textures.empty()) {
