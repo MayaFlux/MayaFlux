@@ -171,7 +171,69 @@ public:
      */
     [[nodiscard]] std::pair<double, double> get_mouse_position() const;
 
+    // =========================================================================
+    // Input ownership
+    //
+    // Every listener still receives every event. A listener that shares the
+    // window with others claims input and asks whether an event is its own, so
+    // that one of them acts. The owner is settled before any listener runs.
+    // =========================================================================
+
+    /**
+     * @brief Register a claim on the window's input.
+     *
+     * The pointer belongs to the claim of highest priority whose @p covers
+     * holds at the pointer, the later registered winning a tie. A button press
+     * keeps the pointer with its owner until every button is up. After a press
+     * that nothing covers, the first claim the held pointer reaches keeps it.
+     *
+     * A key belongs, in the same order, to a claim whose @p wants holds for it.
+     *
+     * @param priority Higher goes first.
+     * @param covers   Whether the claim wants the pointer at a window pixel.
+     *                 Empty never takes it.
+     * @param wants    Whether the claim wants a key. Empty never takes one.
+     * @return Id of the claim, never zero.
+     */
+    [[nodiscard]] uint32_t claim(
+        int priority,
+        std::function<bool(double x, double y)> covers,
+        std::function<bool(IO::Keys)> wants = {});
+
+    /** @brief Withdraw a claim. A press it was keeping is let go. */
+    void unclaim(uint32_t id);
+
+    /**
+     * @brief Give a claim another priority and put it ahead of its equals, as
+     *        if it had just been registered.
+     */
+    void set_claim_priority(uint32_t id, int priority);
+
+    /** @brief Whether the pointer event being delivered, or the last one, belongs to a claim. */
+    [[nodiscard]] bool owns_pointer(uint32_t id) const { return id != 0 && id == m_pointer_owner; }
+
+    /** @brief Whether the key event being delivered, or the last one, belongs to a claim. */
+    [[nodiscard]] bool owns_key(uint32_t id) const { return id != 0 && id == m_key_owner; }
+
 private:
+    struct Claim {
+        uint32_t id;
+        int priority;
+        std::function<bool(double, double)> covers;
+        std::function<bool(IO::Keys)> wants;
+    };
+
+    std::vector<Claim> m_claims;
+    uint32_t m_last_claim {};
+    uint32_t m_pointer_owner {};
+    uint32_t m_pointer_captor {};
+    uint32_t m_key_owner {};
+
+    void settle_ownership(const Core::WindowEvent& event);
+
+    template <typename Holds>
+    [[nodiscard]] uint32_t first_claim(const Holds& holds) const;
+
     std::deque<Core::WindowEvent> m_pending_events;
     std::array<size_t, 256> m_pending_counts {};
     std::unordered_map<int16_t, bool> m_key_states;

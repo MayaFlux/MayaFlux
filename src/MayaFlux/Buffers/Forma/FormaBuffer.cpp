@@ -141,6 +141,7 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     }
     m_render_processor->set_mill_on_change(true);
     m_render_processor->enable_alpha_blending();
+    m_render_processor->set_view_pinned(true);
 
     if (multi_tex) {
         uint32_t slot = 1;

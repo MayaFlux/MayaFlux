@@ -570,11 +570,69 @@ Context& Context::wire_drag(
 }
 
 // =============================================================================
+// Input ownership
+// =============================================================================
+
+void Context::set_input_priority(int priority)
+{
+    m_input_priority = priority;
+    if (m_window && m_claim != 0)
+        m_window->get_event_source().set_claim_priority(m_claim, priority);
+}
+
+bool Context::owns_pointer() const
+{
+    return m_claim == 0 || m_window->get_event_source().owns_pointer(m_claim);
+}
+
+bool Context::owns_key() const
+{
+    return m_claim == 0 || m_window->get_event_source().owns_key(m_claim);
+}
+
+bool Context::wants_key(IO::Keys key) const
+{
+    if (!m_focused)
+        return false;
+
+    const auto found = m_callbacks.find(*m_focused);
+    if (found == m_callbacks.end())
+        return false;
+
+    const ElementCallbacks& callbacks = found->second;
+    if (callbacks.text)
+        return true;
+
+    const auto names_key = [key](const auto& entry) {
+        return (entry.first & 0xFFFF) == (static_cast<int>(key) & 0xFFFF);
+    };
+
+    return std::ranges::any_of(callbacks.key_press, names_key)
+        || std::ranges::any_of(callbacks.key_release, names_key)
+        || std::ranges::any_of(callbacks.key_held, names_key)
+        || std::ranges::any_of(callbacks.subscribers, [key](const auto& subscription) {
+               const auto& filter = subscription.filter;
+               if (filter.key_code)
+                   return *filter.key_code == key;
+               if (!filter.event_type)
+                   return !filter.button;
+               return is_key_event(*filter.event_type) || *filter.event_type == Core::WindowEventType::TEXT_INPUT;
+           });
+}
+
+// =============================================================================
 // Handler registration / cancellation
 // =============================================================================
 
 void Context::register_handlers()
 {
+    if (m_window) {
+        m_claim = m_window->get_event_source().claim(
+            m_input_priority,
+            [this](double px, double py) { return m_layer->hit_test(to_screen(px, py)).has_value(); },
+            [this](IO::Keys key) { return wants_key(key); });
+    }
+
     m_event_manager->add_event(
         std::make_shared<Vruta::Event>(
             Kriya::mouse_moved(m_window,
@@ -647,6 +705,11 @@ void Context::register_handlers()
 
 void Context::cancel_handlers(bool cancel_close)
 {
+    if (m_window && m_claim != 0) {
+        m_window->get_event_source().unclaim(m_claim);
+        m_claim = 0;
+    }
+
     if (!m_event_manager)
         return;
 
@@ -709,7 +772,7 @@ void Context::handle_move(double px, double py)
 {
     sync_size();
     const glm::vec2 screen = to_screen(px, py);
-    const auto hit = m_layer->hit_test(screen);
+    const auto hit = owns_pointer() ? m_layer->hit_test(screen) : std::nullopt;
 
     if (hit != m_hovered) {
         if (m_hovered) {
@@ -748,7 +811,7 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 {
     sync_size();
     const glm::vec2 screen = to_screen(px, py);
-    const auto hit = m_layer->hit_test(screen);
+    const auto hit = owns_pointer() ? m_layer->hit_test(screen) : std::nullopt;
 
     const int btn_idx = static_cast<int>(btn);
 
@@ -785,6 +848,8 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
 {
     const int btn_idx = static_cast<int>(btn);
     m_dragging[btn_idx] = std::nullopt;
+    if (!owns_pointer())
+        return;
 
     const glm::vec2 screen = to_screen(px, py);
     const auto hit = m_layer->hit_test(screen);
@@ -812,6 +877,9 @@ void Context::handle_drags(double px, double py)
 
 void Context::handle_drag(double px, double py, IO::MouseButtons btn)
 {
+    if (!owns_pointer())
+        return;
+
     const glm::vec2 screen = to_screen(px, py);
     const int btn_idx = static_cast<int>(btn);
 
@@ -840,7 +908,7 @@ void Context::handle_drag(double px, double py, IO::MouseButtons btn)
 void Context::handle_scroll(double dx, double dy)
 {
     sync_size();
-    if (!m_hovered)
+    if (!m_hovered || !owns_pointer())
         return;
 
     const uint32_t over = *m_hovered;
@@ -864,7 +932,7 @@ void Context::handle_scroll(double dx, double dy)
 void Context::handle_key_press(int key_code)
 {
     sync_size();
-    if (!m_focused)
+    if (!m_focused || !owns_key())
         return;
 
     auto it = m_callbacks.find(*m_focused);
@@ -893,7 +961,7 @@ void Context::handle_key_release(IO::Keys key)
 
 void Context::handle_key_held(int key_code)
 {
-    if (!m_focused)
+    if (!m_focused || !owns_key())
         return;
 
     auto it = m_callbacks.find(*m_focused);
@@ -924,7 +992,7 @@ void Context::handle_text(uint32_t codepoint)
 void Context::handle_subscribed_key(IO::Keys key, const Core::WindowEvent& event)
 {
     sync_size();
-    if (!m_focused)
+    if (!m_focused || (event.type != Core::WindowEventType::KEY_RELEASED && !owns_key()))
         return;
 
     const bool keyless_listens = m_any_key_types.contains(static_cast<int>(event.type));
@@ -939,7 +1007,7 @@ void Context::handle_any_key(const Core::WindowEvent& event)
         return;
 
     sync_size();
-    if (!m_focused)
+    if (!m_focused || (event.type != Core::WindowEventType::KEY_RELEASED && !owns_key()))
         return;
 
     dispatch(*m_focused, event.type, glm::vec2(0.F), event.data, std::nullopt,

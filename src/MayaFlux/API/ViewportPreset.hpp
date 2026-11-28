@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
 
@@ -36,6 +37,11 @@ using ViewportPresetConfig = Kinesis::NavigationConfig;
  *
  * Each mode registers a distinct set of event handlers and may interpret
  * ViewportPresetConfig fields differently.
+ *
+ * Bindings on one window do not act together. One binding takes a press, a
+ * scroll or a key: of those whose region holds the pointer, the last bound or
+ * raised. A Forma element under the pointer comes before any binding, and so do
+ * keys its focused element listens for.
  */
 enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
@@ -76,7 +82,8 @@ MAYAFLUX_API ViewportBinding bind_viewport_preset(
  *        against a window using default settings.
  *
  * One viewpoint and one controller for every buffer registered with the window at call time
- * that has a RenderProcessor.
+ * that has a RenderProcessor whose view is not pinned, which leaves Forma's
+ * buffers alone.
  * Buffers registered after this call are not covered.
  *
  * @param window  Window supplying input events
@@ -114,7 +121,8 @@ MAYAFLUX_API ViewportBinding bind_fly_preset(
  *        registered against a window.
  *
  * One viewpoint and one controller for every buffer registered with the window at call time
- * that has a RenderProcessor.
+ * that has a RenderProcessor whose view is not pinned, which leaves Forma's
+ * buffers alone.
  * Buffers registered after this call are not covered.
  *
  * @param window   Window supplying input events
@@ -255,6 +263,27 @@ MAYAFLUX_API ViewportBinding join_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
     const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view,
     ViewportPresetMode mode = ViewportPresetMode::Fly,
+    const std::string& name = "default");
+
+/**
+ * @brief Confine a binding to part of the window.
+ *
+ * It takes input only when the pointer is there, keys included, and pan and
+ * zoom measure against that part, as for a view shown in an inset or drawn
+ * into a render lane of that shape. std::nullopt gives it the whole window.
+ *
+ * @param window  Window passed to the bind
+ * @param region  Rectangle in window NDC, +y up
+ * @param name    Name passed to the bind
+ */
+MAYAFLUX_API void set_viewport_preset_region(
+    const std::shared_ptr<Core::Window>& window,
+    const std::optional<Kinesis::AABB2D>& region,
+    const std::string& name = "default");
+
+/** @brief Put a binding ahead of the other bindings of its window. */
+MAYAFLUX_API void raise_viewport_preset(
+    const std::shared_ptr<Core::Window>& window,
     const std::string& name = "default");
 
 /**

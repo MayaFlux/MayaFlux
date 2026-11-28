@@ -379,6 +379,16 @@ public:
         bool enable_depth = true,
         Portal::Graphics::CullMode cull = Portal::Graphics::CullMode::BACK);
 
+    /**
+     * @brief Say that this processor's view is not for others to replace.
+     *
+     * Window-wide viewport binding passes over a pinned processor. Naming the
+     * processor to a bind, or any of the set_view calls, still takes effect.
+     */
+    void set_view_pinned(bool pinned) noexcept { m_view_pinned = pinned; }
+
+    [[nodiscard]] bool view_pinned() const noexcept { return m_view_pinned; }
+
     /** @brief The viewpoint cell drawn from, or null. */
     [[nodiscard]] const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& get_view_cell() const { return m_view_cell; }
 
@@ -720,6 +730,7 @@ private:
      */
     void collect_retired_pipelines();
     bool m_view_transform_active {};
+    bool m_view_pinned {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
     uint32_t m_instance_count { 1 };
