@@ -309,14 +309,15 @@ namespace internal {
                 auto* layer_ptr = &layer;
 
                 reposition = [buffer, geometry_fn, state, id, layer_ptr](Kinesis::AABB2D) {
-                    if (!buffer || !geometry_fn || !state)
+                    if (!geometry_fn || !state)
                         return;
 
                     std::vector<uint8_t> bytes;
                     Element el;
                     el.id = id;
                     geometry_fn(state->value, bytes, el);
-                    buffer.submit(bytes);
+                    if (buffer)
+                        buffer.submit(bytes);
 
                     if (el.bounds_hint)
                         layer_ptr->set_bounds(id, *el.bounds_hint);

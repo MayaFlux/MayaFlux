@@ -46,6 +46,9 @@ struct MappedState;
  */
 class MAYAFLUX_API Context {
 public:
+    /// @brief The ndc of a pointer callback is in the element's own coordinates,
+    ///        see Element::to_local. For a flat element without a view that is
+    ///        the screen position.
     using PressFn = std::function<void(uint32_t id, glm::vec2 ndc)>;
     using MoveFn = std::function<void(uint32_t id, glm::vec2 ndc)>;
     using EnterFn = std::function<void(uint32_t id)>;
@@ -59,7 +62,8 @@ public:
     /**
      * @brief Receives a window event that reached an element.
      *
-     * ndc is the pointer in NDC for pointer events and zero for the others.
+     * ndc is the pointer in the element's coordinates for pointer events and
+     * zero for the others.
      */
     using SubscriberFn = std::function<void(uint32_t id, const Core::WindowEvent& event, glm::vec2 ndc)>;
 
@@ -576,6 +580,7 @@ private:
     void cancel_handlers(bool cancel_close = true);
 
     [[nodiscard]] glm::vec2 to_ndc(double px, double py) const noexcept;
+    [[nodiscard]] glm::vec2 to_screen(double px, double py) const noexcept;
 
     void handle_move(double px, double py);
     void handle_press(double px, double py, IO::MouseButtons btn);

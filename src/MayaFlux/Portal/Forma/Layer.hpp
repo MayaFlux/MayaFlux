@@ -265,8 +265,9 @@ public:
      * @brief The view the layer is drawn with, or std::nullopt for none.
      *
      * Elements stay placed in the z = 0 plane. The batches Forma draws them
-     * into follow the view, and a Context maps the pointer back through it, so
-     * hit regions and callbacks keep working in the elements' own coordinates.
+     * into follow the view, and the pointer is mapped back through it, so hit
+     * regions and callbacks keep working in the elements' own coordinates. An
+     * element with its own to_local does not use the view.
      * A buffer made with create_buffer() takes its view from its own processor.
      * Image batches redraw. Surface::set_view also redraws a Surface's image.
      */
@@ -287,23 +288,31 @@ public:
     // =========================================================================
 
     /**
-     * @brief Return the topmost interactive, visible element containing @p ndc.
+     * @brief Return the topmost interactive, visible element under @p ndc.
      *
-     * Traverses back-to-front. An element passes if:
-     *   1. bounds_hint is absent OR bounds_hint.contains(ndc) is true.
-     *   2. contains is absent OR contains(ndc) is true.
-     * An element with neither set never hits.
+     * Each element tests the point mapped into its own coordinates, by its
+     * to_local or else by the layer's view, with Element::hits. Elements without
+     * to_local come first, the later added winning. Among the others the
+     * smallest depth wins, then the later added.
      *
-     * @param ndc Point in NDC space (x, y in [-1, +1]).
+     * @param ndc Point on screen in NDC space (x, y in [-1, +1]).
      * @return Element id, or nullopt if no element hit.
      */
     [[nodiscard]] std::optional<uint32_t> hit_test(glm::vec2 ndc) const;
 
     /**
-     * @brief Return all interactive, visible elements containing @p ndc,
-     *        ordered front-to-back (topmost first, matching hit_test).
+     * @brief Return all interactive, visible elements under @p ndc, ordered
+     *        front-to-back (topmost first, matching hit_test).
      */
     [[nodiscard]] std::vector<uint32_t> hit_test_all(glm::vec2 ndc) const;
+
+    /**
+     * @brief The screen position @p screen in the coordinates of element @p id.
+     *
+     * Containment, visibility and interactivity are not tested. std::nullopt
+     * for an unknown id or a position that does not meet the element's surface.
+     */
+    [[nodiscard]] std::optional<glm::vec2> local_point(uint32_t id, glm::vec2 screen) const;
 
     // =========================================================================
     // Spatial queries - pixel space
@@ -397,8 +406,13 @@ private:
         double px, double py,
         uint32_t win_w, uint32_t win_h) noexcept;
 
-    [[nodiscard]] static bool test_element(
-        const Element& el, glm::vec2 ndc) noexcept;
+    [[nodiscard]] std::optional<glm::vec2> unprojected(glm::vec2 screen) const;
+
+    [[nodiscard]] static std::optional<glm::vec3> map_to_local(
+        const Element& el, glm::vec2 screen, const std::optional<glm::vec2>& viewed);
+
+    [[nodiscard]] static std::optional<float> test_element(
+        const Element& el, glm::vec2 screen, const std::optional<glm::vec2>& viewed);
 };
 
 } // namespace MayaFlux::Portal::Forma

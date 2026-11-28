@@ -685,14 +685,19 @@ void Context::cancel_handlers(bool cancel_close)
 
 glm::vec2 Context::to_ndc(double px, double py) const noexcept
 {
+    return m_layer->from_view(to_screen(px, py));
+}
+
+glm::vec2 Context::to_screen(double px, double py) const noexcept
+{
     const auto size = extent();
     if (!m_window && m_image) {
         const auto filled = m_area.pixels(m_image->width(), m_image->height());
         px -= filled.x0;
         py -= filled.y0;
     }
-    return m_layer->from_view({ (static_cast<float>(px) / static_cast<float>(size.x)) * 2.0F - 1.0F,
-        1.0F - (static_cast<float>(py) / static_cast<float>(size.y)) * 2.0F });
+    return { (static_cast<float>(px) / static_cast<float>(size.x)) * 2.0F - 1.0F,
+        1.0F - (static_cast<float>(py) / static_cast<float>(size.y)) * 2.0F };
 }
 
 Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) const noexcept
@@ -703,8 +708,8 @@ Kinesis::AABB2D Context::to_ndc_rect(double x, double y, double w, double h) con
 void Context::handle_move(double px, double py)
 {
     sync_size();
-    const glm::vec2 ndc = to_ndc(px, py);
-    const auto hit = m_layer->hit_test(ndc);
+    const glm::vec2 screen = to_screen(px, py);
+    const auto hit = m_layer->hit_test(screen);
 
     if (hit != m_hovered) {
         if (m_hovered) {
@@ -712,24 +717,29 @@ void Context::handle_move(double px, double py)
             const auto it = m_callbacks.find(left);
             if (it != m_callbacks.end())
                 notify(it->second.leave, left);
-            dispatch(left, Core::WindowEventType::MOUSE_EXITED, ndc);
+            dispatch(left, Core::WindowEventType::MOUSE_EXITED,
+                m_layer->local_point(left, screen).value_or(screen));
         }
         if (hit) {
             const uint32_t entered = *hit;
             const auto it = m_callbacks.find(entered);
             if (it != m_callbacks.end())
                 notify(it->second.enter, entered);
-            dispatch(entered, Core::WindowEventType::MOUSE_ENTERED, ndc);
+            if (const auto ndc = m_layer->local_point(entered, screen))
+                dispatch(entered, Core::WindowEventType::MOUSE_ENTERED, *ndc);
         }
         m_hovered = hit;
     }
 
     if (hit) {
         const uint32_t over = *hit;
+        const auto ndc = m_layer->local_point(over, screen);
+        if (!ndc)
+            return;
         const auto it = m_callbacks.find(over);
         if (it != m_callbacks.end())
-            notify(it->second.move, over, ndc);
-        dispatch(over, Core::WindowEventType::MOUSE_MOTION, ndc,
+            notify(it->second.move, over, *ndc);
+        dispatch(over, Core::WindowEventType::MOUSE_MOTION, *ndc,
             Core::WindowEvent::MousePosData { px, py });
     }
 }
@@ -737,12 +747,12 @@ void Context::handle_move(double px, double py)
 void Context::handle_press(double px, double py, IO::MouseButtons btn)
 {
     sync_size();
-    const glm::vec2 ndc = to_ndc(px, py);
-    const auto hit = m_layer->hit_test(ndc);
+    const glm::vec2 screen = to_screen(px, py);
+    const auto hit = m_layer->hit_test(screen);
 
     const int btn_idx = static_cast<int>(btn);
 
-    move_focus(hit, ndc);
+    move_focus(hit, hit ? m_layer->local_point(*hit, screen).value_or(screen) : screen);
 
     if (hit) {
         const auto found = m_callbacks.find(*hit);
@@ -760,10 +770,13 @@ void Context::handle_press(double px, double py, IO::MouseButtons btn)
 
     if (hit) {
         const uint32_t pressed = *hit;
+        const auto ndc = m_layer->local_point(pressed, screen);
+        if (!ndc)
+            return;
         const auto it = m_callbacks.find(pressed);
         if (it != m_callbacks.end())
-            notify(callback_for(it->second.press, btn_idx), pressed, ndc);
-        dispatch(pressed, Core::WindowEventType::MOUSE_BUTTON_PRESSED, ndc,
+            notify(callback_for(it->second.press, btn_idx), pressed, *ndc);
+        dispatch(pressed, Core::WindowEventType::MOUSE_BUTTON_PRESSED, *ndc,
             Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), modifiers() }, btn);
     }
 }
@@ -773,16 +786,19 @@ void Context::handle_release(double px, double py, IO::MouseButtons btn)
     const int btn_idx = static_cast<int>(btn);
     m_dragging[btn_idx] = std::nullopt;
 
-    const glm::vec2 ndc = to_ndc(px, py);
-    const auto hit = m_layer->hit_test(ndc);
+    const glm::vec2 screen = to_screen(px, py);
+    const auto hit = m_layer->hit_test(screen);
     if (!hit)
         return;
 
     const uint32_t released = *hit;
+    const auto ndc = m_layer->local_point(released, screen);
+    if (!ndc)
+        return;
     const auto it = m_callbacks.find(released);
     if (it != m_callbacks.end())
-        notify(callback_for(it->second.release, btn_idx), released, ndc);
-    dispatch(released, Core::WindowEventType::MOUSE_BUTTON_RELEASED, ndc,
+        notify(callback_for(it->second.release, btn_idx), released, *ndc);
+    dispatch(released, Core::WindowEventType::MOUSE_BUTTON_RELEASED, *ndc,
         Core::WindowEvent::MouseButtonData { static_cast<int8_t>(btn), modifiers() }, btn);
 }
 
@@ -796,11 +812,11 @@ void Context::handle_drags(double px, double py)
 
 void Context::handle_drag(double px, double py, IO::MouseButtons btn)
 {
-    const glm::vec2 ndc = to_ndc(px, py);
+    const glm::vec2 screen = to_screen(px, py);
     const int btn_idx = static_cast<int>(btn);
 
     if (!m_dragging[btn_idx]) {
-        const auto hit = m_layer->hit_test(ndc);
+        const auto hit = m_layer->hit_test(screen);
         if (hit)
             m_dragging[btn_idx] = hit;
         else
@@ -812,8 +828,12 @@ void Context::handle_drag(double px, double py, IO::MouseButtons btn)
     if (it == m_callbacks.end())
         return;
 
-    notify(callback_for(it->second.drag, btn_idx), target, ndc);
-    dispatch(target, Core::WindowEventType::MOUSE_MOTION, ndc,
+    const auto ndc = m_layer->local_point(target, screen);
+    if (!ndc)
+        return;
+
+    notify(callback_for(it->second.drag, btn_idx), target, *ndc);
+    dispatch(target, Core::WindowEventType::MOUSE_MOTION, *ndc,
         Core::WindowEvent::MousePosData { px, py }, btn);
 }
 
@@ -829,9 +849,11 @@ void Context::handle_scroll(double dx, double dy)
         return;
 
     const auto position = pointer_position();
-    const glm::vec2 ndc = to_ndc(position.x, position.y);
-    notify(it->second.scroll, over, ndc, dx, dy);
-    dispatch(over, Core::WindowEventType::MOUSE_SCROLLED, ndc,
+    const auto ndc = m_layer->local_point(over, to_screen(position.x, position.y));
+    if (!ndc)
+        return;
+    notify(it->second.scroll, over, *ndc, dx, dy);
+    dispatch(over, Core::WindowEventType::MOUSE_SCROLLED, *ndc,
         Core::WindowEvent::ScrollData { dx, dy });
 }
 
