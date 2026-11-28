@@ -586,8 +586,8 @@ std::vector<glm::vec3> compute_convex_hull_2d(
 
     // Graham scan
     std::vector<size_t> hull;
-    hull.push_back(points[0].index);
-    hull.push_back(points[1].index);
+    hull.push_back(0);
+    hull.push_back(1);
 
     auto ccw = [](const glm::vec2& a, const glm::vec2& b, const glm::vec2& c) {
         return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) > 0.0F;
@@ -607,17 +607,17 @@ std::vector<glm::vec3> compute_convex_hull_2d(
             }
             hull.pop_back();
         }
-        hull.push_back(points[i].index);
+        hull.push_back(i);
     }
 
     std::vector<glm::vec3> result;
     result.reserve(hull.size() + 1);
 
-    for (size_t idx : hull) {
-        result.push_back(vertices[idx]);
+    for (size_t at : hull) {
+        result.push_back(vertices[points[at].index]);
     }
 
-    result.push_back(vertices[hull[0]]);
+    result.push_back(vertices[points[hull[0]].index]);
 
     return result;
 }

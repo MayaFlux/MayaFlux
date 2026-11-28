@@ -2,6 +2,7 @@
 
 #include "Collapsible.hpp"
 #include "MayaFlux/Portal/Forma/Link.hpp"
+#include "MayaFlux/Portal/Forma/Surface.hpp"
 
 namespace MayaFlux::Core {
 class Window;
@@ -75,29 +76,6 @@ struct EntryGroup {
         return b;
     }
 };
-
-/**
- * @brief Convert an NDC row rect into integer pixel dimensions.
- *
- * Clamps width to at least 1 pixel and height to at least the default
- * atlas pixel size to avoid degenerate layouts.
- *
- * @param window  Target window for pixel dimension calculation.
- * @param x_min   Left edge in NDC.
- * @param x_max   Right edge in NDC.
- * @param row_h   Row height in NDC units.
- */
-[[nodiscard]] MAYAFLUX_API glm::uvec2 row_pixel_dims(
-    const std::shared_ptr<Core::Window>& window,
-    float x_min, float x_max, float row_h);
-
-/**
- * @brief Form of row_pixel_dims() for a canvas given by its pixel @p extent,
- *        such as Surface::extent() of a Surface drawn into an image.
- */
-[[nodiscard]] MAYAFLUX_API glm::uvec2 row_pixel_dims(
-    glm::uvec2 extent,
-    float x_min, float x_max, float row_h);
 
 /**
  * @brief Construct one labeled entry row, advance the cursor, and return it.

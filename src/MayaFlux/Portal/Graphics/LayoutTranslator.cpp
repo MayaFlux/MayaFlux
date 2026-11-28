@@ -56,7 +56,7 @@ VertexLayoutTranslator::translate_layout(
     }
 
     if (layout.vertex_count == 0) {
-        MF_WARN(Journal::Component::Portal, Journal::Context::Rendering,
+        MF_DEBUG(Journal::Component::Portal, Journal::Context::Rendering,
             "Vertex layout has zero vertices");
     }
 

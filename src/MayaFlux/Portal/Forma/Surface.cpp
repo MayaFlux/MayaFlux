@@ -2,6 +2,8 @@
 
 #include "Internal/Atelier.hpp"
 #include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+#include "MayaFlux/Journal/Archivist.hpp"
+#include "MayaFlux/Portal/Text/TypeFaceFoundry.hpp"
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 #include "MayaFlux/Vruta/WindowEventSource.hpp"
 
@@ -229,6 +231,33 @@ bool Surface::route_input_from(Surface& host, uint32_t element)
         [fed](uint32_t, const Core::WindowEvent&, glm::vec2) { fed->clear_focus(); });
 
     return true;
+}
+
+glm::uvec2 row_pixel_dims(
+    const std::shared_ptr<Core::Window>& window,
+    float x_min, float x_max, float row_h)
+{
+    const auto& ws = window->get_state();
+    return row_pixel_dims(glm::uvec2 { ws.current_width, ws.current_height }, x_min, x_max, row_h);
+}
+
+glm::uvec2 row_pixel_dims(
+    glm::uvec2 extent,
+    float x_min, float x_max, float row_h)
+{
+    const auto w = static_cast<uint32_t>(
+        (x_max - x_min) * 0.5F * static_cast<float>(extent.x));
+    const auto h = static_cast<uint32_t>(
+        row_h * 0.5F * static_cast<float>(extent.y));
+    auto atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas();
+    if (!atlas) {
+        error<std::runtime_error>(Journal::Component::Portal, Journal::Context::Runtime,
+            std::source_location::current(),
+            "Failed to get default glyph atlas for row pixel dimension calculation");
+    }
+    const uint32_t min_h = atlas->pixel_size();
+
+    return { std::max(w, 1U), std::max(h, min_h) };
 }
 
 } // namespace MayaFlux::Portal::Forma
