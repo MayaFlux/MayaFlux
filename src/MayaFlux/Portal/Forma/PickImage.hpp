@@ -46,6 +46,14 @@ public:
      */
     bool add(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 
+    /**
+     * @brief Draw @p buffer into the image so it hides added ones, without being
+     *        picked itself. It has to meet what add() asks. add() of it makes it
+     *        pickable.
+     * @return False when it has no render processor.
+     */
+    bool occlude(const std::shared_ptr<Buffers::VKBuffer>& buffer);
+
     /** @brief Stop drawing @p buffer into the image. */
     void remove(const std::shared_ptr<Buffers::VKBuffer>& buffer);
 

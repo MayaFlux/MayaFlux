@@ -19,6 +19,28 @@ namespace {
 
     constexpr uint32_t k_pick_constant = 8;
 
+    /** Draw @p buffer into @p target writing @p id; false when it cannot be. */
+    bool draw_into(
+        const std::shared_ptr<Graphics::ImageTarget>& target,
+        const std::shared_ptr<Buffers::VKBuffer>& buffer,
+        uint32_t id)
+    {
+        const auto processor = buffer ? buffer->get_render_processor() : nullptr;
+        if (!processor) {
+            MF_ERROR(Journal::Component::Portal, Journal::Context::API,
+                "PickImage: the buffer is not set up for rendering");
+            return false;
+        }
+
+        processor->add_target_image(target, buffer);
+        if (!processor->set_destination_shader(target, "forma_pick.frag.spv",
+                { { k_pick_constant, std::bit_cast<uint32_t>(static_cast<float>(id)) } })) {
+            processor->remove_target_image(target, buffer);
+            return false;
+        }
+        return true;
+    }
+
 }
 
 struct PickImage::State {
@@ -30,11 +52,18 @@ struct PickImage::State {
     std::shared_ptr<Graphics::ImageTarget> target;
     std::shared_ptr<Buffers::VKBuffer> staging;
     std::vector<std::pair<uint32_t, std::weak_ptr<Buffers::VKBuffer>>> added;
+    std::vector<std::weak_ptr<Buffers::VKBuffer>> occluders;
     uint32_t last_id {};
 
     Graphics::FenceID pending { Graphics::INVALID_FENCE };
     glm::vec2 pending_ndc { 0.0F };
     Sample sample;
+
+    /** Whether @p buffer was an occluder, which it no longer is. */
+    bool drop_occluder(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+    {
+        return std::erase_if(occluders, [&buffer](const auto& held) { return held.lock() == buffer; }) > 0;
+    }
 
     [[nodiscard]] uint32_t id_of(const std::shared_ptr<Buffers::VKBuffer>& buffer) const
     {
@@ -118,7 +147,11 @@ PickImage::PickImage(uint32_t width, uint32_t height)
 
 PickImage::~PickImage()
 {
-    for (const auto& [id, held] : m_state->added) {
+    auto held_buffers = m_state->occluders;
+    for (const auto& [id, held] : m_state->added)
+        held_buffers.push_back(held);
+
+    for (const auto& held : held_buffers) {
         if (const auto buffer = held.lock()) {
             if (const auto processor = buffer->get_render_processor())
                 processor->remove_target_image(m_state->target, buffer);
@@ -135,31 +168,40 @@ PickImage::~PickImage()
 
 bool PickImage::add(const std::shared_ptr<Buffers::VKBuffer>& buffer)
 {
-    const auto processor = buffer ? buffer->get_render_processor() : nullptr;
-    if (!processor) {
-        MF_ERROR(Journal::Component::Portal, Journal::Context::API,
-            "PickImage::add: the buffer is not set up for rendering");
-        return false;
-    }
-
-    if (m_state->id_of(buffer) != 0)
+    if (buffer && m_state->id_of(buffer) != 0)
         return true;
 
-    const uint32_t id = ++m_state->last_id;
-    processor->add_target_image(m_state->target, buffer);
-    if (!processor->set_destination_shader(m_state->target, "forma_pick.frag.spv",
-            { { k_pick_constant, std::bit_cast<uint32_t>(static_cast<float>(id)) } })) {
-        processor->remove_target_image(m_state->target, buffer);
-        return false;
+    if (buffer && m_state->drop_occluder(buffer)) {
+        if (const auto processor = buffer->get_render_processor())
+            processor->remove_target_image(m_state->target, buffer);
     }
 
+    const uint32_t id = m_state->last_id + 1;
+    if (!draw_into(m_state->target, buffer, id))
+        return false;
+
+    m_state->last_id = id;
     m_state->added.emplace_back(id, buffer);
+    return true;
+}
+
+bool PickImage::occlude(const std::shared_ptr<Buffers::VKBuffer>& buffer)
+{
+    const auto is_it = [&buffer](const auto& held) { return held.lock() == buffer; };
+    if (buffer && std::ranges::any_of(m_state->occluders, is_it))
+        return true;
+
+    remove(buffer);
+    if (!draw_into(m_state->target, buffer, 0))
+        return false;
+
+    m_state->occluders.emplace_back(buffer);
     return true;
 }
 
 void PickImage::remove(const std::shared_ptr<Buffers::VKBuffer>& buffer)
 {
-    if (!buffer || m_state->id_of(buffer) == 0)
+    if (!buffer || (m_state->id_of(buffer) == 0 && !m_state->drop_occluder(buffer)))
         return;
 
     if (const auto processor = buffer->get_render_processor())

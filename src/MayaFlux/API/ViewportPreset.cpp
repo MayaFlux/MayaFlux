@@ -18,6 +18,8 @@ namespace {
 
     using Region = std::optional<Kinesis::AABB2D>;
 
+    using Shape = std::function<bool(glm::vec2)>;
+
     /** Presets stand below every Forma Context, which starts at 0. */
     constexpr int k_preset_priority = -1000;
 
@@ -29,6 +31,7 @@ namespace {
         std::weak_ptr<Core::Window> window;
         uint32_t claim {};
         std::shared_ptr<Region> region;
+        std::shared_ptr<Shape> shape;
     };
 
     std::unordered_map<std::string, PresetRecord> s_registry;
@@ -126,16 +129,18 @@ namespace {
     {
         auto region = std::make_shared<Region>();
 
-        const auto covers = [region, weak = std::weak_ptr<Core::Window>(window)](
+        auto shape = std::make_shared<Shape>();
+
+        const auto covers = [region, shape, weak = std::weak_ptr<Core::Window>(window)](
                                 double px, double py) -> std::optional<float> {
             const auto live = weak.lock();
             if (!live) {
                 return std::nullopt;
             }
-            if (*region) {
+            if (*region || *shape) {
                 const auto& state = live->get_state();
-                if (!(*region)->contains(glm::vec2(
-                        Kinesis::to_ndc(px, py, state.current_width, state.current_height)))) {
+                const glm::vec2 at(Kinesis::to_ndc(px, py, state.current_width, state.current_height));
+                if ((*region && !(*region)->contains(at)) || (*shape && !(*shape)(at))) {
                     return std::nullopt;
                 }
             }
@@ -149,6 +154,7 @@ namespace {
         PresetRecord& record = s_registry[make_key(window, name)];
         record.window = window;
         record.region = region;
+        record.shape = shape;
         record.claim = window->get_event_source().claim(k_preset_priority, covers, wants);
 
         return { .window = window, .region = region, .claim = record.claim };
@@ -717,6 +723,21 @@ void set_viewport_preset_region(
     }
 
     *it->second.region = region;
+}
+
+void set_viewport_preset_shape(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<bool(glm::vec2)> within,
+    const std::string& name)
+{
+    const auto it = s_registry.find(make_key(window, name));
+    if (it == s_registry.end() || !it->second.shape) {
+        MF_RT_ERROR(Journal::Component::API, Journal::Context::EventDispatch,
+            "set_viewport_preset_shape: nothing is bound as '{}'", name);
+        return;
+    }
+
+    *it->second.shape = std::move(within);
 }
 
 void raise_viewport_preset(

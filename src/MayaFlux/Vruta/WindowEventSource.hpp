@@ -214,6 +214,18 @@ public:
     /** @brief Whether the pointer event being delivered, or the last one, belongs to a claim. */
     [[nodiscard]] bool owns_pointer(uint32_t id) const { return id != 0 && id == m_pointer_owner; }
 
+    /**
+     * @brief Whether the pointer event being delivered, or the last one, belongs
+     *        to a claim of at least @p priority. A listener that claims nothing
+     *        asks this to stand aside. 0 asks about Forma, which stands above
+     *        viewport presets.
+     */
+    [[nodiscard]] bool pointer_claimed(int priority = std::numeric_limits<int>::min()) const
+    {
+        const auto owner = std::ranges::find(m_claims, m_pointer_owner, &Claim::id);
+        return owner != m_claims.end() && owner->priority >= priority;
+    }
+
     /** @brief Whether the key event being delivered, or the last one, belongs to a claim. */
     [[nodiscard]] bool owns_key(uint32_t id) const { return id != 0 && id == m_key_owner; }
 

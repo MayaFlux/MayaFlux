@@ -281,6 +281,22 @@ MAYAFLUX_API void set_viewport_preset_region(
     const std::optional<Kinesis::AABB2D>& region,
     const std::string& name = "default");
 
+/**
+ * @brief Confine a binding to a shape, in addition to any region.
+ *
+ * It takes input only where @p within holds for the pointer in window NDC, +y
+ * up, such as inside a circle or over what a placed element covers. Pan and zoom
+ * still measure against the region. An empty function removes it.
+ *
+ * @param window  Window passed to the bind
+ * @param within  Test of a window NDC point
+ * @param name    Name passed to the bind
+ */
+MAYAFLUX_API void set_viewport_preset_shape(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<bool(glm::vec2)> within,
+    const std::string& name = "default");
+
 /** @brief Put a binding ahead of the other bindings of its window. */
 MAYAFLUX_API void raise_viewport_preset(
     const std::shared_ptr<Core::Window>& window,
