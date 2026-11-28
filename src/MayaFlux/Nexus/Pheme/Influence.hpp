@@ -35,7 +35,7 @@ struct InfluenceContext {
 
     std::optional<glm::vec2> cone; ///< Optional inner and outer angles of a cone about forward, radians from the axis.
 
-    std::optional<glm::vec3> attenuation; ///< Optional constant, linear and quadratic terms dividing the fall with distance.
+    std::optional<glm::vec3> attenuation; ///< Optional constant, linear and quadratic terms dividing with distance, in place of the inverse square.
 
     const Core::WindowEvent* input {}; ///< The window event that caused this firing, valid only during the call; null for firings a window event did not cause.
 
@@ -73,10 +73,10 @@ struct alignas(16) InfluenceBlock {
     float _pad[3] {};
     glm::vec3 direction { 0.0F, 0.0F, -1.0F };
     float cone_inner { 0.0F };
-    glm::vec3 attenuation { 1.0F, 0.0F, 0.0F };
+    glm::vec3 attenuation { 0.0F, 0.0F, 1.0F }; ///< (0, 0, 1) is the inverse square.
     float cone_outer { 0.0F }; ///< Zero or less is no cone.
 
-    /** @brief The block for @p ctx, with white, size 1, no cone and no attenuation where it has none. */
+    /** @brief The block for @p ctx, with white, size 1, no cone and inverse square falloff where it has none. */
     [[nodiscard]] static InfluenceBlock from(const InfluenceContext& ctx)
     {
         const glm::vec2 cone = ctx.cone.value_or(glm::vec2(0.0F));
@@ -88,7 +88,7 @@ struct alignas(16) InfluenceBlock {
             .size = ctx.size.value_or(1.0F),
             .direction = ctx.orientation.value_or(glm::quat(1.0F, 0.0F, 0.0F, 0.0F)) * glm::vec3(0.0F, 0.0F, -1.0F),
             .cone_inner = cone.x,
-            .attenuation = ctx.attenuation.value_or(glm::vec3(1.0F, 0.0F, 0.0F)),
+            .attenuation = ctx.attenuation.value_or(glm::vec3(0.0F, 0.0F, 1.0F)),
             .cone_outer = cone.y,
         };
     }

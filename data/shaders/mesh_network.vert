@@ -2,6 +2,8 @@
 
 #include "include/mill_config.glsl"
 
+#include "include/view_eye.glsl"
+
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_color;
 layout(location = 2) in float in_weight;
@@ -30,6 +32,7 @@ layout(location = 1) out vec2 out_uv;
 layout(location = 2) out vec3 out_normal;
 layout(location = 3) flat out uint out_slot;
 layout(location = 4) out vec3 out_world_pos;
+layout(location = 8) flat out vec4 out_eye;
 
 void main()
 {
@@ -47,4 +50,5 @@ void main()
     out_normal = normalize(normal_mat * in_normal);
     out_slot = slot;
     out_world_pos = world.xyz;
+    out_eye = view_eye(pc.view, pc.projection);
 }

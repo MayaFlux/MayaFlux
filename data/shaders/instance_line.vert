@@ -2,6 +2,8 @@
 
 #include "include/mill_billboard.glsl"
 
+#include "include/view_eye.glsl"
+
 layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
@@ -36,6 +38,7 @@ layout(location = 0) out vec3 out_color;
 layout(location = 1) out float out_thickness;
 layout(location = 2) out vec2 out_uv;
 layout(location = 3) out vec3 out_world_pos;
+layout(location = 8) flat out vec4 out_eye;
 
 void main()
 {
@@ -51,4 +54,5 @@ void main()
     out_thickness = in_thickness * payload.scalar;
     out_uv = in_uv;
     out_world_pos = world_pos.xyz;
+    out_eye = view_eye(vt.view, vt.projection);
 }

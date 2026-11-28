@@ -7,12 +7,13 @@ layout(location = 2) in vec3 in_normal;
 layout(location = 3) flat in uint in_slot;
 layout(location = 4) in vec3 in_world_pos;
 
-#include "include/influence_light.glsl"
+layout(location = 8) flat in vec4 in_eye;
+
+#include "include/lighting_influence.glsl"
 
 layout(location = 0) out vec4 out_color;
 
 void main()
 {
-    vec3 lit = in_color + influence_light(in_world_pos, in_normal);
-    out_color = vec4(clamp(lit, 0.0, 1.0), 1.0);
+    out_color = vec4(influence_shade(in_color, in_world_pos, in_normal, in_eye), 1.0);
 }

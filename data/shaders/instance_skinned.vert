@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/view_eye.glsl"
+
 layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
@@ -62,6 +64,7 @@ vec3 delta_at(uint base)
 {
     return vec3(deltas[base], deltas[base + 1], deltas[base + 2]);
 }
+layout(location = 8) flat out vec4 out_eye;
 
 void main()
 {
@@ -101,4 +104,5 @@ void main()
     out_uv = in_uv;
     out_normal = normalize(normal_mat * normal);
     out_world_pos = world_pos.xyz;
+    out_eye = view_eye(vt.view, vt.projection);
 }

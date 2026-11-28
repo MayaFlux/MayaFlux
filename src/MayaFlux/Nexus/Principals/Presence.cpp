@@ -1,24 +1,17 @@
 #include "Presence.hpp"
 
+#include "MayaFlux/Kinesis/Radiometry/Attenuation.hpp"
+
 #include <glm/gtc/constants.hpp>
 
 namespace MayaFlux::Nexus {
-
-namespace {
-
-    float linear_falloff(float t)
-    {
-        return 1.0F - std::clamp(t, 0.0F, 1.0F);
-    }
-
-} // namespace
 
 Presence::Presence(float query_radius,
     PerceptionFn perception,
     InfluenceFn influence,
     RadiateFn radiate)
     : Agent(query_radius, std::move(perception), std::move(influence))
-    , m_falloff(linear_falloff)
+    , m_falloff(Kinesis::falloff_linear)
     , m_radiate(std::move(radiate))
 {
     m_presence.falloff_curve.observe(FalloffCurve::Linear);
@@ -31,7 +24,7 @@ Presence::Presence(float query_radius,
     : Agent(query_radius,
           std::move(perception_fn_name), std::move(perception),
           std::move(influence_fn_name), std::move(influence))
-    , m_falloff(linear_falloff)
+    , m_falloff(Kinesis::falloff_linear)
     , m_radiate_fn_call(std::move(radiate_fn_name), Reflect::FunctionCall::second_type {})
     , m_radiate(std::move(radiate))
 {
@@ -44,16 +37,16 @@ void Presence::set_falloff_curve(FalloffCurve curve)
     m_falloff_curve = curve;
     switch (curve) {
     case FalloffCurve::Linear:
-        m_falloff = [](float t) { return 1.0F - std::clamp(t, 0.0F, 1.0F); };
+        m_falloff = Kinesis::falloff_linear;
         break;
     case FalloffCurve::Cosine:
-        m_falloff = [](float t) { return 0.5F * (1.0F + std::cos(std::clamp(t, 0.0F, 1.0F) * glm::pi<float>())); };
+        m_falloff = Kinesis::falloff_cosine;
         break;
     case FalloffCurve::Exponential:
-        m_falloff = [](float t) { return std::exp(-4.0F * std::clamp(t, 0.0F, 1.0F)); };
+        m_falloff = Kinesis::falloff_exponential;
         break;
     case FalloffCurve::InverseSquare:
-        m_falloff = [](float t) { const float c = std::clamp(t, 0.0F, 1.0F); return 1.0F / (1.0F + 16.0F * c * c); };
+        m_falloff = Kinesis::falloff_inverse_square;
         break;
     }
 }
@@ -78,7 +71,7 @@ void Presence::invoke_perception(const PerceptionContext& ctx)
         const float t = fr > 0.0F
             ? std::sqrt(result.distance_sq) / fr
             : 0.0F;
-        const float weight = m_falloff ? m_falloff(t) : linear_falloff(t);
+        const float weight = m_falloff ? m_falloff(t) : Kinesis::falloff_linear(t);
         m_neighbors.emplace_back(result.id, weight);
     }
 }

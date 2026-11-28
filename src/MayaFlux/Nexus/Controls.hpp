@@ -40,7 +40,7 @@ MF_DESCRIBE(PlacementControls)
  *
  * `cone` is a glm::vec2 of inner and outer angles about forward, radians from the axis, and
  * `attenuation` a glm::vec3 of constant, linear and quadratic terms. Empty, the Emitter
- * lights all ways and falls to its radius alone.
+ * lights all ways, falling by the inverse square to zero at its radius.
  */
 struct EmitterControls {
     Quantity intensity;
