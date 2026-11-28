@@ -71,6 +71,7 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/docs/Portal-Forma-UI-Patterns.md
     ${CMAKE_SOURCE_DIR}/docs/Viewport.md
     ${CMAKE_SOURCE_DIR}/docs/Relations.md
+    ${CMAKE_SOURCE_DIR}/docs/Matrix-Mesh-Radiance.md
     DESTINATION share/MayaFlux/guides
 )
 
