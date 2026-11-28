@@ -7,6 +7,10 @@ namespace MayaFlux::Kakshya {
 struct MeshData;
 }
 
+namespace MayaFlux::Kinesis {
+class BoxHierarchy;
+}
+
 namespace MayaFlux::Portal::Forma {
 
 /**
@@ -41,6 +45,21 @@ namespace MayaFlux::Portal::Forma {
     std::function<Kinesis::ViewTransform()> view,
     std::function<glm::mat4()> model,
     const std::shared_ptr<const Kakshya::MeshData>& mesh,
+    Kinesis::AABB2D bounds);
+
+/**
+ * @brief mesh_to_local for a large mesh that does not move, finding the
+ *        triangle through a hierarchy instead of testing every one.
+ *
+ * @param hierarchy Built with Kinesis::triangle_boxes from this mesh. Rebuild it
+ *                  and call again when the mesh changes. One built for another
+ *                  number of triangles is never hit.
+ */
+[[nodiscard]] MAYAFLUX_API std::function<std::optional<glm::vec3>(glm::vec2)> mesh_to_local(
+    std::function<Kinesis::ViewTransform()> view,
+    std::function<glm::mat4()> model,
+    const std::shared_ptr<const Kakshya::MeshData>& mesh,
+    const std::shared_ptr<const Kinesis::BoxHierarchy>& hierarchy,
     Kinesis::AABB2D bounds);
 
 } // namespace MayaFlux::Portal::Forma

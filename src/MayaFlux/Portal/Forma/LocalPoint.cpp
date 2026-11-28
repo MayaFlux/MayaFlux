@@ -2,7 +2,7 @@
 
 #include "MayaFlux/Journal/Archivist.hpp"
 #include "MayaFlux/Kakshya/NDData/MeshData.hpp"
-#include "MayaFlux/Kinesis/Spatial/HitTest.hpp"
+#include "MayaFlux/Kinesis/Spatial/BoxHierarchy.hpp"
 
 namespace MayaFlux::Portal::Forma {
 
@@ -26,13 +26,16 @@ std::function<std::optional<glm::vec3>(glm::vec2)> plane_to_local(
     };
 }
 
-std::function<std::optional<glm::vec3>(glm::vec2)> mesh_to_local(
-    std::function<Kinesis::ViewTransform()> view,
-    std::function<glm::mat4()> model,
-    const std::shared_ptr<const Kakshya::MeshData>& mesh,
-    Kinesis::AABB2D bounds)
+namespace {
+
+    std::function<std::optional<glm::vec3>(glm::vec2)> mesh_mapping(
+        std::function<Kinesis::ViewTransform()> view,
+        std::function<glm::mat4()> model,
+        const std::shared_ptr<const Kakshya::MeshData>& mesh,
+        const std::shared_ptr<const Kinesis::BoxHierarchy>& hierarchy,
+        Kinesis::AABB2D bounds)
 {
-    return [view = std::move(view), model = std::move(model), mesh, bounds,
+    return [view = std::move(view), model = std::move(model), mesh, hierarchy, bounds,
                reported = std::make_shared<bool>(false)](glm::vec2 screen) -> std::optional<glm::vec3> {
         if (!mesh)
             return std::nullopt;
@@ -55,8 +58,13 @@ std::function<std::optional<glm::vec3>(glm::vec2)> mesh_to_local(
         const Kinesis::Ray ray = Kinesis::transform_ray(
             glm::inverse(model()), Kinesis::ray_through(screen, view()));
 
-        const auto hit = Kinesis::ray_triangles_parameter(
-            ray, vertices, std::span<const uint32_t>(*indices), &Kakshya::Vertex::position);
+        const std::span<const uint32_t> triangles(*indices);
+        if (hierarchy && hierarchy->size() != triangles.size() / 3)
+            return std::nullopt;
+
+        const auto hit = hierarchy
+            ? Kinesis::ray_triangles_parameter(ray, *hierarchy, vertices, triangles, &Kakshya::Vertex::position)
+            : Kinesis::ray_triangles_parameter(ray, vertices, triangles, &Kakshya::Vertex::position);
         if (!hit)
             return std::nullopt;
 
@@ -69,6 +77,27 @@ std::function<std::optional<glm::vec3>(glm::vec2)> mesh_to_local(
         const glm::vec2 size = bounds.max - bounds.min;
         return glm::vec3(bounds.min.x + uv.x * size.x, bounds.max.y - uv.y * size.y, at.x);
     };
+}
+
+}
+
+std::function<std::optional<glm::vec3>(glm::vec2)> mesh_to_local(
+    std::function<Kinesis::ViewTransform()> view,
+    std::function<glm::mat4()> model,
+    const std::shared_ptr<const Kakshya::MeshData>& mesh,
+    Kinesis::AABB2D bounds)
+{
+    return mesh_mapping(std::move(view), std::move(model), mesh, nullptr, bounds);
+}
+
+std::function<std::optional<glm::vec3>(glm::vec2)> mesh_to_local(
+    std::function<Kinesis::ViewTransform()> view,
+    std::function<glm::mat4()> model,
+    const std::shared_ptr<const Kakshya::MeshData>& mesh,
+    const std::shared_ptr<const Kinesis::BoxHierarchy>& hierarchy,
+    Kinesis::AABB2D bounds)
+{
+    return mesh_mapping(std::move(view), std::move(model), mesh, hierarchy, bounds);
 }
 
 } // namespace MayaFlux::Portal::Forma
