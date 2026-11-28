@@ -45,15 +45,17 @@ layout(set = 1, binding = 0, std430) readonly buffer Influences {
 #define SURROUND_HEIGHT 64
 #define SURROUND_LEVELS 6
 #define SURROUND_TABLE 64
+#define SURROUND_LOBES 32
 
-/** What Nexus::InfluenceList::set_surround writes. All zero is no surroundings. */
+/** What Nexus::InfluenceList::set_surround and set_lobes write. All zero is neither. */
 layout(set = 1, binding = 1, std430) readonly buffer Surround {
     uint surround_present;
-    uint surround_unused0;
+    uint lobes_present;
     uint surround_unused1;
     uint surround_unused2;
     vec4 surround_harmonics[9];
     vec4 surround_table[SURROUND_TABLE * SURROUND_TABLE];
+    vec4 surround_lobes[SURROUND_LOBES * SURROUND_LOBES];
     vec4 surround_texels[];
 };
 #else
@@ -164,6 +166,21 @@ vec2 surround_albedo(float cos_view, float roughness)
         f.y);
 }
 
+/** The fitted lobe for a view cosine and roughness. */
+mat3 surround_lobe(float cos_view, float roughness)
+{
+    vec2 at = clamp(vec2(sqrt(max(1.0 - cos_view, 0.0)), roughness), vec2(0.0), vec2(1.0))
+        * float(SURROUND_LOBES - 1);
+    ivec2 low = ivec2(at);
+    ivec2 high = min(low + 1, ivec2(SURROUND_LOBES - 1));
+    vec2 f = at - vec2(low);
+    vec4 t = mix(
+        mix(surround_lobes[low.y * SURROUND_LOBES + low.x], surround_lobes[low.y * SURROUND_LOBES + high.x], f.x),
+        mix(surround_lobes[high.y * SURROUND_LOBES + low.x], surround_lobes[high.y * SURROUND_LOBES + high.x], f.x),
+        f.y);
+    return mat3(vec3(t.x, 0.0, t.y), vec3(0.0, 1.0, 0.0), vec3(t.z, 0.0, t.w));
+}
+
 /** What the surroundings add. A zero normal receives the mean radiance diffusely. */
 vec3 surround_contribution(SurfaceResponse surface, vec3 normal, vec3 view)
 {
@@ -174,7 +191,7 @@ vec3 surround_contribution(SurfaceResponse surface, vec3 normal, vec3 view)
     vec3 unit = normal * inversesqrt(normal_sq);
     vec2 albedo = surround_albedo(max(dot(unit, view), 0.0), surface.roughness);
     return environment_contribution(surface, unit, view, surround_irradiance(unit),
-        surround_radiance(reflect(-view, unit), surface.roughness), albedo);
+        surround_radiance(reflect(-view, unit), surface.roughness), albedo, 1.0);
 }
 #endif
 
@@ -192,21 +209,27 @@ vec3 influence_shade(vec3 base_color, vec3 at, vec3 normal, vec4 eye)
 
 #ifdef MF_INFLUENCE_LIST
     float specular_albedo = 1.0;
-    if (surround_present != 0u) {
-        float normal_sq = dot(normal, normal);
-        if (normal_sq > 1e-8) {
-            vec2 albedo = surround_albedo(max(dot(normal * inversesqrt(normal_sq), view), 0.0), surface.roughness);
-            specular_albedo = albedo.x + albedo.y;
+    LobeFit fit = LobeFit(false, mat3(1.0), vec2(0.0));
+    float normal_sq = dot(normal, normal);
+    if ((surround_present != 0u || lobes_present != 0u) && normal_sq > 1e-8) {
+        float cos_view = max(dot(normal * inversesqrt(normal_sq), view), 0.0);
+        vec2 albedo = surround_albedo(cos_view, surface.roughness);
+        specular_albedo = albedo.x + albedo.y;
+        if (lobes_present != 0u) {
+            fit = LobeFit(true, surround_lobe(cos_view, surface.roughness), albedo);
         }
+    }
+    if (surround_present != 0u) {
         total += surround_contribution(surface, normal, view);
     }
     for (uint i = 0u; i < influence_count; ++i) {
-        total += light_contribution(influence_as_light(influences[i]), surface, at, normal, view, specular_albedo);
+        total += light_contribution(influence_as_light(influences[i]), surface, at, normal, view, specular_albedo, fit);
     }
 #else
     InfluenceRecord held = InfluenceRecord(
         position, intensity, color, radius, size, shape, extent, direction, cone_inner, attenuation, cone_outer, right);
-    total = light_contribution(influence_as_light(held), surface, at, normal, view, 1.0);
+    total = light_contribution(influence_as_light(held), surface, at, normal, view, 1.0,
+        LobeFit(false, mat3(1.0), vec2(0.0)));
 #endif
 
     return pbr_neutral(max(total, vec3(0.0)));

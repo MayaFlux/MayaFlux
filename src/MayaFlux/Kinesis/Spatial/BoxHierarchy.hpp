@@ -64,7 +64,48 @@ public:
         return best;
     }
 
+    /**
+     * @brief Whether a ray meets any item before a parameter. Allocates nothing.
+     *
+     * @param ray   Ray of any nonzero direction.
+     * @param limit Parameter beyond which boxes are not entered.
+     * @param meets Whether the ray meets an item before the limit. Stops at the first.
+     */
+    template <typename Meets>
+    [[nodiscard]] bool any(const Ray& ray, float limit, Meets&& meets) const
+    {
+        if (m_nodes.empty()) {
+            return false;
+        }
+
+        std::array<uint32_t, k_depth_limit> pending {};
+        size_t held = 1;
+        while (held > 0) {
+            const Node& node = m_nodes[pending[--held]];
+            const auto entry = node.box.ray_entry(ray);
+            if (!entry || *entry > limit) {
+                continue;
+            }
+
+            if (node.count == 0) {
+                pending[held++] = node.first;
+                pending[held++] = node.first + 1;
+                continue;
+            }
+
+            for (uint32_t i = node.first; i < node.first + node.count; ++i) {
+                if (meets(m_order[i])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 private:
+    /** Above the depth that halving a 32 bit item count can reach. */
+    static constexpr size_t k_depth_limit = 64;
+
     /** A leaf holds count items from first; a branch has count 0 and children first, first + 1. */
     struct Node {
         AABB3D box;

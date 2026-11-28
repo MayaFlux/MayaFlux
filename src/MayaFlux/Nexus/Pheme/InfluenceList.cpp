@@ -3,6 +3,7 @@
 #include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Buffers/VKBuffer.hpp"
 #include "MayaFlux/Kinesis/Radiometry/Prefilter.hpp"
+#include "MayaFlux/Kinesis/Radiometry/TransformedCosine.hpp"
 #include "MayaFlux/Registry/BackendRegistry.hpp"
 #include "MayaFlux/Registry/Service/BufferService.hpp"
 
@@ -24,7 +25,10 @@ namespace {
     }
 
     constexpr size_t k_table_entries = static_cast<size_t>(Kinesis::k_albedo_table_size) * Kinesis::k_albedo_table_size;
-    constexpr size_t k_surround_vectors = 9 + k_table_entries + surround_texel_count();
+    constexpr size_t k_lobe_entries = static_cast<size_t>(Kinesis::k_lobe_table_size) * Kinesis::k_lobe_table_size;
+    constexpr size_t k_table_offset = k_header_bytes + 9 * sizeof(glm::vec4);
+    constexpr size_t k_lobe_offset = k_table_offset + k_table_entries * sizeof(glm::vec4);
+    constexpr size_t k_surround_vectors = 9 + k_table_entries + k_lobe_entries + surround_texel_count();
     constexpr size_t k_surround_bytes = k_header_bytes + k_surround_vectors * sizeof(glm::vec4);
 
     std::shared_ptr<Buffers::VKBuffer> zeroed_storage(size_t bytes)
@@ -96,25 +100,57 @@ void InfluenceList::set_surround(const Kinesis::SurroundRadiance& surround, floa
         return;
     }
 
-    std::vector<glm::vec4> vectors;
-    vectors.reserve(k_surround_vectors);
+    std::vector<glm::vec4> head;
+    head.reserve(9 + k_table_entries);
     for (const auto& coefficient : surround.harmonics) {
-        vectors.emplace_back(coefficient * scale, 0.0F);
+        head.emplace_back(coefficient * scale, 0.0F);
     }
     for (const auto& entry : surround.albedo) {
-        vectors.emplace_back(entry.x, entry.y, 0.0F, 0.0F);
+        head.emplace_back(entry.x, entry.y, 0.0F, 0.0F);
     }
+    std::vector<glm::vec4> texels;
+    texels.reserve(surround_texel_count());
     for (const auto& level : surround.levels) {
         for (const auto& texel : level) {
-            vectors.emplace_back(texel * scale, 0.0F);
+            texels.emplace_back(texel * scale, 0.0F);
         }
     }
 
     auto* mapped = static_cast<uint8_t*>(m_places->surround->get_mapped_ptr());
     const uint32_t present = 1;
-    std::memcpy(mapped + k_header_bytes, vectors.data(), vectors.size() * sizeof(glm::vec4));
+    std::memcpy(mapped + k_header_bytes, head.data(), head.size() * sizeof(glm::vec4));
+    std::memcpy(mapped + k_lobe_offset + k_lobe_entries * sizeof(glm::vec4), texels.data(), texels.size() * sizeof(glm::vec4));
     std::memcpy(mapped, &present, sizeof(present));
     m_places->surround->mark_dirty_range(0, k_surround_bytes);
+}
+
+void InfluenceList::set_lobes(std::span<const glm::vec4> lobes) const
+{
+    if (lobes.size() != k_lobe_entries) {
+        MF_WARN(Journal::Component::Nexus, Journal::Context::Runtime,
+            "InfluenceList: a lobe table of {} entries is ignored, {} are needed", lobes.size(), k_lobe_entries);
+        return;
+    }
+
+    std::vector<glm::vec4> table;
+    table.reserve(k_table_entries);
+    for (const auto& entry : Kinesis::specular_albedo_table(Kinesis::k_albedo_table_size)) {
+        table.emplace_back(entry.x, entry.y, 0.0F, 0.0F);
+    }
+
+    auto* mapped = static_cast<uint8_t*>(m_places->surround->get_mapped_ptr());
+    const uint32_t present = 1;
+    std::memcpy(mapped + k_table_offset, table.data(), table.size() * sizeof(glm::vec4));
+    std::memcpy(mapped + k_lobe_offset, lobes.data(), lobes.size_bytes());
+    std::memcpy(mapped + sizeof(uint32_t), &present, sizeof(present));
+    m_places->surround->mark_dirty_range(0, k_surround_bytes);
+}
+
+void InfluenceList::clear_lobes() const
+{
+    const uint32_t present = 0;
+    std::memcpy(static_cast<uint8_t*>(m_places->surround->get_mapped_ptr()) + sizeof(uint32_t), &present, sizeof(present));
+    m_places->surround->mark_dirty_range(sizeof(uint32_t), sizeof(present));
 }
 
 void InfluenceList::clear_surround() const

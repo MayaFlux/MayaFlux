@@ -81,12 +81,24 @@ vec3 light_arrival(Light light, vec3 at, out vec3 toward)
 }
 
 /**
+ * How much of the surroundings' specular reflection survives an ambient
+ * visibility (Lagarde). Mirrors Kinesis/Radiometry/Visibility.hpp.
+ */
+float specular_occlusion(float cos_view, float visibility, float roughness)
+{
+    float power = exp2(-16.0 * roughness - 1.0);
+    return clamp(pow(max(cos_view + visibility, 0.0), power) - 1.0 + visibility, 0.0, 1.0);
+}
+
+/**
  * Radiance the surroundings add toward view, from the irradiance on the surface,
  * the radiance blurred to its roughness about the mirror direction, and the
- * specular albedo scale and bias. The normal is unit length.
+ * specular albedo scale and bias. The normal is unit length. visibility is the
+ * ambient visibility of the point, 1 in the open.
  */
 vec3 environment_contribution(
-    SurfaceResponse surface, vec3 normal, vec3 view, vec3 irradiance, vec3 reflected, vec2 albedo)
+    SurfaceResponse surface, vec3 normal, vec3 view, vec3 irradiance, vec3 reflected, vec2 albedo,
+    float visibility)
 {
     float cos_view = max(dot(normal, view), 0.0);
     vec3 entering = vec3(1.0) - schlick_fresnel(vec3(surface.dielectric_f0), cos_view);
@@ -94,7 +106,39 @@ vec3 environment_contribution(
     vec3 f0 = surface_f0(surface);
     vec3 specular = reflected * (f0 * albedo.x + albedo.y)
         * multiple_scattering_compensation(f0, albedo.x + albedo.y);
-    return diffuse + specular;
+    return diffuse * visibility + specular * specular_occlusion(cos_view, visibility, surface.roughness);
+}
+
+/**
+ * What a shader holding the fitted lobe supplies to area lights: the inverse
+ * matrix of linearly transformed cosines, and the specular albedo scale and bias
+ * for the view. Absent, highlights use the nearest point of the light.
+ */
+struct LobeFit {
+    bool present;
+    mat3 inverse_lobe;
+    vec2 albedo;
+};
+
+/**
+ * Share of the fitted lobe covered by the polygon in radiometry_corners, which
+ * this bends in place.
+ */
+float transformed_coverage(mat3 inverse_lobe, vec3 normal, vec3 view, int count)
+{
+    vec3 along = view - normal * dot(view, normal);
+    float size = length(along);
+    if (size > 1e-6) {
+        along /= size;
+    } else {
+        vec3 other = abs(normal.x) < 0.9 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0);
+        along = normalize(cross(normal, other));
+    }
+    mat3 bend = inverse_lobe * transpose(mat3(along, cross(normal, along), normal));
+    for (int i = 0; i < count; ++i) {
+        radiometry_corners[i] = bend * radiometry_corners[i];
+    }
+    return polygon_irradiance(count, vec3(0.0, 0.0, 1.0)) / MF_PI;
 }
 
 /**
@@ -102,7 +146,8 @@ vec3 environment_contribution(
  * specular part takes the nearest point of the light to the mirror direction,
  * and is held to what a mirror would show.
  */
-vec3 area_light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3 normal, vec3 view, float specular_albedo)
+vec3 area_light_contribution(
+    Light light, SurfaceResponse surface, vec3 at, vec3 normal, vec3 view, float specular_albedo, LobeFit fit)
 {
     vec3 center = light.position - at;
     float dist = length(center);
@@ -139,25 +184,48 @@ vec3 area_light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3
 
     float irradiance;
     vec3 nearest;
+    int corners = 0;
     if (light.kind == LIGHT_SPHERE) {
         irradiance = sphere_irradiance(dot(unit, toward), radius * radius / (dist * dist));
         nearest = sphere_toward(center, radius, mirrored);
     } else if (light.kind == LIGHT_DISK) {
         disk_corners(center, right, up, radius);
+        corners = 16;
         irradiance = polygon_irradiance(16, unit);
         nearest = disk_toward(center, light.direction, radius, mirrored);
     } else if (light.kind == LIGHT_RECTANGLE) {
         rectangle_corners(center, right, up, light.extent);
+        corners = 4;
         irradiance = polygon_irradiance(4, unit);
         nearest = rectangle_toward(center, right, up, light.extent, mirrored);
     } else {
         tube_corners(center, right, light.extent.x, light.extent.y);
+        corners = 4;
         irradiance = polygon_irradiance(4, unit);
         vec3 along = right * (0.5 * light.extent.y);
         nearest = sphere_toward(segment_toward(center - along, center + along, mirrored), radius, mirrored);
     }
     if (!(irradiance > 0.0)) {
         return vec3(0.0);
+    }
+
+    float least = 0.5 * min(radius / dist, 1.0);
+    vec3 seen = normalize(toward + unit * max(least - dot(unit, toward), 0.0));
+    vec3 diffuse = surface_diffuse(surface, unit, view, seen) * irradiance;
+
+    if (fit.present && !(light.kind == LIGHT_SPHERE && dist <= radius)) {
+        if (light.kind == LIGHT_SPHERE) {
+            vec3 side = abs(toward.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+            vec3 across = normalize(cross(side, toward));
+            float silhouette = radius * dist / sqrt(dist * dist - radius * radius);
+            disk_corners(center, across, cross(toward, across), silhouette);
+            corners = 16;
+        }
+        vec3 f0 = surface_f0(surface);
+        vec3 bent = (f0 * fit.albedo.x + fit.albedo.y)
+            * multiple_scattering_compensation(f0, fit.albedo.x + fit.albedo.y)
+            * transformed_coverage(fit.inverse_lobe, unit, view, corners);
+        return (diffuse + bent) * radiance;
     }
 
     float reach = length(nearest);
@@ -167,9 +235,6 @@ vec3 area_light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3
     float ratio = alpha / wide;
     float energy = light.kind == LIGHT_TUBE ? ratio : ratio * ratio;
 
-    float least = 0.5 * min(radius / dist, 1.0);
-    vec3 seen = normalize(toward + unit * max(least - dot(unit, toward), 0.0));
-    vec3 diffuse = surface_diffuse(surface, unit, view, seen) * irradiance;
     vec3 specular = surface_specular(surface, unit, view, source, alpha, specular_albedo) * (energy * irradiance);
     vec3 mirror = schlick_fresnel(surface_f0(surface), max(dot(unit, view), 0.0));
 
@@ -181,10 +246,11 @@ vec3 area_light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3
  * surface direction, such as points and lines: it receives from every side and
  * reflects diffusely.
  */
-vec3 light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3 normal, vec3 view, float specular_albedo)
+vec3 light_contribution(
+    Light light, SurfaceResponse surface, vec3 at, vec3 normal, vec3 view, float specular_albedo, LobeFit fit)
 {
     if (light.kind >= LIGHT_SPHERE) {
-        return area_light_contribution(light, surface, at, normal, view, specular_albedo);
+        return area_light_contribution(light, surface, at, normal, view, specular_albedo, fit);
     }
 
     vec3 toward;

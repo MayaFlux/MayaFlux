@@ -64,6 +64,19 @@ public:
      */
     void set_surround(const Kinesis::SurroundRadiance& surround, float scale = 1.0F) const;
 
+    /**
+     * @brief Give area lights exact shaped highlights.
+     * @param lobes Kinesis::fit_transformed_cosines() at its default size; others are ignored with a warning.
+     *
+     * @code
+     * lamps->set_lobes(Kinesis::fit_transformed_cosines());
+     * @endcode
+     */
+    void set_lobes(std::span<const glm::vec4> lobes) const;
+
+    /** @brief Return area lights to their nearest point highlights. */
+    void clear_lobes() const;
+
     /** @brief Take the surroundings away. */
     void clear_surround() const;
 
