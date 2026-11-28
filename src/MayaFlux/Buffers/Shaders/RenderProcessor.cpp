@@ -525,6 +525,34 @@ void RenderProcessor::disable_depth_test()
     invalidate_pipelines();
 }
 
+bool RenderProcessor::set_destination_shader(
+    const std::shared_ptr<Portal::Graphics::ImageTarget>& target,
+    const std::string& fragment,
+    const std::unordered_map<uint32_t, uint32_t>& constants)
+{
+    auto* lane = find_lane(target);
+    if (!lane) {
+        MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+            "set_destination_shader: the image target is not a destination of this processor");
+        return false;
+    }
+
+    lane->fragment = Portal::Graphics::get_shader_foundry().load_shader(
+        fragment, Portal::Graphics::ShaderStage::FRAGMENT);
+    lane->constants = constants;
+    invalidate_pipelines();
+    return lane->fragment != Portal::Graphics::INVALID_SHADER;
+}
+
+void RenderProcessor::set_depth_stamp(bool enabled)
+{
+    if (m_depth_stamp == enabled)
+        return;
+
+    m_depth_stamp = enabled;
+    invalidate_pipelines();
+}
+
 void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op, bool write)
 {
     auto next = m_depth_stencil;
@@ -1023,7 +1051,21 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     retire_current_pipeline();
 
+    const bool values = m_lane->fragment != Portal::Graphics::INVALID_SHADER;
+    if (values) {
+        pipeline_config.fragment_shader = m_lane->fragment;
+        pipeline_config.depth_stencil.depth_test_enable = true;
+        pipeline_config.depth_stencil.depth_write_enable = true;
+        pipeline_config.depth_stencil.depth_compare_op = Portal::Graphics::CompareOp::LESS_OR_EQUAL;
+        for (auto& blend : pipeline_config.blend_attachments)
+            blend = {};
+    }
+
     auto constants = m_config.specialization_constants;
+    if (values) {
+        for (const auto& [id, value] : m_lane->constants)
+            constants[id] = value;
+    }
     constants[0U] = m_triangulate ? 1U : 0U;
     constants[1U] = m_triangulate && m_mill_spec.billboard_instances
             && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
@@ -1041,6 +1083,37 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     if (m_depth_enabled) {
         buffer->set_needs_depth_attachment(true);
+    }
+
+    if (m_depth_stamp && !values && depth_format != vk::Format::eUndefined) {
+        constexpr uint32_t k_alpha_cutoff_constant = 6;
+        constexpr uint32_t k_depth_offset_constant = 7;
+        constexpr float k_alpha_cutoff = 0.5F;
+        constexpr float k_depth_offset = 2.0e-6F;
+
+        auto stamp_config = pipeline_config;
+        stamp_config.depth_stencil.depth_test_enable = true;
+        stamp_config.depth_stencil.depth_write_enable = true;
+        stamp_config.depth_stencil.depth_compare_op = Portal::Graphics::CompareOp::LESS_OR_EQUAL;
+
+        for (auto& blend : stamp_config.blend_attachments) {
+            blend.blend_enable = true;
+            blend.src_color_factor = Portal::Graphics::BlendFactor::ZERO;
+            blend.dst_color_factor = Portal::Graphics::BlendFactor::ONE;
+            blend.src_alpha_factor = Portal::Graphics::BlendFactor::ZERO;
+            blend.dst_alpha_factor = Portal::Graphics::BlendFactor::ONE;
+        }
+
+        auto stamp_constants = constants;
+        stamp_constants[k_alpha_cutoff_constant] = std::bit_cast<uint32_t>(k_alpha_cutoff);
+        stamp_constants[k_depth_offset_constant] = std::bit_cast<uint32_t>(k_depth_offset);
+
+        m_lane->stamp = flow.create_pipeline(
+            stamp_config, destination.colors, depth_format, 0U, stamp_constants);
+        if (m_lane->stamp == Portal::Graphics::INVALID_RENDER_PIPELINE) {
+            MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,
+                "Failed to create the depth stamp pipeline");
+        }
     }
 
     m_needs_descriptor_rebuild = m_descriptor_set_ids.empty();
@@ -1470,6 +1543,24 @@ void RenderProcessor::retire_current_pipeline()
         entry.first->remove_pipeline_window(m_lane->pipeline);
     }
 
+    if (const auto stamp = std::exchange(m_lane->stamp, Portal::Graphics::INVALID_RENDER_PIPELINE);
+        stamp != Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        if (!m_lane->window) {
+            Portal::Graphics::get_shader_foundry().release_after_submit([stamp] {
+                Portal::Graphics::get_render_flow().destroy_pipeline(stamp);
+            });
+        } else {
+            uint64_t stamp_frame = std::numeric_limits<uint64_t>::max();
+            if (m_display_service && m_display_service->get_submitted_frame_count) {
+                stamp_frame = m_display_service->get_submitted_frame_count(m_lane->window);
+            }
+            m_retired.push_back({ .pipeline = stamp,
+                .window = m_lane->window,
+                .transform_ubo = nullptr,
+                .after_frame = stamp_frame });
+        }
+    }
+
     if (!m_lane->window) {
         auto retired = std::make_shared<RetiredPipeline>(RetiredPipeline {
             .pipeline = m_lane->pipeline,
@@ -1698,7 +1789,10 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
 
     flow.bind_vertex_buffers(cmd_id, { state.draw_source });
 
-    if (state.vertex_count > 0) {
+    const auto issue = [&] {
+        if (state.vertex_count == 0)
+            return;
+
         if (state.draw_source->has_index_buffer()) {
             flow.bind_index_buffer(cmd_id, state.draw_source);
             flow.draw_indexed(cmd_id, state.index_count, m_instance_count, 0, 0, 0);
@@ -1714,6 +1808,20 @@ void RenderProcessor::record_draw(const std::shared_ptr<VKBuffer>& buffer, const
         } else {
             flow.draw(cmd_id, state.vertex_count, m_instance_count, state.first_vertex, 0);
         }
+    };
+
+    issue();
+
+    if (m_lane->stamp != Portal::Graphics::INVALID_RENDER_PIPELINE) {
+        flow.bind_pipeline(cmd_id, m_lane->stamp);
+        flow.push_descriptors(cmd_id, m_lane->stamp, engine_writes, engine_leases);
+        if (!m_descriptor_set_ids.empty()) {
+            flow.bind_descriptor_sets(cmd_id, m_lane->stamp, m_descriptor_set_ids, 1);
+        }
+        if (!push_data.empty()) {
+            flow.push_constants(cmd_id, m_lane->stamp, push_data.data(), push_data.size());
+        }
+        issue();
     }
 
     foundry.end_commands(cmd_id);
@@ -1804,9 +1912,11 @@ void RenderProcessor::cleanup()
     auto& flow = Portal::Graphics::get_render_flow();
 
     for (const auto& lane : m_lanes) {
-        if (lane->pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE) {
-            flow.destroy_pipeline(lane->pipeline);
-            lane->pipeline = Portal::Graphics::INVALID_RENDER_PIPELINE;
+        for (auto* pipeline : { &lane->pipeline, &lane->stamp }) {
+            if (*pipeline != Portal::Graphics::INVALID_RENDER_PIPELINE) {
+                flow.destroy_pipeline(*pipeline);
+                *pipeline = Portal::Graphics::INVALID_RENDER_PIPELINE;
+            }
         }
     }
 

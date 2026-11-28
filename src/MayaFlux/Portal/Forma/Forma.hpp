@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LocalPoint.hpp"
+#include "PickImage.hpp"
 #include "Primitives/Picker.hpp"
 #include "Primitives/Prompt.hpp"
 #include "Tend.hpp"

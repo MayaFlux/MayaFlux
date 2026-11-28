@@ -13,6 +13,8 @@ layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 geometry;
 } pc;
 
+layout(constant_id = 7) const float DEPTH_OFFSET = 0.0;
+
 layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec2 out_uv;
 layout(location = 2) out vec3 out_world_pos;
@@ -21,6 +23,7 @@ void main()
 {
     vec4 world_pos = pc.geometry * vec4(in_position, 1.0);
     gl_Position = pc.projection * pc.view * world_pos;
+    gl_Position.z += DEPTH_OFFSET * gl_Position.w;
     out_color = in_color;
     out_uv = in_uv;
     out_world_pos = world_pos.xyz;

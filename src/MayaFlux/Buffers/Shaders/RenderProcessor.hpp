@@ -394,6 +394,38 @@ public:
 
     [[nodiscard]] bool view_pinned() const noexcept { return m_view_pinned; }
 
+    /**
+     * @brief Draw one image target with another fragment shader, writing values
+     *        instead of colour.
+     *
+     * Everything else of the draw is the processor's: geometry, runs, instances
+     * and view. That destination draws without blending, testing and writing
+     * depth, so the nearest fragment's output is what the image holds.
+     *
+     * @param target    A destination of this processor.
+     * @param fragment  Fragment shader taking the vertex shader's outputs.
+     * @param constants Specialization constants for that destination only.
+     * @return False when @p target is not a destination.
+     */
+    bool set_destination_shader(
+        const std::shared_ptr<Portal::Graphics::ImageTarget>& target,
+        const std::string& fragment,
+        const std::unordered_map<uint32_t, uint32_t>& constants = {});
+
+    /**
+     * @brief Draw a second time to record depth after the colour draw.
+     *
+     * The second draw leaves colour as it is and writes depth a little behind
+     * what was drawn, only where the fragment's alpha is at least one half. A
+     * blended draw that writes no depth of its own then hides what comes later,
+     * per pixel. Alpha is cut and depth offset by specialization constants 6
+     * (fragment) and 7 (vertex), as forma_plot.frag and triangle.vert declare.
+     * Needs a destination with depth.
+     */
+    void set_depth_stamp(bool enabled);
+
+    [[nodiscard]] bool depth_stamp() const noexcept { return m_depth_stamp; }
+
     /** @brief The viewpoint cell drawn from, or null. */
     [[nodiscard]] const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& get_view_cell() const { return m_view_cell; }
 
@@ -606,6 +638,9 @@ private:
         std::optional<Kinesis::ViewTransform> view;
         std::function<Kinesis::ViewTransform(glm::uvec2)> view_source;
         Portal::Graphics::RenderPipelineID pipeline { Portal::Graphics::INVALID_RENDER_PIPELINE };
+        Portal::Graphics::RenderPipelineID stamp { Portal::Graphics::INVALID_RENDER_PIPELINE };
+        Portal::Graphics::ShaderID fragment { Portal::Graphics::INVALID_SHADER };
+        std::unordered_map<uint32_t, uint32_t> constants;
         Portal::Graphics::SlotArena transform_arena;
         size_t transform_slot {};
         std::optional<Kinesis::RenderTransform> written_transform;
@@ -736,6 +771,7 @@ private:
     void collect_retired_pipelines();
     bool m_view_transform_active {};
     bool m_view_pinned {};
+    bool m_depth_stamp {};
     uint32_t m_first_vertex { 0 };
     uint32_t m_vertex_count { 0 };
     uint32_t m_instance_count { 1 };

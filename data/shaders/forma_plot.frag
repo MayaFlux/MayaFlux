@@ -14,6 +14,7 @@ layout(constant_id = 2) const float CLIP_MIN_X = 0.0;
 layout(constant_id = 3) const float CLIP_MIN_Y = 0.0;
 layout(constant_id = 4) const float CLIP_MAX_X = 0.0;
 layout(constant_id = 5) const float CLIP_MAX_Y = 0.0;
+layout(constant_id = 6) const float ALPHA_CUTOFF = 0.0;
 
 layout(location = 0) out vec4 out_color;
 
@@ -30,8 +31,15 @@ void main()
 
     if (!mill_is_wire(in_uv) && glyph_is_coverage(in_weight)) {
         float glyph = texture(textures[glyph_slot(in_weight)], mill_surface_uv(in_uv)).r;
+        if (glyph * coverage < ALPHA_CUTOFF) {
+            discard;
+        }
         out_color = vec4(in_color, glyph * coverage);
         return;
+    }
+
+    if (coverage < ALPHA_CUTOFF) {
+        discard;
     }
 
     out_color = vec4(in_color, coverage);

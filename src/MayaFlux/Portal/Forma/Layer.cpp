@@ -339,18 +339,16 @@ Kinesis::ViewTransform Layer::drawn_view() const
     if (!front)
         return { .view = composed.view, .projection = glm::mat4(0.0F) };
 
-    order_placed(-composed.view[3].z);
     return composed;
 }
 
-void Layer::order_placed(float distance) const
+int64_t Layer::placed_rank() const
 {
-    const auto rank = -static_cast<int64_t>(std::clamp(distance * k_distance_scale, 0.0F, k_farthest));
+    if (!placed())
+        return 0;
 
-    for (const auto& batch : m_batches) {
-        if (const auto buffer = batch.buffer.lock())
-            buffer->set_draw_rank(rank);
-    }
+    const float distance = -(m_place_view().view * m_placement())[3].z;
+    return -static_cast<int64_t>(std::clamp(distance * k_distance_scale, 0.0F, k_farthest));
 }
 
 void Layer::follow(const std::shared_ptr<Buffers::FormaBuffer>& batch)
@@ -398,15 +396,18 @@ void Layer::configure(Batch& batch) const
             config.draw_band = Portal::Graphics::DrawBand::TRANSLUCENT;
             config.depth_test = Portal::Graphics::CompareOp::LESS_OR_EQUAL;
             config.depth_write = false;
-            processor->enable_depth_test(*config.depth_test, config.depth_write);
+            buffer->set_draw_rank_source([layer = weak_from_this()]() -> int64_t {
+                const auto held = layer.lock();
+                return held ? held->placed_rank() : 0;
+            });
         } else {
             config.draw_band = batch.flat_band;
             config.depth_test.reset();
             config.depth_write = true;
-            processor->disable_depth_test();
             buffer->set_draw_rank(0);
         }
         buffer->set_render_config(config);
+        processor->set_depth_stamp(on_plane);
     }
 
     if (!batch.clip)

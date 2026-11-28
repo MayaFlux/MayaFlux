@@ -297,8 +297,9 @@ public:
      * drawn before them with depth, and draw nothing seen from behind. An
      * element without to_local is hit where the plane shows and carries its
      * distance along the pointer ray. Both are read for every draw and event.
-     * An empty function removes the placement. Replaces set_view(), which
-     * likewise replaces this.
+     * Placed layers also hide each other and later geometry per pixel where
+     * their alpha is at least one half. An empty function removes the
+     * placement. Replaces set_view(), which likewise replaces this.
      */
     void set_placement(
         std::function<Kinesis::ViewTransform()> view,
@@ -434,7 +435,9 @@ private:
     void follow(const std::shared_ptr<Buffers::FormaBuffer>& batch);
     void clip_batch(const std::shared_ptr<Buffers::FormaBuffer>& batch, const Kinesis::AABB2D& rect);
     void configure(Batch& batch) const;
-    void order_placed(float distance) const;
+
+    /** @brief Draw rank of the layer's placement now, farther being lower. */
+    [[nodiscard]] int64_t placed_rank() const;
 
     [[nodiscard]] std::optional<std::pair<uint32_t, float>> topmost(glm::vec2 screen) const;
 
