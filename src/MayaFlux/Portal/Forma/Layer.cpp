@@ -1,5 +1,8 @@
 #include "Layer.hpp"
 
+#include "LocalPoint.hpp"
+
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
 #include "MayaFlux/Kinesis/Spatial/HitTest.hpp"
 #include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 
@@ -50,6 +53,7 @@ void Layer::clear()
             el.buffer.retire();
     }
     m_batch.reset();
+    m_batches.clear();
     m_image_batches.clear();
     m_elements.clear();
     m_index.clear();
@@ -176,35 +180,85 @@ bool Layer::send_to_back(uint32_t id)
 // Spatial queries
 // =============================================================================
 
+std::optional<std::pair<uint32_t, float>> Layer::topmost(glm::vec2 screen) const
+{
+    std::optional<std::pair<uint32_t, float>> nearest;
+    const auto viewed = unprojected(screen);
+
+    for (const auto& element : std::views::reverse(m_elements)) {
+        const auto depth = test_element(element, screen, viewed);
+        if (!depth)
+            continue;
+        if (!element.to_local && !placed())
+            return std::pair { element.id, std::numeric_limits<float>::lowest() };
+        if (!nearest || *depth < nearest->second)
+            nearest.emplace(element.id, *depth);
+    }
+    return nearest;
+}
+
 std::optional<uint32_t> Layer::hit_test(glm::vec2 ndc) const
 {
-    for (const auto& m_element : std::views::reverse(m_elements)) {
-        if (test_element(m_element, ndc))
-            return m_element.id;
-    }
-    return std::nullopt;
+    const auto found = topmost(ndc);
+    if (!found)
+        return std::nullopt;
+    return found->first;
+}
+
+std::optional<float> Layer::hit_depth(glm::vec2 ndc) const
+{
+    const auto found = topmost(ndc);
+    if (!found)
+        return std::nullopt;
+    return found->second;
 }
 
 std::vector<uint32_t> Layer::hit_test_all(glm::vec2 ndc) const
 {
     std::vector<uint32_t> result;
-    for (const auto& m_element : std::views::reverse(m_elements)) {
-        if (test_element(m_element, ndc))
-            result.push_back(m_element.id);
+    std::vector<std::pair<float, uint32_t>> ranked;
+    const auto viewed = unprojected(ndc);
+
+    for (const auto& element : std::views::reverse(m_elements)) {
+        const auto depth = test_element(element, ndc, viewed);
+        if (!depth)
+            continue;
+        if (element.to_local || placed())
+            ranked.emplace_back(*depth, element.id);
+        else
+            result.push_back(element.id);
     }
+
+    std::ranges::stable_sort(ranked, {}, &std::pair<float, uint32_t>::first);
+    for (const auto& [depth, id] : ranked)
+        result.push_back(id);
+
     return result;
+}
+
+std::optional<glm::vec2> Layer::local_point(uint32_t id, glm::vec2 screen) const
+{
+    const Element* element = get(id);
+    if (!element)
+        return std::nullopt;
+
+    const auto local = map_to_local(*element, screen, element->to_local ? std::nullopt : unprojected(screen));
+    if (!local)
+        return std::nullopt;
+
+    return glm::vec2(*local);
 }
 
 std::optional<uint32_t> Layer::hit_test(
     double px, double py, uint32_t win_w, uint32_t win_h) const
 {
-    return hit_test(from_view(to_ndc(px, py, win_w, win_h)));
+    return hit_test(to_ndc(px, py, win_w, win_h));
 }
 
 std::vector<uint32_t> Layer::hit_test_all(
     double px, double py, uint32_t win_w, uint32_t win_h) const
 {
-    return hit_test_all(from_view(to_ndc(px, py, win_w, win_h)));
+    return hit_test_all(to_ndc(px, py, win_w, win_h));
 }
 
 // =========================================================================
@@ -214,6 +268,13 @@ std::vector<uint32_t> Layer::hit_test_all(
 void Layer::set_view(const std::optional<Kinesis::ViewTransform>& view)
 {
     m_view = view;
+    if (placed()) {
+        m_place_view = nullptr;
+        m_placement = nullptr;
+        m_placed_to_local = nullptr;
+        for (auto& batch : m_batches)
+            configure(batch);
+    }
     for (const auto& [target, buffer] : m_image_batches) {
         if (target)
             target->request_redraw();
@@ -222,11 +283,147 @@ void Layer::set_view(const std::optional<Kinesis::ViewTransform>& view)
 
 glm::vec2 Layer::from_view(glm::vec2 screen) const
 {
-    if (!m_view)
-        return screen;
-
     constexpr float k_nowhere = 1.0e9F;
-    return Kinesis::view_plane_point(screen, *m_view).value_or(glm::vec2(k_nowhere));
+    const auto met = unprojected(screen);
+    return met ? glm::vec2(*met) : glm::vec2(k_nowhere);
+}
+
+// =========================================================================
+// Placement
+// =========================================================================
+
+namespace {
+
+    constexpr uint32_t k_clip_constant = 2;
+    constexpr float k_distance_scale = 1000.0F;
+    constexpr float k_farthest = 1.0e12F;
+
+}
+
+void Layer::set_placement(
+    std::function<Kinesis::ViewTransform()> view,
+    std::function<glm::mat4()> placement)
+{
+    if (view && placement) {
+        m_view.reset();
+        m_placed_to_local = plane_to_local(view, placement);
+        m_place_view = std::move(view);
+        m_placement = std::move(placement);
+    } else {
+        m_placed_to_local = nullptr;
+        m_place_view = nullptr;
+        m_placement = nullptr;
+    }
+
+    for (auto& batch : m_batches)
+        configure(batch);
+
+    for (const auto& [target, buffer] : m_image_batches) {
+        if (target)
+            target->request_redraw();
+    }
+}
+
+Kinesis::ViewTransform Layer::drawn_view() const
+{
+    if (!placed())
+        return m_view.value_or(Kinesis::ViewTransform {});
+
+    const Kinesis::ViewTransform seen = m_place_view();
+    const Kinesis::ViewTransform composed { .view = seen.view * m_placement(), .projection = seen.projection };
+
+    const glm::mat4 back = glm::inverse(composed.view);
+    const bool perspective = composed.projection[2][3] != 0.0F;
+    const bool front = perspective ? back[3].z > 0.0F : back[2].z > 0.0F;
+
+    if (!front)
+        return { .view = composed.view, .projection = glm::mat4(0.0F) };
+
+    return composed;
+}
+
+int64_t Layer::placed_rank() const
+{
+    if (!placed())
+        return 0;
+
+    const float distance = -(m_place_view().view * m_placement())[3].z;
+    return -static_cast<int64_t>(std::clamp(distance * k_distance_scale, 0.0F, k_farthest));
+}
+
+void Layer::follow(const std::shared_ptr<Buffers::FormaBuffer>& batch)
+{
+    if (!batch)
+        return;
+
+    std::erase_if(m_batches, [](const Batch& held) { return held.buffer.expired(); });
+    m_batches.push_back({ .buffer = batch,
+        .clip = std::nullopt,
+        .flat_band = batch->get_render_config().draw_band });
+    configure(m_batches.back());
+}
+
+void Layer::clip_batch(const std::shared_ptr<Buffers::FormaBuffer>& batch, const Kinesis::AABB2D& rect)
+{
+    if (!batch)
+        return;
+
+    const auto found = std::ranges::find_if(m_batches,
+        [&batch](const Batch& held) { return held.buffer.lock() == batch; });
+    if (found == m_batches.end()) {
+        if (const auto processor = batch->get_render_processor())
+            processor->set_scissor(Kinesis::Scissor::from(rect));
+        return;
+    }
+
+    found->clip = rect;
+    configure(*found);
+}
+
+void Layer::configure(Batch& batch) const
+{
+    const auto buffer = batch.buffer.lock();
+    const auto processor = buffer ? buffer->get_render_processor() : nullptr;
+    if (!processor)
+        return;
+
+    const bool on_plane = placed();
+    const bool was_on_plane = std::exchange(batch.on_plane, on_plane);
+
+    if (on_plane || was_on_plane) {
+        auto config = buffer->get_render_config();
+        if (on_plane) {
+            config.draw_band = Portal::Graphics::DrawBand::TRANSLUCENT;
+            config.depth_test = Portal::Graphics::CompareOp::LESS_OR_EQUAL;
+            config.depth_write = false;
+            buffer->set_draw_rank_source([layer = weak_from_this()]() -> int64_t {
+                const auto held = layer.lock();
+                return held ? held->placed_rank() : 0;
+            });
+        } else {
+            config.draw_band = batch.flat_band;
+            config.depth_test.reset();
+            config.depth_write = true;
+            buffer->set_draw_rank(0);
+        }
+        buffer->set_render_config(config);
+        processor->set_depth_stamp(on_plane);
+    }
+
+    if (!batch.clip)
+        return;
+
+    processor->set_scissor(on_plane ? std::nullopt
+                                    : std::optional<Kinesis::Scissor>(Kinesis::Scissor::from(*batch.clip)));
+
+    if (!on_plane && !was_on_plane)
+        return;
+
+    const glm::vec4 rect = on_plane
+        ? glm::vec4(batch.clip->min, batch.clip->max)
+        : glm::vec4(0.0F);
+    for (uint32_t i = 0; i < 4; ++i)
+        processor->set_specialization_constant(k_clip_constant + i, std::bit_cast<uint32_t>(rect[static_cast<int>(i)]));
 }
 
 // =========================================================================
@@ -334,11 +531,45 @@ glm::vec2 Layer::to_ndc(double px, double py, uint32_t w, uint32_t h) noexcept
     return { ndc3.x, ndc3.y };
 }
 
-bool Layer::test_element(const Element& el, glm::vec2 ndc) noexcept
+std::optional<glm::vec3> Layer::unprojected(glm::vec2 screen) const
+{
+    if (placed())
+        return m_placed_to_local(screen);
+
+    if (!m_view)
+        return glm::vec3(screen, 0.0F);
+
+    const auto met = Kinesis::view_plane_point(screen, *m_view);
+    if (!met)
+        return std::nullopt;
+
+    return glm::vec3(*met, 0.0F);
+}
+
+std::optional<glm::vec3> Layer::map_to_local(
+    const Element& el, glm::vec2 screen, const std::optional<glm::vec3>& viewed)
+{
+    if (el.to_local) {
+        const auto local = el.to_local(screen);
+        if (!local || !std::isfinite(local->x) || !std::isfinite(local->y) || !std::isfinite(local->z))
+            return std::nullopt;
+        return local;
+    }
+
+    return viewed;
+}
+
+std::optional<float> Layer::test_element(
+    const Element& el, glm::vec2 screen, const std::optional<glm::vec3>& viewed)
 {
     if (!el.interactive || !el.visible)
-        return false;
-    return el.hits(ndc);
+        return std::nullopt;
+
+    const auto local = map_to_local(el, screen, viewed);
+    if (!local || !el.hits(glm::vec2(*local)))
+        return std::nullopt;
+
+    return local->z;
 }
 
 } // namespace MayaFlux::Portal::Forma

@@ -146,7 +146,7 @@ ViewTransform build_view_transform(const NavigationState& st, float aspect)
         .view = glm::lookAt(st.eye, st.eye + forward_of(st), up_of(st)),
         .projection = st.frustum
             ? frustum_projection(*st.frustum, aspect)
-            : glm::perspective(st.fov_radians, aspect, st.near_plane, st.far_plane)
+            : glm::perspectiveRH_ZO(st.fov_radians, aspect, st.near_plane, st.far_plane)
     };
 }
 
@@ -184,26 +184,6 @@ void set_viewpoint(NavigationState& st, const Viewpoint& view)
     st.fov_radians = static_cast<float>(frustum_vertical_fov(frustum));
     st.near_plane = static_cast<float>(frustum.near);
     st.far_plane = static_cast<float>(frustum.far);
-}
-
-Viewpoint mix_viewpoints(const Viewpoint& from, const Viewpoint& to, float t)
-{
-    const float at = std::clamp(t, 0.0F, 1.0F);
-    const glm::quat turn = glm::slerp(
-        glm::normalize(glm::quat_cast(glm::mat3(from.first))),
-        glm::normalize(glm::quat_cast(glm::mat3(to.first))), at);
-
-    glm::mat4 placement = glm::mat4_cast(turn);
-    placement[3] = glm::vec4(glm::mix(glm::vec3(from.first[3]), glm::vec3(to.first[3]), at), 1.0F);
-
-    const Frustum& a = from.second;
-    const Frustum& b = to.second;
-    Frustum frustum = at < 0.5F ? a : b;
-    frustum.window.min = glm::mix(a.window.min, b.window.min, at);
-    frustum.window.max = glm::mix(a.window.max, b.window.max, at);
-    frustum.near = a.near + (b.near - a.near) * static_cast<double>(at);
-    frustum.far = a.far + (b.far - a.far) * static_cast<double>(at);
-    return { placement, frustum };
 }
 
 } // namespace MayaFlux::Kinesis

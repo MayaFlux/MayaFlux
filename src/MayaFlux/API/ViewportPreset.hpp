@@ -1,12 +1,11 @@
 #pragma once
 
+#include "MayaFlux/Kinesis/Spatial/Bounds.hpp"
 #include "MayaFlux/Kinesis/Viewport/Frustum.hpp"
 #include "MayaFlux/Transitive/Memory/OwnedCell.hpp"
 
 #include "MayaFlux/Kinesis/Viewport/NavigationMappings.hpp"
 #include "MayaFlux/Kinesis/Viewport/NavigationState.hpp"
-#include "MayaFlux/Kinesis/Viewport/OrbitState.hpp"
-#include "MayaFlux/Kinesis/Viewport/PanZoom2DState.hpp"
 
 namespace MayaFlux::Buffers {
 class RenderProcessor;
@@ -37,13 +36,17 @@ using ViewportPresetConfig = Kinesis::NavigationConfig;
  * @brief Selects which navigation controller bind_viewport_preset installs.
  *
  * Each mode registers a distinct set of event handlers and may interpret
- * ViewportPresetConfig fields differently. Modes not yet implemented emit a
- * runtime error and return without binding.
+ * ViewportPresetConfig fields differently.
+ *
+ * Bindings on one window do not act together. One binding takes a press, a
+ * scroll or a key: of those whose region holds the pointer, the last bound or
+ * raised. A Forma element under the pointer comes before any binding, and so do
+ * keys its focused element listens for.
  */
 enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
-    Orbit, ///< Tumble around a focal point (not yet implemented)
-    PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
+    Orbit, ///< Rotation about a pivot, pan and distance
+    PanZoom2D, ///< Orthographic 2D pan, and zoom about the cursor
     Screenspace, ///< Perspective pan in camera's local right/up plane, scroll dolly, no rotation
     // Trackball, ///< Virtual trackball (not yet implemented)
 };
@@ -79,7 +82,8 @@ MAYAFLUX_API ViewportBinding bind_viewport_preset(
  *        against a window using default settings.
  *
  * One viewpoint and one controller for every buffer registered with the window at call time
- * that has a RenderProcessor.
+ * that has a RenderProcessor whose view is not pinned, which leaves Forma's
+ * buffers alone.
  * Buffers registered after this call are not covered.
  *
  * @param window  Window supplying input events
@@ -117,7 +121,8 @@ MAYAFLUX_API ViewportBinding bind_fly_preset(
  *        registered against a window.
  *
  * One viewpoint and one controller for every buffer registered with the window at call time
- * that has a RenderProcessor.
+ * that has a RenderProcessor whose view is not pinned, which leaves Forma's
+ * buffers alone.
  * Buffers registered after this call are not covered.
  *
  * @param window   Window supplying input events
@@ -241,8 +246,67 @@ MAYAFLUX_API ViewportBinding bind_screenspace_preset(
     const std::string& name = "default");
 
 /**
- * @brief Cancel all event handlers registered by bind_viewport_preset() and
- *        restore the window input config to its state before bind was called.
+ * @brief Drive a viewpoint that already exists, such as a Locus camera or
+ *        another preset's.
+ *
+ * The controller takes over from where the viewpoint stands, with the mode's
+ * default settings. No processor is changed; whatever draws from the
+ * viewpoint follows. PanZoom2D keeps its own lens when the viewpoint has a
+ * perspective one.
+ *
+ * @param window  Window supplying input events
+ * @param view    Viewpoint to drive
+ * @param mode    Navigation controller to install
+ * @param name    Unique prefix for registered events; must be unique per window
+ */
+MAYAFLUX_API ViewportBinding join_viewport_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view,
+    ViewportPresetMode mode = ViewportPresetMode::Fly,
+    const std::string& name = "default");
+
+/**
+ * @brief Confine a binding to part of the window.
+ *
+ * It takes input only when the pointer is there, keys included, and pan and
+ * zoom measure against that part, as for a view shown in an inset or drawn
+ * into a render lane of that shape. std::nullopt gives it the whole window.
+ *
+ * @param window  Window passed to the bind
+ * @param region  Rectangle in window NDC, +y up
+ * @param name    Name passed to the bind
+ */
+MAYAFLUX_API void set_viewport_preset_region(
+    const std::shared_ptr<Core::Window>& window,
+    const std::optional<Kinesis::AABB2D>& region,
+    const std::string& name = "default");
+
+/**
+ * @brief Confine a binding to a shape, in addition to any region.
+ *
+ * It takes input only where @p within holds for the pointer in window NDC, +y
+ * up, such as inside a circle or over what a placed element covers. Pan and zoom
+ * still measure against the region. An empty function removes it.
+ *
+ * @param window  Window passed to the bind
+ * @param within  Test of a window NDC point
+ * @param name    Name passed to the bind
+ */
+MAYAFLUX_API void set_viewport_preset_shape(
+    const std::shared_ptr<Core::Window>& window,
+    std::function<bool(glm::vec2)> within,
+    const std::string& name = "default");
+
+/** @brief Put a binding ahead of the other bindings of its window. */
+MAYAFLUX_API void raise_viewport_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::string& name = "default");
+
+/**
+ * @brief Cancel all event handlers registered under @p name, restore the
+ *        window input config and stop driving the viewpoint.
+ *
+ * What draws from the viewpoint keeps the view as it was left.
  *
  * @param window  Window passed to bind_viewport_preset()
  * @param name    Name passed to bind_viewport_preset()

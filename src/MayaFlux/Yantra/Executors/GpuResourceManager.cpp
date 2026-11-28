@@ -499,6 +499,7 @@ bool GpuResourceManager::initialise(const std::string& key,
 
     if (config.shader_id != Portal::Graphics::INVALID_SHADER) {
         unit->shader_id = config.shader_id;
+        foundry.retain_shader(config.shader_id);
     } else {
         unit->shader_id = foundry.load_shader(config.shader_path);
     }

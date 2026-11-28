@@ -77,6 +77,18 @@ struct MAYAFLUX_API Element {
     ///        When absent, @c bounds_hint is used as the sole test.
     std::function<bool(glm::vec2)> contains;
 
+    /**
+     * @brief Optional mapping from a screen NDC point to this element's own
+     *        coordinates, for an element that does not lie flat on the screen.
+     *
+     * x and y of the result are the point that bounds_hint, contains, clip and
+     * Context callbacks receive. z is its depth, smaller being nearer, in one
+     * measure for every element of a Layer. std::nullopt is a miss. Elements
+     * without a mapping are hit before every element with one, so a flat
+     * background that should not block them has to be non_interactive().
+     */
+    std::function<std::optional<glm::vec3>(glm::vec2)> to_local;
+
     /// @brief Where this region's rendered output is written: a buffer of its
     ///        own, or a slice of one it shares. Empty for non-rendering
     ///        elements (pure hit-test regions).
@@ -130,6 +142,15 @@ struct MAYAFLUX_API Element {
     }
 
     /**
+     * @brief Set the screen to element mapping. See to_local.
+     */
+    Element& with_to_local(std::function<std::optional<glm::vec3>(glm::vec2)> fn)
+    {
+        to_local = std::move(fn);
+        return *this;
+    }
+
+    /**
      * @brief Set bounds_hint and contains from one hit region.
      *
      * The clip is written only when the region carries one, so a clip set by
@@ -146,7 +167,7 @@ struct MAYAFLUX_API Element {
     }
 
     /**
-     * @brief Whether an NDC point hits this element's spatial fields.
+     * @brief Whether a point in element coordinates hits this element's spatial fields.
      *
      * Applies clip, bounds_hint and contains in the order of
      * Kinesis::HitRegion::hits. Ignores interactive and visible, which

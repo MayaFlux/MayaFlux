@@ -30,7 +30,7 @@ void main()
     }
 
     if (glyph_is_coverage(in_weight)) {
-        float glyph_coverage = texture(textures[glyph_slot(in_weight)], sample_uv).r;
+        float glyph_coverage = texture(textures[glyph_slot(in_weight)], sample_uv).r * glyph_alpha(in_weight);
         out_color = vec4(in_color, glyph_coverage * coverage);
         return;
     }

@@ -36,6 +36,9 @@ namespace internal {
 
     constexpr size_t k_capacity_bytes = 4096;
 
+    /// @brief Text slots every batch declares.
+    inline constexpr uint32_t k_text_slots = 4;
+
     /**
      * @class Atelier
      * @brief Process-wide Forma workshop. Not part of the public surface.
@@ -99,6 +102,16 @@ namespace internal {
         {
             return m_atlas_images[&atlas];
         }
+
+        /**
+         * @brief Text slot of @p atlas, the same in every batch, so a slice
+         *        keeps its slot when it moves to another one.
+         *
+         * The default atlas holds slot 0. Others take the next free slot, then
+         * one whose atlas no text draws from any more, and slot 0 when every
+         * one is in use.
+         */
+        [[nodiscard]] uint32_t atlas_slot(const Text::GlyphAtlas& atlas);
 
         // =====================================================================
         // Construction
@@ -309,14 +322,15 @@ namespace internal {
                 auto* layer_ptr = &layer;
 
                 reposition = [buffer, geometry_fn, state, id, layer_ptr](Kinesis::AABB2D) {
-                    if (!buffer || !geometry_fn || !state)
+                    if (!geometry_fn || !state)
                         return;
 
                     std::vector<uint8_t> bytes;
                     Element el;
                     el.id = id;
                     geometry_fn(state->value, bytes, el);
-                    buffer.submit(bytes);
+                    if (buffer)
+                        buffer.submit(bytes);
 
                     if (el.bounds_hint)
                         layer_ptr->set_bounds(id, *el.bounds_hint);
@@ -369,6 +383,7 @@ namespace internal {
         std::unique_ptr<Inspector> m_inspect;
         std::unordered_map<const Text::GlyphAtlas*, Text::AtlasImage> m_atlas_images;
         std::shared_ptr<Core::VKImage> m_text_fallback;
+        std::vector<const Text::GlyphAtlas*> m_atlas_slots;
 
         bool m_initialized {};
     };

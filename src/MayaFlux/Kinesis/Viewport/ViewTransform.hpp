@@ -68,7 +68,7 @@ static_assert(sizeof(RenderTransform) == 3 * sizeof(glm::mat4));
     float near,
     float far)
 {
-    return { .projection = glm::perspective(fov_radians, aspect, near, far) };
+    return { .projection = glm::perspectiveRH_ZO(fov_radians, aspect, near, far) };
 }
 
 /**
@@ -86,7 +86,7 @@ static_assert(sizeof(RenderTransform) == 3 * sizeof(glm::mat4));
     float bottom, float top,
     float near = -1.0F, float far = 1.0F)
 {
-    return { .projection = glm::ortho(left, right, bottom, top, near, far) };
+    return { .projection = glm::orthoRH_ZO(left, right, bottom, top, near, far) };
 }
 
 /**
@@ -111,7 +111,7 @@ static_assert(sizeof(RenderTransform) == 3 * sizeof(glm::mat4));
 {
     return {
         .view = glm::lookAt(eye, target, up),
-        .projection = glm::perspective(fov_radians, aspect, near, far)
+        .projection = glm::perspectiveRH_ZO(fov_radians, aspect, near, far)
     };
 }
 

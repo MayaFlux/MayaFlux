@@ -23,8 +23,6 @@ std::vector<Kakshya::MeshVertex> glyph_vertices(
     std::vector<V> out;
     out.reserve(quads.size() * 6);
 
-    const float weight = coverage_weight(slot);
-
     for (const auto& q : quads) {
         glm::vec4 rgb { color };
         for (auto it = spans.rbegin(); it != spans.rend(); ++it) {
@@ -38,6 +36,8 @@ std::vector<Kakshya::MeshVertex> glyph_vertices(
 
         const glm::vec2 top_left = map({ q.x0, q.y0 });
         const glm::vec2 bottom_right = map({ q.x1, q.y1 });
+
+        const float weight = coverage_weight(slot, rgb.a);
 
         const V bl { .position = { top_left.x, bottom_right.y, 0.F }, .color = rgb, .weight = weight, .uv = { q.uv_x0, q.uv_y1 } };
         const V br { .position = { bottom_right.x, bottom_right.y, 0.F }, .color = rgb, .weight = weight, .uv = { q.uv_x1, q.uv_y1 } };

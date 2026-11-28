@@ -16,10 +16,8 @@ namespace MayaFlux::Kinesis {
  * semantics need (a grabbed canvas moves opposite the drag, a dragged
  * scrollbar thumb moves with it).
  *
- * Shared by PanZoom2DState::apply_pan_zoom_pan and any CPU-side drag
- * scroll: both are "drag the content by moving the viewport's frame over
- * it," differing only in what consumes the result (a GPU ViewTransform
- * versus a CPU layout offset).
+ * For dragging content by moving the viewport's frame over it, such as a
+ * CPU layout offset.
  *
  * @param pixel_delta          Pixel-space delta.
  * @param visible_extent       Currently visible content extent (width, height), same units as the return value.

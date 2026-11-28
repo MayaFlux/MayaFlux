@@ -452,9 +452,43 @@ void VKBuffer::apply_render_config(
     render_processor->set_polygon_mode(config.polygon_mode);
     render_processor->set_cull_mode(config.cull_mode);
     render_processor->set_scissor(config.scissor);
+    render_processor->set_view_pinned(config.view_pinned);
+
+    if (config.depth_test)
+        render_processor->enable_depth_test(*config.depth_test, config.depth_write);
 
     if (!config.geometry_shader.empty())
         render_processor->set_geometry_shader(config.geometry_shader);
+}
+
+void VKBuffer::set_render_config(const RenderConfig& config)
+{
+    const RenderConfig previous = std::exchange(m_render_config, config);
+    m_render_config_dirty = true;
+
+    const auto push = [&](const std::shared_ptr<RenderProcessor>& processor) {
+        if (!processor)
+            return;
+
+        if (config.view_pinned != previous.view_pinned)
+            processor->set_view_pinned(config.view_pinned);
+        if (config.cull_mode != previous.cull_mode)
+            processor->set_cull_mode(config.cull_mode);
+        if (config.scissor != previous.scissor)
+            processor->set_scissor(config.scissor);
+
+        if (config.depth_test == previous.depth_test && config.depth_write == previous.depth_write)
+            return;
+        if (config.depth_test) {
+            processor->enable_depth_test(*config.depth_test, config.depth_write);
+        } else if (previous.depth_test) {
+            processor->disable_depth_test();
+        }
+    };
+
+    push(get_render_processor());
+    for (const auto& processor : get_additional_render_processors())
+        push(processor);
 }
 
 void VKBuffer::mark_dirty_range(size_t offset, size_t size)

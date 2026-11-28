@@ -39,35 +39,44 @@ struct HitResult {
 // =========================================================================
 
 /**
- * @brief Construct a world-space ray from window pixel coordinates.
+ * @brief Ray under a screen position, in the space the view takes points from.
+ *
+ * The origin is the point of NDC depth 0 and the direction is normalized, so a
+ * parameter along the ray is a distance from that origin.
+ *
+ * @param ndc Position on screen, x and y in [-1, 1], +y up.
+ * @param vt  Active ViewTransform.
+ */
+[[nodiscard]] inline Ray ray_through(glm::vec2 ndc, const ViewTransform& vt)
+{
+    const glm::mat4 inv_vp = glm::inverse(vt.projection * vt.view);
+
+    const glm::vec4 near_h = inv_vp * glm::vec4(ndc.x, ndc.y, 0.0F, 1.0F);
+    const glm::vec4 far_h = inv_vp * glm::vec4(ndc.x, ndc.y, 1.0F, 1.0F);
+
+    const glm::vec3 near_w = glm::vec3(near_h) / near_h.w;
+    const glm::vec3 far_w = glm::vec3(far_h) / far_h.w;
+
+    return { .origin = near_w, .direction = glm::normalize(far_w - near_w) };
+}
+
+/**
+ * @brief ray_through for a position in window pixels.
  * @param window_x  X in window space [0, width]
  * @param window_y  Y in window space [0, height] (top-left origin)
  * @param width     Window width in pixels.
  * @param height    Window height in pixels.
  * @param vt        Active ViewTransform (view + projection matrices).
- * @return Ray with origin at the near plane and normalized direction into the scene.
- *
- * Unprojects two points at z=0 (near) and z=1 (far) in NDC through the
- * inverse of projection * view. The resulting world-space positions define
- * the ray origin and direction.
  */
 [[nodiscard]] inline Ray screen_to_ray(
     double window_x, double window_y,
     uint32_t width, uint32_t height,
     const ViewTransform& vt)
 {
-    float ndc_x = (static_cast<float>(window_x) / static_cast<float>(width)) * 2.0F - 1.0F;
-    float ndc_y = 1.0F - (static_cast<float>(window_y) / static_cast<float>(height)) * 2.0F;
-
-    glm::mat4 inv_vp = glm::inverse(vt.projection * vt.view);
-
-    glm::vec4 near_h = inv_vp * glm::vec4(ndc_x, ndc_y, 0.0F, 1.0F);
-    glm::vec4 far_h = inv_vp * glm::vec4(ndc_x, ndc_y, 1.0F, 1.0F);
-
-    glm::vec3 near_w = glm::vec3(near_h) / near_h.w;
-    glm::vec3 far_w = glm::vec3(far_h) / far_h.w;
-
-    return { .origin = near_w, .direction = glm::normalize(far_w - near_w) };
+    return ray_through(
+        { (static_cast<float>(window_x) / static_cast<float>(width)) * 2.0F - 1.0F,
+            1.0F - (static_cast<float>(window_y) / static_cast<float>(height)) * 2.0F },
+        vt);
 }
 
 /**
@@ -84,8 +93,7 @@ struct HitResult {
 [[nodiscard]] inline std::optional<glm::vec2> view_plane_point(
     glm::vec2 ndc, const ViewTransform& vt)
 {
-    const Ray ray = screen_to_ray(
-        static_cast<double>(ndc.x) + 1.0, 1.0 - static_cast<double>(ndc.y), 2U, 2U, vt);
+    const Ray ray = ray_through(ndc, vt);
 
     if (std::abs(ray.direction.z) < 1e-6F) {
         return std::nullopt;
@@ -120,6 +128,131 @@ struct HitResult {
         .origin = glm::vec3(transform * glm::vec4(ray.origin, 1.0F)),
         .direction = glm::vec3(transform * glm::vec4(ray.direction, 0.0F)),
     };
+}
+
+// =========================================================================
+// Intersections
+// =========================================================================
+
+/**
+ * @brief Parameter at which a ray meets a plane.
+ * @param ray    Ray of any nonzero direction.
+ * @param point  A point of the plane.
+ * @param normal Normal of the plane, any nonzero length.
+ * @return std::nullopt when the ray is parallel to the plane or the plane is
+ *         behind the origin.
+ */
+[[nodiscard]] inline std::optional<float> ray_plane_parameter(
+    const Ray& ray, const glm::vec3& point, const glm::vec3& normal)
+{
+    const float rate = glm::dot(ray.direction, normal);
+    if (std::abs(rate) <= 1e-7F * glm::length(ray.direction) * glm::length(normal)) {
+        return std::nullopt;
+    }
+
+    const float t = glm::dot(point - ray.origin, normal) / rate;
+    if (t < 0.0F) {
+        return std::nullopt;
+    }
+    return t;
+}
+
+/**
+ * @brief Where a ray meets a triangle, from either side.
+ * @return t, u and v, the point being (1 - u - v) a + u b + v c, or
+ *         std::nullopt on a miss, a degenerate triangle or a hit behind.
+ */
+[[nodiscard]] inline std::optional<glm::vec3> ray_triangle_parameter(
+    const Ray& ray, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
+{
+    const glm::vec3 ab = b - a;
+    const glm::vec3 ac = c - a;
+    const glm::vec3 p = glm::cross(ray.direction, ac);
+    const float det = glm::dot(ab, p);
+    if (std::abs(det) <= 1e-7F * glm::length(ab) * glm::length(p)) {
+        return std::nullopt;
+    }
+
+    const float inv = 1.0F / det;
+    const glm::vec3 from_a = ray.origin - a;
+    const float u = glm::dot(from_a, p) * inv;
+    if (u < 0.0F || u > 1.0F) {
+        return std::nullopt;
+    }
+
+    const glm::vec3 q = glm::cross(from_a, ab);
+    const float v = glm::dot(ray.direction, q) * inv;
+    if (v < 0.0F || u + v > 1.0F) {
+        return std::nullopt;
+    }
+
+    const float t = glm::dot(ac, q) * inv;
+    if (t < 0.0F) {
+        return std::nullopt;
+    }
+    return glm::vec3(t, u, v);
+}
+
+/**
+ * @brief Nearest triangle of an indexed set that a ray meets.
+ *
+ * Tests every triangle. Triangles naming a vertex out of range are skipped.
+ *
+ * @param ray      Ray in the space of the vertices.
+ * @param vertices Vertex records.
+ * @param indices  Three per triangle.
+ * @param position Projection from a record to its position.
+ * @return The triangle's number and its t, u, v as ray_triangle_parameter gives them.
+ */
+template <std::ranges::random_access_range R, typename Proj = std::identity>
+[[nodiscard]] std::optional<std::pair<uint32_t, glm::vec3>> ray_triangles_parameter(
+    const Ray& ray, const R& vertices, std::span<const uint32_t> indices, Proj position = {})
+{
+    const auto count = static_cast<size_t>(std::ranges::size(vertices));
+    const auto first = std::ranges::begin(vertices);
+    std::optional<std::pair<uint32_t, glm::vec3>> best;
+
+    for (size_t i = 0; i + 2 < indices.size(); i += 3) {
+        const uint32_t a = indices[i];
+        const uint32_t b = indices[i + 1];
+        const uint32_t c = indices[i + 2];
+        if (a >= count || b >= count || c >= count) {
+            continue;
+        }
+
+        const auto hit = ray_triangle_parameter(ray,
+            std::invoke(position, first[a]),
+            std::invoke(position, first[b]),
+            std::invoke(position, first[c]));
+        if (hit && (!best || hit->x < best->second.x)) {
+            best.emplace(static_cast<uint32_t>(i / 3), *hit);
+        }
+    }
+
+    return best;
+}
+
+/**
+ * @brief Where along a segment it comes nearest to a ray's line.
+ * @return Parameter in [0, 1] from @p a to @p b, or std::nullopt when the
+ *         segment is parallel to the ray or has no length.
+ */
+[[nodiscard]] inline std::optional<float> nearest_segment_parameter(
+    const Ray& ray, const glm::vec3& a, const glm::vec3& b)
+{
+    const glm::vec3 along = b - a;
+    const glm::vec3 between = ray.origin - a;
+
+    const float dd = glm::dot(ray.direction, ray.direction);
+    const float da = glm::dot(ray.direction, along);
+    const float aa = glm::dot(along, along);
+    const float denom = dd * aa - da * da;
+    if (denom <= 1e-7F * dd * aa) {
+        return std::nullopt;
+    }
+
+    const float s = (dd * glm::dot(along, between) - da * glm::dot(ray.direction, between)) / denom;
+    return std::clamp(s, 0.0F, 1.0F);
 }
 
 // =========================================================================

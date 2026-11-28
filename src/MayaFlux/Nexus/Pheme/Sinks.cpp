@@ -171,7 +171,12 @@ void add_render_sink(
     renderer->set_polygon_mode(rc.polygon_mode);
     renderer->set_cull_mode(rc.cull_mode);
 
-    renderer->enable_depth_test();
+    renderer->set_view_pinned(rc.view_pinned);
+    if (rc.depth_test) {
+        renderer->enable_depth_test(*rc.depth_test, rc.depth_write);
+    } else {
+        renderer->enable_depth_test();
+    }
     buf->set_needs_depth_attachment(true);
 
     renderer->set_destinations(rc.target_window, rc.target_images, buf);

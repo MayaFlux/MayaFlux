@@ -1,6 +1,9 @@
 #include "TextSlice.hpp"
 
 #include "Atelier.hpp"
+#include "MayaFlux/Buffers/Shaders/RenderProcessor.hpp"
+#include "MayaFlux/Core/Backends/Windowing/Window.hpp"
+#include "MayaFlux/Portal/Graphics/ImageTarget.hpp"
 
 namespace MayaFlux::Portal::Forma::internal {
 
@@ -54,6 +57,11 @@ std::shared_ptr<TextSlice> TextSlice::make(
 {
     auto slice = std::shared_ptr<TextSlice>(new TextSlice(std::move(target), bounds, std::move(params)));
     live_slices().push_back(slice);
+    slice->m_target.on_moved([weak = std::weak_ptr<TextSlice>(slice)] {
+        if (const auto held = weak.lock()) {
+            held->refresh();
+        }
+    });
     slice->set(text);
     return slice;
 }
@@ -84,7 +92,36 @@ void TextSlice::set_tail(std::vector<Kakshya::MeshVertex> tail)
 
 Text::GlyphMap TextSlice::map() const noexcept
 {
-    return Text::GlyphMap::fit(m_bounds, m_run.extent());
+    Kinesis::AABB2D bounds = m_bounds;
+
+    const auto& buffer = m_target.buffer();
+    const auto processor = buffer ? buffer->get_render_processor() : nullptr;
+    if (processor
+        && buffer->get_render_config().draw_band != Portal::Graphics::DrawBand::TRANSLUCENT) {
+        glm::vec2 size { 0.0F };
+        if (const auto window = processor->get_target_window()) {
+            const auto& state = window->get_state();
+            size = { static_cast<float>(state.current_width), static_cast<float>(state.current_height) };
+        } else if (const auto image = processor->get_target_image()) {
+            size = { static_cast<float>(image->width()), static_cast<float>(image->height()) };
+        }
+
+        if (size.x > 0.0F && size.y > 0.0F) {
+            const glm::vec2 corner { bounds.min.x, bounds.max.y };
+            const glm::vec2 whole = glm::round((corner + 1.0F) * 0.5F * size) / size * 2.0F - 1.0F;
+            bounds = bounds.translated(whole - corner);
+        }
+    }
+
+    return Text::GlyphMap::fit(bounds, m_run.extent());
+}
+
+bool TextSlice::drawn_from(const Text::GlyphAtlas* atlas)
+{
+    return std::ranges::any_of(live_slices(), [atlas](const auto& weak) {
+        const auto slice = weak.lock();
+        return slice && slice->alive() && slice->run().atlas() == atlas;
+    });
 }
 
 bool TextSlice::alive() const
@@ -103,16 +140,27 @@ void TextSlice::refresh()
         return;
     }
 
-    auto vertices = m_run.vertices(map(), 0);
+    const auto& buffer = m_target.buffer();
+    uint32_t slot = atelier().atlas_slot(*atlas);
+    if (slot > 0) {
+        const auto& declared = buffer->get_render_config().additional_textures;
+        if (slot >= declared.size() || !declared[slot].name.starts_with("text")) {
+            slot = 0;
+        }
+    }
+
+    auto vertices = m_run.vertices(map(), slot);
     vertices.insert(vertices.end(), m_tail.begin(), m_tail.end());
 
     const auto gpu = atelier().atlas_image(*atlas).sync(*atlas);
 
     const bool replaced = gpu && gpu != m_bound_image;
     const bool superseded = replaced && m_bound_image;
-    if (replaced) {
-        m_target.bind_texture(0, gpu);
+    if (gpu && (replaced || m_bound_buffer != buffer || slot != m_bound_slot)) {
+        m_target.bind_texture(slot, gpu);
         m_bound_image = gpu;
+        m_bound_buffer = buffer;
+        m_bound_slot = slot;
     }
 
     m_target.submit(vertices);

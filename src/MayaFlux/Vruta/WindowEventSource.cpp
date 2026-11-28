@@ -29,10 +29,24 @@ void WindowEventSource::signal(Core::WindowEvent event)
         m_mouse_y = pd->y;
     }
 
+    const uint32_t outer_pointer = m_pointer_owner;
+    const uint32_t outer_key = m_key_owner;
+    settle_ownership(event);
+
     const size_t resumed_before = m_resumed;
     ++m_signal_depth;
     dispatch(&event);
     --m_signal_depth;
+
+    if (m_signal_depth != 0) {
+        m_pointer_owner = outer_pointer;
+        m_key_owner = outer_key;
+    }
+
+    if (event.type == Core::WindowEventType::MOUSE_BUTTON_RELEASED
+        && std::ranges::none_of(m_button_states, [](const auto& button) { return button.second; })) {
+        m_pointer_captor = 0;
+    }
     if (m_resumed == resumed_before) {
         m_pending_events.push_back(event);
         auto& held = m_pending_counts[static_cast<uint8_t>(event.type)];
@@ -50,6 +64,98 @@ void WindowEventSource::signal(Core::WindowEvent event)
     deferred_actions.swap(m_deferred_actions);
     for (auto& action : deferred_actions)
         action();
+}
+
+template <typename Measure>
+uint32_t WindowEventSource::first_claim(const Measure& measure) const
+{
+    const Claim* best = nullptr;
+    float best_distance {};
+    for (const auto& candidate : m_claims) {
+        if (best && candidate.priority < best->priority)
+            continue;
+
+        const std::optional<float> distance = measure(candidate);
+        if (!distance)
+            continue;
+
+        if (!best || candidate.priority > best->priority || *distance <= best_distance) {
+            best = &candidate;
+            best_distance = *distance;
+        }
+    }
+    return best ? best->id : 0U;
+}
+
+void WindowEventSource::settle_ownership(const Core::WindowEvent& event)
+{
+    using Type = Core::WindowEventType;
+
+    switch (event.type) {
+    case Type::MOUSE_MOTION:
+    case Type::MOUSE_BUTTON_PRESSED:
+    case Type::MOUSE_BUTTON_RELEASED:
+    case Type::MOUSE_SCROLLED:
+        m_pointer_owner = m_pointer_captor != 0
+            ? m_pointer_captor
+            : first_claim([this](const Claim& candidate) -> std::optional<float> {
+                  return candidate.covers ? candidate.covers(m_mouse_x, m_mouse_y) : std::nullopt;
+              });
+        if (m_pointer_captor == 0
+            && (event.type == Type::MOUSE_BUTTON_PRESSED
+                || (event.type == Type::MOUSE_MOTION
+                    && std::ranges::any_of(m_button_states, [](const auto& button) { return button.second; })))) {
+            m_pointer_captor = m_pointer_owner;
+        }
+        break;
+
+    case Type::KEY_PRESSED:
+    case Type::KEY_RELEASED:
+    case Type::KEY_REPEAT:
+        if (const auto* data = std::get_if<Core::WindowEvent::KeyData>(&event.data)) {
+            const auto key = static_cast<IO::Keys>(data->key);
+            m_key_owner = first_claim([key](const Claim& candidate) -> std::optional<float> {
+                if (candidate.wants && candidate.wants(key))
+                    return 0.0F;
+                return std::nullopt;
+            });
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+uint32_t WindowEventSource::claim(
+    int priority,
+    std::function<std::optional<float>(double, double)> covers,
+    std::function<bool(IO::Keys)> wants)
+{
+    m_claims.push_back({ .id = ++m_last_claim,
+        .priority = priority,
+        .covers = std::move(covers),
+        .wants = std::move(wants) });
+    return m_last_claim;
+}
+
+void WindowEventSource::unclaim(uint32_t id)
+{
+    std::erase_if(m_claims, [id](const Claim& held) { return held.id == id; });
+    for (uint32_t* owner : { &m_pointer_owner, &m_pointer_captor, &m_key_owner }) {
+        if (*owner == id)
+            *owner = 0;
+    }
+}
+
+void WindowEventSource::set_claim_priority(uint32_t id, int priority)
+{
+    const auto found = std::ranges::find(m_claims, id, &Claim::id);
+    if (found == m_claims.end())
+        return;
+
+    found->priority = priority;
+    std::rotate(found, found + 1, m_claims.end());
 }
 
 void WindowEventSource::defer(std::function<void()> action)

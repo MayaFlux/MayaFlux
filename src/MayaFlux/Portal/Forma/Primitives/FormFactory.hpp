@@ -195,13 +195,15 @@ template <typename T>
  * @param angle_end   End angle in radians (value = 1).
  * @param color       Line color.
  * @param live_offset Optional. Current translation of the drawn indicator.
+ * @param line_width  Width of the drawn line in pixels.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> radial(
     Kinesis::AABB2D region,
     float angle_start,
     float angle_end,
     glm::vec3 color = glm::vec3(0.9F),
-    const std::function<glm::vec2()>& live_offset = {});
+    const std::function<glm::vec2()>& live_offset = {},
+    float line_width = 3.0F);
 
 // =============================================================================
 // Point
@@ -284,6 +286,7 @@ template <typename T>
  * @param handle_color   Color of the handle point.
  * @param handle_size    Handle point size in pixels.
  * @param live_offset    Optional. Current translation of the drawn path.
+ * @param line_width     Width of the drawn path in pixels.
  */
 [[nodiscard]] MAYAFLUX_API Form<float> stroke_slider(
     std::span<const glm::vec2> path,
@@ -293,7 +296,8 @@ template <typename T>
     glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),
     glm::vec3 handle_color = glm::vec3(0.95F),
     float handle_size = 10.0F,
-    const std::function<glm::vec2()>& live_offset = {});
+    const std::function<glm::vec2()>& live_offset = {},
+    float line_width = 3.0F);
 
 // =============================================================================
 // Toggle
@@ -327,6 +331,35 @@ template <typename T>
     Kinesis::AABB2D region,
     glm::vec3 color_off = glm::vec3(0.25F),
     glm::vec3 color_on = glm::vec3(0.2F, 0.7F, 0.4F),
+    const std::function<glm::vec2()>& live_offset = {});
+
+/**
+ * @brief A toggle that is true only while the left button holds it.
+ *
+ * True on press, false on release, and false when the pointer leaves, since a
+ * release elsewhere is not delivered to the element.
+ */
+[[nodiscard]] MAYAFLUX_API Form<bool> momentary(
+    Kinesis::AABB2D region,
+    glm::vec3 color_off = glm::vec3(0.25F),
+    glm::vec3 color_on = glm::vec3(0.9F, 0.55F, 0.2F),
+    const std::function<glm::vec2()>& live_offset = {});
+
+/**
+ * @brief A horizontal track with two handles, for a low and a high value.
+ *
+ * The value is x low and y high, both in [0, 1]. A press takes the nearer
+ * handle, which then follows the drag and does not pass the other.
+ *
+ * @param region       NDC bounds of the track.
+ * @param handle_width Width of each handle in NDC units.
+ */
+[[nodiscard]] MAYAFLUX_API Form<glm::vec2> range_fader(
+    Kinesis::AABB2D region,
+    float handle_width = 0.03F,
+    glm::vec3 track_color = glm::vec3(0.25F),
+    glm::vec3 fill_color = glm::vec3(0.2F, 0.6F, 1.0F),
+    glm::vec3 handle_color = glm::vec3(0.95F),
     const std::function<glm::vec2()>& live_offset = {});
 
 // =============================================================================

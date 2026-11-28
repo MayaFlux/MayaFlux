@@ -136,6 +136,8 @@ struct Mapped {
      * If state->version has advanced since last_version, invokes geometry_fn
      * with the current value into a local byte buffer, then passes the result
      * to VKBuffer::set_data so the existing upload path handles GPU transfer.
+     * An element without a buffer still runs geometry_fn, so a value can drive
+     * an object that draws itself.
      *
      * @param layer Optional. Layer::add() stored a separate copy of element
      *              when this Mapped was registered, so a geometry_fn that
@@ -148,13 +150,14 @@ struct Mapped {
      */
     void sync(Layer* layer = nullptr)
     {
-        if (!state || !geometry_fn || !element.buffer)
+        if (!state || !geometry_fn)
             return;
         if (state->version == last_version && !force_redraw_on_sync)
             return;
 
         geometry_fn(state->value, m_bytes, element);
-        element.buffer.submit(m_bytes);
+        if (element.buffer)
+            element.buffer.submit(m_bytes);
         last_version = state->version;
 
         if (layer) {

@@ -137,6 +137,13 @@ void MeshBuffer::setup_rendering(const RenderConfig& config)
 
     m_render_config.target_window = config.target_window;
     m_render_config.target_images = config.target_images;
+    m_render_config.depth_test = config.depth_test;
+    m_render_config.depth_write = config.depth_write;
+    m_render_config.view_pinned = config.view_pinned;
+    m_render_config.draw_band = config.draw_band;
+    m_render_config.cull_mode = config.cull_mode;
+    m_render_config.scissor = config.scissor;
+    m_render_config.draw_priority = config.draw_priority;
     m_render_config.topology = Portal::Graphics::PrimitiveTopology::TRIANGLE_LIST;
     m_render_config.polygon_mode = config.polygon_mode;
     m_render_config.triangulate = config.triangulate;

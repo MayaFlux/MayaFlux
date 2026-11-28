@@ -225,6 +225,13 @@ public:
     [[nodiscard]] const std::optional<Kinesis::ViewTransform>& view() const noexcept { return m_layer->view(); }
 
     /**
+     * @brief Draw and hit test this Surface on a placed plane. See Layer::set_placement.
+     */
+    void set_placement(
+        std::function<Kinesis::ViewTransform()> view,
+        std::function<glm::mat4()> placement);
+
+    /**
      * @brief Pixel size of a canvas given by its window or, without one, its image.
      *
      * For callbacks that must not keep the Surface alive.
@@ -245,6 +252,15 @@ public:
      * the pointer leaves it, and losing focus on the host clears focus here.
      * The mapping takes the image to fill the element's bounds_hint, top edge
      * to top edge.
+     *
+     * To show the image on a mesh instead, give the host element the whole
+     * surface as bounds and mesh_to_local() as its to_local:
+     * @code
+     * host_element.with_bounds(host.full())
+     *     .with_to_local(mesh_to_local(view, placement, mesh, host.full()));
+     * @endcode
+     * A drag pauses while the pointer is off the mesh, and a mesh with
+     * transparent texels still writes depth unless it discards them.
      *
      * @return False, routing nothing, when this Surface has a window or the
      *         element is missing or has no bounds_hint.
@@ -420,5 +436,28 @@ private:
     std::shared_ptr<Layer> m_layer;
     std::shared_ptr<Context> m_ctx;
 };
+
+/**
+ * @brief Convert an NDC row rect into integer pixel dimensions.
+ *
+ * Clamps width to at least 1 pixel and height to at least the default
+ * atlas pixel size to avoid degenerate layouts.
+ *
+ * @param window  Target window for pixel dimension calculation.
+ * @param x_min   Left edge in NDC.
+ * @param x_max   Right edge in NDC.
+ * @param row_h   Row height in NDC units.
+ */
+[[nodiscard]] MAYAFLUX_API glm::uvec2 row_pixel_dims(
+    const std::shared_ptr<Core::Window>& window,
+    float x_min, float x_max, float row_h);
+
+/**
+ * @brief Form of row_pixel_dims() for a canvas given by its pixel @p extent,
+ *        such as Surface::extent() of a Surface drawn into an image.
+ */
+[[nodiscard]] MAYAFLUX_API glm::uvec2 row_pixel_dims(
+    glm::uvec2 extent,
+    float x_min, float x_max, float row_h);
 
 } // namespace MayaFlux::Portal::Forma

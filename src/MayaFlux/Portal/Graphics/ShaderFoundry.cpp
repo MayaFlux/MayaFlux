@@ -457,6 +457,7 @@ ShaderID ShaderFoundry::load_shader(
     if (id_it != m_shader_filepath_cache.end()) {
         MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Using cached shader ID for: {}", cache_key);
+        retain_shader(id_it->second);
         return id_it->second;
     }
 
@@ -546,6 +547,7 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
         if (kernel_id_it != m_shader_filepath_cache.end()) {
             MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
                 "Using cached kernel shader: {}", key);
+            retain_shader(kernel_id_it->second);
             return kernel_id_it->second;
         }
 
@@ -580,6 +582,7 @@ ShaderID ShaderFoundry::load_shader(const ShaderSpec& spec)
     if (id_it != m_shader_filepath_cache.end()) {
         MF_DEBUG(Journal::Component::Portal, Journal::Context::ShaderCompilation,
             "Using cached generated shader: {}", key);
+        retain_shader(id_it->second);
         return id_it->second;
     }
 
@@ -695,29 +698,31 @@ std::string ShaderFoundry::generate_source_cache_key(const std::string& source, 
 ShaderID ShaderFoundry::reload_shader(const std::string& filepath)
 {
     invalidate_cache(filepath);
-
-    auto cache_it = m_shader_filepath_cache.find(filepath);
-    if (cache_it != m_shader_filepath_cache.end()) {
-        destroy_shader(cache_it->second);
-        m_shader_filepath_cache.erase(filepath);
-    }
-
+    m_shader_filepath_cache.erase(filepath);
     return load_shader(filepath);
+}
+
+void ShaderFoundry::retain_shader(ShaderID shader_id)
+{
+    if (const auto it = m_shaders.find(shader_id); it != m_shaders.end())
+        ++it->second.holders;
 }
 
 void ShaderFoundry::destroy_shader(ShaderID shader_id)
 {
-    auto it = m_shaders.find(shader_id);
-    if (it != m_shaders.end()) {
-        if (!it->second.filepath.empty()) {
-            m_shader_filepath_cache.erase(it->second.filepath);
-            m_shader_cache.erase(it->second.filepath);
-        }
-        if (it->second.module) {
-            it->second.module->cleanup(get_device());
-        }
-        m_shaders.erase(it);
+    const auto it = m_shaders.find(shader_id);
+    if (it == m_shaders.end() || --it->second.holders > 0)
+        return;
+
+    if (const auto cached = m_shader_filepath_cache.find(it->second.filepath);
+        cached != m_shader_filepath_cache.end() && cached->second == shader_id) {
+        m_shader_filepath_cache.erase(cached);
+        m_shader_cache.erase(it->second.filepath);
     }
+    if (it->second.module) {
+        it->second.module->cleanup(get_device());
+    }
+    m_shaders.erase(it);
 }
 
 //==============================================================================

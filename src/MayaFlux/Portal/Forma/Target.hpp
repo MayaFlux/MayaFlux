@@ -94,6 +94,12 @@ public:
      */
     [[nodiscard]] bool move_to(const std::shared_ptr<Buffers::FormaBuffer>& destination) const;
 
+    /**
+     * @brief Call @p fn after each move_to(), for what has to be rebound to the
+     *        new buffer. Replaces the previous one, shared by every copy.
+     */
+    void on_moved(std::function<void()> fn) const;
+
     /** @brief Bind a texture in the buffer's texture array. */
     void bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image) const;
 
@@ -136,6 +142,7 @@ private:
     struct State {
         std::shared_ptr<Buffers::FormaBuffer> buffer;
         SliceId slice {};
+        std::function<void()> moved;
     };
 
     std::shared_ptr<State> m_state;

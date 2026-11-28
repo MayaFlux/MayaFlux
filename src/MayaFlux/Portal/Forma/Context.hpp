@@ -38,6 +38,11 @@ struct MappedState;
  * They may write a MappedState directly, since it is the same thread, and the
  * value is read by the next frame. They must not touch GPU resources directly.
  *
+ * Several listeners may share a window. A Context with a window claims input on
+ * its event source: the pointer goes to the highest priority claim with
+ * something under it, a press stays there until release, and a press elsewhere
+ * clears this Context's focus. See set_input_priority().
+ *
  * All registered events are cancelled on destruction via
  * EventManager::cancel_event, keyed by names scoped to this Context.
  *
@@ -46,6 +51,9 @@ struct MappedState;
  */
 class MAYAFLUX_API Context {
 public:
+    /// @brief The ndc of a pointer callback is in the element's own coordinates,
+    ///        see Element::to_local. For a flat element without a view that is
+    ///        the screen position.
     using PressFn = std::function<void(uint32_t id, glm::vec2 ndc)>;
     using MoveFn = std::function<void(uint32_t id, glm::vec2 ndc)>;
     using EnterFn = std::function<void(uint32_t id)>;
@@ -59,7 +67,8 @@ public:
     /**
      * @brief Receives a window event that reached an element.
      *
-     * ndc is the pointer in NDC for pointer events and zero for the others.
+     * ndc is the pointer in the element's coordinates for pointer events and
+     * zero for the others.
      */
     using SubscriberFn = std::function<void(uint32_t id, const Core::WindowEvent& event, glm::vec2 ndc)>;
 
@@ -493,6 +502,16 @@ public:
 
     [[nodiscard]] std::optional<uint32_t> hovered() const { return m_hovered; }
 
+    /**
+     * @brief Where this Context stands among the listeners of its window.
+     *
+     * Contexts start at 0, the later made going first among equals, and
+     * viewport presets start below them. No effect without a window.
+     */
+    void set_input_priority(int priority);
+
+    [[nodiscard]] int input_priority() const noexcept { return m_input_priority; }
+
     [[nodiscard]] const Vruta::WindowEventSource& event_source() const;
 
     /**
@@ -575,7 +594,15 @@ private:
     void register_handlers();
     void cancel_handlers(bool cancel_close = true);
 
+    uint32_t m_claim {};
+    int m_input_priority {};
+
+    [[nodiscard]] bool owns_pointer() const;
+    [[nodiscard]] bool owns_key() const;
+    [[nodiscard]] bool wants_key(IO::Keys key) const;
+
     [[nodiscard]] glm::vec2 to_ndc(double px, double py) const noexcept;
+    [[nodiscard]] glm::vec2 to_screen(double px, double py) const noexcept;
 
     void handle_move(double px, double py);
     void handle_press(double px, double py, IO::MouseButtons btn);

@@ -171,7 +171,83 @@ public:
      */
     [[nodiscard]] std::pair<double, double> get_mouse_position() const;
 
+    // =========================================================================
+    // Input ownership
+    //
+    // Every listener still receives every event. A listener that shares the
+    // window with others claims input and asks whether an event is its own, so
+    // that one of them acts. The owner is settled before any listener runs.
+    // =========================================================================
+
+    /**
+     * @brief Register a claim on the window's input.
+     *
+     * The pointer belongs to the claim of highest priority that covers it, the
+     * smallest distance winning among equals, then the later registered. A button press
+     * keeps the pointer with its owner until every button is up. After a press
+     * that nothing covers, the first claim the held pointer reaches keeps it.
+     *
+     * A key belongs, in the same order, to a claim whose @p wants holds for it.
+     *
+     * @param priority Higher goes first.
+     * @param covers   How far what the claim has at a window pixel is, or
+     *                 std::nullopt when it has nothing there. A flat listener
+     *                 gives the lowest float, one behind everything the largest.
+     *                 Empty never takes the pointer.
+     * @param wants    Whether the claim wants a key. Empty never takes one.
+     * @return Id of the claim, never zero.
+     */
+    [[nodiscard]] uint32_t claim(
+        int priority,
+        std::function<std::optional<float>(double x, double y)> covers,
+        std::function<bool(IO::Keys)> wants = {});
+
+    /** @brief Withdraw a claim. A press it was keeping is let go. */
+    void unclaim(uint32_t id);
+
+    /**
+     * @brief Give a claim another priority and put it ahead of its equals, as
+     *        if it had just been registered.
+     */
+    void set_claim_priority(uint32_t id, int priority);
+
+    /** @brief Whether the pointer event being delivered, or the last one, belongs to a claim. */
+    [[nodiscard]] bool owns_pointer(uint32_t id) const { return id != 0 && id == m_pointer_owner; }
+
+    /**
+     * @brief Whether the pointer event being delivered, or the last one, belongs
+     *        to a claim of at least @p priority. A listener that claims nothing
+     *        asks this to stand aside. 0 asks about Forma, which stands above
+     *        viewport presets.
+     */
+    [[nodiscard]] bool pointer_claimed(int priority = std::numeric_limits<int>::min()) const
+    {
+        const auto owner = std::ranges::find(m_claims, m_pointer_owner, &Claim::id);
+        return owner != m_claims.end() && owner->priority >= priority;
+    }
+
+    /** @brief Whether the key event being delivered, or the last one, belongs to a claim. */
+    [[nodiscard]] bool owns_key(uint32_t id) const { return id != 0 && id == m_key_owner; }
+
 private:
+    struct Claim {
+        uint32_t id;
+        int priority;
+        std::function<std::optional<float>(double, double)> covers;
+        std::function<bool(IO::Keys)> wants;
+    };
+
+    std::vector<Claim> m_claims;
+    uint32_t m_last_claim {};
+    uint32_t m_pointer_owner {};
+    uint32_t m_pointer_captor {};
+    uint32_t m_key_owner {};
+
+    void settle_ownership(const Core::WindowEvent& event);
+
+    template <typename Measure>
+    [[nodiscard]] uint32_t first_claim(const Measure& measure) const;
+
     std::deque<Core::WindowEvent> m_pending_events;
     std::array<size_t, 256> m_pending_counts {};
     std::unordered_map<int16_t, bool> m_key_states;

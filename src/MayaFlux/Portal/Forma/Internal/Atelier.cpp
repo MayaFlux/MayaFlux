@@ -1,4 +1,5 @@
 #include "Atelier.hpp"
+#include "TextSlice.hpp"
 
 #include "MayaFlux/Portal/Forma/Inspect/Inspector.hpp"
 
@@ -68,6 +69,7 @@ void Atelier::shutdown()
     m_bridge.reset();
     m_inspect.reset();
     m_atlas_images.clear();
+    m_atlas_slots.clear();
     Graphics::get_texture_manager().release_image(m_text_fallback);
     m_text_fallback.reset();
 
@@ -155,6 +157,33 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_buffer(Graphics::RenderCon
     return buf;
 }
 
+uint32_t Atelier::atlas_slot(const Text::GlyphAtlas& atlas)
+{
+    if (&atlas == Text::TypeFaceFoundry::instance().get_default_glyph_atlas()) {
+        return 0;
+    }
+
+    const auto found = std::ranges::find(m_atlas_slots, &atlas);
+    if (found != m_atlas_slots.end()) {
+        return static_cast<uint32_t>(std::distance(m_atlas_slots.begin(), found)) + 1;
+    }
+
+    if (m_atlas_slots.size() + 1 >= k_text_slots) {
+        for (size_t i = 0; i < m_atlas_slots.size(); ++i) {
+            if (!TextSlice::drawn_from(m_atlas_slots[i])) {
+                m_atlas_slots[i] = &atlas;
+                return static_cast<uint32_t>(i) + 1;
+            }
+        }
+        MF_WARN(Journal::Component::Portal, Journal::Context::API,
+            "Portal::Forma: every text slot is in use, this atlas shares slot 0");
+        return 0;
+    }
+
+    m_atlas_slots.push_back(&atlas);
+    return static_cast<uint32_t>(m_atlas_slots.size());
+}
+
 std::shared_ptr<Core::VKImage> Atelier::text_image()
 {
     if (auto* atlas = Text::TypeFaceFoundry::instance().get_default_glyph_atlas()) {
@@ -189,7 +218,7 @@ namespace {
         processor->set_view_transform_source(
             [layer = std::weak_ptr<Layer>(surface.layer_ptr())]() {
                 const auto held = layer.lock();
-                return held && held->view() ? *held->view() : Kinesis::ViewTransform {};
+                return held ? held->drawn_view() : Kinesis::ViewTransform {};
             },
             false, Graphics::CullMode::NONE);
 
@@ -208,13 +237,18 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surfa
 {
     auto batch = create_batch(surface.render_config(), priority);
     follow_surface(batch, surface);
+    surface.layer_ptr()->follow(batch);
     return batch;
 }
 
 std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(Graphics::RenderConfig render, int64_t priority)
 {
     render.fragment_shader = "forma_plot.frag.spv";
-    render.additional_textures.push_back({ .name = "text", .image = text_image() });
+    const auto image = text_image();
+    for (uint32_t slot = 0; slot < k_text_slots; ++slot) {
+        render.additional_textures.push_back(
+            { .name = slot == 0 ? std::string("text") : "text_" + std::to_string(slot), .image = image });
+    }
     render.draw_priority = priority;
     return create_buffer(std::move(render));
 }
@@ -249,12 +283,14 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(
         if (!buffer || buffer->needs_removal()) {
             buffer = create_batch(surface.image_config(target));
             follow_surface(buffer, surface);
+            surface.layer_ptr()->follow(buffer);
         }
         return buffer;
     }
 
     auto buffer = create_batch(surface.image_config(target));
     follow_surface(buffer, surface);
+    surface.layer_ptr()->follow(buffer);
     layer.m_image_batches.emplace_back(target, buffer);
     return buffer;
 }

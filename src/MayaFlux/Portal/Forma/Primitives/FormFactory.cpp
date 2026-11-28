@@ -94,12 +94,13 @@ Form<float> radial(
     float angle_start,
     float angle_end,
     glm::vec3 color,
-    const std::function<glm::vec2()>& live_offset)
+    const std::function<glm::vec2()>& live_offset,
+    float line_width)
 {
     const glm::vec2 center = region.center();
     const float radius = std::min(region.width(), region.height()) * 0.5F;
 
-    GeometryFn<float> fn = [center, radius, angle_start, angle_end, color, live_offset](
+    GeometryFn<float> fn = [center, radius, angle_start, angle_end, color, live_offset, line_width](
                                float v, std::vector<uint8_t>& out, Element& el) {
         const glm::vec2 shift = live_offset ? live_offset() : glm::vec2(0.F);
         const glm::vec2 live_center = center + shift;
@@ -109,8 +110,8 @@ Form<float> radial(
 
         using V = Kakshya::LineVertex;
         const std::vector<V> verts = {
-            { .position = { live_center.x, live_center.y, 0 }, .color = glm::vec4(color, 1.F) },
-            { .position = { tip.x, tip.y, 0 }, .color = glm::vec4(color, 1.F) },
+            { .position = { live_center.x, live_center.y, 0 }, .color = glm::vec4(color, 1.F), .thickness = line_width },
+            { .position = { tip.x, tip.y, 0 }, .color = glm::vec4(color, 1.F), .thickness = line_width },
         };
 
         write_verts(out, verts);
@@ -190,7 +191,8 @@ Form<float> stroke_slider(
     glm::vec3 fill_color,
     glm::vec3 handle_color,
     float handle_size,
-    const std::function<glm::vec2()>& live_offset)
+    const std::function<glm::vec2()>& live_offset,
+    float line_width)
 {
     std::vector<glm::vec2> pts(path.begin(), path.end());
 
@@ -224,7 +226,8 @@ Form<float> stroke_slider(
                                fill_color,
                                handle_color,
                                handle_size,
-                               live_offset](float v, std::vector<uint8_t>& out, Element& el) {
+                               live_offset,
+                               line_width](float v, std::vector<uint8_t>& out, Element& el) {
         if (pts.size() < 2) {
             out.clear();
             return;
@@ -260,16 +263,16 @@ Form<float> stroke_slider(
         for (const auto& p : pts)
             live_pts.push_back(p + shift);
 
-        auto verts = Kinesis::polyline(live_pts, glm::vec4(track_color, 1.F));
+        auto verts = Kinesis::polyline(live_pts, glm::vec4(track_color, 1.F), line_width);
 
         auto fill = Kinesis::polyline(
             std::span<const glm::vec2>(live_pts).subspan(0, split_seg + 1),
-            glm::vec4(fill_color, 1.F));
+            glm::vec4(fill_color, 1.F), line_width);
         verts.insert(verts.end(), fill.begin(), fill.end());
 
         if (split_t > 0.0F) {
-            verts.push_back({ .position = { live_pts[split_seg].x, live_pts[split_seg].y, 0.0F }, .color = glm::vec4(fill_color, 1.F) });
-            verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = glm::vec4(fill_color, 1.F) });
+            verts.push_back({ .position = { live_pts[split_seg].x, live_pts[split_seg].y, 0.0F }, .color = glm::vec4(fill_color, 1.F), .thickness = line_width });
+            verts.push_back({ .position = { handle_pos.x, handle_pos.y, 0.0F }, .color = glm::vec4(fill_color, 1.F), .thickness = line_width });
         }
 
         write_verts(out, verts);
@@ -293,6 +296,98 @@ Form<float> stroke_slider(
         Graphics::PrimitiveTopology::LINE_LIST,
         cap,
         drag_with<float>(std::move(project)) };
+}
+
+Form<bool> momentary(
+    Kinesis::AABB2D region,
+    glm::vec3 color_off,
+    glm::vec3 color_on,
+    const std::function<glm::vec2()>& live_offset)
+{
+    Form<bool> form = toggle(region, color_off, color_on, live_offset);
+    form.wire = [](Context& ctx, uint32_t id, std::shared_ptr<MappedState<bool>> state) {
+        const auto write = [state](bool held) {
+            if (state->value != held)
+                state->write(held);
+        };
+        ctx.on_press(id, IO::MouseButtons::Left, [write](uint32_t, glm::vec2) { write(true); });
+        ctx.on_release(id, IO::MouseButtons::Left, [write](uint32_t, glm::vec2) { write(false); });
+        ctx.on_leave(id, [write](uint32_t) { write(false); });
+    };
+    return form;
+}
+
+Form<glm::vec2> range_fader(
+    Kinesis::AABB2D region,
+    float handle_width,
+    glm::vec3 track_color,
+    glm::vec3 fill_color,
+    glm::vec3 handle_color,
+    const std::function<glm::vec2()>& live_offset)
+{
+    GeometryFn<glm::vec2> fn = [region, handle_width, track_color, fill_color, handle_color, live_offset](
+                                   glm::vec2 value, std::vector<uint8_t>& out, Element& el) {
+        const glm::vec2 shift = live_offset ? live_offset() : glm::vec2(0.F);
+        const Kinesis::AABB2D live = region.translated(shift);
+        const auto at = [&live](float unit) {
+            return live.min.x + std::clamp(unit, 0.F, 1.F) * live.width();
+        };
+
+        std::vector<Kakshya::MeshVertex> vertices;
+        const auto quad = [&vertices](float left, float right, float bottom, float top, glm::vec3 color) {
+            const auto corner = [color](float x, float y) {
+                return Kakshya::MeshVertex { .position = { x, y, 0.F }, .color = glm::vec4(color, 1.F) };
+            };
+            vertices.insert(vertices.end(),
+                { corner(left, bottom), corner(right, bottom), corner(right, top),
+                    corner(left, bottom), corner(right, top), corner(left, top) });
+        };
+
+        const float low = at(value.x);
+        const float high = at(value.y);
+        quad(live.min.x, live.max.x, live.min.y, live.max.y, track_color);
+        quad(low, high, live.min.y, live.max.y, fill_color);
+        for (const float handle : { low, high })
+            quad(handle - handle_width * 0.5F, handle + handle_width * 0.5F, live.min.y, live.max.y, handle_color);
+
+        write_verts(out, vertices);
+        el.bounds_hint = live.expanded(handle_width * 0.5F);
+        el.contains = {};
+    };
+
+    Form<glm::vec2>::Wire wire = [region, live_offset](
+                                     Context& ctx, uint32_t id, std::shared_ptr<MappedState<glm::vec2>> state) {
+        const auto unit_of = [region, live_offset](glm::vec2 ndc) {
+            const float shift = live_offset ? live_offset().x : 0.F;
+            return region.width() > 0.F
+                ? std::clamp((ndc.x - region.min.x - shift) / region.width(), 0.F, 1.F)
+                : 0.F;
+        };
+        const auto upper = std::make_shared<bool>(false);
+        const auto move = [state, upper, unit_of](glm::vec2 ndc) {
+            glm::vec2 value = state->value;
+            const float unit = unit_of(ndc);
+            if (*upper)
+                value.y = std::max(unit, value.x);
+            else
+                value.x = std::min(unit, value.y);
+            state->write(value);
+        };
+
+        ctx.on_press(id, IO::MouseButtons::Left, [state, upper, unit_of, move](uint32_t, glm::vec2 ndc) {
+            const float unit = unit_of(ndc);
+            const float to_low = std::abs(unit - state->value.x);
+            const float to_high = std::abs(unit - state->value.y);
+            *upper = to_high < to_low || (to_high == to_low && unit > state->value.y);
+            move(ndc);
+        });
+        ctx.on_drag(id, IO::MouseButtons::Left, [move](uint32_t, glm::vec2 ndc) { move(ndc); });
+    };
+
+    return { std::move(fn),
+        Graphics::PrimitiveTopology::TRIANGLE_LIST,
+        static_cast<size_t>(24) * sizeof(Kakshya::MeshVertex),
+        std::move(wire) };
 }
 
 Form<bool> toggle(

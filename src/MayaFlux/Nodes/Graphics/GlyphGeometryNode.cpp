@@ -91,8 +91,12 @@ void GlyphGeometryNode::rebuild_outlines()
         return;
     }
 
+    const auto* atlas = Portal::Text::TypeFaceFoundry::instance().get_default_glyph_atlas();
+    const uint32_t line_height = m_face ? m_pixel_size : (atlas ? atlas->pixel_size() : 0);
+
     float cursor_x = m_pen_x;
     float cursor_y = m_pen_y;
+    float widest = 0.0F;
 
     const auto* bytes = reinterpret_cast<const utf8proc_uint8_t*>(m_text.data());
     auto remaining = static_cast<utf8proc_ssize_t>(m_text.size());
@@ -112,13 +116,8 @@ void GlyphGeometryNode::rebuild_outlines()
             continue;
 
         if (cp == '\n') {
-            const uint32_t px = m_face
-                ? m_pixel_size
-                : (Portal::Text::TypeFaceFoundry::instance().get_default_glyph_atlas()
-                          ? Portal::Text::TypeFaceFoundry::instance().get_default_glyph_atlas()->pixel_size()
-                          : 0);
             cursor_x = m_pen_x;
-            cursor_y += static_cast<float>(px);
+            cursor_y += static_cast<float>(line_height);
             continue;
         }
 
@@ -133,6 +132,17 @@ void GlyphGeometryNode::rebuild_outlines()
         m_outlines.push_back(std::move(outline));
 
         cursor_x += static_cast<float>(m_outlines.back().advance_x);
+        widest = std::max(widest, cursor_x - m_pen_x);
+    }
+
+    if (m_center) {
+        const auto height = static_cast<float>(line_height);
+        const glm::vec2 block_min { m_pen_x, m_pen_y - height };
+        const glm::vec2 block_max { m_pen_x + widest, cursor_y };
+        const glm::vec2 shift = *m_center - (block_min + block_max) * 0.5F;
+        for (auto& offset : m_pen_offsets) {
+            offset += shift;
+        }
     }
 
     write_vertices();

@@ -203,7 +203,11 @@ struct RenderSinkRecord {
     Portal::Graphics::PrimitiveTopology topology { Portal::Graphics::PrimitiveTopology::POINT_LIST };
     Portal::Graphics::PolygonMode polygon_mode { Portal::Graphics::PolygonMode::FILL };
     Portal::Graphics::CullMode cull_mode { Portal::Graphics::CullMode::NONE };
+    std::optional<Portal::Graphics::CompareOp> depth_test;
+    bool depth_write { true };
+    bool view_pinned { false };
     bool triangulate { false };
+    std::optional<Portal::Graphics::DrawBand> draw_band;
     int64_t draw_priority {};
     std::unordered_map<std::string, std::string> extra_string_params;
     std::map<std::string, std::string> arguments;

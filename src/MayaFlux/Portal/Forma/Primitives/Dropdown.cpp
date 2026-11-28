@@ -94,6 +94,7 @@ Dropdown& Dropdown::place(
     }
 
     const auto rows = std::make_shared<std::vector<std::shared_ptr<Element>>>();
+    const auto row_ids = std::make_shared<std::vector<uint32_t>>();
 
     for (uint32_t i = 0; i < count; ++i) {
         const float top = list_top - row_h * static_cast<float>(i);
@@ -103,6 +104,7 @@ Dropdown& Dropdown::place(
         const uint32_t id = made.first;
         const auto& row = made.second;
         rows->push_back(row);
+        row_ids->push_back(id);
 
         internal::hover_text_row(surface, id, row, labels->at(i), dims);
         ctx.on_press(id, IO::MouseButtons::Left, [choose, i](uint32_t, glm::vec2) { choose(i); });
@@ -134,6 +136,42 @@ Dropdown& Dropdown::place(
 
     internal::atelier().bridge().register_element<size_t>(
         ElementRef { layer_ptr, hid }, selected_state, header_row->buffer.buffer());
+
+    internal::atelier().bridge().spawn_sync(surface.layer(), hid,
+        [selected_state, refresh_header, labels, seen = std::make_shared<size_t>(initial)] {
+            selected_state->value = std::min(selected_state->value, labels->size() - 1);
+            if (*seen == selected_state->value)
+                return;
+            *seen = selected_state->value;
+            refresh_header();
+        });
+
+    const bool scrolls = panel.has_value();
+    m_track = [surface, scrolls, hid, header_rect, header_row, rows, row_ids, list_top, row_h, x_min, x_max](Scrollable& outer, Layer& layer) mutable {
+        if (scrolls) {
+            MF_WARN(Journal::Component::Portal, Journal::Context::API,
+                "Dropdown::track: a list that scrolls on its own cannot be tracked");
+            return;
+        }
+
+        const auto wheel = outer.wheel_handler(surface);
+        surface.ctx().on_scroll(hid, wheel);
+
+        outer.track(
+            layer, hid, header_rect,
+            [header_row](Kinesis::AABB2D moved) { header_row->retarget(moved); },
+            header_row->buffer);
+
+        for (size_t i = 0; i < rows->size(); ++i) {
+            const float top = list_top - row_h * static_cast<float>(i);
+            const Kinesis::AABB2D row_rect { .min = { x_min, top - row_h }, .max = { x_max, top } };
+            surface.ctx().on_scroll(row_ids->at(i), wheel);
+            outer.track(
+                layer, row_ids->at(i), row_rect,
+                [row = rows->at(i)](Kinesis::AABB2D moved) { row->retarget(moved); },
+                rows->at(i)->buffer);
+        }
+    };
 
     header_id = hid;
     selected = std::move(selected_state);

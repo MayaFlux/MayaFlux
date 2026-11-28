@@ -69,6 +69,9 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 {
     RenderConfig resolved = config;
     resolved.topology = m_topology;
+    resolved.view_pinned = true;
+    if (!resolved.draw_band)
+        resolved.draw_band = Portal::Graphics::DrawBand::OVERLAY;
     resolved.triangulate |= Portal::Graphics::needs_triangulation(
         resolved.topology, resolved.polygon_mode);
 
