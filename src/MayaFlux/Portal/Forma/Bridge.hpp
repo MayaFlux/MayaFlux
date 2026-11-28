@@ -669,14 +669,15 @@ public:
     }
 
     /**
-     * @brief Spawn a presentation sync task scoped to a Layer.
+     * @brief Run @p sync_fn once per graphics frame for an element.
      *
-     * The task name is also stored in the outbound_tasks of the record for
-     * @p id, when one exists, so that unbind() cancels it. @p layer must be
+     * One task per Layer runs these in the order they were added, until
+     * unbind() of @p id or stop_sync() of the Layer. @p sync_fn may add,
+     * unbind or stop. What it adds runs from the next frame. @p layer must be
      * owned by a shared_ptr.
      *
-     * @param layer Layer that owns the task.
-     * @param id Element id used for task naming and diagnostics.
+     * @param layer Layer that owns the element.
+     * @param id Element the function belongs to.
      * @param sync_fn Function invoked once per graphics frame.
      */
     void spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn);
@@ -695,6 +696,17 @@ private:
         std::optional<Kakshya::GpuDataFormat> typed_format; ///< format of T when typed_reader is populated
     };
 
+    struct SyncEntry {
+        uint32_t id {};
+        std::function<void()> fn;
+        bool live { true };
+    };
+
+    struct LayerSync {
+        std::string task;
+        std::vector<std::shared_ptr<SyncEntry>> entries;
+    };
+
     std::shared_ptr<Vruta::TaskScheduler> m_scheduler;
     std::shared_ptr<Buffers::BufferManager> m_buffer_manager;
 
@@ -702,6 +714,7 @@ private:
 
     std::map<std::weak_ptr<Layer>, std::unordered_map<uint32_t, ElementRecord>, std::owner_less<>> m_records;
     std::map<std::weak_ptr<Layer>, std::vector<std::string>, std::owner_less<>> m_layer_tasks;
+    std::map<std::weak_ptr<Layer>, std::shared_ptr<LayerSync>, std::owner_less<>> m_syncs;
 
     template <typename T>
     [[nodiscard]] static ElementRef ref_of(const std::shared_ptr<MappedState<T>>& state)
@@ -713,6 +726,7 @@ private:
     std::string make_task_name(uint32_t id, const char* suffix) const;
     std::string make_layer_task_name(const char* suffix) const;
     void cancel_inbound(ElementRecord& rec);
+    void cancel_sync(LayerSync& sync);
     void cancel_outbound(ElementRecord& rec);
     void spawn_inbound(const ElementRef& ref, std::function<float()> source);
 

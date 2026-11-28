@@ -35,6 +35,10 @@ Bridge::~Bridge()
         }
     }
 
+    for (auto& [layer, sync] : m_syncs) {
+        cancel_sync(*sync);
+    }
+
     for (auto& [layer, tasks] : m_layer_tasks) {
         for (const auto& name : tasks)
             m_scheduler->cancel_task(name);
@@ -277,6 +281,15 @@ void Bridge::write(
 
 void Bridge::unbind(const ElementRef& ref)
 {
+    if (const auto it = m_syncs.find(ref.first); it != m_syncs.end()) {
+        std::erase_if(it->second->entries, [id = ref.second](const auto& entry) {
+            if (entry->id != id)
+                return false;
+            entry->live = false;
+            return true;
+        });
+    }
+
     auto* rec = find_record(ref);
     if (!rec)
         return;
@@ -287,6 +300,11 @@ void Bridge::unbind(const ElementRef& ref)
 
 void Bridge::stop_sync(Layer& layer)
 {
+    if (const auto found = m_syncs.find(layer.weak_from_this()); found != m_syncs.end()) {
+        cancel_sync(*found->second);
+        m_syncs.erase(found);
+    }
+
     auto it = m_layer_tasks.find(layer.weak_from_this());
     if (it == m_layer_tasks.end())
         return;
@@ -347,13 +365,30 @@ void Bridge::cancel_outbound(ElementRecord& rec)
 
 void Bridge::spawn_sync(Layer& layer, uint32_t id, std::function<void()> sync_fn)
 {
-    auto name = make_task_name(id, "sync");
-    const ElementRef ref { layer.weak_from_this(), id };
-    m_layer_tasks[ref.first].push_back(name);
-    if (auto* rec = find_record(ref))
-        rec->outbound_tasks.push_back(name);
+    auto& sync = m_syncs[layer.weak_from_this()];
+    if (!sync) {
+        sync = std::make_shared<LayerSync>();
+        sync->task = make_layer_task_name("sync");
+        spawn_each(sync->task, [held = sync, running = std::vector<std::shared_ptr<SyncEntry>> {}]() mutable {
+            running = held->entries;
+            for (const auto& entry : running) {
+                if (entry->live)
+                    entry->fn();
+            }
+            running.clear();
+        });
+    }
 
-    spawn_each(name, std::move(sync_fn));
+    sync->entries.push_back(std::make_shared<SyncEntry>(SyncEntry { .id = id, .fn = std::move(sync_fn) }));
+}
+
+void Bridge::cancel_sync(LayerSync& sync)
+{
+    for (const auto& entry : sync.entries) {
+        entry->live = false;
+    }
+    sync.entries.clear();
+    m_scheduler->cancel_task(sync.task);
 }
 
 void Bridge::spawn_each(const std::string& name, std::function<void()> cycle)
