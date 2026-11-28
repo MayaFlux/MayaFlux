@@ -60,4 +60,40 @@ namespace MayaFlux::Kinesis {
 [[nodiscard]] MAYAFLUX_API Viewpoint scale_viewpoint_window(
     const Viewpoint& view, float factor, glm::vec2 ndc, float aspect);
 
+/**
+ * @brief Translate by a displacement in the viewpoint's own frame.
+ * @param view         Viewpoint to start from.
+ * @param displacement World units along right, up and backward.
+ */
+[[nodiscard]] MAYAFLUX_API Viewpoint translate_viewpoint(
+    const Viewpoint& view, const glm::vec3& displacement);
+
+/**
+ * @brief Look along a direction at a point, keeping its distance.
+ *
+ * The result is level with respect to @p axis. Along the axis itself the
+ * present right direction is kept.
+ *
+ * @param view      Viewpoint to start from.
+ * @param centre    World point to put straight ahead.
+ * @param direction View direction wanted. Zero returns the viewpoint unchanged.
+ * @param axis      Reference direction, any nonzero length.
+ */
+[[nodiscard]] MAYAFLUX_API Viewpoint align_viewpoint(
+    const Viewpoint& view, const glm::vec3& centre, const glm::vec3& direction,
+    const glm::vec3& axis = { 0.0F, 1.0F, 0.0F });
+
+/**
+ * @brief The viewpoint a fraction of the way from one to another.
+ *
+ * The position moves in a straight line and the orientation turns the short way
+ * round at a constant rate. The window, near and far of the frustum are mixed;
+ * its fit and whether it is orthographic change at the halfway point.
+ *
+ * @param from Viewpoint at 0.
+ * @param to   Viewpoint at 1.
+ * @param t    Fraction, clamped to [0, 1].
+ */
+[[nodiscard]] MAYAFLUX_API Viewpoint mix_viewpoints(const Viewpoint& from, const Viewpoint& to, float t);
+
 } // namespace MayaFlux::Kinesis

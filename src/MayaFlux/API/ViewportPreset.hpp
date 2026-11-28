@@ -5,8 +5,6 @@
 
 #include "MayaFlux/Kinesis/Viewport/NavigationMappings.hpp"
 #include "MayaFlux/Kinesis/Viewport/NavigationState.hpp"
-#include "MayaFlux/Kinesis/Viewport/OrbitState.hpp"
-#include "MayaFlux/Kinesis/Viewport/PanZoom2DState.hpp"
 
 namespace MayaFlux::Buffers {
 class RenderProcessor;
@@ -37,13 +35,12 @@ using ViewportPresetConfig = Kinesis::NavigationConfig;
  * @brief Selects which navigation controller bind_viewport_preset installs.
  *
  * Each mode registers a distinct set of event handlers and may interpret
- * ViewportPresetConfig fields differently. Modes not yet implemented emit a
- * runtime error and return without binding.
+ * ViewportPresetConfig fields differently.
  */
 enum class ViewportPresetMode : uint8_t {
     Fly, ///< First-person fly: WASD/QE translate, RMB drag yaw/pitch, scroll dolly, KP ortho snaps
-    Orbit, ///< Tumble around a focal point (not yet implemented)
-    PanZoom2D, ///< Orthographic 2D pan and zoom (not yet implemented)
+    Orbit, ///< Rotation about a pivot, pan and distance
+    PanZoom2D, ///< Orthographic 2D pan, and zoom about the cursor
     Screenspace, ///< Perspective pan in camera's local right/up plane, scroll dolly, no rotation
     // Trackball, ///< Virtual trackball (not yet implemented)
 };
@@ -241,8 +238,30 @@ MAYAFLUX_API ViewportBinding bind_screenspace_preset(
     const std::string& name = "default");
 
 /**
- * @brief Cancel all event handlers registered by bind_viewport_preset() and
- *        restore the window input config to its state before bind was called.
+ * @brief Drive a viewpoint that already exists, such as a Locus camera or
+ *        another preset's.
+ *
+ * The controller takes over from where the viewpoint stands, with the mode's
+ * default settings. No processor is changed; whatever draws from the
+ * viewpoint follows. PanZoom2D keeps its own lens when the viewpoint has a
+ * perspective one.
+ *
+ * @param window  Window supplying input events
+ * @param view    Viewpoint to drive
+ * @param mode    Navigation controller to install
+ * @param name    Unique prefix for registered events; must be unique per window
+ */
+MAYAFLUX_API ViewportBinding join_viewport_preset(
+    const std::shared_ptr<Core::Window>& window,
+    const std::shared_ptr<Memory::OwnedCell<Kinesis::Viewpoint>>& view,
+    ViewportPresetMode mode = ViewportPresetMode::Fly,
+    const std::string& name = "default");
+
+/**
+ * @brief Cancel all event handlers registered under @p name, restore the
+ *        window input config and stop driving the viewpoint.
+ *
+ * What draws from the viewpoint keeps the view as it was left.
  *
  * @param window  Window passed to bind_viewport_preset()
  * @param name    Name passed to bind_viewport_preset()

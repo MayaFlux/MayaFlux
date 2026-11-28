@@ -1,5 +1,7 @@
 #include "ViewpointOperations.hpp"
 
+#include <glm/gtc/quaternion.hpp>
+
 namespace MayaFlux::Kinesis {
 
 namespace {
@@ -101,6 +103,67 @@ Viewpoint scale_viewpoint_window(
     scaled.second.window.min = fixed + (view.second.window.min - fixed) * factor;
     scaled.second.window.max = fixed + (view.second.window.max - fixed) * factor;
     return scaled;
+}
+
+Viewpoint translate_viewpoint(const Viewpoint& view, const glm::vec3& displacement)
+{
+    Viewpoint moved = view;
+    for (int column = 0; column < 3; ++column) {
+        moved.first[3] += glm::vec4(
+            glm::normalize(glm::vec3(view.first[column])) * displacement[column], 0.0F);
+    }
+    return moved;
+}
+
+Viewpoint align_viewpoint(
+    const Viewpoint& view, const glm::vec3& centre, const glm::vec3& direction,
+    const glm::vec3& axis)
+{
+    if (!(glm::length(direction) > 0.0F)) {
+        return view;
+    }
+
+    const glm::vec3 forward = glm::normalize(direction);
+    glm::vec3 right = glm::cross(forward, glm::normalize(axis));
+
+    if (glm::length(right) <= 1.0e-6F) {
+        const glm::vec3 present = glm::normalize(glm::vec3(view.first[0]));
+        right = present - forward * glm::dot(present, forward);
+        if (glm::length(right) <= 1.0e-6F) {
+            right = glm::cross(forward, glm::normalize(glm::vec3(view.first[1])));
+        }
+    }
+    right = glm::normalize(right);
+
+    const float distance = glm::distance(glm::vec3(view.first[3]), centre);
+    return {
+        glm::mat4(
+            glm::vec4(right, 0.0F),
+            glm::vec4(glm::cross(right, forward), 0.0F),
+            glm::vec4(-forward, 0.0F),
+            glm::vec4(centre - forward * distance, 1.0F)),
+        view.second
+    };
+}
+
+Viewpoint mix_viewpoints(const Viewpoint& from, const Viewpoint& to, float t)
+{
+    const float at = std::clamp(t, 0.0F, 1.0F);
+    const glm::quat turn = glm::slerp(
+        glm::normalize(glm::quat_cast(glm::mat3(from.first))),
+        glm::normalize(glm::quat_cast(glm::mat3(to.first))), at);
+
+    glm::mat4 placement = glm::mat4_cast(turn);
+    placement[3] = glm::vec4(glm::mix(glm::vec3(from.first[3]), glm::vec3(to.first[3]), at), 1.0F);
+
+    const Frustum& a = from.second;
+    const Frustum& b = to.second;
+    Frustum frustum = at < 0.5F ? a : b;
+    frustum.window.min = glm::mix(a.window.min, b.window.min, at);
+    frustum.window.max = glm::mix(a.window.max, b.window.max, at);
+    frustum.near = a.near + (b.near - a.near) * static_cast<double>(at);
+    frustum.far = a.far + (b.far - a.far) * static_cast<double>(at);
+    return { placement, frustum };
 }
 
 } // namespace MayaFlux::Kinesis

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Frustum.hpp"
+#include "ViewpointOperations.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -17,6 +17,39 @@ struct NavigationConfig {
     float move_speed { 3.0F }; ///< World units per second
     float mouse_sensitivity { 0.002F }; ///< Radians per pixel
     float scroll_speed { 0.5F }; ///< World units per scroll tick
+};
+
+/**
+ * @struct OrbitConfig
+ * @brief Construction parameters for an orbit navigation controller.
+ */
+struct OrbitConfig {
+    glm::vec3 focal_point { 0.0F, 0.0F, 0.0F }; ///< World-space point the camera orbits around
+    float initial_distance { 5.0F }; ///< Initial radius from focal point
+    float initial_azimuth { 0.0F }; ///< Initial horizontal angle in radians
+    float initial_elevation { glm::radians(20.0F) }; ///< Initial vertical angle in radians
+    float fov_radians { glm::radians(60.0F) };
+    float near_plane { 0.01F };
+    float far_plane { 1000.0F };
+    float rotate_sensitivity { 0.005F }; ///< Radians per pixel for MMB drag
+    float pan_sensitivity { 0.001F }; ///< World units per pixel, scaled by distance
+    float scroll_speed { 0.1F }; ///< Fractional distance change per scroll tick
+    float min_distance { 0.1F }; ///< Minimum dolly distance
+    float max_distance { 10000.0F }; ///< Maximum dolly distance
+};
+
+/**
+ * @struct PanZoom2DConfig
+ * @brief Construction parameters for a 2D pan/zoom orthographic controller.
+ */
+struct PanZoom2DConfig {
+    glm::vec2 initial_pan { 0.0F, 0.0F }; ///< Initial pan offset in world units
+    float initial_zoom { 1.0F }; ///< Initial half-height of the orthographic frustum
+    float scroll_speed { 0.1F }; ///< Fractional zoom change per scroll tick
+    float min_zoom { 0.001F }; ///< Minimum half-height (maximum zoom in)
+    float max_zoom { 10000.0F }; ///< Maximum half-height (maximum zoom out)
+    float near_plane { -1.0F };
+    float far_plane { 1.0F };
 };
 
 /**
@@ -172,15 +205,5 @@ MAYAFLUX_API void advance_navigation(NavigationState& state, float dt);
  * sets the fov and clip planes; any other is kept whole in NavigationState::frustum.
  */
 MAYAFLUX_API void set_viewpoint(NavigationState& state, const Viewpoint& view);
-
-/**
- * @brief The viewpoint part of the way from one to another.
- *
- * The position and the frustum's window and clip distances run linearly and the rotation
- * along the shortest arc. The projection kind is that of the nearer end.
- *
- * @param t Zero is @p from, one is @p to. Clamped.
- */
-[[nodiscard]] MAYAFLUX_API Viewpoint mix_viewpoints(const Viewpoint& from, const Viewpoint& to, float t);
 
 } // namespace MayaFlux::Kinesis
