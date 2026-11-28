@@ -146,7 +146,7 @@ ViewTransform build_view_transform(const NavigationState& st, float aspect)
         .view = glm::lookAt(st.eye, st.eye + forward_of(st), up_of(st)),
         .projection = st.frustum
             ? frustum_projection(*st.frustum, aspect)
-            : glm::perspective(st.fov_radians, aspect, st.near_plane, st.far_plane)
+            : glm::perspectiveRH_ZO(st.fov_radians, aspect, st.near_plane, st.far_plane)
     };
 }
 

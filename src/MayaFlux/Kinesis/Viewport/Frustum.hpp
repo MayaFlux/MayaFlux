@@ -122,13 +122,13 @@ using Viewpoint = std::pair<glm::mat4, Frustum>;
     }
 
     if (frustum.orthographic) {
-        return glm::ortho(
+        return glm::orthoRH_ZO(
             static_cast<float>(left), static_cast<float>(right),
             static_cast<float>(bottom), static_cast<float>(top),
             static_cast<float>(frustum.near), static_cast<float>(frustum.far));
     }
 
-    return glm::frustum(
+    return glm::frustumRH_ZO(
         static_cast<float>(left * frustum.near), static_cast<float>(right * frustum.near),
         static_cast<float>(bottom * frustum.near), static_cast<float>(top * frustum.near),
         static_cast<float>(frustum.near), static_cast<float>(frustum.far));
