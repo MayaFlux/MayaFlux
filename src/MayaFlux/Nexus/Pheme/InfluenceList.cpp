@@ -15,6 +15,10 @@ namespace {
 
     constexpr size_t k_header_bytes = 4 * sizeof(uint32_t);
 
+    /** Where the lit shaders' push block keeps the two addresses, after the InfluenceBlock. */
+    constexpr size_t k_list_address_offset = sizeof(InfluenceBlock);
+    constexpr size_t k_surround_address_offset = k_list_address_offset + sizeof(uint64_t);
+
     constexpr size_t surround_texel_count()
     {
         size_t texels = 0;
@@ -34,7 +38,7 @@ namespace {
     std::shared_ptr<Buffers::VKBuffer> zeroed_storage(size_t bytes)
     {
         auto buffer = std::make_shared<Buffers::VKBuffer>(
-            bytes, Buffers::VKBuffer::Usage::HOST_STORAGE, Kakshya::DataModality::UNKNOWN);
+            bytes, Buffers::VKBuffer::Usage::STORAGE_BDA, Kakshya::DataModality::UNKNOWN);
 
         const auto service = Registry::BackendRegistry::instance().get_service<Registry::Service::BufferService>();
         if (!service) {
@@ -83,8 +87,15 @@ InfluenceList::InfluenceList(uint32_t capacity)
 void InfluenceList::bind(const std::shared_ptr<Buffers::RenderProcessor>& renderer) const
 {
     if (renderer) {
-        renderer->bind_buffer("influences", m_places->buffer);
-        renderer->bind_buffer("surround", m_places->surround);
+        renderer->set_push_constant_address(k_list_address_offset, m_places->buffer);
+        renderer->set_push_constant_address(k_surround_address_offset, m_places->surround);
+    }
+}
+
+void InfluenceList::bind_surround(const std::shared_ptr<Buffers::RenderProcessor>& renderer) const
+{
+    if (renderer) {
+        renderer->set_push_constant_address(k_surround_address_offset, m_places->surround);
     }
 }
 

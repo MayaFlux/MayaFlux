@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/lighting_influence.glsl"
+
 #include "include/mill_shape.glsl"
 
 layout(location = 0) in vec3 in_color;
@@ -10,8 +12,6 @@ layout(set = 0, binding = 1) uniform sampler2D diffuseTex;
 
 layout(location = 7) in vec3 in_normal;
 layout(location = 8) flat in vec4 in_eye;
-
-#include "include/lighting_influence.glsl"
 
 layout(location = 0) out vec4 out_color;
 

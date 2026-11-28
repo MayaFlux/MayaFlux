@@ -187,14 +187,20 @@ public:
     [[nodiscard]] std::shared_ptr<Locus> locus_from(
         const std::shared_ptr<const Kakshya::MeshAssemblyContainer>& assembly, size_t row);
 
-    /** @brief An Emitter with the color of @p light, placed at @p placement. */
+    /**
+     * @brief An Emitter for @p light, placed at @p placement.
+     *
+     * It takes the color, cone and attenuation, and a radius reaching to where the
+     * intensity has faded. A directional light keeps its kind, and an area light
+     * with a size becomes a rectangle of that size under the placement's scale.
+     */
     [[nodiscard]] std::shared_ptr<Emitter> emitter_from(
         const Kakshya::MeshAssemblyLight& light, const glm::mat4& placement);
 
     /**
      * @brief An Emitter where a row rests, whatever the row shows.
      *
-     * It takes the color of a light row.
+     * A light row gives it what emitter_from() of a light takes.
      * @return nullptr for a null assembly or a row out of range.
      */
     [[nodiscard]] std::shared_ptr<Emitter> emitter_from(

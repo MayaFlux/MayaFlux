@@ -479,6 +479,23 @@ void ShaderProcessor::set_push_constant_size(size_t size)
     }
 }
 
+void ShaderProcessor::set_push_constant_address(size_t offset, const std::shared_ptr<VKBuffer>& buffer)
+{
+    uint64_t address = 0;
+    if (buffer) {
+        ensure_initialized(buffer);
+        address = buffer->get_device_address();
+        m_addressed_buffers[offset] = buffer;
+    } else {
+        m_addressed_buffers.erase(offset);
+    }
+
+    if (m_push_constant_data.size() < offset + sizeof(address)) {
+        set_push_constant_size(offset + sizeof(address));
+    }
+    std::memcpy(m_push_constant_data.data() + offset, &address, sizeof(address));
+}
+
 void ShaderProcessor::set_push_constant_data_raw(const void* data, size_t size)
 {
     if (size > m_config.push_constant_size) {
@@ -494,7 +511,7 @@ void ShaderProcessor::set_push_constant_data_raw(const void* data, size_t size)
 
 size_t ShaderProcessor::resolve_push_constant_size(const std::shared_ptr<VKBuffer>& buffer) const
 {
-    size_t size = std::max(m_config.push_constant_size, m_push_constant_data.size());
+    size_t size = std::max({ m_config.push_constant_size, m_push_constant_data.size(), m_declared_push_constant_size });
 
     for (const auto& entry : buffer->get_pipeline_context().push_constant_bindings) {
         size = std::max(size, static_cast<size_t>(entry.offset) + entry.data.size());
@@ -869,6 +886,7 @@ void ShaderProcessor::cleanup()
     m_descriptor_set_ids.clear();
     m_descriptors_ready = false;
     m_bound_buffers.clear();
+    m_addressed_buffers.clear();
     m_feeds.clear();
     m_created_layout.reset();
     m_initialized = false;

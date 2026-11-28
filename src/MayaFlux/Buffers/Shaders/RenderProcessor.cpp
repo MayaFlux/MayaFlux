@@ -956,6 +956,16 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
     pipeline_config.semantic_vertex_layout = state->semantic_layout;
     pipeline_config.use_vertex_shader_reflection = state->use_reflection;
 
+    m_declared_push_constant_size = 0;
+    for (const Portal::Graphics::ShaderID shader_id : { m_shader_id, m_fragment_shader_id, m_geometry_shader_id, m_tess_control_shader_id, m_tess_eval_shader_id, m_lane->fragment }) {
+        if (shader_id == Portal::Graphics::INVALID_SHADER) {
+            continue;
+        }
+        for (const auto& range : Portal::Graphics::get_shader_foundry().get_shader_reflection(shader_id).push_constant_ranges) {
+            m_declared_push_constant_size = std::max(
+                m_declared_push_constant_size, static_cast<size_t>(range.offset) + range.size);
+        }
+    }
     pipeline_config.push_constant_size = resolve_push_constant_size(buffer);
 
     auto& descriptor_bindings = buffer->get_pipeline_context().descriptor_buffer_bindings;
