@@ -11,6 +11,19 @@ struct WindowEvent;
 namespace MayaFlux::Nexus {
 
 /**
+ * @enum SourceShape
+ * @brief The shape an influence radiates from, which decides what its intensity measures.
+ */
+enum class SourceShape : uint8_t {
+    Point, ///< A position, narrowed by a cone when one is set. Intensity is radiant intensity.
+    Directional, ///< Arrives along forward from everywhere. Intensity is irradiance.
+    Sphere, ///< extent.x is the radius. Intensity is radiance, as for the shapes below.
+    Disk, ///< extent.x is the radius; shines along forward.
+    Rectangle, ///< extent is width along local +X and height; shines along forward.
+    Tube ///< extent.x is the radius and extent.y the length, along local +X.
+};
+
+/**
  * @struct InfluenceContext
  * @brief Data passed to an Emitter or Agent influence function on each commit.
  *
@@ -35,7 +48,11 @@ struct InfluenceContext {
 
     std::optional<glm::vec2> cone; ///< Optional inner and outer angles of a cone about forward, radians from the axis.
 
-    std::optional<glm::vec3> attenuation; ///< Optional constant, linear and quadratic terms dividing the fall with distance.
+    std::optional<glm::vec3> attenuation; ///< Optional constant, linear and quadratic terms dividing with distance, in place of the inverse square.
+
+    std::optional<SourceShape> shape; ///< Optional shape, a point where unset.
+
+    std::optional<glm::vec2> extent; ///< Optional measures of the shape, as SourceShape describes them.
 
     const Core::WindowEvent* input {}; ///< The window event that caused this firing, valid only during the call; null for firings a window event did not cause.
 
@@ -55,10 +72,13 @@ struct InfluenceContext {
  *     vec3  color;
  *     float radius;
  *     float size;
+ *     uint  shape;
+ *     vec2  extent;
  *     vec3  direction;
  *     float cone_inner;
  *     vec3  attenuation;
  *     float cone_outer;
+ *     vec3  right;
  * };
  * @endcode
  *
@@ -70,31 +90,38 @@ struct alignas(16) InfluenceBlock {
     glm::vec3 color { 1.0F, 1.0F, 1.0F };
     float radius { 1.0F };
     float size { 1.0F };
-    float _pad[3] {};
+    uint32_t shape { 0 }; ///< A SourceShape.
+    glm::vec2 extent { 1.0F };
     glm::vec3 direction { 0.0F, 0.0F, -1.0F };
     float cone_inner { 0.0F };
-    glm::vec3 attenuation { 1.0F, 0.0F, 0.0F };
+    glm::vec3 attenuation { 0.0F, 0.0F, 1.0F }; ///< (0, 0, 1) is the inverse square.
     float cone_outer { 0.0F }; ///< Zero or less is no cone.
+    glm::vec3 right { 1.0F, 0.0F, 0.0F }; ///< Local +X of the orientation.
+    float _pad {};
 
-    /** @brief The block for @p ctx, with white, size 1, no cone and no attenuation where it has none. */
+    /** @brief The block for @p ctx, with white, size 1, no cone and inverse square falloff where it has none. */
     [[nodiscard]] static InfluenceBlock from(const InfluenceContext& ctx)
     {
         const glm::vec2 cone = ctx.cone.value_or(glm::vec2(0.0F));
+        const glm::quat orientation = ctx.orientation.value_or(glm::quat(1.0F, 0.0F, 0.0F, 0.0F));
         return {
             .position = ctx.position,
             .intensity = ctx.intensity,
             .color = ctx.color.value_or(glm::vec3(1.0F)),
             .radius = ctx.radius,
             .size = ctx.size.value_or(1.0F),
-            .direction = ctx.orientation.value_or(glm::quat(1.0F, 0.0F, 0.0F, 0.0F)) * glm::vec3(0.0F, 0.0F, -1.0F),
+            .shape = static_cast<uint32_t>(ctx.shape.value_or(SourceShape::Point)),
+            .extent = ctx.extent.value_or(glm::vec2(1.0F)),
+            .direction = orientation * glm::vec3(0.0F, 0.0F, -1.0F),
             .cone_inner = cone.x,
-            .attenuation = ctx.attenuation.value_or(glm::vec3(1.0F, 0.0F, 0.0F)),
+            .attenuation = ctx.attenuation.value_or(glm::vec3(0.0F, 0.0F, 1.0F)),
             .cone_outer = cone.y,
+            .right = orientation * glm::vec3(1.0F, 0.0F, 0.0F),
         };
     }
 };
 
-static_assert(sizeof(InfluenceBlock) == 80);
+static_assert(sizeof(InfluenceBlock) == 96);
 
 /**
  * @class Influence

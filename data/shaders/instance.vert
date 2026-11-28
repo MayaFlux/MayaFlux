@@ -2,6 +2,8 @@
 
 #include "include/mill_billboard.glsl"
 
+#include "include/view_eye.glsl"
+
 layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
@@ -38,6 +40,7 @@ layout(location = 2) out vec3 out_normal;
 layout(location = 3) out vec3 out_world_pos;
 layout(location = 4) flat out uint out_texture;
 layout(location = 5) flat out float out_scalar;
+layout(location = 8) flat out vec4 out_eye;
 
 void main()
 {
@@ -57,4 +60,5 @@ void main()
     out_uv = in_uv;
     out_normal = normalize(normal_mat * in_normal);
     out_world_pos = world_pos.xyz;
+    out_eye = view_eye(vt.view, vt.projection);
 }

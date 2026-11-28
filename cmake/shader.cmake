@@ -190,25 +190,13 @@ if(SHADER_FILES)
         if(NOT OUTPUT_FILE IN_LIST SHADER_OUTPUTS)
             add_custom_command(
                 OUTPUT  ${OUTPUT_FILE}
-                COMMAND glslc --target-env=vulkan1.4 ${SHADER_FILE} -o ${OUTPUT_FILE}
+                COMMAND glslc --target-env=vulkan1.4 -MD -MF ${OUTPUT_FILE}.d ${SHADER_FILE} -o ${OUTPUT_FILE}
                 DEPENDS ${SHADER_FILE}
+                DEPFILE ${OUTPUT_FILE}.d
                 COMMENT "Compiling shader: ${SHADER_NAME}"
                 VERBATIM
             )
             list(APPEND SHADER_OUTPUTS ${OUTPUT_FILE})
-
-            if(SHADER_NAME MATCHES "_lit\\.frag$")
-                string(REPLACE "_lit.frag" "_lit_list.frag" LIST_NAME ${SHADER_NAME})
-                set(LIST_OUTPUT "${SHADER_OUTPUT_DIR}/${LIST_NAME}.spv")
-                add_custom_command(
-                    OUTPUT  ${LIST_OUTPUT}
-                    COMMAND glslc --target-env=vulkan1.4 -DMF_INFLUENCE_LIST ${SHADER_FILE} -o ${LIST_OUTPUT}
-                    DEPENDS ${SHADER_FILE}
-                    COMMENT "Compiling shader: ${LIST_NAME}"
-                    VERBATIM
-                )
-                list(APPEND SHADER_OUTPUTS ${LIST_OUTPUT})
-            endif()
         endif()
     endforeach()
 

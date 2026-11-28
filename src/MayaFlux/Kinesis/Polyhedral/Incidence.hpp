@@ -1,8 +1,7 @@
 #pragma once
 
 #include "MayaFlux/Kakshya/NDData/FaceList.hpp"
-
-#include <execution>
+#include "MayaFlux/Kinesis/ForEachIndexed.hpp"
 
 namespace MayaFlux::Kinesis {
 
@@ -16,32 +15,6 @@ enum class AttributeSupport : uint8_t {
     Vertex, ///< One value per vertex.
     Corner ///< One value per corner, the slot a face holds for one of its vertices.
 };
-
-namespace detail {
-
-    inline constexpr size_t k_parallel_threshold = 16384;
-
-    /**
-     * @brief Call @p fn(index, item) for every item, in parallel above a size threshold.
-     *
-     * The index is recovered from the item's address, so no index array is built.
-     * @p fn must be safe to run unsequenced when @p policy is par_unseq.
-     */
-    template <typename Policy, typename T, typename Fn>
-    void for_each_indexed(const Policy& policy, std::span<T> items, const Fn& fn)
-    {
-        if (items.size() < k_parallel_threshold) {
-            for (size_t i = 0; i < items.size(); ++i) {
-                fn(i, items[i]);
-            }
-            return;
-        }
-        T* const base = items.data();
-        std::for_each(policy, items.begin(), items.end(),
-            [&fn, base](T& item) { fn(static_cast<size_t>(&item - base), item); });
-    }
-
-} // namespace detail
 
 /**
  * @struct VertexCorners

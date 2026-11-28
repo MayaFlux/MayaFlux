@@ -59,4 +59,26 @@ namespace MayaFlux::Kinesis {
     return { hue, cmax > 0.F ? delta / cmax : 0.F, cmax };
 }
 
+/**
+ * @brief Decode sRGB encoded components to linear.
+ */
+[[nodiscard]] inline glm::vec3 srgb_to_linear(glm::vec3 encoded) noexcept
+{
+    const auto channel = [](float c) {
+        return c <= 0.04045F ? c / 12.92F : std::pow((c + 0.055F) / 1.055F, 2.4F);
+    };
+    return { channel(encoded.x), channel(encoded.y), channel(encoded.z) };
+}
+
+/**
+ * @brief Encode linear components as sRGB.
+ */
+[[nodiscard]] inline glm::vec3 linear_to_srgb(glm::vec3 linear) noexcept
+{
+    const auto channel = [](float c) {
+        return c <= 0.0031308F ? c * 12.92F : 1.055F * std::pow(c, 1.0F / 2.4F) - 0.055F;
+    };
+    return { channel(linear.x), channel(linear.y), channel(linear.z) };
+}
+
 } // namespace MayaFlux::Kinesis

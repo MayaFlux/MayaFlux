@@ -319,6 +319,13 @@ public:
     void set_push_constant_size(size_t size);
 
     /**
+     * @brief Write a buffer's device address into the push constants and keep the buffer alive.
+     * @param offset Byte offset of the eight byte address.
+     * @param buffer A UNIFORM_BDA or STORAGE_BDA buffer; null writes zero and releases the earlier one.
+     */
+    void set_push_constant_address(size_t offset, const std::shared_ptr<VKBuffer>& buffer);
+
+    /**
      * @brief Set push constant size from type
      * @tparam T Push constant struct type
      */
@@ -675,6 +682,9 @@ protected:
     std::shared_ptr<VKBuffer> m_pending_buffer; ///< Buffer retained for the outstanding submission.
 
     std::vector<uint8_t> m_push_constant_data;
+
+    size_t m_declared_push_constant_size {}; ///< What the shaders declare; unset bytes are zero.
+    std::unordered_map<size_t, std::shared_ptr<VKBuffer>> m_addressed_buffers;
 
     bool m_initialized {};
     bool m_needs_pipeline_rebuild = true;

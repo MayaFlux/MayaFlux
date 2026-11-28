@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/view_eye.glsl"
+
 layout(set = 0, binding = 0) uniform RenderTransformBlock {
     mat4 view;
     mat4 projection;
@@ -15,6 +17,7 @@ layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec3 out_position;
 layout(location = 2) out vec2 out_uv;
 layout(location = 3) out float out_weight;
+layout(location = 8) flat out vec4 out_eye;
 
 void main()
 {
@@ -25,4 +28,5 @@ void main()
     out_position = world_pos.xyz;
     out_uv = inUV;
     out_weight = inSize;
+    out_eye = view_eye(transform.view, transform.projection);
 }

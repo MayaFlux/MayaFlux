@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/view_eye.glsl"
+
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_color;
 layout(location = 2) in float in_weight;
@@ -17,6 +19,8 @@ layout(location = 0) out vec3 out_color;
 layout(location = 1) out vec2 out_uv;
 layout(location = 2) out vec3 out_world_pos;
 layout(location = 3) out float out_weight;
+layout(location = 7) out vec3 out_normal;
+layout(location = 8) flat out vec4 out_eye;
 
 void main()
 {
@@ -26,4 +30,6 @@ void main()
     out_uv = in_uv;
     out_world_pos = world_pos.xyz;
     out_weight = in_weight;
+    out_normal = transpose(inverse(mat3(pc.geometry))) * in_normal;
+    out_eye = view_eye(pc.view, pc.projection);
 }

@@ -1,5 +1,7 @@
 #version 460
 
+#include "include/lighting_influence.glsl"
+
 #include "include/mill_shape.glsl"
 
 layout(location = 0) in vec3 in_color;
@@ -8,7 +10,8 @@ layout(location = 2) in vec3 in_world_pos;
 
 layout(set = 0, binding = 1) uniform sampler2D diffuseTex;
 
-#include "include/influence_light.glsl"
+layout(location = 7) in vec3 in_normal;
+layout(location = 8) flat in vec4 in_eye;
 
 layout(location = 0) out vec4 out_color;
 
@@ -26,6 +29,7 @@ void main()
             sample_uv = mill_point_coord(in_uv);
         }
         tex = texture(diffuseTex, sample_uv);
+        tex.rgb = surface_texture_color(tex.rgb);
         if (MILL_ACTIVE) {
             tex.rgb *= in_color;
             if (!mill_is_point(in_uv)) {
@@ -36,6 +40,6 @@ void main()
         }
     }
 
-    vec3 lit = tex.rgb + influence_light(in_world_pos, vec3(0.0));
-    out_color = vec4(clamp(lit, 0.0, 1.0), tex.a);
+    vec3 normal = MILL_ACTIVE ? vec3(0.0) : in_normal;
+    out_color = vec4(influence_shade(tex.rgb, in_world_pos, normal, in_eye), tex.a);
 }
