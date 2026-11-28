@@ -9,29 +9,44 @@
 
 #include "radiometry_attenuation.glsl"
 #include "radiometry_reflectance.glsl"
+#include "radiometry_solid_angle.glsl"
 
 #define LIGHT_POINT 0u
 #define LIGHT_SPOT 1u
 #define LIGHT_DIRECTIONAL 2u
+#define LIGHT_SPHERE 3u
+#define LIGHT_DISK 4u
+#define LIGHT_RECTANGLE 5u
+#define LIGHT_TUBE 6u
 
 struct Light {
     vec3 position;
-    /** Radiant intensity for point and spot lights, irradiance for directional ones. */
+    /**
+     * Radiant intensity for point and spot lights, irradiance for directional
+     * ones, radiance for sphere, disk, rectangle and tube lights.
+     */
     float intensity;
     /** Linear colour. */
     vec3 color;
-    /** Distance at which point and spot lights reach zero. */
+    /** Distance at which placed lights reach zero. */
     float range;
     /**
      * Constant, linear and quadratic terms dividing point and spot lights with
      * distance. (0, 0, 1) is the inverse square; all zero is no division.
      */
     vec3 falloff;
-    /** Unit direction the light travels, for spot and directional lights. */
+    /**
+     * Unit direction the light travels, for spot and directional lights, and the
+     * side disk and rectangle lights shine from.
+     */
     vec3 direction;
     float cos_inner;
     float cos_outer;
     uint kind;
+    /** Unit width direction of a rectangle light, axis of a tube light. */
+    vec3 right;
+    /** Radius of a sphere or disk; width and height of a rectangle; radius and length of a tube. */
+    vec2 extent;
 };
 
 /**
@@ -66,12 +81,112 @@ vec3 light_arrival(Light light, vec3 at, out vec3 toward)
 }
 
 /**
+ * Radiance the surroundings add toward view, from the irradiance on the surface,
+ * the radiance blurred to its roughness about the mirror direction, and the
+ * specular albedo scale and bias. The normal is unit length.
+ */
+vec3 environment_contribution(
+    SurfaceResponse surface, vec3 normal, vec3 view, vec3 irradiance, vec3 reflected, vec2 albedo)
+{
+    float cos_view = max(dot(normal, view), 0.0);
+    vec3 entering = vec3(1.0) - schlick_fresnel(vec3(surface.dielectric_f0), cos_view);
+    vec3 diffuse = entering * surface.base_color * irradiance * ((1.0 - surface.metallic) / MF_PI);
+    vec3 f0 = surface_f0(surface);
+    vec3 specular = reflected * (f0 * albedo.x + albedo.y)
+        * multiple_scattering_compensation(f0, albedo.x + albedo.y);
+    return diffuse + specular;
+}
+
+/**
+ * Radiance an area light adds toward view. The diffuse part is exact; the
+ * specular part takes the nearest point of the light to the mirror direction,
+ * and is held to what a mirror would show.
+ */
+vec3 area_light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3 normal, vec3 view, float specular_albedo)
+{
+    vec3 center = light.position - at;
+    float dist = length(center);
+    if (!(dist > 1e-6)) {
+        return vec3(0.0);
+    }
+
+    bool planar = light.kind == LIGHT_DISK || light.kind == LIGHT_RECTANGLE;
+    if (planar && !(dot(center, light.direction) < 0.0)) {
+        return vec3(0.0);
+    }
+
+    vec3 radiance = light.color * (light.intensity * range_window(dist, light.range));
+    vec3 right = light.right;
+    vec3 up = planar ? cross(right, light.direction) : vec3(0.0);
+
+    float radius = light.extent.x;
+    float area = MF_PI * radius * radius;
+    if (light.kind == LIGHT_RECTANGLE) {
+        area = light.extent.x * light.extent.y;
+        radius = sqrt(area / MF_PI);
+    } else if (light.kind == LIGHT_TUBE) {
+        area = 2.0 * light.extent.x * light.extent.y;
+    }
+
+    float normal_sq = dot(normal, normal);
+    if (!(normal_sq > 1e-8)) {
+        float irradiance = min(area / (dist * dist), MF_PI);
+        return surface.base_color * radiance * (irradiance / MF_PI);
+    }
+    vec3 unit = normal * inversesqrt(normal_sq);
+    vec3 mirrored = reflect(-view, unit);
+    vec3 toward = center / dist;
+
+    float irradiance;
+    vec3 nearest;
+    if (light.kind == LIGHT_SPHERE) {
+        irradiance = sphere_irradiance(dot(unit, toward), radius * radius / (dist * dist));
+        nearest = sphere_toward(center, radius, mirrored);
+    } else if (light.kind == LIGHT_DISK) {
+        disk_corners(center, right, up, radius);
+        irradiance = polygon_irradiance(16, unit);
+        nearest = disk_toward(center, light.direction, radius, mirrored);
+    } else if (light.kind == LIGHT_RECTANGLE) {
+        rectangle_corners(center, right, up, light.extent);
+        irradiance = polygon_irradiance(4, unit);
+        nearest = rectangle_toward(center, right, up, light.extent, mirrored);
+    } else {
+        tube_corners(center, right, light.extent.x, light.extent.y);
+        irradiance = polygon_irradiance(4, unit);
+        vec3 along = right * (0.5 * light.extent.y);
+        nearest = sphere_toward(segment_toward(center - along, center + along, mirrored), radius, mirrored);
+    }
+    if (!(irradiance > 0.0)) {
+        return vec3(0.0);
+    }
+
+    float reach = length(nearest);
+    vec3 source = reach > 1e-6 ? nearest / reach : toward;
+    float alpha = roughness_to_alpha(surface.roughness);
+    float wide = widened_alpha(alpha, radius, dist);
+    float ratio = alpha / wide;
+    float energy = light.kind == LIGHT_TUBE ? ratio : ratio * ratio;
+
+    float least = 0.5 * min(radius / dist, 1.0);
+    vec3 seen = normalize(toward + unit * max(least - dot(unit, toward), 0.0));
+    vec3 diffuse = surface_diffuse(surface, unit, view, seen) * irradiance;
+    vec3 specular = surface_specular(surface, unit, view, source, alpha, specular_albedo) * (energy * irradiance);
+    vec3 mirror = schlick_fresnel(surface_f0(surface), max(dot(unit, view), 0.0));
+
+    return diffuse * radiance + min(specular, mirror) * radiance;
+}
+
+/**
  * Radiance one light adds toward view. A zero normal marks geometry without a
  * surface direction, such as points and lines: it receives from every side and
  * reflects diffusely.
  */
 vec3 light_contribution(Light light, SurfaceResponse surface, vec3 at, vec3 normal, vec3 view, float specular_albedo)
 {
+    if (light.kind >= LIGHT_SPHERE) {
+        return area_light_contribution(light, surface, at, normal, view, specular_albedo);
+    }
+
     vec3 toward;
     vec3 arriving = light_arrival(light, at, toward);
     if (dot(toward, toward) == 0.0) {

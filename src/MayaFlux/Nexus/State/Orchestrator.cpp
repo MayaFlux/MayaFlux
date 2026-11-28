@@ -124,6 +124,9 @@ namespace {
     EmitterControls controls_of(const Kakshya::MeshAssemblyLight& light)
     {
         EmitterControls controls { .color = light.color };
+        if (light.kind == Kakshya::MeshAssemblyLightKind::Directional) {
+            controls.shape = SourceShape::Directional;
+        }
         const bool spot = light.kind == Kakshya::MeshAssemblyLightKind::Spot;
         if (spot && light.outer_cone > 0.0F && light.outer_cone < glm::pi<float>()) {
             controls.cone = glm::vec2(light.inner_cone, light.outer_cone);

@@ -51,12 +51,31 @@ vec3 oren_nayar_energy_preserving(vec3 albedo, float roughness, vec3 normal, vec
     return single_lobe + multiple_lobe;
 }
 
-/**
- * Reflectance for one pair of unit directions, without the cosine of the source.
- * specular_albedo is the specular lobe's directional albedo at unit Fresnel; one
- * applies no multiple scattering compensation.
- */
-vec3 surface_reflectance(SurfaceResponse surface, vec3 normal, vec3 view, vec3 source, float specular_albedo)
+/** Reflectance at normal incidence of both parts of the surface together. */
+vec3 surface_f0(SurfaceResponse surface)
+{
+    return mix(vec3(surface.dielectric_f0), surface.base_color, surface.metallic);
+}
+
+/** The diffuse lobe of surface_reflectance(). */
+vec3 surface_diffuse(SurfaceResponse surface, vec3 normal, vec3 view, vec3 source)
+{
+    float cos_view = dot(normal, view);
+    float cos_source = dot(normal, source);
+    if (!(cos_view > 0.0) || !(cos_source > 0.0)) {
+        return vec3(0.0);
+    }
+
+    vec3 boundary = vec3(surface.dielectric_f0);
+    vec3 entering = (vec3(1.0) - schlick_fresnel(boundary, cos_view))
+        * (vec3(1.0) - schlick_fresnel(boundary, cos_source))
+        / (vec3(1.0) - schlick_average(boundary));
+    return entering * (1.0 - surface.metallic)
+        * oren_nayar_energy_preserving(surface.base_color, surface.diffuse_roughness, normal, view, source);
+}
+
+/** The specular lobe of surface_reflectance() at a GGX width. */
+vec3 surface_specular(SurfaceResponse surface, vec3 normal, vec3 view, vec3 source, float alpha, float specular_albedo)
 {
     float cos_view = dot(normal, view);
     float cos_source = dot(normal, source);
@@ -65,22 +84,21 @@ vec3 surface_reflectance(SurfaceResponse surface, vec3 normal, vec3 view, vec3 s
     }
 
     vec3 halfway = normalize(view + source);
-    float cos_difference = max(dot(view, halfway), 0.0);
-    float alpha = roughness_to_alpha(surface.roughness);
-
-    vec3 f0 = mix(vec3(surface.dielectric_f0), surface.base_color, surface.metallic);
-    vec3 specular = schlick_fresnel(f0, cos_difference)
+    vec3 f0 = surface_f0(surface);
+    return schlick_fresnel(f0, max(dot(view, halfway), 0.0))
         * (ggx_density(dot(normal, halfway), alpha) * ggx_visibility(cos_view, cos_source, alpha))
         * multiple_scattering_compensation(f0, specular_albedo);
+}
 
-    vec3 boundary = vec3(surface.dielectric_f0);
-    vec3 entering = (vec3(1.0) - schlick_fresnel(boundary, cos_view))
-        * (vec3(1.0) - schlick_fresnel(boundary, cos_source))
-        / (vec3(1.0) - schlick_average(boundary));
-    vec3 diffuse = entering * (1.0 - surface.metallic)
-        * oren_nayar_energy_preserving(surface.base_color, surface.diffuse_roughness, normal, view, source);
-
-    return diffuse + specular;
+/**
+ * Reflectance for one pair of unit directions, without the cosine of the source.
+ * specular_albedo is the specular lobe's directional albedo at unit Fresnel; one
+ * applies no multiple scattering compensation.
+ */
+vec3 surface_reflectance(SurfaceResponse surface, vec3 normal, vec3 view, vec3 source, float specular_albedo)
+{
+    return surface_diffuse(surface, normal, view, source)
+        + surface_specular(surface, normal, view, source, roughness_to_alpha(surface.roughness), specular_albedo);
 }
 
 #endif

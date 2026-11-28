@@ -365,6 +365,18 @@ public:
         return quantity_value<glm::vec3>(m_controls.attenuation);
     }
 
+    /** @brief The shape, if set. Unset is a point. */
+    [[nodiscard]] std::optional<SourceShape> shape() const
+    {
+        return quantity_value<SourceShape>(m_controls.shape);
+    }
+
+    /** @brief The measures of the shape, if set. */
+    [[nodiscard]] std::optional<glm::vec2> extent() const
+    {
+        return quantity_value<glm::vec2>(m_controls.extent);
+    }
+
     /**
      * @brief Make an existing, already rendered buffer the look of this object.
      *

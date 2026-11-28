@@ -7,6 +7,10 @@ class VKBuffer;
 class RenderProcessor;
 }
 
+namespace MayaFlux::Kinesis {
+struct SurroundRadiance;
+}
+
 namespace MayaFlux::Nexus {
 
 /**
@@ -16,7 +20,8 @@ namespace MayaFlux::Nexus {
  * One storage buffer of InfluenceBlocks. Each target() takes a place of its own, which
  * is emptied and freed when the last copy of the target goes, such as when its Emitter
  * is destroyed. Renderers drawn with a lit_list fragment shader, mesh_lit_list and the
- * rest, add up every place. Any number of renderers can read one list.
+ * rest, add up every place. Any number of renderers can read one list. The list
+ * also carries the surroundings, none until set_surround().
  *
  * A target may be called from any thread. A draw already running can read a block
  * half written, for that frame only.
@@ -46,6 +51,21 @@ public:
 
     /** @brief A target writing the next free place, or one that does nothing when the list is full. */
     [[nodiscard]] Influence<InfluenceBlock>::Target target() const;
+
+    /**
+     * @brief Light every surface from all around, as prefilter_surround() prepared it.
+     * @param surround Ignored with a warning if a level or the table has the wrong size.
+     * @param scale    Multiplies its radiance.
+     *
+     * @code
+     * const auto sky = Kinesis::prefilter_surround({ pixels, width, height, channels });
+     * lamps->set_surround(sky);
+     * @endcode
+     */
+    void set_surround(const Kinesis::SurroundRadiance& surround, float scale = 1.0F) const;
+
+    /** @brief Take the surroundings away. */
+    void clear_surround() const;
 
     [[nodiscard]] uint32_t capacity() const noexcept;
 
