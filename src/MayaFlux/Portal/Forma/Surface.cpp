@@ -96,6 +96,16 @@ void Surface::set_view(const std::optional<Kinesis::ViewTransform>& view)
     }
 }
 
+void Surface::set_placement(
+    std::function<Kinesis::ViewTransform()> view,
+    std::function<glm::mat4()> placement)
+{
+    m_layer->set_placement(std::move(view), std::move(placement));
+    if (m_image) {
+        m_image->request_redraw();
+    }
+}
+
 Surface::Surface(SurfaceConfig config)
     : m_window_ownership(std::make_shared<WindowOwnership>(std::move(config.window)))
     , m_image(std::move(config.image))

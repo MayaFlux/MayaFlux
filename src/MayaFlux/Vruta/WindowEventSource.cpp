@@ -66,13 +66,23 @@ void WindowEventSource::signal(Core::WindowEvent event)
         action();
 }
 
-template <typename Holds>
-uint32_t WindowEventSource::first_claim(const Holds& holds) const
+template <typename Measure>
+uint32_t WindowEventSource::first_claim(const Measure& measure) const
 {
     const Claim* best = nullptr;
+    float best_distance {};
     for (const auto& candidate : m_claims) {
-        if ((!best || candidate.priority >= best->priority) && holds(candidate))
+        if (best && candidate.priority < best->priority)
+            continue;
+
+        const std::optional<float> distance = measure(candidate);
+        if (!distance)
+            continue;
+
+        if (!best || candidate.priority > best->priority || *distance <= best_distance) {
             best = &candidate;
+            best_distance = *distance;
+        }
     }
     return best ? best->id : 0U;
 }
@@ -88,8 +98,8 @@ void WindowEventSource::settle_ownership(const Core::WindowEvent& event)
     case Type::MOUSE_SCROLLED:
         m_pointer_owner = m_pointer_captor != 0
             ? m_pointer_captor
-            : first_claim([this](const Claim& candidate) {
-                  return candidate.covers && candidate.covers(m_mouse_x, m_mouse_y);
+            : first_claim([this](const Claim& candidate) -> std::optional<float> {
+                  return candidate.covers ? candidate.covers(m_mouse_x, m_mouse_y) : std::nullopt;
               });
         if (m_pointer_captor == 0
             && (event.type == Type::MOUSE_BUTTON_PRESSED
@@ -104,8 +114,10 @@ void WindowEventSource::settle_ownership(const Core::WindowEvent& event)
     case Type::KEY_REPEAT:
         if (const auto* data = std::get_if<Core::WindowEvent::KeyData>(&event.data)) {
             const auto key = static_cast<IO::Keys>(data->key);
-            m_key_owner = first_claim([key](const Claim& candidate) {
-                return candidate.wants && candidate.wants(key);
+            m_key_owner = first_claim([key](const Claim& candidate) -> std::optional<float> {
+                if (candidate.wants && candidate.wants(key))
+                    return 0.0F;
+                return std::nullopt;
             });
         }
         break;
@@ -117,7 +129,7 @@ void WindowEventSource::settle_ownership(const Core::WindowEvent& event)
 
 uint32_t WindowEventSource::claim(
     int priority,
-    std::function<bool(double, double)> covers,
+    std::function<std::optional<float>(double, double)> covers,
     std::function<bool(IO::Keys)> wants)
 {
     m_claims.push_back({ .id = ++m_last_claim,

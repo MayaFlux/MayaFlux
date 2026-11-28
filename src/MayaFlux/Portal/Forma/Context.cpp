@@ -629,7 +629,7 @@ void Context::register_handlers()
     if (m_window) {
         m_claim = m_window->get_event_source().claim(
             m_input_priority,
-            [this](double px, double py) { return m_layer->hit_test(to_screen(px, py)).has_value(); },
+            [this](double px, double py) { return m_layer->hit_depth(to_screen(px, py)); },
             [this](IO::Keys key) { return wants_key(key); });
     }
 

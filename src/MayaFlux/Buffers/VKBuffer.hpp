@@ -647,6 +647,17 @@ public:
     }
 
     /**
+     * @brief Order computed at run time, between the draw band and
+     *        RenderConfig::draw_priority. Lower draws first, 0 by default.
+     *
+     * For an order that follows something moving, such as a distance. It is
+     * not part of the render configuration.
+     */
+    void set_draw_rank(int64_t rank) noexcept { m_draw_rank = rank; }
+
+    [[nodiscard]] int64_t draw_rank() const noexcept { return m_draw_rank; }
+
+    /**
      * @brief Mark this buffer as requiring depth testing when rendered
      */
     void set_needs_depth_attachment(bool needs) { m_needs_depth = needs; }
@@ -722,6 +733,7 @@ private:
     size_t m_size_bytes {};
     Usage m_usage {};
     bool m_needs_depth {};
+    int64_t m_draw_rank {};
 
     // Semantic metadata
     Kakshya::DataModality m_modality;

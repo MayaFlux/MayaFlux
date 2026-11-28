@@ -525,11 +525,11 @@ void RenderProcessor::disable_depth_test()
     invalidate_pipelines();
 }
 
-void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op)
+void RenderProcessor::enable_depth_test(Portal::Graphics::CompareOp compare_op, bool write)
 {
     auto next = m_depth_stencil;
     next.depth_test_enable = true;
-    next.depth_write_enable = true;
+    next.depth_write_enable = write;
     next.depth_compare_op = compare_op;
 
     const bool was_enabled = m_depth_enabled;
@@ -1023,12 +1023,15 @@ void RenderProcessor::initialize_pipeline(const std::shared_ptr<VKBuffer>& buffe
 
     retire_current_pipeline();
 
-    m_lane->pipeline = flow.create_pipeline(pipeline_config, destination.colors, depth_format, 0U,
-        { { 0U, m_triangulate ? 1U : 0U },
-            { 1U, m_triangulate && m_mill_spec.billboard_instances
-                    && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
-                ? 1U
-                : 0U } });
+    auto constants = m_config.specialization_constants;
+    constants[0U] = m_triangulate ? 1U : 0U;
+    constants[1U] = m_triangulate && m_mill_spec.billboard_instances
+            && m_mill_spec.ribbon == Portal::Graphics::MillSpec::Ribbon::WorldFacing
+        ? 1U
+        : 0U;
+
+    m_lane->pipeline = flow.create_pipeline(
+        pipeline_config, destination.colors, depth_format, 0U, constants);
 
     if (m_lane->pipeline == Portal::Graphics::INVALID_RENDER_PIPELINE) {
         MF_ERROR(Journal::Component::Buffers, Journal::Context::BufferProcessing,

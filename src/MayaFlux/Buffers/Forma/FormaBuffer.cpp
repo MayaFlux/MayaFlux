@@ -69,6 +69,9 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
 {
     RenderConfig resolved = config;
     resolved.topology = m_topology;
+    resolved.view_pinned = true;
+    if (!resolved.draw_band)
+        resolved.draw_band = Portal::Graphics::DrawBand::OVERLAY;
     resolved.triangulate |= Portal::Graphics::needs_triangulation(
         resolved.topology, resolved.polygon_mode);
 
@@ -141,7 +144,6 @@ void FormaBuffer::setup_rendering(const RenderConfig& config)
     }
     m_render_processor->set_mill_on_change(true);
     m_render_processor->enable_alpha_blending();
-    m_render_processor->set_view_pinned(true);
 
     if (multi_tex) {
         uint32_t slot = 1;

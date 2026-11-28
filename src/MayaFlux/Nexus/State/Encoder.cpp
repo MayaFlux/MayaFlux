@@ -154,7 +154,11 @@ namespace {
                 rec.topology = config.topology;
                 rec.polygon_mode = config.polygon_mode;
                 rec.cull_mode = config.cull_mode;
+                rec.depth_test = config.depth_test;
+                rec.depth_write = config.depth_write;
+                rec.view_pinned = config.view_pinned;
                 rec.triangulate = config.triangulate;
+                rec.draw_band = config.draw_band;
                 rec.draw_priority = config.draw_priority;
                 rec.extra_string_params = config.extra_string_params;
             }

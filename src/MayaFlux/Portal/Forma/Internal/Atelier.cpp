@@ -189,7 +189,7 @@ namespace {
         processor->set_view_transform_source(
             [layer = std::weak_ptr<Layer>(surface.layer_ptr())]() {
                 const auto held = layer.lock();
-                return held && held->view() ? *held->view() : Kinesis::ViewTransform {};
+                return held ? held->drawn_view() : Kinesis::ViewTransform {};
             },
             false, Graphics::CullMode::NONE);
 
@@ -208,6 +208,7 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::create_batch(const Surface& surfa
 {
     auto batch = create_batch(surface.render_config(), priority);
     follow_surface(batch, surface);
+    surface.layer_ptr()->follow(batch);
     return batch;
 }
 
@@ -249,12 +250,14 @@ std::shared_ptr<Buffers::FormaBuffer> Atelier::surface_batch(
         if (!buffer || buffer->needs_removal()) {
             buffer = create_batch(surface.image_config(target));
             follow_surface(buffer, surface);
+            surface.layer_ptr()->follow(buffer);
         }
         return buffer;
     }
 
     auto buffer = create_batch(surface.image_config(target));
     follow_surface(buffer, surface);
+    surface.layer_ptr()->follow(buffer);
     layer.m_image_batches.emplace_back(target, buffer);
     return buffer;
 }

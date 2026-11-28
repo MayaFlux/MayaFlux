@@ -39,7 +39,7 @@ struct HitResult {
 // =========================================================================
 
 /**
- * @brief World-space ray under a screen position.
+ * @brief Ray under a screen position, in the space the view takes points from.
  *
  * The origin is the point of NDC depth 0 and the direction is normalized, so a
  * parameter along the ray is a distance from that origin.

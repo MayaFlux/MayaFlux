@@ -687,7 +687,11 @@ namespace {
             config.topology = sink.topology;
             config.polygon_mode = sink.polygon_mode;
             config.cull_mode = sink.cull_mode;
+            config.depth_test = sink.depth_test;
+            config.depth_write = sink.depth_write;
+            config.view_pinned = sink.view_pinned;
             config.triangulate = sink.triangulate;
+            config.draw_band = sink.draw_band;
             config.draw_priority = sink.draw_priority;
             config.extra_string_params = sink.extra_string_params;
 

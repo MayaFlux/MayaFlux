@@ -343,6 +343,19 @@ struct SampledTexture {
 };
 
 /**
+ * @enum DrawBand
+ * @brief Coarse draw order. Every buffer of a lower band draws before any of a
+ *        higher one.
+ */
+enum class DrawBand : uint8_t {
+    BACKDROP = 16, ///< Behind everything else.
+    BASE = 32, ///< Where a buffer draws unless it says otherwise.
+    TRANSLUCENT = 48, ///< Blended over BASE, usually testing depth without writing it.
+    OVERLAY = 64, ///< Over what is drawn in space. Flat Forma buffers draw here.
+    FOREMOST = 80 ///< Over overlays.
+};
+
+/**
  * @struct RenderConfig
  * @brief Unified rendering configuration for graphics buffers
  *
@@ -375,6 +388,18 @@ struct RenderConfig {
     PrimitiveTopology topology { PrimitiveTopology::POINT_LIST };
     PolygonMode polygon_mode { PolygonMode::FILL };
     CullMode cull_mode { CullMode::NONE };
+
+    /**
+     * @brief Depth comparison to draw with. Unset leaves it to the render
+     *        processor, which tests once it is given a view.
+     */
+    std::optional<CompareOp> depth_test;
+
+    /** @brief With depth_test set, whether passing fragments write their depth. */
+    bool depth_write { true };
+
+    /** @brief Window-wide viewport binding passes over this buffer's view. */
+    bool view_pinned { false };
 
     /**
      * @brief Mill draw runs into triangles before rendering.
@@ -412,7 +437,10 @@ struct RenderConfig {
     ///< For child-specific fields
     std::unordered_map<std::string, std::string> extra_string_params;
 
-    /// @brief Draw-order priority. Higher sorts later (drawn on top). Default 0.
+    /// @brief Draw band. Unset takes the buffer class's own: OVERLAY for Forma, else BASE.
+    std::optional<DrawBand> draw_band;
+
+    /// @brief Draw-order priority within a band. Higher sorts later (drawn on top). Default 0.
     int64_t draw_priority {};
 
     /**

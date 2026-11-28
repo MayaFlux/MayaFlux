@@ -325,8 +325,13 @@ public:
      *
      * Marks the owning buffer as requiring a depth attachment.
      * Pipeline will be created with D32_SFLOAT depth format.
+     *
+     * @param write False tests without writing depth, so what is drawn hides
+     *        nothing drawn later.
      */
-    void enable_depth_test(Portal::Graphics::CompareOp compare_op = Portal::Graphics::CompareOp::LESS);
+    void enable_depth_test(
+        Portal::Graphics::CompareOp compare_op = Portal::Graphics::CompareOp::LESS,
+        bool write = true);
 
     /**
      * @brief Disable depth testing and depth writes for this processor's pipeline.

@@ -89,6 +89,10 @@ void TextureBuffer::setup_rendering(const RenderConfig& user_config)
     }
     m_render_config.target_window = user_config.target_window;
     m_render_config.target_images = user_config.target_images;
+    m_render_config.depth_test = user_config.depth_test;
+    m_render_config.depth_write = user_config.depth_write;
+    m_render_config.view_pinned = user_config.view_pinned;
+    m_render_config.draw_band = user_config.draw_band;
     m_render_config.default_sampler = user_config.default_sampler;
 
     if (!user_config.additional_textures.empty()) {

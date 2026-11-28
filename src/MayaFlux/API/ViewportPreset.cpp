@@ -126,17 +126,20 @@ namespace {
     {
         auto region = std::make_shared<Region>();
 
-        const auto covers = [region, weak = std::weak_ptr<Core::Window>(window)](double px, double py) {
+        const auto covers = [region, weak = std::weak_ptr<Core::Window>(window)](
+                                double px, double py) -> std::optional<float> {
             const auto live = weak.lock();
             if (!live) {
-                return false;
+                return std::nullopt;
             }
-            if (!*region) {
-                return true;
+            if (*region) {
+                const auto& state = live->get_state();
+                if (!(*region)->contains(glm::vec2(
+                        Kinesis::to_ndc(px, py, state.current_width, state.current_height)))) {
+                    return std::nullopt;
+                }
             }
-            const auto& state = live->get_state();
-            return (*region)->contains(glm::vec2(
-                Kinesis::to_ndc(px, py, state.current_width, state.current_height)));
+            return std::numeric_limits<float>::max();
         };
 
         const auto wants = [keys = std::move(keys)](IO::Keys key) {

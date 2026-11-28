@@ -225,6 +225,13 @@ public:
     [[nodiscard]] const std::optional<Kinesis::ViewTransform>& view() const noexcept { return m_layer->view(); }
 
     /**
+     * @brief Draw and hit test this Surface on a placed plane. See Layer::set_placement.
+     */
+    void set_placement(
+        std::function<Kinesis::ViewTransform()> view,
+        std::function<glm::mat4()> placement);
+
+    /**
      * @brief Pixel size of a canvas given by its window or, without one, its image.
      *
      * For callbacks that must not keep the Surface alive.
@@ -245,6 +252,15 @@ public:
      * the pointer leaves it, and losing focus on the host clears focus here.
      * The mapping takes the image to fill the element's bounds_hint, top edge
      * to top edge.
+     *
+     * To show the image on a mesh instead, give the host element the whole
+     * surface as bounds and mesh_to_local() as its to_local:
+     * @code
+     * host_element.with_bounds(host.full())
+     *     .with_to_local(mesh_to_local(view, placement, mesh, host.full()));
+     * @endcode
+     * A drag pauses while the pointer is off the mesh, and a mesh with
+     * transparent texels still writes depth unless it discards them.
      *
      * @return False, routing nothing, when this Surface has a window or the
      *         element is missing or has no bounds_hint.

@@ -56,10 +56,7 @@ Scrollable& Scrollable::place(
 
     buf.submit(Kinesis::filled_rect(viewport, glm::vec4(m_background, 1.F)));
 
-    if (buf) {
-        if (auto render = buf->get_render_processor())
-            render->set_scissor(Kinesis::Scissor::from(viewport));
-    }
+    surface.layer().clip_batch(buf.buffer(), viewport);
 
     Element el = Element {}
                      .with_name("scrollable_viewport")
@@ -127,8 +124,8 @@ Scrollable& Scrollable::track(
         if (!clipped) {
             MF_WARN(Journal::Component::Portal, Journal::Context::API,
                 "Scrollable::track: element {} could not move into the viewport's buffer and is not clipped when drawn", id);
-        } else if (auto render = clip_buf->get_render_processor()) {
-            render->set_scissor(Kinesis::Scissor::from(viewport_bounds));
+        } else {
+            layer.clip_batch(clip_buf.buffer(), viewport_bounds);
         }
     }
 

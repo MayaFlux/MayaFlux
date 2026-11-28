@@ -10,12 +10,21 @@ layout(location = 3) in float in_weight;
 
 layout(set = 0, binding = 1) uniform sampler2D textures[8];
 
+layout(constant_id = 2) const float CLIP_MIN_X = 0.0;
+layout(constant_id = 3) const float CLIP_MIN_Y = 0.0;
+layout(constant_id = 4) const float CLIP_MAX_X = 0.0;
+layout(constant_id = 5) const float CLIP_MAX_Y = 0.0;
+
 layout(location = 0) out vec4 out_color;
 
 void main()
 {
+    bool clipped = CLIP_MAX_X > CLIP_MIN_X
+        && (in_world_pos.x < CLIP_MIN_X || in_world_pos.x > CLIP_MAX_X
+            || in_world_pos.y < CLIP_MIN_Y || in_world_pos.y > CLIP_MAX_Y);
+
     float coverage = mill_coverage(in_uv);
-    if (coverage <= 0.0) {
+    if (clipped || coverage <= 0.0) {
         discard;
     }
 

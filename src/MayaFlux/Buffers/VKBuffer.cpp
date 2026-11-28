@@ -452,6 +452,10 @@ void VKBuffer::apply_render_config(
     render_processor->set_polygon_mode(config.polygon_mode);
     render_processor->set_cull_mode(config.cull_mode);
     render_processor->set_scissor(config.scissor);
+    render_processor->set_view_pinned(config.view_pinned);
+
+    if (config.depth_test)
+        render_processor->enable_depth_test(*config.depth_test, config.depth_write);
 
     if (!config.geometry_shader.empty())
         render_processor->set_geometry_shader(config.geometry_shader);

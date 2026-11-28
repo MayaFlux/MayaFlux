@@ -14,6 +14,8 @@ namespace internal {
     class Atelier;
 }
 
+struct Scrollable;
+
 /**
  * @class Layer
  * @brief Flat registry of Elements on a surface.
@@ -284,8 +286,40 @@ public:
     [[nodiscard]] glm::vec2 from_view(glm::vec2 screen) const;
 
     // =========================================================================
+    // Placement
+    // =========================================================================
+
+    /**
+     * @brief Draw and hit test the layer on a placed plane.
+     *
+     * Elements stay in the z = 0 plane in NDC units, which @p placement puts
+     * where @p view sees it. Its batches follow both, are hidden by what was
+     * drawn before them with depth, and draw nothing seen from behind. An
+     * element without to_local is hit where the plane shows and carries its
+     * distance along the pointer ray. Both are read for every draw and event.
+     * An empty function removes the placement. Replaces set_view(), which
+     * likewise replaces this.
+     */
+    void set_placement(
+        std::function<Kinesis::ViewTransform()> view,
+        std::function<glm::mat4()> placement);
+
+    [[nodiscard]] bool placed() const noexcept { return static_cast<bool>(m_placed_to_local); }
+
+    /** @brief The view the layer's batches draw with now. Identity when it has none. */
+    [[nodiscard]] Kinesis::ViewTransform drawn_view() const;
+
+    // =========================================================================
     // Spatial queries - NDC space
     // =========================================================================
+
+    /**
+     * @brief The distance of the element hit_test() finds at @p ndc.
+     *
+     * The lowest float for a flat element, which comes before every distance.
+     * std::nullopt when nothing is hit.
+     */
+    [[nodiscard]] std::optional<float> hit_depth(glm::vec2 ndc) const;
 
     /**
      * @brief Return the topmost interactive, visible element under @p ndc.
@@ -383,6 +417,26 @@ public:
 
 private:
     friend class internal::Atelier;
+    friend struct Scrollable;
+
+    struct Batch {
+        std::weak_ptr<Buffers::FormaBuffer> buffer;
+        std::optional<Kinesis::AABB2D> clip;
+        std::optional<Graphics::DrawBand> flat_band;
+        bool on_plane {};
+    };
+
+    std::vector<Batch> m_batches;
+    std::function<Kinesis::ViewTransform()> m_place_view;
+    std::function<glm::mat4()> m_placement;
+    std::function<std::optional<glm::vec3>(glm::vec2)> m_placed_to_local;
+
+    void follow(const std::shared_ptr<Buffers::FormaBuffer>& batch);
+    void clip_batch(const std::shared_ptr<Buffers::FormaBuffer>& batch, const Kinesis::AABB2D& rect);
+    void configure(Batch& batch) const;
+    void order_placed(float distance) const;
+
+    [[nodiscard]] std::optional<std::pair<uint32_t, float>> topmost(glm::vec2 screen) const;
 
     std::vector<Element> m_elements;
     mutable std::unordered_map<uint32_t, size_t> m_index;
@@ -406,13 +460,13 @@ private:
         double px, double py,
         uint32_t win_w, uint32_t win_h) noexcept;
 
-    [[nodiscard]] std::optional<glm::vec2> unprojected(glm::vec2 screen) const;
+    [[nodiscard]] std::optional<glm::vec3> unprojected(glm::vec2 screen) const;
 
     [[nodiscard]] static std::optional<glm::vec3> map_to_local(
-        const Element& el, glm::vec2 screen, const std::optional<glm::vec2>& viewed);
+        const Element& el, glm::vec2 screen, const std::optional<glm::vec3>& viewed);
 
     [[nodiscard]] static std::optional<float> test_element(
-        const Element& el, glm::vec2 screen, const std::optional<glm::vec2>& viewed);
+        const Element& el, glm::vec2 screen, const std::optional<glm::vec3>& viewed);
 };
 
 } // namespace MayaFlux::Portal::Forma

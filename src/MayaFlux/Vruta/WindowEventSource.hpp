@@ -182,22 +182,24 @@ public:
     /**
      * @brief Register a claim on the window's input.
      *
-     * The pointer belongs to the claim of highest priority whose @p covers
-     * holds at the pointer, the later registered winning a tie. A button press
+     * The pointer belongs to the claim of highest priority that covers it, the
+     * smallest distance winning among equals, then the later registered. A button press
      * keeps the pointer with its owner until every button is up. After a press
      * that nothing covers, the first claim the held pointer reaches keeps it.
      *
      * A key belongs, in the same order, to a claim whose @p wants holds for it.
      *
      * @param priority Higher goes first.
-     * @param covers   Whether the claim wants the pointer at a window pixel.
-     *                 Empty never takes it.
+     * @param covers   How far what the claim has at a window pixel is, or
+     *                 std::nullopt when it has nothing there. A flat listener
+     *                 gives the lowest float, one behind everything the largest.
+     *                 Empty never takes the pointer.
      * @param wants    Whether the claim wants a key. Empty never takes one.
      * @return Id of the claim, never zero.
      */
     [[nodiscard]] uint32_t claim(
         int priority,
-        std::function<bool(double x, double y)> covers,
+        std::function<std::optional<float>(double x, double y)> covers,
         std::function<bool(IO::Keys)> wants = {});
 
     /** @brief Withdraw a claim. A press it was keeping is let go. */
@@ -219,7 +221,7 @@ private:
     struct Claim {
         uint32_t id;
         int priority;
-        std::function<bool(double, double)> covers;
+        std::function<std::optional<float>(double, double)> covers;
         std::function<bool(IO::Keys)> wants;
     };
 
@@ -231,8 +233,8 @@ private:
 
     void settle_ownership(const Core::WindowEvent& event);
 
-    template <typename Holds>
-    [[nodiscard]] uint32_t first_claim(const Holds& holds) const;
+    template <typename Measure>
+    [[nodiscard]] uint32_t first_claim(const Measure& measure) const;
 
     std::deque<Core::WindowEvent> m_pending_events;
     std::array<size_t, 256> m_pending_counts {};

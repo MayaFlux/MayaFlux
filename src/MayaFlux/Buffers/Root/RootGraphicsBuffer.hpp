@@ -242,13 +242,22 @@ private:
 
     /**
      * @brief Stable-sort the collected renderable buffers by each buffer's
-     *        RenderConfig::draw_priority, lowest first.
+     *        draw band, draw rank, then draw priority, lowest first.
      */
     void sort_renderable_buffers()
     {
         std::ranges::stable_sort(m_renderable_buffers, {},
             [](const RenderableBufferInfo& info) {
-                return info.buffer ? info.buffer->get_render_config().draw_priority : int64_t {};
+                using Portal::Graphics::DrawBand;
+                if (!info.buffer)
+                    return std::tuple { DrawBand::BASE, int64_t {}, int64_t {} };
+
+                const auto config = info.buffer->get_render_config();
+                return std::tuple {
+                    config.draw_band.value_or(DrawBand::BASE),
+                    info.buffer->draw_rank(),
+                    config.draw_priority
+                };
             });
     }
 

@@ -11,7 +11,7 @@ namespace MayaFlux::Kinesis {
  * 1 degree short of looking along @p axis.
  *
  * @param view      Viewpoint to start from.
- * @param centre    World point held fixed.
+ * @param centre    Point held fixed.
  * @param azimuth   Radians about @p axis, by the right hand rule.
  * @param elevation Radians toward @p axis.
  * @param axis      Reference direction, any nonzero length.
@@ -27,13 +27,13 @@ namespace MayaFlux::Kinesis {
     const glm::vec3& axis = { 0.0F, 1.0F, 0.0F });
 
 /**
- * @brief Translate parallel to the image plane until a world point has a given image.
+ * @brief Translate parallel to the image plane until a point has a given image.
  *
  * An aspect or frustum that cannot be imaged leaves the viewpoint unchanged, as
  * it does for scale_viewpoint_window.
  *
  * @param view   Viewpoint to start from.
- * @param point  World point. Behind a perspective eye the viewpoint is returned unchanged.
+ * @param point  Point. Behind a perspective eye the viewpoint is returned unchanged.
  * @param ndc    Image to give it, x and y in [-1, 1], +y up.
  * @param aspect Width over height of the destination.
  */
@@ -63,7 +63,7 @@ namespace MayaFlux::Kinesis {
 /**
  * @brief Translate by a displacement in the viewpoint's own frame.
  * @param view         Viewpoint to start from.
- * @param displacement World units along right, up and backward.
+ * @param displacement Distances along right, up and backward.
  */
 [[nodiscard]] MAYAFLUX_API Viewpoint translate_viewpoint(
     const Viewpoint& view, const glm::vec3& displacement);
@@ -75,7 +75,7 @@ namespace MayaFlux::Kinesis {
  * present right direction is kept.
  *
  * @param view      Viewpoint to start from.
- * @param centre    World point to put straight ahead.
+ * @param centre    Point to put straight ahead.
  * @param direction View direction wanted. Zero returns the viewpoint unchanged.
  * @param axis      Reference direction, any nonzero length.
  */
