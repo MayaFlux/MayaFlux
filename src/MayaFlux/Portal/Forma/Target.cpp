@@ -83,7 +83,15 @@ bool FormaTarget::move_to(const std::shared_ptr<Buffers::FormaBuffer>& destinati
 
     m_state->buffer = destination;
     m_state->slice = moved;
+    if (m_state->moved)
+        m_state->moved();
     return true;
+}
+
+void FormaTarget::on_moved(std::function<void()> fn) const
+{
+    if (m_state)
+        m_state->moved = std::move(fn);
 }
 
 void FormaTarget::bind_texture(uint32_t array_index, const std::shared_ptr<Core::VKImage>& image) const

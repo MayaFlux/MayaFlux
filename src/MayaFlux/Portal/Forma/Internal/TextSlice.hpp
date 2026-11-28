@@ -11,8 +11,9 @@ namespace MayaFlux::Portal::Forma::internal {
  *
  * Owns a Text::TextRun and writes its vertices, an optional tail of extra
  * vertices after them, and the atlas image binding to the target. The
- * target's buffer must be created with a texture slot at index 0 (the atlas
- * is bound there). Layout pixels map onto the bounds with
+ * target's buffer must be created with a texture slot at index 0. The atlas is
+ * bound there, or at Atelier::atlas_slot() where the buffer declares a text
+ * slot of that index. Layout pixels map onto the bounds with
  * Text::GlyphMap::fit against the run's extent, so a caller that sets
  * render_bounds to the pixel size of the bounds, at least one line high, gets
  * one layout pixel per screen pixel; shorter bounds squeeze the text to fit.
@@ -72,6 +73,8 @@ private:
     Text::TextRun m_run;
     std::vector<Kakshya::MeshVertex> m_tail;
     std::shared_ptr<Core::VKImage> m_bound_image;
+    std::shared_ptr<Buffers::FormaBuffer> m_bound_buffer;
+    uint32_t m_bound_slot {};
 };
 
 } // namespace MayaFlux::Portal::Forma::internal

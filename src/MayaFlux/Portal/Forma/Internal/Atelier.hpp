@@ -36,6 +36,9 @@ namespace internal {
 
     constexpr size_t k_capacity_bytes = 4096;
 
+    /// @brief Text slots every batch declares.
+    inline constexpr uint32_t k_text_slots = 4;
+
     /**
      * @class Atelier
      * @brief Process-wide Forma workshop. Not part of the public surface.
@@ -99,6 +102,15 @@ namespace internal {
         {
             return m_atlas_images[&atlas];
         }
+
+        /**
+         * @brief Text slot of @p atlas, the same in every batch, so a slice
+         *        keeps its slot when it moves to another one.
+         *
+         * The default atlas holds slot 0. Others take the next free slot, and
+         * slot 0 once all k_text_slots are held.
+         */
+        [[nodiscard]] uint32_t atlas_slot(const Text::GlyphAtlas& atlas);
 
         // =====================================================================
         // Construction
@@ -370,6 +382,7 @@ namespace internal {
         std::unique_ptr<Inspector> m_inspect;
         std::unordered_map<const Text::GlyphAtlas*, Text::AtlasImage> m_atlas_images;
         std::shared_ptr<Core::VKImage> m_text_fallback;
+        std::vector<const Text::GlyphAtlas*> m_atlas_slots;
 
         bool m_initialized {};
     };
